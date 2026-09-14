@@ -22,7 +22,7 @@ export default async function RootLayout({
   return (
     <html lang="en" data-theme={theme}>
       <body>
-        <Header />
+        <Header theme={theme} />
         {children}
       </body>
     </html>

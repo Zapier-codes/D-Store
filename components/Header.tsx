@@ -1,25 +1,27 @@
 import Link from "next/link";
+import type { Theme } from "@/lib/theme";
+import ThemeToggle from "./ThemeToggle";
 import styles from "./Header.module.css";
 
 /**
- * Site header — leaf 0.c.i.zi (responsive nav + search bar).
+ * Site header — leaf 0.c.i.zi (responsive nav + search bar), extended
+ * by 0.c.i.zo (theme toggle integration).
  *
- * A pure server component: the mobile nav open/close uses the
+ * A pure server component itself: the mobile nav open/close uses the
  * checkbox-hack pattern (hidden checkbox + label, shown/hidden purely
  * via CSS in Header.module.css) rather than client-side state, so no
  * 'use client' boundary is needed just to make the nav responsive.
  * The search bar is a plain GET <form>, which submits to /search?q=...
- * without any JavaScript.
+ * without any JavaScript. The one client boundary in the header is
+ * <ThemeToggle> itself, which needs to call a server action — see
+ * ThemeToggle.tsx.
  *
  * /search and /categories don't exist as real pages yet — they land in
  * 0.g (Search & Category Browse). Linking to them now is intentional,
  * the same forward-reference pattern used for design tokens ahead of
  * their consumers; they'll 404 until then.
- *
- * Theme toggle integration (0.c.i.zo) adds a ThemeToggle client
- * component into the nav — not present yet in this leaf.
  */
-export default function Header() {
+export default function Header({ theme }: { theme: Theme }) {
   return (
     <header className={styles.header}>
       <div className={styles.bar}>
@@ -65,6 +67,7 @@ export default function Header() {
           <Link href="/categories" className={styles.navLink}>
             Categories
           </Link>
+          <ThemeToggle theme={theme} />
         </nav>
       </div>
     </header>

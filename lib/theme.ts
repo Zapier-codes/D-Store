@@ -7,11 +7,13 @@
  * a flash of the wrong theme on load, rather than setting the attribute
  * client-side after hydration.
  *
- * This leaf only covers storage + read-on-load. The actual toggle UI is
- * a separate leaf (0.c.i.zo, header integration); it should call
- * `setThemeCookie` (a server action) once it exists, and read the
- * current theme via `getTheme()` in a server component the way
- * `app/layout.tsx` does below.
+ * This leaf only covers storage + read-on-load. The actual toggle UI
+ * (0.c.i.zo) lives in components/ThemeToggle.tsx and calls the write
+ * side, `setThemeCookie`, from lib/theme-actions.ts — kept in a
+ * separate file because Next.js requires any module containing a
+ * "use server" function to export *only* async functions, and this
+ * file also needs to export the `Theme` type and constants that
+ * server *components* (not actions) import.
  *
  * Out of scope for this leaf: theme toggle UI (0.c.i.zo), transition
  * animation (0.b.iii.zo), system-preference auto-detect (not yet an
@@ -28,9 +30,7 @@ export const THEME_COOKIE_NAME = "d-store-theme";
 // UI, so "dark" is the safe default for visitors with no cookie yet.
 export const DEFAULT_THEME: Theme = "dark";
 
-const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
-
-function isTheme(value: string | undefined): value is Theme {
+export function isTheme(value: string | undefined): value is Theme {
   return value === "dark" || value === "light";
 }
 
@@ -44,18 +44,4 @@ export async function getTheme(): Promise<Theme> {
   const store = await cookies();
   const value = store.get(THEME_COOKIE_NAME)?.value;
   return isTheme(value) ? value : DEFAULT_THEME;
-}
-
-/**
- * Server action that persists a theme choice. Not called anywhere yet
- * — this is the write side the 0.c.i.zo toggle will invoke.
- */
-export async function setThemeCookie(theme: Theme): Promise<void> {
-  "use server";
-  const store = await cookies();
-  store.set(THEME_COOKIE_NAME, theme, {
-    path: "/",
-    maxAge: ONE_YEAR_SECONDS,
-    sameSite: "lax",
-  });
 }
