@@ -28,9 +28,13 @@ import styles from "./Hero.module.css";
  * the gradient stands in for hero artwork for now — swapping in a real
  * banner image later only touches this file's background layer.
  *
- * No reveal animation yet — that's the next leaf, 0.d.i.zo
- * (`prefers-reduced-motion`-aware), kept separate per the
- * one-leaf-one-task rule. This leaf is the static, fully-rendered hero.
+ * Reveal animation — leaf 0.d.i.zo — lives entirely in Hero.module.css
+ * (`.panel`/`.icon` `animation`, gated behind
+ * `@media (prefers-reduced-motion: no-preference)`, same guard already
+ * used by the theme-transition in app/globals.css). No client boundary
+ * needed: the hero sits above the fold on first paint, so a plain CSS
+ * `animation` that plays once on mount gives the "reveal" moment
+ * without an IntersectionObserver — this stays a server component.
  */
 export default function Hero({ app }: { app: App }) {
   const initial = app.name.trim().charAt(0).toUpperCase();

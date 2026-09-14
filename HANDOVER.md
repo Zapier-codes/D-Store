@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.d.i.zo`** *(Home Page — Hero: reveal animation, respecting `prefers-reduced-motion`. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.d.ii.zi`** *(Home Page — Shelves: Featured shelf, from dummy data. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -102,7 +102,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 **0.d — Home Page** *(pulls forward `1.d`, dummy data)*
 - 0.d.i — Hero
   - [x] 0.d.i.zi — Cinematic hero for one featured app (from dummy data) — `components/Hero.tsx` + `Hero.module.css`, wired into `app/page.tsx` (replacing the Phase 0 placeholder confirmed live by `0.a.i.zo`) via `getFeaturedApps()`, first result. The one deliberate glassmorphism moment per D-STORE.md §4C: a frosted `.panel` (icon, name, summary, rating/install-count/license meta, forward-referenced `/app/[slug]` CTA) over a full-bleed background gradient built from the app's own dummy `primary_color`/`secondary_color`/`tertiary_color` fields plus the existing `--gradient-vignette` token, since no real banner art exists yet. No reveal animation — that's `0.d.i.zo`, next.
-  - [ ] 0.d.i.zo — Reveal animation (respects `prefers-reduced-motion`)
+  - [x] 0.d.i.zo — Reveal animation (respects `prefers-reduced-motion`) — `Hero.module.css`: `.panel`/`.icon` play a one-shot fade/translate-up `animation` on first paint (the hero is above the fold, so "reveal" here means on-mount, not scroll-triggered — nothing to scroll past first), gated behind `@media (prefers-reduced-motion: no-preference)`, the same guard already used by the theme-transition (`0.b.iii.zo`) and mobile nav collapse. `both` fill-mode avoids a flash of the un-animated state on either edge. Pure CSS — no client boundary added to `Hero.tsx`.
 - 0.d.ii — Shelves
   - [ ] 0.d.ii.zi — Featured shelf
   - [ ] 0.d.ii.zo — Trending shelf (sorted by dummy `install_count`)

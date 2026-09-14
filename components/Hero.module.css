@@ -154,3 +154,49 @@
     font-size: 1.75rem;
   }
 }
+
+/*
+ * Reveal animation — leaf 0.d.i.zo.
+ *
+ * The hero renders above the fold, so this plays once on first paint
+ * rather than on scroll-into-view (there's nothing to scroll past
+ * first) — .panel fades/slides up, .icon follows slightly staggered
+ * so it doesn't read as one flat block moving together. Same
+ * `prefers-reduced-motion: no-preference` guard already used for the
+ * theme-transition (app/globals.css, 0.b.iii.zo) and the mobile nav
+ * collapse — motion is opt-in by device/OS setting, not assumed.
+ * `both` fill-mode holds the `from` state before the animation starts
+ * and the `to` state after it ends, so there's no flash of the
+ * un-animated layout on either edge.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .panel {
+    animation: heroPanelReveal 640ms ease-out both;
+  }
+
+  .icon {
+    animation: heroIconReveal 640ms ease-out 120ms both;
+  }
+}
+
+@keyframes heroPanelReveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroIconReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
