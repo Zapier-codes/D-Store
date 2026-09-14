@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.a.ii.zo`** *(local data-fetch layer that serves the mock dataset in `lib/mock-data.ts` behind the same interface a real API/Supabase client will use later, so swapping in real data is a drop-in change. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.b.i.zi`** *(Design Tokens — dark theme "Cinematic Gold": define color tokens for bg, surface, accent, border. Part of Phase 0, UI revamp priority, see Section 2. `0.a` is now fully complete. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -75,7 +75,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.a.i.zo — Confirm a live preview URL renders end-to-end on a placeholder page before building real UI on top of it (fetched https://d-store-nu.vercel.app/ — served HTML matches `app/page.tsx`/`app/layout.tsx` in the repo exactly: title, meta description, and placeholder copy all render correctly from `master`)
 - 0.a.ii — Dummy data layer
   - [x] 0.a.ii.zi — Mock dataset covering every app currently in the catalog, shaped to match the full field set (`install_count`, `avg_rating`, `rating_count`, `is_featured`, `is_editors_pick`, `sha256_checksum`, etc.) — `lib/mock-data.ts`, seeded from the real legacy `Application`/`Category` entity fields and the actual apps/categories visible in `screenshot_1.png`/`screenshot_2.png` (13 real apps: F-Droid plus the 12-app Theming shelf); new fields not in the old entity are dummy values, clearly marked as such in the file's header comment
-  - [ ] 0.a.ii.zo — Local data-fetch layer that serves the mock dataset behind the same interface a real API/Supabase client will use later, so swapping in real data later is a drop-in change, not a rewrite
+  - [x] 0.a.ii.zo — Local data-fetch layer that serves the mock dataset behind the same interface a real API/Supabase client will use later, so swapping in real data later is a drop-in change, not a rewrite — `lib/catalog.ts`: `getCategories`, `getCategoryBySlug`, `getCategoryAppCount`, `getApps`, `getAppBySlug`, `getFeaturedApps`, `getTrendingApps`, `getEditorsPicks`, `getNewAndUpdated`, `searchApps`, `getSimilarApps` — all async with simulated latency so loading states can be built against it now; callers should import this, never `lib/mock-data.ts` directly
 
 **0.b — Design Tokens** *(pulls forward `1.b`)*
 - 0.b.i — Dark theme, "Cinematic Gold"
