@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.f.i.zi`** *(App Detail Page — APK verification: SHA256 checksum display, dummy value (`App.sha256_checksum`). Part of Phase 0, UI revamp priority, see Section 2. `0.e` (App Detail Page) is now fully complete. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.f.i.zo`** *(App Detail Page — APK verification: digital signature info display, dummy value. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -123,7 +123,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **0.f — Trust & Safety UI** *(pulls forward `2.b`, display-only, dummy data)*
 - 0.f.i — APK verification
-  - [ ] 0.f.i.zi — SHA256 checksum display (dummy value)
+  - [x] 0.f.i.zi — SHA256 checksum display (dummy value) — `components/ChecksumDisplay.tsx` + `.module.css`, a "Verify this APK" section on the detail page after Ratings — the start of D-Store's transparency-over-Play-Store pitch (docs/D-STORE.md §2: checksums/permissions/source links up front). Renders `App.sha256_checksum` in a monospace, selectable `<code>` block with a copy-to-clipboard button (transient "Copied!" confirmation, `aria-live` announcement, graceful no-op if `navigator.clipboard` is unavailable — the hash is still manually selectable either way). Dummy value only — generated via `secrets.token_hex(32)` when the mock dataset was seeded (0.a.ii.zi), not a digest of any real APK bytes; becomes real once Phase 5 computes actual checksums from uploaded/mirrored APKs. `next build` passes clean; manually verified via `next start` that `/app/f-droid` renders the correct checksum, label, and copy button.
   - [ ] 0.f.i.zo — Digital signature info display (dummy value)
 - 0.f.ii — Transparency
   - [ ] 0.f.ii.zi — "Why not on Play Store" disclosure UI
