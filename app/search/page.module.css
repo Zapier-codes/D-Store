@@ -1,0 +1,25 @@
+/*
+ * Search results page layout — leaf 0.g.i.zo. Same max-width/padding
+ * shell as the app detail page (app/app/[slug]/page.module.css) for
+ * consistency across top-level routes.
+ */
+
+.main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.message {
+  margin: 0;
+  color: var(--color-border);
+}
