@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getAppBySlug } from "@/lib/catalog";
+import { getAppBySlug, getSimilarApps } from "@/lib/catalog";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
@@ -10,6 +10,7 @@ import SignatureInfo from "@/components/SignatureInfo";
 import PlayStoreDisclosure from "@/components/PlayStoreDisclosure";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
 import ReportAppForm from "@/components/ReportAppForm";
+import Shelf from "@/components/Shelf";
 import styles from "./page.module.css";
 
 /**
@@ -19,15 +20,24 @@ import styles from "./page.module.css";
  * stars + histogram), 0.e.iii.zo (anonymous rating submission),
  * 0.f.i.zi (SHA-256 checksum), 0.f.i.zo (digital signature info),
  * 0.f.ii.zi ("Why not on Play Store" disclosure), 0.f.ii.zo
- * (permissions disclosure), and now 0.f.iii.zi (anonymous "Report app"
- * form, this leaf — closes out `0.f`). This is the route `/app/[slug]`
- * itself (created by 0.e.i.zi) — every card/hero link built so far
- * (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as a forward
- * reference.
+ * (permissions disclosure), 0.f.iii.zi (anonymous "Report app" form),
+ * and now 0.g.iii.zi (similar-apps rail, this leaf). This is the route
+ * `/app/[slug]` itself (created by 0.e.i.zi) — every card/hero link
+ * built so far (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as
+ * a forward reference.
  *
- * `0.e` (App Detail Page) and `0.f` (Trust & Safety UI) are now fully
- * complete. Next up per HANDOVER.md is `0.g` (Search & Category
- * Browse), which lands on new routes rather than this page.
+ * The similar-apps rail reuses `Shelf` (0.d.ii.zi) directly, unlike
+ * every other section on this page (which use a plain `<section>` +
+ * `<h2>` wrapper) — `Shelf` already renders nothing when its `apps`
+ * array is empty, which is exactly right here (an app that's the only
+ * one in its category, e.g. `system`'s lone F-Droid entry, shouldn't
+ * show an empty "Similar Apps" rail), so there's no need to duplicate
+ * that empty-check the way the Permissions/Report sections do for
+ * their own different reasons.
+ *
+ * `0.e`, `0.f` (Trust & Safety UI), and now `0.g.iii` (Related content)
+ * are complete for this page. `0.g.iii.zo` (developer profile page)
+ * lands on a new route, not here.
  *
  * Dynamic route (`notFound()` on an unknown slug) — no
  * `generateStaticParams` yet since the whole catalog is still an
@@ -47,6 +57,7 @@ export default async function AppDetailPage({
     notFound();
   }
 
+  const similarApps = await getSimilarApps(app.slug);
   const initial = app.name.trim().charAt(0).toUpperCase();
 
   return (
@@ -122,6 +133,8 @@ export default async function AppDetailPage({
         </h2>
         <ReportAppForm appSlug={app.slug} />
       </section>
+
+      <Shelf title="Similar Apps" apps={similarApps} />
     </main>
   );
 }
