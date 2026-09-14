@@ -1,0 +1,64 @@
+/*
+ * Anonymous report-app form styles — leaf 0.f.iii.zi. Same
+ * bordered-surface shell as RateThisApp (0.e.iii.zo) for visual
+ * consistency across the detail page's interactive dummy forms.
+ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.label {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.select,
+.textarea {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.submit {
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.submit:not(:disabled):hover,
+.submit:not(:disabled):focus-visible {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.confirmation {
+  margin: 0;
+  font-size: 0.9rem;
+}
