@@ -36,9 +36,11 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **Storage roles (update):** the Telegram S3-compatible drive is **primary** storage for APKs/splits — it's existing infrastructure that has been continuously active, not something to newly deploy. Telegram's job is storage only: it holds the finished assets and nothing else. The entire build/sign/split/checksum/changelog/catalog-sync pipeline runs end to end inside one GitHub Actions workflow, with the assets attached to that workflow run throughout — the workflow's final step is the one that releases the finished artifacts to the Telegram drive. GitHub Releases is **not** used to store or serve app binaries. The Cloudflare edge worker fronts the Telegram drive as the sole storage backend, with no GitHub fallback. This is reflected in the revised `5.a`–`5.c`, `5.f`, and `5.g` leaves below.
 
+**Priority override — UI revamp first:** before any further backend/infra work, the storefront UI gets rebuilt end to end on dummy data and deployed to Vercel for real-time preview. See the new **Phase 0** at the top of Section 2. It pulls forward the UI-facing leaves from Phase 1 (`1.b`–`1.d`) and Phase 2 (`2.a`–`2.c`), so those original leaves are marked superseded rather than duplicated — check them off once their Phase 0 counterpart ships. Backend/infra sequencing (starting at `5.f.i.zi`, provision Supabase) resumes once Phase 0 is complete.
+
 ### Current position
 
-> **Next leaf to work: `5.f.i.zi`** *(pulled forward from Phase 5 — see "Architecture pivot" note above; normal `zi`-before-`zo` path order resumes within `5.f` once it's underway)*
+> **Next leaf to work: `0.a.i.zi`** *(new top priority — UI revamp on Vercel with dummy data, see Phase 0 in Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -55,6 +57,83 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ## 2. Full Task Hierarchy
 
+### Phase 0 — UI Revamp (PRIORITY — supersedes prior sequencing until complete)
+
+*Added by resequencing. Full storefront UI, live-previewable on Vercel, running entirely on dummy/mock data seeded from the apps currently in the catalog — no real backend calls (no Supabase, no Telegram, no Doctrine) at this stage. Every data-dependent interaction (install button, ratings, search, filters, report form) uses local dummy logic so the whole app is clickable and visually complete. This becomes the working roadmap/reference for what the real backend (Phase 5 infra, Supabase, etc.) needs to eventually support underneath. Once Phase 0 is complete, sequencing resumes at `5.f.i.zi` (provision Supabase) so real data gets wired in behind the same interfaces established here.*
+
+**0.a — Vercel Project & Preview Pipeline**
+- 0.a.i — Frontend scaffold & deploy
+  - [ ] 0.a.i.zi — Initialize the new frontend project and connect the repo to Vercel for automatic preview deploys on every push
+  - [ ] 0.a.i.zo — Confirm a live preview URL renders end-to-end on a placeholder page before building real UI on top of it
+- 0.a.ii — Dummy data layer
+  - [ ] 0.a.ii.zi — Mock dataset covering every app currently in the catalog, shaped to match the full field set (`install_count`, `avg_rating`, `rating_count`, `is_featured`, `is_editors_pick`, `sha256_checksum`, etc.)
+  - [ ] 0.a.ii.zo — Local data-fetch layer that serves the mock dataset behind the same interface a real API/Supabase client will use later, so swapping in real data later is a drop-in change, not a rewrite
+
+**0.b — Design Tokens** *(pulls forward `1.b`)*
+- 0.b.i — Dark theme, "Cinematic Gold"
+  - [ ] 0.b.i.zi — Define color tokens (bg, surface, accent, border)
+  - [ ] 0.b.i.zo — Define vignette/gradient background treatment
+- 0.b.ii — Light theme, "Scientific Blue"
+  - [ ] 0.b.ii.zi — Define color tokens
+  - [ ] 0.b.ii.zo — Contrast-check accent variants (WCAG AA)
+- 0.b.iii — Theme persistence
+  - [ ] 0.b.iii.zi — Theme storage + read on load (no flash)
+  - [ ] 0.b.iii.zo — Theme toggle transition animation
+
+**0.c — Core Layout Shell** *(pulls forward `1.c`)*
+- 0.c.i — Header
+  - [ ] 0.c.i.zi — Responsive nav + search bar
+  - [ ] 0.c.i.zo — Theme toggle integration
+- 0.c.ii — Grid system
+  - [ ] 0.c.ii.zi — Responsive shelf-grid (2→6 columns)
+  - [ ] 0.c.ii.zo — Small/dense app-card component
+- 0.c.iii — Footer
+  - [ ] 0.c.iii.zi — Legal links (Privacy, Terms, DMCA)
+  - [ ] 0.c.iii.zo — RSS link + "no account required" notice
+
+**0.d — Home Page** *(pulls forward `1.d`, dummy data)*
+- 0.d.i — Hero
+  - [ ] 0.d.i.zi — Cinematic hero for one featured app (from dummy data)
+  - [ ] 0.d.i.zo — Reveal animation (respects `prefers-reduced-motion`)
+- 0.d.ii — Shelves
+  - [ ] 0.d.ii.zi — Featured shelf
+  - [ ] 0.d.ii.zo — Trending shelf (sorted by dummy `install_count`)
+- 0.d.iii — Editorial
+  - [ ] 0.d.iii.zi — Editor's Picks shelf
+  - [ ] 0.d.iii.zo — Sponsored card slot (dummy/native placeholder, clearly labeled)
+
+**0.e — App Detail Page** *(pulls forward `2.a`, dummy data)*
+- 0.e.i — Media
+  - [ ] 0.e.i.zi — Screenshot carousel
+  - [ ] 0.e.i.zo — Lightbox viewer
+- 0.e.ii — Content
+  - [ ] 0.e.ii.zi — Expandable description
+  - [ ] 0.e.ii.zo — "What's New" changelog block
+- 0.e.iii — Ratings
+  - [ ] 0.e.iii.zi — Rating stars + histogram (dummy data)
+  - [ ] 0.e.iii.zo — Anonymous rating submission (dummy — updates local state only, no backend)
+
+**0.f — Trust & Safety UI** *(pulls forward `2.b`, display-only, dummy data)*
+- 0.f.i — APK verification
+  - [ ] 0.f.i.zi — SHA256 checksum display (dummy value)
+  - [ ] 0.f.i.zo — Digital signature info display (dummy value)
+- 0.f.ii — Transparency
+  - [ ] 0.f.ii.zi — "Why not on Play Store" disclosure UI
+  - [ ] 0.f.ii.zo — Permissions disclosure list (dummy data)
+- 0.f.iii — Moderation
+  - [ ] 0.f.iii.zi — Anonymous "Report app" form (dummy submit — logs locally, no backend)
+
+**0.g — Search & Category Browse** *(pulls forward `2.c`, dummy data)*
+- 0.g.i — Search
+  - [ ] 0.g.i.zi — Instant search suggestions over the dummy dataset
+  - [ ] 0.g.i.zo — Search results page
+- 0.g.ii — Category browse
+  - [ ] 0.g.ii.zi — Category grid page
+  - [ ] 0.g.ii.zo — Advanced filters (license, size)
+- 0.g.iii — Related content
+  - [ ] 0.g.iii.zi — Similar-apps rail (dummy)
+  - [ ] 0.g.iii.zo — Developer profile page (dummy)
+
 ### Phase 1 — Foundation (data model + design system + shell)
 
 **1.a — Data Model Migration**
@@ -68,7 +147,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 1.a.iii.zi — Create `Review` entity (anonymous, rate-limited)
   - [ ] 1.a.iii.zo — Create `ReportFlag` entity
 
-**1.b — Design Tokens**
+**1.b — Design Tokens** *(superseded — see `0.b`; leave open here, mark done only once its `0.b` counterpart ships)*
 - 1.b.i — Dark theme, "Cinematic Gold"
   - [ ] 1.b.i.zi — Define color tokens (bg, surface, accent, border)
   - [ ] 1.b.i.zo — Define vignette/gradient background treatment
@@ -79,7 +158,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 1.b.iii.zi — Cookie-based theme storage, read server-side
   - [ ] 1.b.iii.zo — Theme toggle transition animation (no flash)
 
-**1.c — Core Layout Shell**
+**1.c — Core Layout Shell** *(superseded — see `0.c`)*
 - 1.c.i — Header
   - [ ] 1.c.i.zi — Responsive nav + search bar
   - [ ] 1.c.i.zo — Theme toggle integration
@@ -90,7 +169,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 1.c.iii.zi — Legal links (Privacy, Terms, DMCA)
   - [ ] 1.c.iii.zo — RSS link + "no account required" notice
 
-**1.d — Home Page**
+**1.d — Home Page** *(superseded — see `0.d`)*
 - 1.d.i — Hero
   - [ ] 1.d.i.zi — Cinematic hero for one featured app
   - [ ] 1.d.i.zo — Reveal animation (respects `prefers-reduced-motion`)
@@ -103,7 +182,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Phase 2 — Discovery & Trust
 
-**2.a — App Detail Page**
+**2.a — App Detail Page** *(superseded — see `0.e`)*
 - 2.a.i — Media
   - [ ] 2.a.i.zi — Screenshot carousel
   - [ ] 2.a.i.zo — Lightbox viewer
@@ -114,7 +193,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 2.a.iii.zi — Rating stars + histogram
   - [ ] 2.a.iii.zo — Anonymous rating submission (rate-limited)
 
-**2.b — Trust & Safety**
+**2.b — Trust & Safety** *(display/UI leaves superseded — see `0.f`; `2.b.iii.zo` admin queue is real backend work, not superseded)*
 - 2.b.i — APK verification
   - [ ] 2.b.i.zi — SHA256 checksum display
   - [ ] 2.b.i.zo — Digital signature info display
@@ -125,7 +204,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 2.b.iii.zi — Anonymous "Report app" form
   - [ ] 2.b.iii.zo — Report review queue (admin)
 
-**2.c — Search & Category**
+**2.c — Search & Category** *(superseded — see `0.g`)*
 - 2.c.i — Search
   - [ ] 2.c.i.zi — Instant search suggestions
   - [ ] 2.c.i.zo — Search results page
@@ -319,6 +398,7 @@ This is the same process used to hand off the D-Store documentation itself — i
 
 **Key location — cache files:** the storefront reads catalog/asset data from local cache files only, never live per-request calls to Telegram or Supabase — this keeps the app populated and responsive even if either upstream is briefly unreachable. Cached/downloaded files live at **`storage/downloads`**. Any leaf that touches caching, downloads, or catalog population must read from and write to this location; note it explicitly in the commit body when a leaf adds or changes what's cached there.
 
+0. **Check upstream first, before doing anything else:** `git fetch origin` and compare against `origin/master`. If origin has moved since the local clone/session was last synced (earlier patches already applied and pushed, for instance), rebase local work onto the current `origin/master` (`git rebase origin/master`) before starting the leaf and before generating any patch. A patch built against a stale base will fail to apply with `git am` even when the content it wants is logically identical to what's already there — this step is what prevents that.
 1. **Do the one assigned leaf task** (Section 1 — nothing more).
 2. **Update this file**: flip the completed leaf's `[ ]` to `[x]`, and move the "Current position" line (Section 0) to the next open leaf in path order (`zi` before `zo`; within a milestone before moving to the next `i/ii/iii`; within a track before the next `a/b/c/d`; within a phase before the next `1/2/3/4`).
 3. **Commit** the code change and the `HANDOVER.md` update **together**, in one commit, with a message that starts with the leaf path:
@@ -326,11 +406,11 @@ This is the same process used to hand off the D-Store documentation itself — i
    git add -A
    git commit -m "1.a.i.zi: add install_count, avg_rating, rating_count fields"
    ```
-4. **Generate the patch** for that single commit:
+4. **Generate the patch**, based on the current `origin/master` (from step 0), for that single commit:
    ```
    git format-patch -1 HEAD -o patches/
    ```
-5. **Hand the patch file to the user** — never push directly unless explicitly told to. The patch is the deliverable that closes the session. **Always hand off exactly one patch file, never more than one.** If a handoff spans several commits (e.g. a multi-commit resequencing session, or several small fixes batched together), combine them into a single file with `git format-patch <base>..HEAD --stdout > patches/000X-<description>.patch` — this produces one mbox-style file containing all the commits in order, which `git am` applies in one shot. Do not hand off several separate `.patch` files for one handoff.
+5. **Hand the patch file to the user** — never push directly unless explicitly told to. The patch is the deliverable that closes the session. **Always hand off exactly one patch file, never more than one.** If a handoff spans several commits (e.g. a multi-commit resequencing session, or several small fixes batched together), combine them into a single file with `git format-patch origin/master --stdout > patches/000X-<description>.patch` — this produces one mbox-style file containing all the commits since the real upstream state, in order, which `git am` applies in one shot. Do not hand off several separate `.patch` files for one handoff.
 6. The next session applies it with:
    ```
    cd ~/D-Store
