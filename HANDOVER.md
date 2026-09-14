@@ -34,7 +34,7 @@ Because of this, Phase 1.a leaves already completed or in flight against the Doc
 
 Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f` — Catalog Database & Platform Risk) rather than continuing further down Phase 1 in path order.
 
-**Storage roles (update):** the Telegram S3-compatible drive is **primary** storage for APKs/splits — it's existing infrastructure that has been continuously active, not something to newly deploy. GitHub's role is now limited to CI/CD (GitHub Actions: build, sign, split, checksum, tag) and whatever other logic the team's internal Linux server can fully handle on its own — GitHub Releases is **not** used to store or serve app binaries. Compiled artifacts go straight from the CI job to the Telegram drive; the Cloudflare edge worker fronts the Telegram drive as the sole storage backend, with no GitHub fallback. This is reflected in the revised `5.a`–`5.c`, `5.f`, and `5.g` leaves below.
+**Storage roles (update):** the Telegram S3-compatible drive is **primary** storage for APKs/splits — it's existing infrastructure that has been continuously active, not something to newly deploy. Telegram's job is storage only: it holds the finished assets and nothing else. The entire build/sign/split/checksum/changelog/catalog-sync pipeline runs end to end inside one GitHub Actions workflow, with the assets attached to that workflow run throughout — the workflow's final step is the one that releases the finished artifacts to the Telegram drive. GitHub Releases is **not** used to store or serve app binaries. The Cloudflare edge worker fronts the Telegram drive as the sole storage backend, with no GitHub fallback. This is reflected in the revised `5.a`–`5.c`, `5.f`, and `5.g` leaves below.
 
 ### Current position
 
@@ -238,19 +238,19 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 5.a.i.zi — APK ingest workflow, triggered on new release commit
   - [ ] 5.a.i.zo — Semantic version tagging automation
 - 5.a.ii — Build artifacts
-  - [ ] 5.a.ii.zi — Generate changelog per version (no GitHub Release object created — GitHub Actions runs the pipeline only, per the storage pivot in Section 0)
-  - [ ] 5.a.ii.zo — Auto-generate SHA256 checksum, handed off to the Telegram upload step (5.b.ii.zi)
+  - [ ] 5.a.ii.zi — Generate changelog per version; artifacts stay attached to the workflow run (build → sign → split → checksum → Telegram upload all happen as steps in one CI job) — no GitHub Release object is created
+  - [ ] 5.a.ii.zo — Auto-generate SHA256 checksum, handed off within the same workflow run to the Telegram upload step (5.b.ii.zi)
 - 5.a.iii — Catalog sync
-  - [ ] 5.a.iii.zi — Webhook/job: Telegram drive upload complete → update D-Store catalog/DB (replaces the old "GitHub Release published" trigger)
+  - [ ] 5.a.iii.zi — Final CI workflow step: once the Telegram upload step confirms success, call the D-Store catalog/DB update directly from the workflow (not a separate webhook listening on Telegram — Telegram's only job is storage, everything else runs in GitHub Actions)
   - [ ] 5.a.iii.zo — Nightly reconciliation job (catalog vs. Telegram drive drift check)
 
 **5.b — Storage & Delivery Backend**
 - 5.b.i — Primary storage (Telegram S3-compatible drive)
   - [ ] 5.b.i.zi — Document/confirm the CI integration point for the existing Telegram S3-compatible drive — it's already deployed and has been continuously active, so this is verification and wiring, not a fresh deploy
   - [ ] 5.b.i.zo — Retention/cleanup policy on the Telegram drive
-- 5.b.ii — Build pipeline handoff (GitHub Actions → Telegram)
-  - [ ] 5.b.ii.zi — CI job: after build/sign/split, push artifacts directly to the Telegram S3 drive — GitHub Releases is not used for storage or distribution
-  - [ ] 5.b.ii.zo — Upload verification/retry job (checksum-match confirmation against the Telegram drive copy)
+- 5.b.ii — Storage handoff step (within the GitHub Actions workflow)
+  - [ ] 5.b.ii.zi — CI step: after build/sign/split in the same workflow run, push artifacts to the Telegram S3 drive — Telegram receives and stores the finished assets, it doesn't run any pipeline logic itself
+  - [ ] 5.b.ii.zo — CI step: verify the Telegram drive copy's checksum matches before the workflow reports success (retry within the same run on mismatch)
 - 5.b.iii — Edge delivery
   - [ ] 5.b.iii.zi — Cloudflare Worker download endpoint fronting the Telegram S3 drive as sole backend
   - [ ] 5.b.iii.zo — Retry/backoff handling against the Telegram drive (no second storage backend to fail over to, since GitHub no longer holds binaries)
