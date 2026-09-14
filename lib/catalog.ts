@@ -47,12 +47,20 @@ export async function getCategoryAppCount(slug: string): Promise<number> {
 export interface GetAppsOptions {
   category?: string;
   limit?: number;
+  license?: string;
+  maxSizeMb?: number;
 }
 
 export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
   let result = apps;
   if (options.category) {
     result = result.filter((app) => app.category === options.category);
+  }
+  if (options.license) {
+    result = result.filter((app) => app.license === options.license);
+  }
+  if (options.maxSizeMb !== undefined) {
+    result = result.filter((app) => app.size_mb <= options.maxSizeMb!);
   }
   if (options.limit) {
     result = result.slice(0, options.limit);

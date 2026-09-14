@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getCategoryBySlug, getApps } from "@/lib/catalog";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
+import CategoryFilters from "@/components/CategoryFilters";
 import styles from "./page.module.css";
 
 /**
@@ -15,30 +16,57 @@ import styles from "./page.module.css";
  * silently renders nothing on an empty `apps` array, which is wrong
  * here (an empty category should say so, not show a blank page).
  *
- * `0.g.ii.zo` (advanced filters — license, size) extends this same
- * page next, the same incremental pattern already used across `0.d`
- * and the app detail page.
+ * Extended by `0.g.ii.zo` (advanced filters — license, size): reads
+ * `license`/`maxSize` from `searchParams` and passes them straight to
+ * `getApps` (lib/catalog.ts), which grew matching `license`/`maxSizeMb`
+ * options for this leaf. The category's *unfiltered* app list is
+ * fetched separately (`allApps`) purely to derive which licenses are
+ * actually present — see `CategoryFilters`'s header comment for why
+ * that can't just be every license in the whole catalog.
  */
 export default async function CategoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ license?: string; maxSize?: string }>;
 }) {
   const { slug } = await params;
+  const { license = "", maxSize = "" } = await searchParams;
   const category = await getCategoryBySlug(slug);
 
   if (!category) {
     notFound();
   }
 
-  const apps = await getApps({ category: slug });
+  const allApps = await getApps({ category: slug });
+  const licenses = [...new Set(allApps.map((app) => app.license))].sort();
+
+  const apps = await getApps({
+    category: slug,
+    license: license || undefined,
+    maxSizeMb: maxSize ? Number(maxSize) : undefined,
+  });
 
   return (
     <main className={styles.main}>
       <h1 className={styles.heading}>{category.name}</h1>
 
+      {allApps.length > 0 && (
+        <CategoryFilters
+          categorySlug={slug}
+          licenses={licenses}
+          selectedLicense={license}
+          selectedMaxSize={maxSize}
+        />
+      )}
+
       {apps.length === 0 ? (
-        <p className={styles.message}>No apps in this category yet.</p>
+        <p className={styles.message}>
+          {allApps.length === 0
+            ? "No apps in this category yet."
+            : "No apps in this category match the selected filters."}
+        </p>
       ) : (
         <ShelfGrid>
           {apps.map((app) => (
