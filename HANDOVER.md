@@ -38,6 +38,8 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **Priority override — UI revamp first:** before any further backend/infra work, the storefront UI gets rebuilt end to end on dummy data and deployed to Vercel for real-time preview. See the new **Phase 0** at the top of Section 2. It pulls forward the UI-facing leaves from Phase 1 (`1.b`–`1.d`) and Phase 2 (`2.a`–`2.c`), so those original leaves are marked superseded rather than duplicated — check them off once their Phase 0 counterpart ships. Backend/infra sequencing (starting at `5.f.i.zi`, provision Supabase) resumes once Phase 0 is complete.
 
+**Repo layout (update, part of `0.a.i.zi`):** the Next.js app now lives at the **repo root** (`package.json`, `app/`, `next.config.mjs`, `tsconfig.json`), not a `frontend/` subdirectory — this lets Vercel auto-detect the framework on import with zero manual configuration, permanently, not just on the first import. The old Symfony app (`app/`, `src/`, `web/`, `composer.json`) was moved into **`legacy-symfony/`** to make room; its internal relative paths (composer autoload, kernel bootstrap, parameters file) are all resolved relative to `legacy-symfony/composer.json` itself, so nothing inside it needed to change. Their internal Linux server deployment for the Symfony app should point at `legacy-symfony/` going forward.
+
 ### Current position
 
 > **Next leaf to work: `0.a.i.zi`** *(new top priority — UI revamp on Vercel with dummy data, see Phase 0 in Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
@@ -63,7 +65,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **0.a — Vercel Project & Preview Pipeline**
 - 0.a.i — Frontend scaffold & deploy
-  - [ ] 0.a.i.zi — Initialize the new frontend project and connect the repo to Vercel for automatic preview deploys on every push
+  - [~] 0.a.i.zi — Initialize the new frontend project and connect the repo to Vercel for automatic preview deploys on every push (code done: Next.js app at repo root — moved out of `frontend/` so Vercel needs zero manual configuration, ever, not even on first import; old Symfony app relocated to `legacy-symfony/`; remaining: the one-time Vercel dashboard import — see `docs/VERCEL-SETUP.md`, only the account owner can do this step)
   - [ ] 0.a.i.zo — Confirm a live preview URL renders end-to-end on a placeholder page before building real UI on top of it
 - 0.a.ii — Dummy data layer
   - [ ] 0.a.ii.zi — Mock dataset covering every app currently in the catalog, shaped to match the full field set (`install_count`, `avg_rating`, `rating_count`, `is_featured`, `is_editors_pick`, `sha256_checksum`, etc.)
