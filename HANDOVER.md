@@ -317,6 +317,8 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 This is the same process used to hand off the D-Store documentation itself — it is now the fixed rule for every session, no exceptions.
 
+**Key location — cache files:** the storefront reads catalog/asset data from local cache files only, never live per-request calls to Telegram or Supabase — this keeps the app populated and responsive even if either upstream is briefly unreachable. Cached/downloaded files live at **`storage/downloads`**. Any leaf that touches caching, downloads, or catalog population must read from and write to this location; note it explicitly in the commit body when a leaf adds or changes what's cached there.
+
 1. **Do the one assigned leaf task** (Section 1 — nothing more).
 2. **Update this file**: flip the completed leaf's `[ ]` to `[x]`, and move the "Current position" line (Section 0) to the next open leaf in path order (`zi` before `zo`; within a milestone before moving to the next `i/ii/iii`; within a track before the next `a/b/c/d`; within a phase before the next `1/2/3/4`).
 3. **Commit** the code change and the `HANDOVER.md` update **together**, in one commit, with a message that starts with the leaf path:
