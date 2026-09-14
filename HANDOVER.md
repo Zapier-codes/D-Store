@@ -40,6 +40,12 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **Repo layout (update, part of `0.a.i.zi`):** the Next.js app now lives at the **repo root** (`package.json`, `app/`, `next.config.mjs`, `tsconfig.json`), not a `frontend/` subdirectory — this lets Vercel auto-detect the framework on import with zero manual configuration, permanently, not just on the first import. The old Symfony app (`app/`, `src/`, `web/`, `composer.json`) was moved into **`legacy-symfony/`** to make room; its internal relative paths (composer autoload, kernel bootstrap, parameters file) are all resolved relative to `legacy-symfony/composer.json` itself, so nothing inside it needed to change. Their internal Linux server deployment for the Symfony app should point at `legacy-symfony/` going forward.
 
+**Scope addition — Geo-regionalization foundation (`0.h`, new):** future sessions need to build region-aware catalogs (Play-Store-style per-country listings/availability) on top of the real backend once it exists. To make that possible without a rewrite later, Phase 0 gains a new `0.h` track: a global **ipapi.co** IP-geolocation client, wired in now while the rest of the UI is still dummy-data-only.
+
+- This is a deliberate, single, narrow exception to Phase 0's "no real backend calls" rule stated at the top of Section 2 — ipapi.co is locale/geolocation detection, not catalog/store data, so it doesn't reintroduce a Supabase/Telegram/Doctrine dependency. The catalog itself stays on `lib/mock-data.ts` (plus a new dummy `available_regions` field) until Phase 5 lands real data.
+- **ipapi.co's free tier is explicitly not meant for production** — up to ~1,000 lookups/day (~30K/month), positioned by ipapi.co as a testing/evaluation plan, not a deployment plan. The client (`0.h.i.zi`) must (a) fail soft to a default region on any error/429/timeout — never block rendering — and (b) cache the detected region (e.g. a cookie or edge-cached response) so it's looked up once per visitor session, not on every request. Moving to a paid ipapi.co plan, or swapping the client for a Vercel/Cloudflare edge geolocation header instead, is an open question for whoever picks up production-readiness — noted here, not decided.
+- Placed as `0.h` (after `0.g`) rather than resequenced to the front: nothing already planned in `0.a`–`0.g` depends on it, so it doesn't jump the queue — it just needs to land sometime during Phase 0 so the leaves after Phase 0 (real backend, Supabase) can build region-aware queries against a catalog shape that already has a `available_regions` field and a working region-detection hook.
+
 ### Current position
 
 > **Next leaf to work: `0.a.ii.zo`** *(local data-fetch layer that serves the mock dataset in `lib/mock-data.ts` behind the same interface a real API/Supabase client will use later, so swapping in real data is a drop-in change. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
@@ -135,6 +141,14 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 - 0.g.iii — Related content
   - [ ] 0.g.iii.zi — Similar-apps rail (dummy)
   - [ ] 0.g.iii.zo — Developer profile page (dummy)
+
+**0.h — Geo-Regionalization Foundation** *(new — see "Scope addition" note above. The one Phase 0 track allowed a real external call; everything catalog-side still runs on dummy data.)*
+- 0.h.i — IP geolocation client (ipapi.co)
+  - [ ] 0.h.i.zi — Global `ipapi.co` client wrapper (typed response, timeout, graceful fallback to a default region on error/429/rate-limit — never blocks rendering)
+  - [ ] 0.h.i.zo — Region-context provider: calls the client once per visitor session (cached — cookie or edge cache, not per-request), exposes detected country/region to the component tree; no catalog coupling yet
+- 0.h.ii — Region-aware dummy catalog scaffold
+  - [ ] 0.h.ii.zi — Extend `lib/mock-data.ts` `App` shape with a dummy `available_regions: string[]` field (still 100% local dummy data — no live catalog calls)
+  - [ ] 0.h.ii.zo — Region-filter helper in the dummy data-fetch layer (`0.a.ii.zo`) that narrows `apps` by the detected region — the seam future Play-Store-style regionalized queries plug into once Supabase (`5.f.i`) lands
 
 ### Phase 1 — Foundation (data model + design system + shell)
 
