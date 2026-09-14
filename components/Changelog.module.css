@@ -1,0 +1,34 @@
+/*
+ * "What's New" changelog block styles — leaf 0.e.ii.zo.
+ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.version {
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.date {
+  opacity: 0.7;
+}
+
+.notes {
+  margin: 0;
+  line-height: 1.5;
+}

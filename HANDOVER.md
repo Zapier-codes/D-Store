@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.e.ii.zo`** *(App Detail Page — Content: "What's New" changelog block, dummy data (`App.changelog`). Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.e.iii.zi`** *(App Detail Page — Ratings: rating stars + histogram, dummy data (`App.avg_rating`, `App.rating_count`). Part of Phase 0, UI revamp priority, see Section 2. `0.e.ii` (Content) is now fully complete. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -116,7 +116,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.e.i.zo — Lightbox viewer — `components/Lightbox.tsx` + `.module.css`, opened from `ScreenshotCarousel.tsx` (which gains a `"use client"` boundary and turns each slide into a real `<button>` to trigger it at that slide's index — the swipe track's CSS scroll-snap behavior from `0.e.i.zi` is unchanged). Built on the native `<dialog>` element (`showModal()`) rather than a hand-rolled modal/portal, matching the repo's existing preference for native platform behavior: focus trapping and Escape-to-close come for free, only arrow-key prev/next and click-outside-to-dismiss needed explicit handlers. Same placeholder-tile/color-cycle convention as the carousel, just rendered larger; fade/scale-in on open is gated behind `prefers-reduced-motion`, the same convention as `0.b.iii.zo`/`0.d.i.zo`. `next build` passes clean; manually verified `/app/f-droid` renders both screenshots as buttons with the expected accessible labels.
 - 0.e.ii — Content
   - [x] 0.e.ii.zi — Expandable description — `components/ExpandableDescription.tsx` + `.module.css`, added as an "About this app" section on the detail page after Screenshots. Collapsed state shows `App.description` as plain text clamped to 4 lines (`-webkit-line-clamp`); expanded state re-renders the same string with its actual paragraph/bullet structure (blank-line-separated paragraphs, "- " bullet lines — F-Droid's entry, transcribed from the app-detail screenshot, is the clearest example). "Read more"/"Read less" toggle button only renders past a length heuristic (220 chars) so short one-line summaries (Simply Solid, Battery Live) don't get a pointless button. `next build` passes clean; manually verified via `next start` that `/app/f-droid` (long description) renders the toggle and `/app/simply-solid` (short) doesn't.
-  - [ ] 0.e.ii.zo — "What's New" changelog block
+  - [x] 0.e.ii.zo — "What's New" changelog block — `components/Changelog.tsx` + `.module.css`, a "What's New" section on the detail page after "About this app." Pure server component (no interaction needed, unlike ExpandableDescription) pairing `App.version`/`App.updated_at` (formatted via `toLocaleDateString`) with the single `App.changelog` release-notes line — there's no changelog *history* array in the data model yet, so only the latest entry renders; a real backend would need a `changelog[]`/release-history shape to show more, noted as out of scope here. `next build` passes clean; manually verified `/app/f-droid` renders "Version 0.102", "November 30, 2016", and the changelog text correctly.
 - 0.e.iii — Ratings
   - [ ] 0.e.iii.zi — Rating stars + histogram (dummy data)
   - [ ] 0.e.iii.zo — Anonymous rating submission (dummy — updates local state only, no backend)
