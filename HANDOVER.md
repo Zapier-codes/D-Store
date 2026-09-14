@@ -330,7 +330,7 @@ This is the same process used to hand off the D-Store documentation itself — i
    ```
    git format-patch -1 HEAD -o patches/
    ```
-5. **Hand the patch file to the user** — never push directly unless explicitly told to. The patch is the deliverable that closes the session.
+5. **Hand the patch file to the user** — never push directly unless explicitly told to. The patch is the deliverable that closes the session. **Always hand off exactly one patch file, never more than one.** If a handoff spans several commits (e.g. a multi-commit resequencing session, or several small fixes batched together), combine them into a single file with `git format-patch <base>..HEAD --stdout > patches/000X-<description>.patch` — this produces one mbox-style file containing all the commits in order, which `git am` applies in one shot. Do not hand off several separate `.patch` files for one handoff.
 6. The next session applies it with:
    ```
    cd ~/D-Store
