@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.c.ii.zi`** *(Core Layout Shell — Grid system: responsive shelf-grid (2→6 columns). Part of Phase 0, UI revamp priority, see Section 2. `0.c.i` — Header — is now fully complete. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.c.ii.zo`** *(Core Layout Shell — Grid system: small/dense app-card component, to populate the `ShelfGrid` from `0.c.ii.zi`. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -93,7 +93,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.c.i.zi — Responsive nav + search bar — `components/Header.tsx` + `Header.module.css`, rendered from `app/layout.tsx` above `{children}` so it's on every page; mobile nav collapse uses the checkbox-hack (no client JS), search is a plain GET form to `/search?q=...` (page doesn't exist yet — lands in `0.g.i.zo`); styled entirely from the `0.b` design tokens so it re-themes automatically once the toggle (`0.c.i.zo`) lands
   - [x] 0.c.i.zo — Theme toggle integration — `components/ThemeToggle.tsx` (client component, sun/moon button) added to the header's nav; calls the `setThemeCookie` server action (`lib/theme-actions.ts`, split out from `lib/theme.ts` since a `"use server"` module can only export async functions) then `router.refresh()` so the server-rendered `data-theme` picks up the new cookie — the fade itself is `0.b.iii.zo`'s existing CSS transition, this component only triggers the swap; `theme` is threaded down from `app/layout.tsx`'s single `getTheme()` read, not tracked as separate local state
 - 0.c.ii — Grid system
-  - [ ] 0.c.ii.zi — Responsive shelf-grid (2→6 columns)
+  - [x] 0.c.ii.zi — Responsive shelf-grid (2→6 columns) — `components/ShelfGrid.tsx` + `ShelfGrid.module.css`: explicit 2/3/4/6-column breakpoints (not auto-fill/minmax) for predictable Play-Store-density at every size, per D-STORE.md §3. Not wired into any page yet — it's the shared layout primitive for the dense app-card (`0.c.ii.zo`, next) and later shelves/category grid (`0.d`, `0.g.ii.i`)
   - [ ] 0.c.ii.zo — Small/dense app-card component
 - 0.c.iii — Footer
   - [ ] 0.c.iii.zi — Legal links (Privacy, Terms, DMCA)
