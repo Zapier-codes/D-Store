@@ -7,6 +7,7 @@ import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
 import ChecksumDisplay from "@/components/ChecksumDisplay";
 import SignatureInfo from "@/components/SignatureInfo";
+import PlayStoreDisclosure from "@/components/PlayStoreDisclosure";
 import styles from "./page.module.css";
 
 /**
@@ -14,17 +15,16 @@ import styles from "./page.module.css";
  * carousel), extended by 0.e.i.zo (lightbox), 0.e.ii.zi (expandable
  * description), 0.e.ii.zo (What's New changelog), 0.e.iii.zi (rating
  * stars + histogram), 0.e.iii.zo (anonymous rating submission),
- * 0.f.i.zi (SHA-256 checksum display), and now 0.f.i.zo (digital
- * signature info, this leaf — completing "Verify this APK"). This is
- * the route `/app/[slug]` itself (created by 0.e.i.zi) — every
+ * 0.f.i.zi (SHA-256 checksum), 0.f.i.zo (digital signature info), and
+ * now 0.f.ii.zi ("Why not on Play Store" disclosure, this leaf). This
+ * is the route `/app/[slug]` itself (created by 0.e.i.zi) — every
  * card/hero link built so far (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has
  * pointed here as a forward reference.
  *
  * `0.e` (App Detail Page) and `0.f.i` (APK verification) are fully
- * complete. `0.f.ii` (Transparency: "Why not on Play Store" disclosure,
- * permissions) and `0.f.iii` (Moderation: report form) land next,
- * appended to this same page, the same incremental pattern
- * `app/page.tsx` followed across `0.d`.
+ * complete. `0.f.ii.zo` (permissions disclosure) and `0.f.iii`
+ * (Moderation: report form) land next, appended to this same page, the
+ * same incremental pattern `app/page.tsx` followed across `0.d`.
  *
  * Dynamic route (`notFound()` on an unknown slug) — no
  * `generateStaticParams` yet since the whole catalog is still an
@@ -97,6 +97,13 @@ export default async function AppDetailPage({
         </h2>
         <ChecksumDisplay checksum={app.sha256_checksum} />
         <SignatureInfo fingerprint={app.signing_certificate_fingerprint} />
+      </section>
+
+      <section aria-labelledby="play-store-heading">
+        <h2 id="play-store-heading" className={styles.sectionTitle}>
+          Play Store Status
+        </h2>
+        <PlayStoreDisclosure app={app} />
       </section>
     </main>
   );
