@@ -14,9 +14,27 @@ import styles from "./Shelf.module.css";
  *
  * Renders nothing when `apps` is empty (e.g. a future region filter,
  * 0.h.ii.zo, narrows a shelf to zero results) rather than showing an
- * empty heading.
+ * empty heading. An empty `apps` array still suppresses the whole
+ * shelf even when `extraSlot` is passed — a shelf that's just an ad
+ * with no curated apps around it isn't "woven into listings" per
+ * docs/D-STORE.md §6, it's an interstitial.
+ *
+ * `extraSlot` (0.d.iii.zo) is an optional non-`App` node — the
+ * sponsored card slot — rendered inside the same `ShelfGrid` after the
+ * real apps, so it reads as woven into the listing rather than
+ * inserted ahead of the curated order a caller fetched `apps` in.
+ * Generic on purpose (not `sponsored?: boolean`) so this stays a plain
+ * layout component with no knowledge of what a sponsored card is.
  */
-export default function Shelf({ title, apps }: { title: string; apps: App[] }) {
+export default function Shelf({
+  title,
+  apps,
+  extraSlot,
+}: {
+  title: string;
+  apps: App[];
+  extraSlot?: React.ReactNode;
+}) {
   if (apps.length === 0) return null;
 
   return (
@@ -28,6 +46,7 @@ export default function Shelf({ title, apps }: { title: string; apps: App[] }) {
         {apps.map((app) => (
           <AppCard key={app.slug} app={app} />
         ))}
+        {extraSlot}
       </ShelfGrid>
     </section>
   );

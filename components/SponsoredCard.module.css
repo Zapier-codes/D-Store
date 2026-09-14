@@ -1,0 +1,77 @@
+/*
+ * Sponsored-card styles — leaf 0.d.iii.zo.
+ *
+ * Deliberately mirrors AppCard.module.css class-for-class (card/icon/
+ * info/name/meta) so the sponsored slot is shape- and theme-identical
+ * to an organic card in a ShelfGrid — same 0.b design tokens, same
+ * dimensions, same touch target. `.card` here is a plain non-link
+ * container (no <a>/href) rather than AppCard's <Link>, since this is
+ * a dummy placeholder with no real click-through destination yet.
+ * `.badge` replaces AppCard's rating `.rating` span in the meta line —
+ * that's the one intentional visual difference, and it's the "clearly
+ * labeled" requirement from docs/D-STORE.md §6.
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-accent);
+  min-height: 44px;
+}
+
+.icon {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-border);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  white-space: nowrap;
+}

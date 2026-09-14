@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.d.iii.zo`** *(Home Page — Editorial: Sponsored card slot, dummy/native placeholder, clearly labeled. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.e.i.zi`** *(App Detail Page — Media: Screenshot carousel, dummy data. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -108,7 +108,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.d.ii.zo — Trending shelf (sorted by dummy `install_count`) — `app/page.tsx`: second `Shelf` (0.d.ii.zi) below Featured, fed by `getTrendingApps()`, fetched alongside `getFeaturedApps()` via `Promise.all` rather than sequentially. Trending is a separate fetch, not a slice of the Featured result — it's a different sort dimension (`install_count`, not the `is_featured` flag), so the two shelves can legitimately overlap. No client-side sort needed: `getTrendingApps()` in `lib/catalog.ts` already returns apps ordered by `install_count` descending. `next build` passes clean.
 - 0.d.iii — Editorial
   - [x] 0.d.iii.zi — Editor's Picks shelf — `app/page.tsx`: third `Shelf` (0.d.ii.zi) below Trending, fed by `getEditorsPicks()`, fetched alongside the other two via the same `Promise.all`. Filtered on the dummy `is_editors_pick` flag — a third independent dimension from both `is_featured` and `install_count` — so fetched separately rather than derived from either existing list; individual cards already surface an "Editors' Pick" badge (`AppCard`, 0.c.ii.zo) when an app also appears in Featured/Trending, this shelf is the dedicated curated collection. `next build` passes clean.
-  - [ ] 0.d.iii.zo — Sponsored card slot (dummy/native placeholder, clearly labeled)
+  - [x] 0.d.iii.zo — Sponsored card slot (dummy/native placeholder, clearly labeled) — `components/SponsoredCard.tsx` + `SponsoredCard.module.css`: markup/CSS classes mirror `AppCard` one-for-one (icon tile, clamped name, meta line) so it's shape/theme-identical to an organic card per D-STORE.md §6, with a `Sponsored` badge replacing the rating as the "clearly labeled" element (dashed accent border as the one other visual tell); plain non-link `<div>`, not a `<Link>`, since there's no real click-through yet. Dummy content lives inline in the component rather than `lib/mock-data.ts`, since a sponsored slot isn't a catalog `App` (no slug/detail page/rating) and mixing it into the real `App[]` would leak a fake entry into search/trending/category logic. `Shelf.tsx` gained a new optional `extraSlot: React.ReactNode` prop (generic, no sponsored-specific knowledge) rendered inside its `ShelfGrid` after the mapped `AppCard`s; `app/page.tsx` passes `<SponsoredCard />` as the Editor's Picks shelf's `extraSlot`, so it's woven in after the curated picks rather than reordering them. `next build` passes clean.
 
 **0.e — App Detail Page** *(pulls forward `2.a`, dummy data)*
 - 0.e.i — Media

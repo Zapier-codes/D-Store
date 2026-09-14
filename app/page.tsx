@@ -1,6 +1,7 @@
 import { getFeaturedApps, getTrendingApps, getEditorsPicks } from "@/lib/catalog";
 import Hero from "@/components/Hero";
 import Shelf from "@/components/Shelf";
+import SponsoredCard from "@/components/SponsoredCard";
 
 /**
  * Home page — leaf 0.d.i.zi wired in the hero, replacing the Phase 0
@@ -25,9 +26,13 @@ import Shelf from "@/components/Shelf";
  * than derived from either existing list. Individual cards already
  * surface an "Editors' Pick" badge (AppCard, 0.c.ii.zo) when an app
  * appears in one of the other shelves too — this shelf is the
- * dedicated, curated collection of just those apps. The sponsored card
- * slot (0.d.iii.zo) lands next and will sit alongside/within this
- * shelf.
+ * dedicated, curated collection of just those apps.
+ *
+ * 0.d.iii.zo adds the sponsored card slot (`SponsoredCard`) as the
+ * Editor's Picks shelf's `extraSlot` — a dummy/native placeholder,
+ * styled like an organic card and clearly labeled "Sponsored" per
+ * docs/D-STORE.md §6, woven in after the curated picks rather than
+ * replacing or reordering any of them.
  */
 export default async function Home() {
   const [featured, trending, editorsPicks] = await Promise.all([
@@ -42,7 +47,11 @@ export default async function Home() {
       {heroApp && <Hero app={heroApp} />}
       <Shelf title="Featured" apps={restFeatured} />
       <Shelf title="Trending" apps={trending} />
-      <Shelf title="Editor's Picks" apps={editorsPicks} />
+      <Shelf
+        title="Editor's Picks"
+        apps={editorsPicks}
+        extraSlot={<SponsoredCard />}
+      />
     </main>
   );
 }
