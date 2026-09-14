@@ -6,8 +6,15 @@
  * upcoming light theme ("Scientific Blue", 0.b.ii) can sit alongside
  * it under [data-theme="light"] without these values leaking into it.
  *
+ * Leaf 0.b.i.zo adds the vignette/gradient background treatment on top
+ * of those tokens: a soft warm-gold glow near the top of the viewport
+ * (the "cinematic" part) fading into a darker vignette toward the
+ * bottom edge, composed from --color-accent/--color-bg so it stays in
+ * sync if either token changes. Exposed as --gradient-vignette so any
+ * component (not just <body>) can reuse the same treatment later
+ * (e.g. the hero in 0.d.i).
+ *
  * Out of scope for this leaf (land in later leaves):
- *   - vignette/gradient background treatment (0.b.i.zo)
  *   - light theme tokens (0.b.ii)
  *   - theme storage/toggle (0.b.iii) — html[data-theme] is hardcoded
  *     to "dark" for now in app/layout.tsx until that leaf lands.
@@ -25,10 +32,17 @@
 
   /* Hairlines, dividers, card outlines */
   --color-border: #2a2419;
+
+  /* Cinematic vignette: subtle gold glow up top, darkened edges */
+  --gradient-vignette:
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(212, 175, 55, 0.10), transparent 55%),
+    radial-gradient(ellipse 140% 100% at 50% 110%, rgba(0, 0, 0, 0.65), transparent 60%);
 }
 
 body {
   background-color: var(--color-bg);
+  background-image: var(--gradient-vignette);
+  background-attachment: fixed;
   color: #f2ece0;
   margin: 0;
 }
