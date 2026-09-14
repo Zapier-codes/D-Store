@@ -34,6 +34,8 @@ Because of this, Phase 1.a leaves already completed or in flight against the Doc
 
 Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f` — Catalog Database & Platform Risk) rather than continuing further down Phase 1 in path order.
 
+**Storage roles (update):** the Telegram S3-compatible drive is **primary** storage for APKs/splits — it's existing infrastructure that has been continuously active, not something to newly deploy. GitHub's role is now limited to CI/CD (GitHub Actions: build, sign, split, checksum, tag) and whatever other logic the team's internal Linux server can fully handle on its own — GitHub Releases is **not** used to store or serve app binaries. Compiled artifacts go straight from the CI job to the Telegram drive; the Cloudflare edge worker fronts the Telegram drive as the sole storage backend, with no GitHub fallback. This is reflected in the revised `5.a`–`5.c`, `5.f`, and `5.g` leaves below.
+
 ### Current position
 
 > **Next leaf to work: `5.f.i.zi`** *(pulled forward from Phase 5 — see "Architecture pivot" note above; normal `zi`-before-`zo` path order resumes within `5.f` once it's underway)*
@@ -231,27 +233,27 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Phase 5 — Infrastructure & Distribution
 
-**5.a — CI/CD Pipeline (GitHub Actions)**
+**5.a — CI/CD Pipeline (GitHub Actions — build/workflow only, no storage role)**
 - 5.a.i — Build & tag
   - [ ] 5.a.i.zi — APK ingest workflow, triggered on new release commit
   - [ ] 5.a.i.zo — Semantic version tagging automation
-- 5.a.ii — Release publishing
-  - [ ] 5.a.ii.zi — Auto-create GitHub Release with changelog per version
-  - [ ] 5.a.ii.zo — Auto-generate & attach SHA256 checksum to release assets
+- 5.a.ii — Build artifacts
+  - [ ] 5.a.ii.zi — Generate changelog per version (no GitHub Release object created — GitHub Actions runs the pipeline only, per the storage pivot in Section 0)
+  - [ ] 5.a.ii.zo — Auto-generate SHA256 checksum, handed off to the Telegram upload step (5.b.ii.zi)
 - 5.a.iii — Catalog sync
-  - [ ] 5.a.iii.zi — Webhook: GitHub Release published → update D-Store catalog/DB
-  - [ ] 5.a.iii.zo — Nightly reconciliation job (catalog vs. GitHub Releases drift check)
+  - [ ] 5.a.iii.zi — Webhook/job: Telegram drive upload complete → update D-Store catalog/DB (replaces the old "GitHub Release published" trigger)
+  - [ ] 5.a.iii.zo — Nightly reconciliation job (catalog vs. Telegram drive drift check)
 
-**5.b — Storage & Mirrors**
-- 5.b.i — Primary storage
-  - [ ] 5.b.i.zi — GitHub Releases as primary APK storage
-  - [ ] 5.b.i.zo — Release asset retention/cleanup policy
-- 5.b.ii — Telegram S3-compatible mirror
-  - [ ] 5.b.ii.zi — Deploy S3-compatible Telegram Drive backend
-  - [ ] 5.b.ii.zo — Mirror sync job: GitHub Release → Telegram S3 backend
+**5.b — Storage & Delivery Backend**
+- 5.b.i — Primary storage (Telegram S3-compatible drive)
+  - [ ] 5.b.i.zi — Document/confirm the CI integration point for the existing Telegram S3-compatible drive — it's already deployed and has been continuously active, so this is verification and wiring, not a fresh deploy
+  - [ ] 5.b.i.zo — Retention/cleanup policy on the Telegram drive
+- 5.b.ii — Build pipeline handoff (GitHub Actions → Telegram)
+  - [ ] 5.b.ii.zi — CI job: after build/sign/split, push artifacts directly to the Telegram S3 drive — GitHub Releases is not used for storage or distribution
+  - [ ] 5.b.ii.zo — Upload verification/retry job (checksum-match confirmation against the Telegram drive copy)
 - 5.b.iii — Edge delivery
-  - [ ] 5.b.iii.zi — Cloudflare Worker unified download endpoint (fronts both mirrors)
-  - [ ] 5.b.iii.zo — Failover logic (serve from mirror if primary unavailable)
+  - [ ] 5.b.iii.zi — Cloudflare Worker download endpoint fronting the Telegram S3 drive as sole backend
+  - [ ] 5.b.iii.zo — Retry/backoff handling against the Telegram drive (no second storage backend to fail over to, since GitHub no longer holds binaries)
 
 **5.c — Update & Version History**
 - 5.c.i — Update mechanism
@@ -259,7 +261,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 5.c.i.zo — Web Push subscription for saved-app updates (ties to 4.d local favorites)
 - 5.c.ii — Version history
   - [ ] 5.c.ii.zi — "Version history" tab on detail page
-  - [ ] 5.c.ii.zo — Direct download links for older versions (from GitHub Releases history)
+  - [ ] 5.c.ii.zo — Direct download links for older versions (from Telegram drive version history)
 - 5.c.iii — Rollback & advisories
   - [ ] 5.c.iii.zi — Rollback: install-older-version flow
   - [ ] 5.c.iii.zo — Deprecation/security-advisory banner for pulled/flagged versions
@@ -291,11 +293,11 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 5.f.i.zi — Provision Supabase (Postgres) as the metadata store — app info, ratings, counters, developer/agreement status
   - [ ] 5.f.i.zo — Migrate schema from existing Symfony/Doctrine `Application`/`Category` entities into Supabase
 - 5.f.ii — Platform risk documentation
-  - [ ] 5.f.ii.zi — Document GitHub Releases ToS/abuse-policy risk at CDN-level traffic
-  - [ ] 5.f.ii.zo — Document Telegram Bot API ToS/rate-limit risk at CDN-level traffic
+  - [ ] 5.f.ii.zi — Document GitHub Actions/API quota risk (CI/workflow usage only — GitHub no longer serves download/distribution traffic)
+  - [ ] 5.f.ii.zo — Document Telegram Bot API ToS/rate-limit risk at CDN-level traffic (now the primary distribution channel, not a mirror)
 - 5.f.iii — Quota monitoring
-  - [ ] 5.f.iii.zi — GitHub API rate-limit monitoring/alerting
-  - [ ] 5.f.iii.zo — Telegram & Workers request-quota monitoring/alerting
+  - [ ] 5.f.iii.zi — GitHub API/Actions rate-limit monitoring/alerting (CI/workflow usage only)
+  - [ ] 5.f.iii.zo — Telegram & Workers request-quota monitoring/alerting (primary traffic path)
 
 **5.g — Developer Console Integration (cross-repo contract)**
 *This repo never submits, uploads, or authenticates developers — it only reads what the separate Console writes to Supabase. These leaves are about the read-side contract, not building the Console itself.*
@@ -304,7 +306,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 5.g.i.zo — Define the shared schema contract (field names/types) this repo expects from Console-written rows
 - 5.g.ii — AAB → APK compile pipeline (GitHub Actions side)
   - [ ] 5.g.ii.zi — `bundletool`-based AAB→signed-APK/split compilation step, triggered by a Console submission event
-  - [ ] 5.g.ii.zo — Publish the compiled APK to GitHub Releases as the distributed copy; the raw AAB never leaves the Console/build environment
+  - [ ] 5.g.ii.zo — Publish the compiled APK to the Telegram S3-compatible drive as the distributed copy; GitHub Releases is not used for binary distribution, and the raw AAB never leaves the Console/build environment
 - 5.g.iii — Developer trust signals
   - [ ] 5.g.iii.zi — "Verified developer" badge on the app detail page, sourced from the Console's agreement-signing status in Supabase
   - [ ] 5.g.iii.zo — Footer link to the Console site as the submission entry point (no submission UI lives in this repo)

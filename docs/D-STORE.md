@@ -170,14 +170,13 @@ New entities: `Review` (anonymous, rate-limited), `ReportFlag` (anonymous app re
 
 | Component | Choice |
 |---|---|
-| CI/CD | GitHub Actions — builds, tags, and publishes releases automatically |
-| Primary APK storage | GitHub Releases (versioned, 2GB per-file cap — comfortable for any single APK/split) |
-| Mirror storage | S3-compatible Telegram Drive backend (2–4GB per-file ceiling depending on account tier) |
-| Edge/CDN | Cloudflare Workers — single download endpoint fronting both GitHub Releases and the Telegram mirror, with failover |
-| Metadata database | **Supabase (Postgres)** — app metadata, ratings, install/view counters, developer/agreement status. Holds metadata only; APK binaries stay in GitHub Releases/Telegram, never in Supabase |
+| CI/CD | GitHub Actions — build, sign, split, and checksum pipeline only. Does not store or serve APK binaries; GitHub Releases is not used as a distribution artifact host |
+| Primary APK storage | S3-compatible Telegram Drive backend (2–4GB per-file ceiling depending on account tier) — existing infrastructure, continuously active |
+| Edge/CDN | Cloudflare Workers — download endpoint fronting the Telegram drive as the sole storage backend |
+| Metadata database | **Supabase (Postgres)** — app metadata, ratings, install/view counters, developer/agreement status. Holds metadata only; APK binaries stay in the Telegram drive, never in Supabase |
 | Delivery model | Split APKs (base + ABI/density/language config splits), further compressed, chunked into ≤200MB segments for OTA transfer — no single user-facing download exceeds ~200MB even for larger apps |
 
-No AWS or equivalent blob storage is needed for APK hosting under this model: no app in the catalog exceeds GitHub's/Telegram's per-file ceilings, and splitting keeps individual downloads small regardless. The genuine gap either service leaves is the catalog metadata itself — solved by Supabase above — plus the fact that neither GitHub Releases nor the Telegram Bot API is designed to be used as a high-traffic CDN; that's a policy risk to monitor (5.f.ii), not a technical blocker at this scale.
+No AWS or equivalent blob storage is needed for APK hosting under this model: no app in the catalog exceeds the Telegram drive's per-file ceiling, and splitting keeps individual downloads small regardless. The genuine gap the Telegram service leaves is the catalog metadata itself — solved by Supabase above — plus the fact that the Telegram Bot API is not designed to be used as a high-traffic CDN; that's a policy risk to monitor (5.f.ii), not a technical blocker at this scale.
 
 *One item mentioned alongside this setup is not yet included pending clarification: "C2" — unclear meaning, and commonly refers to command-and-control infrastructure for remotely controlling other devices, which would not be something this documentation can include. Will be added once clarified.*
 
@@ -198,9 +197,9 @@ D-Store is two systems, not one:
 
 1. Developer uploads a signed `.aab` to the Console and accepts the distribution agreement.
 2. GitHub Actions (triggered by the Console) runs **bundletool** to generate a signed, distributable APK (or split-APK set) from the AAB — the same approach Play Store's own Play App Signing uses.
-3. The **compiled APK is published to GitHub Releases** — a derived copy, not the original AAB. The raw AAB never leaves the Console/build environment and is never publicly exposed.
+3. The **compiled APK is published to the Telegram S3-compatible drive** — a derived copy, not the original AAB. GitHub Actions runs the build/sign/split pipeline but is not used to store or serve the artifact. The raw AAB never leaves the Console/build environment and is never publicly exposed.
 4. Metadata (app info, version, developer/agreement status) is written to Supabase.
-5. This repo reads that Supabase metadata and links downloads to the compiled APK on GitHub Releases/Telegram mirror — it never sees or handles the AAB at any point.
+5. This repo reads that Supabase metadata and links downloads to the compiled APK on the Telegram drive — it never sees or handles the AAB at any point.
 
 This is the same posture Play Store takes with app bundles: what end users receive is a platform-generated artifact derived from the developer's upload, not the raw upload itself.
 
