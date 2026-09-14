@@ -174,12 +174,35 @@ New entities: `Review` (anonymous, rate-limited), `ReportFlag` (anonymous app re
 | Primary APK storage | GitHub Releases (versioned, 2GB per-file cap — comfortable for any single APK/split) |
 | Mirror storage | S3-compatible Telegram Drive backend (2–4GB per-file ceiling depending on account tier) |
 | Edge/CDN | Cloudflare Workers — single download endpoint fronting both GitHub Releases and the Telegram mirror, with failover |
-| Catalog database | Cloudflare D1 (pairs with Workers) — holds app metadata, ratings, counters; separate concern from APK binary storage above |
+| Metadata database | **Supabase (Postgres)** — app metadata, ratings, install/view counters, developer/agreement status. Holds metadata only; APK binaries stay in GitHub Releases/Telegram, never in Supabase |
 | Delivery model | Split APKs (base + ABI/density/language config splits), further compressed, chunked into ≤200MB segments for OTA transfer — no single user-facing download exceeds ~200MB even for larger apps |
 
-No AWS or equivalent blob storage is needed for APK hosting under this model: no app in the catalog exceeds GitHub's/Telegram's per-file ceilings, and splitting keeps individual downloads small regardless. The two things GitHub/Telegram genuinely don't cover are (a) the catalog database itself — solved by D1 above — and (b) the fact that neither GitHub Releases nor the Telegram Bot API is designed to be used as a high-traffic CDN; that's a policy risk to monitor (5.f.ii), not a technical blocker at this scale.
+No AWS or equivalent blob storage is needed for APK hosting under this model: no app in the catalog exceeds GitHub's/Telegram's per-file ceilings, and splitting keeps individual downloads small regardless. The genuine gap either service leaves is the catalog metadata itself — solved by Supabase above — plus the fact that neither GitHub Releases nor the Telegram Bot API is designed to be used as a high-traffic CDN; that's a policy risk to monitor (5.f.ii), not a technical blocker at this scale.
 
 *One item mentioned alongside this setup is not yet included pending clarification: "C2" — unclear meaning, and commonly refers to command-and-control infrastructure for remotely controlling other devices, which would not be something this documentation can include. Will be added once clarified.*
+
+---
+
+## 8. System Boundary — This Repo Is the Storefront, Not the Console
+
+D-Store is two systems, not one:
+
+| System | What it does | Repo |
+|---|---|---|
+| **Developer Console** | Where developers submit their `.aab` (Android App Bundle), sign a copyright/distribution agreement (same function as Play Store's developer agreement), and manage listings | **Separate site — not this repo** |
+| **D-Store (this repo)** | The public, no-login storefront — browse, search, view app details, download compiled APKs | **This repo** |
+
+**This repo has no submission UI, no AAB upload, no developer authentication, and no agreement-signing flow.** Its only relationship to the Console is reading the metadata the Console's pipeline writes to Supabase, and linking out to the Console site for anyone who wants to submit an app.
+
+### The compile pipeline (bridges the two systems)
+
+1. Developer uploads a signed `.aab` to the Console and accepts the distribution agreement.
+2. GitHub Actions (triggered by the Console) runs **bundletool** to generate a signed, distributable APK (or split-APK set) from the AAB — the same approach Play Store's own Play App Signing uses.
+3. The **compiled APK is published to GitHub Releases** — a derived copy, not the original AAB. The raw AAB never leaves the Console/build environment and is never publicly exposed.
+4. Metadata (app info, version, developer/agreement status) is written to Supabase.
+5. This repo reads that Supabase metadata and links downloads to the compiled APK on GitHub Releases/Telegram mirror — it never sees or handles the AAB at any point.
+
+This is the same posture Play Store takes with app bundles: what end users receive is a platform-generated artifact derived from the developer's upload, not the raw upload itself.
 
 ---
 

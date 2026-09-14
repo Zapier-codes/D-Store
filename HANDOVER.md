@@ -277,14 +277,26 @@ Every leaf carries one of:
 
 **5.f — Catalog Database & Platform Risk**
 - 5.f.i — Catalog database
-  - [ ] 5.f.i.zi — Choose and provision the catalog database (Cloudflare D1 pairs naturally with Workers)
-  - [ ] 5.f.i.zo — Migrate schema from the existing Symfony/Doctrine `Application`/`Category` entities into D1
+  - [ ] 5.f.i.zi — Provision Supabase (Postgres) as the metadata store — app info, ratings, counters, developer/agreement status
+  - [ ] 5.f.i.zo — Migrate schema from existing Symfony/Doctrine `Application`/`Category` entities into Supabase
 - 5.f.ii — Platform risk documentation
   - [ ] 5.f.ii.zi — Document GitHub Releases ToS/abuse-policy risk at CDN-level traffic
   - [ ] 5.f.ii.zo — Document Telegram Bot API ToS/rate-limit risk at CDN-level traffic
 - 5.f.iii — Quota monitoring
   - [ ] 5.f.iii.zi — GitHub API rate-limit monitoring/alerting
   - [ ] 5.f.iii.zo — Telegram & Workers request-quota monitoring/alerting
+
+**5.g — Developer Console Integration (cross-repo contract)**
+*This repo never submits, uploads, or authenticates developers — it only reads what the separate Console writes to Supabase. These leaves are about the read-side contract, not building the Console itself.*
+- 5.g.i — Metadata read contract
+  - [ ] 5.g.i.zi — Read-only Supabase client in this repo (no write access, no login, matches the no-account scope decision)
+  - [ ] 5.g.i.zo — Define the shared schema contract (field names/types) this repo expects from Console-written rows
+- 5.g.ii — AAB → APK compile pipeline (GitHub Actions side)
+  - [ ] 5.g.ii.zi — `bundletool`-based AAB→signed-APK/split compilation step, triggered by a Console submission event
+  - [ ] 5.g.ii.zo — Publish the compiled APK to GitHub Releases as the distributed copy; the raw AAB never leaves the Console/build environment
+- 5.g.iii — Developer trust signals
+  - [ ] 5.g.iii.zi — "Verified developer" badge on the app detail page, sourced from the Console's agreement-signing status in Supabase
+  - [ ] 5.g.iii.zo — Footer link to the Console site as the submission entry point (no submission UI lives in this repo)
 
 ---
 
