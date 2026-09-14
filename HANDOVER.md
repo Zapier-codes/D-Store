@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.b.iii.zo`** *(Theme persistence — theme toggle transition animation, building on the cookie storage/read from `0.b.iii.zi`. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.c.i.zi`** *(Core Layout Shell — Header: responsive nav + search bar. Part of Phase 0, UI revamp priority, see Section 2. `0.b` — Design Tokens, both themes plus persistence — is now fully complete. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -86,7 +86,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.b.ii.zo — Contrast-check accent variants (WCAG AA) — `app/globals.css`: computed ratios documented inline; base `--color-accent` #2454c9 already clears AA (6.20:1 vs bg, 6.59:1 vs surface/white text); added contrast-checked `--color-accent-strong` #1a3d99 (9.10:1 / 9.67:1) for hover/active/pressed states
 - 0.b.iii — Theme persistence
   - [x] 0.b.iii.zi — Theme storage + read on load (no flash) — `lib/theme.ts`: cookie-based storage (`d-store-theme`, 1yr, no accounts so no server-side per-user store), `getTheme()` read server-side, `setThemeCookie()` server action for the future toggle (0.c.i.zo); `app/layout.tsx` now reads it and sets `data-theme` on `<html>` before HTML reaches the client — no client-side swap, no flash. Note: this makes routes render dynamically (`ƒ`) instead of statically (`○`), since the layout now depends on the request's cookies
-  - [ ] 0.b.iii.zo — Theme toggle transition animation
+  - [x] 0.b.iii.zo — Theme toggle transition animation — `app/globals.css`: `body` gets `transition: background-color 200ms ease, color 200ms ease`, gated behind `@media (prefers-reduced-motion: no-preference)`; `background-image` (the vignette) intentionally not transitioned since browsers don't interpolate between distinct gradients. Distinct from `0.b.iii.zi`'s no-flash-on-load guarantee — this smooths the swap once a visitor actually toggles, via the future `0.c.i.zo` control
 
 **0.c — Core Layout Shell** *(pulls forward `1.c`)*
 - 0.c.i — Header

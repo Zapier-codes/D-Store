@@ -90,3 +90,30 @@ body {
   color: #f2ece0;
   margin: 0;
 }
+
+/*
+ * Leaf 0.b.iii.zo — theme toggle transition animation
+ *
+ * When data-theme flips (via the header toggle, 0.c.i.zo — not built
+ * yet, so nothing calls this in the UI today), --color-bg/--color-accent/
+ * etc. change instantly by default since they're plain CSS custom
+ * properties. This transitions the properties that consume them on
+ * <body> so the swap reads as a fade rather than a hard cut — the "no
+ * flash" requirement from D-STORE.md §4.C, distinct from the *initial*
+ * no-flash guarantee 0.b.iii.zi already gives via server-side cookie
+ * read (that one prevents a flash on load; this one is about the
+ * transition once a visitor actually toggles).
+ *
+ * background-image (the vignette) is intentionally left out: browsers
+ * don't interpolate between two different gradient definitions, so
+ * transitioning it would just delay the same hard cut rather than
+ * smooth it — background-color carries the visible fade.
+ *
+ * Disabled under prefers-reduced-motion, per the same accessibility
+ * rule D-STORE.md §4.C applies to the hero's reveal animation (0.d.i.zo).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  body {
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+}
