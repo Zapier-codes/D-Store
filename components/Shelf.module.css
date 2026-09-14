@@ -1,0 +1,17 @@
+/*
+ * Shelf styles — leaf 0.d.ii.zi.
+ *
+ * Built entirely on the 0.b design tokens, same convention as
+ * AppCard/Header/Footer, so it re-themes automatically.
+ */
+
+.shelf {
+  padding: 1.5rem 1rem;
+}
+
+.title {
+  margin: 0 0 0.85rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
