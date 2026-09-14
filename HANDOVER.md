@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.b.ii.zi`** *(Design Tokens — light theme "Scientific Blue": define color tokens. Part of Phase 0, UI revamp priority, see Section 2. `0.b.i` — dark theme "Cinematic Gold" — is now fully complete. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.b.ii.zo`** *(Design Tokens — light theme "Scientific Blue": contrast-check accent variants against WCAG AA, building on the color tokens from `0.b.ii.zi`. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -82,7 +82,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.b.i.zi — Define color tokens (bg, surface, accent, border) — `app/globals.css`, scoped under `[data-theme="dark"]` so the upcoming light theme (`0.b.ii`) can coexist without collision; `app/layout.tsx` now sets `data-theme="dark"` on `<html>` (hardcoded until `0.b.iii` adds persistence/toggle) and imports the stylesheet
   - [x] 0.b.i.zo — Define vignette/gradient background treatment — `app/globals.css`: `--gradient-vignette` (soft warm-gold glow near the top fading into a darkened edge, composed from `--color-accent`/`--color-bg`), applied to `body` via `background-image`; exposed as a token so other components (e.g. the hero, `0.d.i`) can reuse it
 - 0.b.ii — Light theme, "Scientific Blue"
-  - [ ] 0.b.ii.zi — Define color tokens
+  - [x] 0.b.ii.zi — Define color tokens — `app/globals.css`: `[data-theme="light"]` block with `--color-bg`, `--color-surface`, `--color-accent` (cobalt), `--color-border`, mirroring the dark theme's token shape; inert until `0.b.iii` wires up the toggle
   - [ ] 0.b.ii.zo — Contrast-check accent variants (WCAG AA)
 - 0.b.iii — Theme persistence
   - [ ] 0.b.iii.zi — Theme storage + read on load (no flash)

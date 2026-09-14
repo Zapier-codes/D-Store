@@ -14,10 +14,11 @@
  * component (not just <body>) can reuse the same treatment later
  * (e.g. the hero in 0.d.i).
  *
- * Out of scope for this leaf (land in later leaves):
- *   - light theme tokens (0.b.ii)
+ * Out of scope for the dark theme leaves above (now complete):
+ *   - light theme tokens (0.b.ii) — added below by leaf 0.b.ii.zi
  *   - theme storage/toggle (0.b.iii) — html[data-theme] is hardcoded
- *     to "dark" for now in app/layout.tsx until that leaf lands.
+ *     to "dark" for now in app/layout.tsx until that leaf lands, so
+ *     the [data-theme="light"] block below has no visible effect yet.
  */
 
 [data-theme="dark"] {
@@ -37,6 +38,36 @@
   --gradient-vignette:
     radial-gradient(ellipse 120% 60% at 50% -10%, rgba(212, 175, 55, 0.10), transparent 55%),
     radial-gradient(ellipse 140% 100% at 50% 110%, rgba(0, 0, 0, 0.65), transparent 60%);
+}
+
+/*
+ * Design tokens — leaf 0.b.ii.zi
+ *
+ * Light theme, "Scientific Blue": crisp white/gray base, cobalt accent,
+ * clinical precision. Mirrors the dark theme's token shape (bg, surface,
+ * accent, border) so both themes can be swapped via the same variable
+ * names once 0.b.iii wires up the toggle.
+ *
+ * Out of scope for this leaf (land in later leaves):
+ *   - WCAG AA contrast-check of accent variants (0.b.ii.zo)
+ *   - no vignette/gradient token here — "clinical precision" calls for
+ *     a flat, crisp base, unlike the dark theme's cinematic glow; not
+ *     an oversight
+ *   - theme storage/toggle (0.b.iii) — this block is inert until then
+ */
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Base surfaces */
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+
+  /* Accent — cobalt blue */
+  --color-accent: #2454c9;
+
+  /* Hairlines, dividers, card outlines */
+  --color-border: #d8dde3;
 }
 
 body {
