@@ -42,7 +42,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.a.i.zo`** *(confirm the live preview URL — https://d-store-nu.vercel.app/ — renders end-to-end on a placeholder page before real UI work begins. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.a.ii.zi`** *(mock dataset covering every app currently in the catalog, shaped to match the full field set — `install_count`, `avg_rating`, `rating_count`, `is_featured`, `is_editors_pick`, `sha256_checksum`, etc. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -66,7 +66,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 **0.a — Vercel Project & Preview Pipeline**
 - 0.a.i — Frontend scaffold & deploy
   - [x] 0.a.i.zi — Initialize the new frontend project and connect the repo to Vercel for automatic preview deploys on every push (Next.js app at repo root — moved out of `frontend/` so Vercel needs zero manual configuration, ever, not even on first import; old Symfony app relocated to `legacy-symfony/`; account owner completed the one-time Vercel dashboard import per `docs/VERCEL-SETUP.md` — confirmed live at https://d-store-nu.vercel.app/, serving the expected Phase 0 placeholder page)
-  - [ ] 0.a.i.zo — Confirm a live preview URL renders end-to-end on a placeholder page before building real UI on top of it
+  - [x] 0.a.i.zo — Confirm a live preview URL renders end-to-end on a placeholder page before building real UI on top of it (fetched https://d-store-nu.vercel.app/ — served HTML matches `app/page.tsx`/`app/layout.tsx` in the repo exactly: title, meta description, and placeholder copy all render correctly from `master`)
 - 0.a.ii — Dummy data layer
   - [ ] 0.a.ii.zi — Mock dataset covering every app currently in the catalog, shaped to match the full field set (`install_count`, `avg_rating`, `rating_count`, `is_featured`, `is_editors_pick`, `sha256_checksum`, etc.)
   - [ ] 0.a.ii.zo — Local data-fetch layer that serves the mock dataset behind the same interface a real API/Supabase client will use later, so swapping in real data later is a drop-in change, not a rewrite
