@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.b.ii.zo`** *(Design Tokens — light theme "Scientific Blue": contrast-check accent variants against WCAG AA, building on the color tokens from `0.b.ii.zi`. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.b.iii.zi`** *(Theme persistence — theme storage + read on load, no flash. Part of Phase 0, UI revamp priority, see Section 2. `0.b.i` and `0.b.ii` — both theme palettes — are now fully complete. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -83,7 +83,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.b.i.zo — Define vignette/gradient background treatment — `app/globals.css`: `--gradient-vignette` (soft warm-gold glow near the top fading into a darkened edge, composed from `--color-accent`/`--color-bg`), applied to `body` via `background-image`; exposed as a token so other components (e.g. the hero, `0.d.i`) can reuse it
 - 0.b.ii — Light theme, "Scientific Blue"
   - [x] 0.b.ii.zi — Define color tokens — `app/globals.css`: `[data-theme="light"]` block with `--color-bg`, `--color-surface`, `--color-accent` (cobalt), `--color-border`, mirroring the dark theme's token shape; inert until `0.b.iii` wires up the toggle
-  - [ ] 0.b.ii.zo — Contrast-check accent variants (WCAG AA)
+  - [x] 0.b.ii.zo — Contrast-check accent variants (WCAG AA) — `app/globals.css`: computed ratios documented inline; base `--color-accent` #2454c9 already clears AA (6.20:1 vs bg, 6.59:1 vs surface/white text); added contrast-checked `--color-accent-strong` #1a3d99 (9.10:1 / 9.67:1) for hover/active/pressed states
 - 0.b.iii — Theme persistence
   - [ ] 0.b.iii.zi — Theme storage + read on load (no flash)
   - [ ] 0.b.iii.zo — Theme toggle transition animation
