@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.g.i.zi`** *(Search & Category Browse — Search: instant search suggestions over the dummy dataset. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.g.i.zo`** *(Search & Category Browse — Search: search results page at `/search`. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -133,7 +133,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **0.g — Search & Category Browse** *(pulls forward `2.c`, dummy data)*
 - 0.g.i — Search
-  - [ ] 0.g.i.zi — Instant search suggestions over the dummy dataset
+  - [x] 0.g.i.zi — Instant search suggestions over the dummy dataset — `components/SearchBar.tsx` + `.module.css` (client component, replacing the plain `<input>` that used to live directly in `Header.tsx`), backed by a new `lib/search-actions.ts` server action (`searchAppsAction`) that thinly wraps the existing `searchApps` from `lib/catalog.ts` — split out the same way `lib/theme-actions.ts` is split from `lib/theme.ts`, since a `"use server"` module can only export async functions and `catalog.ts` also exports types/interfaces. Debounced 200ms (matching `catalog.ts`'s own simulated latency), capped to 6 results, dismissible via click-outside; stale responses from a superseded keystroke are dropped via a request-id ref. Still a real `<form action="/search" method="GET">` underneath, so the no-JS path to `/search?q=...` (0.g.i.zo, next) is unchanged — the dropdown is a progressive enhancement, not a replacement. The mobile order/flex-basis rule that used to live on Header's `.search` class moved to `SearchBar.module.css`'s `.wrapper` at the same 640px breakpoint, since it's still a direct child of the same `.bar` flex container. `next build` passes clean; manually verified via `next start` that `/` still renders the no-JS form (`action="/search"`, `name="q"`) correctly.
   - [ ] 0.g.i.zo — Search results page
 - 0.g.ii — Category browse
   - [ ] 0.g.ii.zi — Category grid page

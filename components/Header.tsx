@@ -1,20 +1,25 @@
 import Link from "next/link";
 import type { Theme } from "@/lib/theme";
 import ThemeToggle from "./ThemeToggle";
+import SearchBar from "./SearchBar";
 import styles from "./Header.module.css";
 
 /**
  * Site header — leaf 0.c.i.zi (responsive nav + search bar), extended
- * by 0.c.i.zo (theme toggle integration).
+ * by 0.c.i.zo (theme toggle integration) and 0.g.i.zi (instant search
+ * suggestions).
  *
  * A pure server component itself: the mobile nav open/close uses the
  * checkbox-hack pattern (hidden checkbox + label, shown/hidden purely
  * via CSS in Header.module.css) rather than client-side state, so no
  * 'use client' boundary is needed just to make the nav responsive.
- * The search bar is a plain GET <form>, which submits to /search?q=...
- * without any JavaScript. The one client boundary in the header is
- * <ThemeToggle> itself, which needs to call a server action — see
- * ThemeToggle.tsx.
+ * The search bar was originally a plain GET <form> rendered directly
+ * here; as of 0.g.i.zi it's the <SearchBar> client component
+ * (components/SearchBar.tsx), which still submits to /search?q=...
+ * as a real form (no-JS fallback preserved) but now also shows
+ * instant suggestions as a progressive enhancement. The other client
+ * boundary in the header is <ThemeToggle> itself, which needs to call
+ * a server action — see ThemeToggle.tsx.
  *
  * /search and /categories don't exist as real pages yet — they land in
  * 0.g (Search & Category Browse). Linking to them now is intentional,
@@ -29,20 +34,7 @@ export default function Header({ theme }: { theme: Theme }) {
           D-Store
         </Link>
 
-        <form
-          action="/search"
-          method="GET"
-          role="search"
-          className={styles.search}
-        >
-          <input
-            type="search"
-            name="q"
-            placeholder="Search apps"
-            aria-label="Search apps"
-            className={styles.searchInput}
-          />
-        </form>
+        <SearchBar />
 
         <input
           type="checkbox"
