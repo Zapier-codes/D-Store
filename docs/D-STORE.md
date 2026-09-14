@@ -166,4 +166,17 @@ New entities: `Review` (anonymous, rate-limited), `ReportFlag` (anonymous app re
 
 ---
 
+## 7. Infrastructure & Distribution
+
+| Component | Choice |
+|---|---|
+| CI/CD | GitHub Actions — builds, tags, and publishes releases automatically |
+| Primary APK storage | GitHub Releases (versioned, effectively unlimited for this scale) |
+| Mirror storage | S3-compatible Telegram Drive backend |
+| Edge/CDN | Cloudflare Workers — single download endpoint fronting both GitHub Releases and the Telegram mirror, with failover |
+
+*Two items mentioned alongside this setup are not yet included pending clarification: a "VPN" component (unclear if this refers to the earlier example sponsored-ad app or an actual network component) and "C2" (unclear meaning — commonly refers to command-and-control infrastructure for remotely controlling other devices, which would not be something this documentation can include). Both will be added once clarified.*
+
+---
+
 *Documentation only, as requested — no code has been generated for D-Store. Next step is your call: I can go deeper on any single section above (e.g. write out the full data schema, or the Trust & Safety UX copy) as more documentation.*

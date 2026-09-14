@@ -218,6 +218,52 @@ Every leaf carries one of:
   - [ ] 4.d.ii.zi — Category-affinity "For You" row
   - [ ] 4.d.ii.zo — Personalization tuning from local history
 
+### Phase 5 — Infrastructure & Distribution
+
+**5.a — CI/CD Pipeline (GitHub Actions)**
+- 5.a.i — Build & tag
+  - [ ] 5.a.i.zi — APK ingest workflow, triggered on new release commit
+  - [ ] 5.a.i.zo — Semantic version tagging automation
+- 5.a.ii — Release publishing
+  - [ ] 5.a.ii.zi — Auto-create GitHub Release with changelog per version
+  - [ ] 5.a.ii.zo — Auto-generate & attach SHA256 checksum to release assets
+- 5.a.iii — Catalog sync
+  - [ ] 5.a.iii.zi — Webhook: GitHub Release published → update D-Store catalog/DB
+  - [ ] 5.a.iii.zo — Nightly reconciliation job (catalog vs. GitHub Releases drift check)
+
+**5.b — Storage & Mirrors**
+- 5.b.i — Primary storage
+  - [ ] 5.b.i.zi — GitHub Releases as primary APK storage
+  - [ ] 5.b.i.zo — Release asset retention/cleanup policy
+- 5.b.ii — Telegram S3-compatible mirror
+  - [ ] 5.b.ii.zi — Deploy S3-compatible Telegram Drive backend
+  - [ ] 5.b.ii.zo — Mirror sync job: GitHub Release → Telegram S3 backend
+- 5.b.iii — Edge delivery
+  - [ ] 5.b.iii.zi — Cloudflare Worker unified download endpoint (fronts both mirrors)
+  - [ ] 5.b.iii.zo — Failover logic (serve from mirror if primary unavailable)
+
+**5.c — Update & Version History**
+- 5.c.i — Update mechanism
+  - [ ] 5.c.i.zi — Companion "D-Store Updater" app spec/scaffold
+  - [ ] 5.c.i.zo — Web Push subscription for saved-app updates (ties to 4.d local favorites)
+- 5.c.ii — Version history
+  - [ ] 5.c.ii.zi — "Version history" tab on detail page
+  - [ ] 5.c.ii.zo — Direct download links for older versions (from GitHub Releases history)
+- 5.c.iii — Rollback & advisories
+  - [ ] 5.c.iii.zi — Rollback: install-older-version flow
+  - [ ] 5.c.iii.zo — Deprecation/security-advisory banner for pulled/flagged versions
+
+**5.d — Security, Abuse Prevention & Governance**
+- 5.d.i — Automated scanning
+  - [ ] 5.d.i.zi — Static malware-signature scan step in CI before publish
+  - [ ] 5.d.i.zo — Permission-diff alert between app versions
+- 5.d.ii — Anti-abuse throttling
+  - [ ] 5.d.ii.zi — Rate-limit/fingerprint-throttle install & view counters
+  - [ ] 5.d.ii.zo — Rate-limit/fingerprint-throttle ratings & reports
+- 5.d.iii — Quality & governance docs
+  - [ ] 5.d.iii.zi — Baseline test suite (unit + e2e smoke test for browse/download/rate)
+  - [ ] 5.d.iii.zo — Catalog acceptance/moderation policy + patch ledger (`CHANGELOG.md`)
+
 ---
 
 ## 3. Standing Handoff Process (mandatory, every session)
