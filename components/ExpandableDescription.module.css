@@ -1,0 +1,54 @@
+/*
+ * Expandable description styles — leaf 0.e.ii.zi.
+ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.clamped {
+  margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.formatted {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.paragraph {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.toggle:hover,
+.toggle:focus-visible {
+  text-decoration: underline;
+}

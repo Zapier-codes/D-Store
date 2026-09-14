@@ -1,21 +1,22 @@
 import { notFound } from "next/navigation";
 import { getAppBySlug } from "@/lib/catalog";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
+import ExpandableDescription from "@/components/ExpandableDescription";
 import styles from "./page.module.css";
 
 /**
  * App detail page — leaf 0.e.i.zi (App Detail Page → Media → Screenshot
- * carousel). This is the first 0.e leaf, so it's also what creates the
- * `/app/[slug]` route itself — every card/hero link built so far
- * (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as a forward
- * reference since it didn't exist yet.
+ * carousel), extended by 0.e.i.zo (lightbox) and 0.e.ii.zi (expandable
+ * description, this leaf). This is the route `/app/[slug]` itself
+ * (created by 0.e.i.zi) — every card/hero link built so far (AppCard
+ * 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as a forward reference.
  *
- * Only a minimal header (icon/name/summary, reusing the same colored-tile
- * convention as AppCard/Hero) plus the screenshot carousel are wired in
- * here — the rest of the detail page (lightbox, expandable description,
- * changelog, ratings, trust & safety, similar apps) lands piece by piece
- * in the remaining 0.e/0.f/0.g leaves and gets appended to this same
- * page, the same incremental pattern `app/page.tsx` followed across 0.d.
+ * Header (icon/name/summary), screenshot carousel, and now the
+ * description section are wired in — the rest of the detail page
+ * ("What's New" changelog, ratings, trust & safety, similar apps) lands
+ * piece by piece in the remaining 0.e/0.f/0.g leaves, appended to this
+ * same page, the same incremental pattern `app/page.tsx` followed
+ * across 0.d.
  *
  * Dynamic route (`notFound()` on an unknown slug) — no
  * `generateStaticParams` yet since the whole catalog is still an
@@ -58,6 +59,13 @@ export default async function AppDetailPage({
           Screenshots
         </h2>
         <ScreenshotCarousel app={app} />
+      </section>
+
+      <section aria-labelledby="description-heading">
+        <h2 id="description-heading" className={styles.sectionTitle}>
+          About this app
+        </h2>
+        <ExpandableDescription description={app.description} />
       </section>
     </main>
   );
