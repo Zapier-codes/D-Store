@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.d.ii.zo`** *(Home Page — Shelves: Trending shelf, sorted by dummy `install_count`. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.d.iii.zi`** *(Home Page — Editorial: Editor's Picks shelf, from dummy data. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -105,7 +105,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.d.i.zo — Reveal animation (respects `prefers-reduced-motion`) — `Hero.module.css`: `.panel`/`.icon` play a one-shot fade/translate-up `animation` on first paint (the hero is above the fold, so "reveal" here means on-mount, not scroll-triggered — nothing to scroll past first), gated behind `@media (prefers-reduced-motion: no-preference)`, the same guard already used by the theme-transition (`0.b.iii.zo`) and mobile nav collapse. `both` fill-mode avoids a flash of the un-animated state on either edge. Pure CSS — no client boundary added to `Hero.tsx`.
 - 0.d.ii — Shelves
   - [x] 0.d.ii.zi — Featured shelf — `components/Shelf.tsx` + `Shelf.module.css`: reusable titled-shelf wrapper (heading + `ShelfGrid`/`AppCard`, 0.c.ii) so the shelves that follow (Trending, Editor's Picks) reuse it instead of re-deriving the markup; renders nothing when given an empty `apps` array (e.g. a future region filter narrows a shelf to zero, 0.h.ii.zo) rather than an empty heading. Wired into `app/page.tsx` below the hero, reusing the existing `getFeaturedApps()` call already made for the hero (first result → hero, remainder → shelf) rather than a second fetch, so the hero's app isn't duplicated directly beneath it. `next build` passes clean.
-  - [ ] 0.d.ii.zo — Trending shelf (sorted by dummy `install_count`)
+  - [x] 0.d.ii.zo — Trending shelf (sorted by dummy `install_count`) — `app/page.tsx`: second `Shelf` (0.d.ii.zi) below Featured, fed by `getTrendingApps()`, fetched alongside `getFeaturedApps()` via `Promise.all` rather than sequentially. Trending is a separate fetch, not a slice of the Featured result — it's a different sort dimension (`install_count`, not the `is_featured` flag), so the two shelves can legitimately overlap. No client-side sort needed: `getTrendingApps()` in `lib/catalog.ts` already returns apps ordered by `install_count` descending. `next build` passes clean.
 - 0.d.iii — Editorial
   - [ ] 0.d.iii.zi — Editor's Picks shelf
   - [ ] 0.d.iii.zo — Sponsored card slot (dummy/native placeholder, clearly labeled)
