@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.d.iii.zi`** *(Home Page — Editorial: Editor's Picks shelf, from dummy data. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.d.iii.zo`** *(Home Page — Editorial: Sponsored card slot, dummy/native placeholder, clearly labeled. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -107,7 +107,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.d.ii.zi — Featured shelf — `components/Shelf.tsx` + `Shelf.module.css`: reusable titled-shelf wrapper (heading + `ShelfGrid`/`AppCard`, 0.c.ii) so the shelves that follow (Trending, Editor's Picks) reuse it instead of re-deriving the markup; renders nothing when given an empty `apps` array (e.g. a future region filter narrows a shelf to zero, 0.h.ii.zo) rather than an empty heading. Wired into `app/page.tsx` below the hero, reusing the existing `getFeaturedApps()` call already made for the hero (first result → hero, remainder → shelf) rather than a second fetch, so the hero's app isn't duplicated directly beneath it. `next build` passes clean.
   - [x] 0.d.ii.zo — Trending shelf (sorted by dummy `install_count`) — `app/page.tsx`: second `Shelf` (0.d.ii.zi) below Featured, fed by `getTrendingApps()`, fetched alongside `getFeaturedApps()` via `Promise.all` rather than sequentially. Trending is a separate fetch, not a slice of the Featured result — it's a different sort dimension (`install_count`, not the `is_featured` flag), so the two shelves can legitimately overlap. No client-side sort needed: `getTrendingApps()` in `lib/catalog.ts` already returns apps ordered by `install_count` descending. `next build` passes clean.
 - 0.d.iii — Editorial
-  - [ ] 0.d.iii.zi — Editor's Picks shelf
+  - [x] 0.d.iii.zi — Editor's Picks shelf — `app/page.tsx`: third `Shelf` (0.d.ii.zi) below Trending, fed by `getEditorsPicks()`, fetched alongside the other two via the same `Promise.all`. Filtered on the dummy `is_editors_pick` flag — a third independent dimension from both `is_featured` and `install_count` — so fetched separately rather than derived from either existing list; individual cards already surface an "Editors' Pick" badge (`AppCard`, 0.c.ii.zo) when an app also appears in Featured/Trending, this shelf is the dedicated curated collection. `next build` passes clean.
   - [ ] 0.d.iii.zo — Sponsored card slot (dummy/native placeholder, clearly labeled)
 
 **0.e — App Detail Page** *(pulls forward `2.a`, dummy data)*
