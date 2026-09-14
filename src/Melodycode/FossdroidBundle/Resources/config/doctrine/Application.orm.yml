@@ -49,6 +49,18 @@ Melodycode\FossdroidBundle\Entity\Application:
             nullable: true
         is_published:
             type: boolean
+        install_count:
+            type: integer
+            options:
+                default: 0
+        avg_rating:
+            type: float
+            options:
+                default: 0
+        rating_count:
+            type: integer
+            options:
+                default: 0
         created_at:
             type: date
         updated_at:

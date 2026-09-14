@@ -26,7 +26,7 @@ Every leaf carries one of:
 
 ### Current position
 
-> **Next leaf to work: `1.a.i.zi`**
+> **Next leaf to work: `1.a.i.zo`**
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -47,7 +47,7 @@ Every leaf carries one of:
 
 **1.a — Data Model Migration**
 - 1.a.i — Core metrics fields
-  - [ ] 1.a.i.zi — Add `install_count`, `avg_rating`, `rating_count` to the app entity
+  - [x] 1.a.i.zi — Add `install_count`, `avg_rating`, `rating_count` to the app entity
   - [ ] 1.a.i.zo — Add `is_featured`, `is_editors_pick` flags
 - 1.a.ii — Trust & safety fields
   - [ ] 1.a.ii.zi — Add `sha256_checksum` field

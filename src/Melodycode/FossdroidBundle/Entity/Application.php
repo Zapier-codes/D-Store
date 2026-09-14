@@ -95,6 +95,21 @@ class Application
     private $is_published;
 
     /**
+     * @var integer
+     */
+    private $install_count;
+
+    /**
+     * @var float
+     */
+    private $avg_rating;
+
+    /**
+     * @var integer
+     */
+    private $rating_count;
+
+    /**
      * @var \DateTime
      */
     private $created_at;
@@ -499,6 +514,75 @@ class Application
     public function getIsPublished()
     {
         return $this->is_published;
+    }
+
+    /**
+     * Set install_count
+     *
+     * @param integer $installCount
+     * @return Application
+     */
+    public function setInstallCount($installCount)
+    {
+        $this->install_count = $installCount;
+
+        return $this;
+    }
+
+    /**
+     * Get install_count
+     *
+     * @return integer
+     */
+    public function getInstallCount()
+    {
+        return $this->install_count;
+    }
+
+    /**
+     * Set avg_rating
+     *
+     * @param float $avgRating
+     * @return Application
+     */
+    public function setAvgRating($avgRating)
+    {
+        $this->avg_rating = $avgRating;
+
+        return $this;
+    }
+
+    /**
+     * Get avg_rating
+     *
+     * @return float
+     */
+    public function getAvgRating()
+    {
+        return $this->avg_rating;
+    }
+
+    /**
+     * Set rating_count
+     *
+     * @param integer $ratingCount
+     * @return Application
+     */
+    public function setRatingCount($ratingCount)
+    {
+        $this->rating_count = $ratingCount;
+
+        return $this;
+    }
+
+    /**
+     * Get rating_count
+     *
+     * @return integer
+     */
+    public function getRatingCount()
+    {
+        return $this->rating_count;
     }
 
     /**
