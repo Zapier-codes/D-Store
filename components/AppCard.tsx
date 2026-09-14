@@ -1,0 +1,61 @@
+import Link from "next/link";
+import type { App } from "@/lib/catalog";
+import styles from "./AppCard.module.css";
+
+/**
+ * Small, dense app-card — leaf 0.c.ii.zo.
+ *
+ * The per-app unit that populates the `ShelfGrid` (0.c.ii.zi). Deliberately
+ * minimal per D-STORE.md §3 ("Small, dense cards | Play-Store-density grid,
+ * not oversized promo tiles everywhere"): icon, name, and a rating line —
+ * nothing else competes for space at 2-column mobile width. Richer detail
+ * (description, screenshots, permissions, changelog) is the app-detail
+ * page's job (0.e), not the card's.
+ *
+ * Icon rendering: `App.icon` in the dummy dataset (lib/mock-data.ts) is a
+ * filename like "f-droid.png", but no actual icon assets exist in this
+ * repo yet (no /public/icons — real icons are a real-backend concern,
+ * Phase 5). Rather than point <img> at a path that 404s for every card,
+ * this renders a colored initial tile using the app's own
+ * `primary_color`/`secondary_color` dummy fields — every card gets a
+ * correctly-colored, non-broken icon today, and swapping in real <img>
+ * icons later only touches this one spot.
+ *
+ * Pure server component — no interaction of its own yet. The whole card
+ * is a single link out to the (not-yet-built, 0.e) app detail page at
+ * /app/[slug], which is the dense-grid convention Play Store itself uses
+ * (tap anywhere on the card, not just the icon or the name).
+ */
+export default function AppCard({ app }: { app: App }) {
+  const initial = app.name.trim().charAt(0).toUpperCase();
+
+  return (
+    <Link href={`/app/${app.slug}`} className={styles.card}>
+      <div
+        className={styles.icon}
+        style={{
+          backgroundColor: app.primary_color,
+          color: app.secondary_color,
+        }}
+        aria-hidden="true"
+      >
+        {initial}
+      </div>
+
+      <div className={styles.info}>
+        <p className={styles.name} title={app.name}>
+          {app.name}
+        </p>
+
+        <p className={styles.meta}>
+          <span className={styles.rating}>
+            <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
+          </span>
+          {app.is_editors_pick && (
+            <span className={styles.badge}>Editors&rsquo; Pick</span>
+          )}
+        </p>
+      </div>
+    </Link>
+  );
+}
