@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.c.i.zi`** *(Core Layout Shell — Header: responsive nav + search bar. Part of Phase 0, UI revamp priority, see Section 2. `0.b` — Design Tokens, both themes plus persistence — is now fully complete. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.c.i.zo`** *(Core Layout Shell — Header: theme toggle integration, building on `0.c.i.zi`'s header and the cookie storage from `0.b.iii`. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -90,7 +90,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **0.c — Core Layout Shell** *(pulls forward `1.c`)*
 - 0.c.i — Header
-  - [ ] 0.c.i.zi — Responsive nav + search bar
+  - [x] 0.c.i.zi — Responsive nav + search bar — `components/Header.tsx` + `Header.module.css`, rendered from `app/layout.tsx` above `{children}` so it's on every page; mobile nav collapse uses the checkbox-hack (no client JS), search is a plain GET form to `/search?q=...` (page doesn't exist yet — lands in `0.g.i.zo`); styled entirely from the `0.b` design tokens so it re-themes automatically once the toggle (`0.c.i.zo`) lands
   - [ ] 0.c.i.zo — Theme toggle integration
 - 0.c.ii — Grid system
   - [ ] 0.c.ii.zi — Responsive shelf-grid (2→6 columns)

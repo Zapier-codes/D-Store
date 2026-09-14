@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { getTheme } from "../lib/theme";
+import { getTheme } from "@/lib/theme";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "D-Store",
@@ -20,7 +21,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en" data-theme={theme}>
-      <body>{children}</body>
+      <body>
+        <Header />
+        {children}
+      </body>
     </html>
   );
 }
