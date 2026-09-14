@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.e.i.zo`** *(App Detail Page — Media: Lightbox viewer, dummy data. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.e.ii.zi`** *(App Detail Page — Content: Expandable description, dummy data. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -113,7 +113,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 **0.e — App Detail Page** *(pulls forward `2.a`, dummy data)*
 - 0.e.i — Media
   - [x] 0.e.i.zi — Screenshot carousel — `components/ScreenshotCarousel.tsx` + `.module.css`: pure server component, swipeable via native CSS scroll-snap (`overflow-x: auto` + `scroll-snap-type: x mandatory`/`scroll-snap-align`) rather than a client carousel lib or touch handlers, matching the repo's existing preference for CSS-only interaction. Since no real screenshot image assets exist yet (`App.screenshots` are dummy `/mock/...` paths, same gap Hero.tsx already notes for banner art), each slide is a colored placeholder tile cycling the app's `primary_color`/`secondary_color`/`tertiary_color` fields — same convention as AppCard's/Hero's icon tiles. This leaf also creates the `/app/[slug]` route itself (`app/app/[slug]/page.tsx` + `page.module.css`) — the first 0.e leaf, and every card/hero link built so far (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as a forward reference since it didn't exist; `notFound()` on an unknown slug, `getAppBySlug` for lookup. Page currently renders just a minimal header (icon/name/summary) plus the carousel — remaining 0.e/0.f/0.g leaves append further sections here, the same incremental pattern `app/page.tsx` followed across 0.d. `next build` passes clean; manually verified `/app/f-droid` renders both of F-Droid's dummy screenshots and `/app/does-not-exist` 404s.
-  - [ ] 0.e.i.zo — Lightbox viewer
+  - [x] 0.e.i.zo — Lightbox viewer — `components/Lightbox.tsx` + `.module.css`, opened from `ScreenshotCarousel.tsx` (which gains a `"use client"` boundary and turns each slide into a real `<button>` to trigger it at that slide's index — the swipe track's CSS scroll-snap behavior from `0.e.i.zi` is unchanged). Built on the native `<dialog>` element (`showModal()`) rather than a hand-rolled modal/portal, matching the repo's existing preference for native platform behavior: focus trapping and Escape-to-close come for free, only arrow-key prev/next and click-outside-to-dismiss needed explicit handlers. Same placeholder-tile/color-cycle convention as the carousel, just rendered larger; fade/scale-in on open is gated behind `prefers-reduced-motion`, the same convention as `0.b.iii.zo`/`0.d.i.zo`. `next build` passes clean; manually verified `/app/f-droid` renders both screenshots as buttons with the expected accessible labels.
 - 0.e.ii — Content
   - [ ] 0.e.ii.zi — Expandable description
   - [ ] 0.e.ii.zo — "What's New" changelog block

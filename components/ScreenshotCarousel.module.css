@@ -37,6 +37,31 @@
   scroll-snap-stop: always;
 }
 
+/*
+ * Slide button — leaf 0.e.i.zo. Each slide's placeholder tile is now
+ * wrapped in a real <button> (opens the Lightbox at that index), so
+ * this strips default button chrome back down to "look exactly like
+ * the 0.e.i.zi placeholder did" and adds a focus ring for keyboard
+ * users, since a bare <div> had no focus state to begin with.
+ */
+.slideButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.slideButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 16px;
+}
+
 .placeholder {
   /* Portrait phone-screenshot aspect ratio. */
   width: 62vw;
