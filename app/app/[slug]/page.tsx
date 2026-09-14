@@ -6,25 +6,25 @@ import Changelog from "@/components/Changelog";
 import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
 import ChecksumDisplay from "@/components/ChecksumDisplay";
+import SignatureInfo from "@/components/SignatureInfo";
 import styles from "./page.module.css";
 
 /**
  * App detail page — leaf 0.e.i.zi (App Detail Page → Media → Screenshot
  * carousel), extended by 0.e.i.zo (lightbox), 0.e.ii.zi (expandable
  * description), 0.e.ii.zo (What's New changelog), 0.e.iii.zi (rating
- * stars + histogram), 0.e.iii.zo (anonymous rating submission), and now
- * 0.f.i.zi (SHA-256 checksum display, this leaf — the start of the
- * "Verify this APK" section, D-Store's transparency edge over Play
- * Store per docs/D-STORE.md §2). This is the route `/app/[slug]` itself
- * (created by 0.e.i.zi) — every card/hero link built so far (AppCard
- * 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as a forward reference.
+ * stars + histogram), 0.e.iii.zo (anonymous rating submission),
+ * 0.f.i.zi (SHA-256 checksum display), and now 0.f.i.zo (digital
+ * signature info, this leaf — completing "Verify this APK"). This is
+ * the route `/app/[slug]` itself (created by 0.e.i.zi) — every
+ * card/hero link built so far (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has
+ * pointed here as a forward reference.
  *
- * `0.e` (App Detail Page) is fully complete. `0.f` (Trust & Safety) is
- * starting here — digital signature info (0.f.i.zo), the "Why not on
- * Play Store" disclosure (0.f.ii.zi), permissions (0.f.ii.zo), and the
- * report form (0.f.iii.zi) land piece by piece next, appended to this
- * same page, the same incremental pattern `app/page.tsx` followed
- * across `0.d`.
+ * `0.e` (App Detail Page) and `0.f.i` (APK verification) are fully
+ * complete. `0.f.ii` (Transparency: "Why not on Play Store" disclosure,
+ * permissions) and `0.f.iii` (Moderation: report form) land next,
+ * appended to this same page, the same incremental pattern
+ * `app/page.tsx` followed across `0.d`.
  *
  * Dynamic route (`notFound()` on an unknown slug) — no
  * `generateStaticParams` yet since the whole catalog is still an
@@ -96,6 +96,7 @@ export default async function AppDetailPage({
           Verify this APK
         </h2>
         <ChecksumDisplay checksum={app.sha256_checksum} />
+        <SignatureInfo fingerprint={app.signing_certificate_fingerprint} />
       </section>
     </main>
   );

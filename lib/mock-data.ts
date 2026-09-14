@@ -27,6 +27,13 @@
  * clearly called out as such. Everything else (names, categories,
  * summaries, license, source/site links) reflects the real legacy catalog.
  *
+ * `signing_certificate_fingerprint` was added later, by leaf 0.f.i.zo,
+ * beyond §7's original list — the "Verify this APK" section needed a
+ * code-signing certificate fingerprint (a distinct concept from
+ * `sha256_checksum`, which is a hash of the APK file itself, not its
+ * signer's certificate). Same treatment as the rest: a plausible dummy
+ * value, not a real digest.
+ *
  * This module is data only. The fetch layer that serves it behind the
  * same interface a real Supabase client will use later is leaf 0.a.ii.zo.
  */
@@ -69,6 +76,7 @@ export interface App {
   min_android_version: string;
   size_mb: number;
   sha256_checksum: string;
+  signing_certificate_fingerprint: string;
   play_store_rejection_reason: string | null;
   permissions: string[];
   screenshots: string[];
@@ -141,6 +149,7 @@ export const apps: App[] = [
     min_android_version: "4.1",
     size_mb: 6.8,
     sha256_checksum: "d32b26f2b83eb63f82c3ab33f43e8db4bfe9f6cc87df2f8d6ce3f341b09f6712",
+    signing_certificate_fingerprint: "2B:00:47:7F:16:7A:59:E7:DB:30:7D:A9:C7:72:7C:C4:35:8C:65:9E:84:7C:9A:8B:82:3E:4E:45:81:81:F8:64",
     play_store_rejection_reason:
       "Facilitates installation of applications from outside Google Play, which violates Play Store distribution policy.",
     permissions: ["INTERNET", "ACCESS_NETWORK_STATE", "REQUEST_INSTALL_PACKAGES", "WRITE_EXTERNAL_STORAGE"],
@@ -178,6 +187,7 @@ export const apps: App[] = [
     min_android_version: "5.0",
     size_mb: 3.2,
     sha256_checksum: "a061e574c854ea5e167ec0c05fb3af53ff1d84c464308f0aa7417008998eb4d0",
+    signing_certificate_fingerprint: "AF:C1:6F:09:71:42:0D:16:B7:92:76:E0:86:5A:63:D0:50:EF:B2:92:03:C5:F4:61:67:85:55:16:84:CB:D3:0C",
     play_store_rejection_reason: "Themes system UI components, which Play Store policy restricts for non-OEM apps.",
     permissions: ["WRITE_SETTINGS"],
     screenshots: ["/mock/screenshots/materialos-1.png"],
@@ -214,6 +224,7 @@ export const apps: App[] = [
     min_android_version: "4.4",
     size_mb: 1.1,
     sha256_checksum: "b762e95d920eb276b2236c39431568332bf042354ed14026686160016a1d0c36",
+    signing_certificate_fingerprint: "0C:68:04:0F:5F:16:D7:DC:2F:03:EF:60:9A:5B:9C:5E:C7:E9:CC:7C:1C:0B:B4:E4:EF:A7:C5:83:07:6E:7C:34",
     play_store_rejection_reason: null,
     permissions: ["BATTERY_STATS"],
     screenshots: ["/mock/screenshots/battery-live-1.png"],
@@ -250,6 +261,7 @@ export const apps: App[] = [
     min_android_version: "4.0",
     size_mb: 0.6,
     sha256_checksum: "b0f3ed9a1a8a12bbb7b63eaef1e5d7cf21a93894a39e0a724e2b96ce09dbf8f1",
+    signing_certificate_fingerprint: "18:B0:27:34:E0:2B:4D:FE:0A:1D:B2:C8:40:2D:F3:A5:7C:9B:77:11:C8:BD:3A:F2:61:25:94:AF:18:3A:29:1B",
     play_store_rejection_reason: null,
     permissions: ["SET_WALLPAPER"],
     screenshots: ["/mock/screenshots/simply-solid-1.png"],
@@ -286,6 +298,7 @@ export const apps: App[] = [
     min_android_version: "7.0",
     size_mb: 0.9,
     sha256_checksum: "8909dfed62b00d4fbf985a5223696055667d3caae71f7004787d4376dec8b64b",
+    signing_certificate_fingerprint: "9F:D5:1F:31:5F:D3:8D:72:DB:3D:51:8C:E1:10:83:AE:EA:33:62:98:C8:E0:65:E2:57:62:41:B9:9E:10:7F:21",
     play_store_rejection_reason: "Relies on a hidden system API not exposed via the public Android SDK.",
     permissions: ["WRITE_SECURE_SETTINGS"],
     screenshots: ["/mock/screenshots/night-mode-enabler-1.png"],
@@ -322,6 +335,7 @@ export const apps: App[] = [
     min_android_version: "4.1",
     size_mb: 1.4,
     sha256_checksum: "7be792875765453369ff4dfb54c8e1fb6e68652ed9019050a3c0141f6f422e83",
+    signing_certificate_fingerprint: "89:52:D8:15:5A:40:C3:03:0A:EE:86:CB:6B:A6:E5:6E:8A:51:63:D9:F3:3D:AB:19:83:DA:89:00:B0:4D:0C:03",
     play_store_rejection_reason: null,
     permissions: ["READ_CALENDAR"],
     screenshots: ["/mock/screenshots/mincal-widget-1.png", "/mock/screenshots/mincal-widget-2.png"],
@@ -358,6 +372,7 @@ export const apps: App[] = [
     min_android_version: "5.0",
     size_mb: 2.3,
     sha256_checksum: "d64d1234b2337bef4aec48425f8f6fecf6f2124aa44581446eb74fafe886a5d4",
+    signing_certificate_fingerprint: "02:95:F2:CA:43:8F:D6:5A:3B:DC:41:4B:48:9F:6A:13:71:11:F4:A8:FE:7D:44:0E:EC:19:01:58:7F:C9:E6:D5",
     play_store_rejection_reason: null,
     permissions: [],
     screenshots: ["/mock/screenshots/awesomewallpaper-1.png"],
@@ -394,6 +409,7 @@ export const apps: App[] = [
     min_android_version: "4.1",
     size_mb: 4.6,
     sha256_checksum: "6a127822416a7526c1404c42c66bb0579820d4a7eb8895ebdfb607d8a693ab01",
+    signing_certificate_fingerprint: "5A:CE:BF:94:FF:5F:BD:C6:CF:E7:BD:20:AD:CA:06:E6:9D:91:22:85:AA:4D:67:F8:D5:01:E2:9C:93:F2:73:6B",
     play_store_rejection_reason: null,
     permissions: [],
     screenshots: ["/mock/screenshots/paper-foss-theme-1.png"],
@@ -430,6 +446,7 @@ export const apps: App[] = [
     min_android_version: "4.4",
     size_mb: 5.9,
     sha256_checksum: "eae9bab600f76d2ada27594dc05a3980464e431cd0cb495df9dc950d314f9277",
+    signing_certificate_fingerprint: "E5:B4:DD:13:5E:39:11:73:31:B8:3E:31:65:13:EF:1F:9A:01:14:B2:56:40:AE:FE:3C:36:BE:6D:94:0A:7E:C3",
     play_store_rejection_reason: "Themes system UI components, which Play Store policy restricts for non-OEM apps.",
     permissions: ["WRITE_SETTINGS"],
     screenshots: ["/mock/screenshots/amexia-1.png"],
@@ -466,6 +483,7 @@ export const apps: App[] = [
     min_android_version: "6.0",
     size_mb: 4.1,
     sha256_checksum: "2acf86c8dccad0726fca9902285b15ed63c1efb7d5dbe4522caba1387bb82e20",
+    signing_certificate_fingerprint: "BF:91:10:B6:CF:84:9F:BC:BF:1C:98:53:93:24:79:BD:2B:28:3A:FB:C6:2F:8F:F0:E7:71:40:F7:D1:18:52:A5",
     play_store_rejection_reason: "Themes system UI components, which Play Store policy restricts for non-OEM apps.",
     permissions: ["WRITE_SETTINGS"],
     screenshots: ["/mock/screenshots/enhancement-1.png"],
@@ -502,6 +520,7 @@ export const apps: App[] = [
     min_android_version: "4.1",
     size_mb: 2.0,
     sha256_checksum: "d54ceeaa906cef6ec7f04178e2d6872c0b053506d402d584a1666da39298c22a",
+    signing_certificate_fingerprint: "84:33:9B:AA:5F:35:34:CF:01:ED:A8:9B:59:06:74:EB:8D:C9:43:8D:90:53:C2:56:4A:2B:91:CA:2E:4E:D0:DF",
     play_store_rejection_reason: null,
     permissions: [],
     screenshots: ["/mock/screenshots/fira-font-1.png"],
@@ -538,6 +557,7 @@ export const apps: App[] = [
     min_android_version: "4.1",
     size_mb: 8.2,
     sha256_checksum: "781335b1eebf02403e539797dfb28737b55715233175df09f6e17e6bd0cf94d2",
+    signing_certificate_fingerprint: "8A:DB:22:DC:52:2D:68:11:7E:15:F8:20:72:2B:8E:C9:74:D1:DA:9D:F8:42:92:A7:B9:94:35:7E:25:87:05:B5",
     play_store_rejection_reason: null,
     permissions: [],
     screenshots: ["/mock/screenshots/icecons-1.png"],
@@ -574,6 +594,7 @@ export const apps: App[] = [
     min_android_version: "5.0",
     size_mb: 3.5,
     sha256_checksum: "0a4db68e89bde58a72d5807e67d26a054df60b556748627aadb79951ce5d3a87",
+    signing_certificate_fingerprint: "35:04:C0:59:C5:C1:42:06:20:35:4A:D2:E1:B9:3E:07:EC:8A:4E:AE:2D:80:4F:15:FB:8D:C1:B1:03:42:45:CB",
     play_store_rejection_reason: "Themes system UI components, which Play Store policy restricts for non-OEM apps.",
     permissions: ["WRITE_SETTINGS"],
     screenshots: ["/mock/screenshots/greyscale-1.png"],
