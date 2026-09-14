@@ -1,0 +1,34 @@
+/*
+ * Design tokens — leaf 0.b.i.zi
+ *
+ * Dark theme, "Cinematic Gold": near-black base, warm gold accent.
+ * Scoped under [data-theme="dark"] rather than a bare :root so the
+ * upcoming light theme ("Scientific Blue", 0.b.ii) can sit alongside
+ * it under [data-theme="light"] without these values leaking into it.
+ *
+ * Out of scope for this leaf (land in later leaves):
+ *   - vignette/gradient background treatment (0.b.i.zo)
+ *   - light theme tokens (0.b.ii)
+ *   - theme storage/toggle (0.b.iii) — html[data-theme] is hardcoded
+ *     to "dark" for now in app/layout.tsx until that leaf lands.
+ */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Base surfaces */
+  --color-bg: #0a0908;
+  --color-surface: #16130f;
+
+  /* Accent — warm gold */
+  --color-accent: #d4af37;
+
+  /* Hairlines, dividers, card outlines */
+  --color-border: #2a2419;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: #f2ece0;
+  margin: 0;
+}
