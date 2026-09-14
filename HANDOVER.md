@@ -333,7 +333,8 @@ This is the same process used to hand off the D-Store documentation itself — i
 5. **Hand the patch file to the user** — never push directly unless explicitly told to. The patch is the deliverable that closes the session.
 6. The next session applies it with:
    ```
-   git am patches/000X-<leaf-path>-<description>.patch
+   cd ~/D-Store
+   git am ~/storage/downloads/000X-<leaf-path>-<description>.patch
    git push origin master
    ```
 
