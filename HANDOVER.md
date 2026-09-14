@@ -24,9 +24,19 @@ Every leaf carries one of:
 - `[~]` in progress — a session started but did not finish (should be rare; a leaf is sized to finish in one session)
 - `[x]` done — completed and handed off via patch (see Section 3)
 
+### Architecture pivot (resequencing note)
+
+The Symfony/Doctrine backend is no longer the direction of record. Going forward:
+- **Supabase (Postgres)** is the metadata store only — app info, ratings, counters, developer/agreement status. It never holds APKs or other release binaries.
+- **GitHub Releases** is the binary store *and* the source of usage metrics — it already exposes per-asset download counts natively, so those feed install/trending numbers instead of a custom increment endpoint built against Doctrine.
+
+Because of this, Phase 1.a leaves already completed or in flight against the Doctrine `Application` entity (`1.a.i.zi`, done via Doctrine/YAML mapping) will need to be re-expressed against the Supabase schema once `5.f.i` lands — they are not being redone right now, just noted as superseded-pending-migration. New leaves should not add further Doctrine-only data model work until the Supabase schema exists.
+
+Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f` — Catalog Database & Platform Risk) rather than continuing further down Phase 1 in path order.
+
 ### Current position
 
-> **Next leaf to work: `1.a.i.zo`**
+> **Next leaf to work: `5.f.i.zi`** *(pulled forward from Phase 5 — see "Architecture pivot" note above; normal `zi`-before-`zo` path order resumes within `5.f` once it's underway)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -149,6 +159,7 @@ Every leaf carries one of:
   - [ ] 3.a.iii.zo — Empty/error/404 state designs
 
 **3.b — Metrics Pipeline**
+*(Per the architecture pivot in Section 0: GitHub Releases already exposes per-asset download counts, so install/trending numbers should be sourced from the GitHub API into Supabase rather than built as custom increment endpoints. Re-scope these two leaves against that before starting them.)*
 - 3.b.i — Counters
   - [ ] 3.b.i.zi — Install-count increment endpoint
   - [ ] 3.b.i.zo — View-count increment endpoint
