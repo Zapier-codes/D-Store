@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { getTheme } from "@/lib/theme";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "D-Store",
@@ -24,6 +25,7 @@ export default async function RootLayout({
       <body>
         <Header theme={theme} />
         {children}
+        <Footer />
       </body>
     </html>
   );

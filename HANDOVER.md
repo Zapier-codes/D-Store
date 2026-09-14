@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.c.iii.zi`** *(Core Layout Shell — Footer: legal links (Privacy, Terms, DMCA). Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.c.iii.zo`** *(Core Layout Shell — Footer: RSS link + "no account required" notice. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -96,7 +96,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 0.c.ii.zi — Responsive shelf-grid (2→6 columns) — `components/ShelfGrid.tsx` + `ShelfGrid.module.css`: explicit 2/3/4/6-column breakpoints (not auto-fill/minmax) for predictable Play-Store-density at every size, per D-STORE.md §3. Not wired into any page yet — it's the shared layout primitive for the dense app-card (`0.c.ii.zo`, next) and later shelves/category grid (`0.d`, `0.g.ii.i`)
   - [x] 0.c.ii.zo — Small/dense app-card component — `components/AppCard.tsx` + `AppCard.module.css`: icon (colored initial tile from the app's dummy `primary_color`/`secondary_color`, since no real icon image assets exist in the repo yet), 2-line-clamped name, and a rating line (★ `avg_rating` + an "Editors' Pick" badge when `is_editors_pick`) — nothing else, per D-STORE.md §3's "small, dense cards" rule. Whole card links to `/app/[slug]` (not built yet, lands in `0.e`). Built on the `App` type from `lib/catalog.ts`; not wired into any page yet — that's `0.d`'s shelves and `0.g.ii.i`'s category grid, both of which now have their card primitive ready
 - 0.c.iii — Footer
-  - [ ] 0.c.iii.zi — Legal links (Privacy, Terms, DMCA)
+  - [x] 0.c.iii.zi — Legal links (Privacy, Terms, DMCA) — `components/Footer.tsx` + `Footer.module.css`, rendered from `app/layout.tsx` below `{children}` so it's on every page; styled entirely from the `0.b` design tokens (same convention as `Header.tsx`) so it re-themes automatically. `/privacy`, `/terms`, `/dmca` don't exist as real pages yet — same forward-reference pattern already used for `/search`/`/categories`, they'll 404 until a later leaf builds them
   - [ ] 0.c.iii.zo — RSS link + "no account required" notice
 
 **0.d — Home Page** *(pulls forward `1.d`, dummy data)*
