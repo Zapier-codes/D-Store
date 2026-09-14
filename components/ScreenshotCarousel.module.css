@@ -1,0 +1,77 @@
+/*
+ * Screenshot carousel styles — leaf 0.e.i.zi.
+ *
+ * `scroll-snap-type: x mandatory` on the track + `scroll-snap-align:
+ * start` on each slide is what makes this swipeable without any JS —
+ * see the component doc comment. `scroll-behavior: smooth` only
+ * affects *programmatic* scrolls (there are none yet, this is a plain
+ * server component), so it isn't gated behind
+ * prefers-reduced-motion the way the reveal/theme transitions are;
+ * nothing here auto-plays or animates on its own.
+ */
+
+.carousel {
+  width: 100%;
+}
+
+.track {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0 0 0.5rem;
+  list-style: none;
+
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+
+  /* Keep the scrollbar visually out of the way without hiding it entirely (still keyboard/AT operable). */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.slide {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.placeholder {
+  /* Portrait phone-screenshot aspect ratio. */
+  width: 62vw;
+  max-width: 220px;
+  aspect-ratio: 9 / 16;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+
+  display: flex;
+  align-items: flex-end;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+.placeholderLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  opacity: 0.85;
+}
+
+@media (min-width: 768px) {
+  .placeholder {
+    max-width: 260px;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

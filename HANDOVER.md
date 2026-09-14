@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.e.i.zi`** *(App Detail Page — Media: Screenshot carousel, dummy data. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.e.i.zo`** *(App Detail Page — Media: Lightbox viewer, dummy data. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -112,7 +112,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **0.e — App Detail Page** *(pulls forward `2.a`, dummy data)*
 - 0.e.i — Media
-  - [ ] 0.e.i.zi — Screenshot carousel
+  - [x] 0.e.i.zi — Screenshot carousel — `components/ScreenshotCarousel.tsx` + `.module.css`: pure server component, swipeable via native CSS scroll-snap (`overflow-x: auto` + `scroll-snap-type: x mandatory`/`scroll-snap-align`) rather than a client carousel lib or touch handlers, matching the repo's existing preference for CSS-only interaction. Since no real screenshot image assets exist yet (`App.screenshots` are dummy `/mock/...` paths, same gap Hero.tsx already notes for banner art), each slide is a colored placeholder tile cycling the app's `primary_color`/`secondary_color`/`tertiary_color` fields — same convention as AppCard's/Hero's icon tiles. This leaf also creates the `/app/[slug]` route itself (`app/app/[slug]/page.tsx` + `page.module.css`) — the first 0.e leaf, and every card/hero link built so far (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as a forward reference since it didn't exist; `notFound()` on an unknown slug, `getAppBySlug` for lookup. Page currently renders just a minimal header (icon/name/summary) plus the carousel — remaining 0.e/0.f/0.g leaves append further sections here, the same incremental pattern `app/page.tsx` followed across 0.d. `next build` passes clean; manually verified `/app/f-droid` renders both of F-Droid's dummy screenshots and `/app/does-not-exist` 404s.
   - [ ] 0.e.i.zo — Lightbox viewer
 - 0.e.ii — Content
   - [ ] 0.e.ii.zi — Expandable description
