@@ -171,11 +171,15 @@ New entities: `Review` (anonymous, rate-limited), `ReportFlag` (anonymous app re
 | Component | Choice |
 |---|---|
 | CI/CD | GitHub Actions — builds, tags, and publishes releases automatically |
-| Primary APK storage | GitHub Releases (versioned, effectively unlimited for this scale) |
-| Mirror storage | S3-compatible Telegram Drive backend |
+| Primary APK storage | GitHub Releases (versioned, 2GB per-file cap — comfortable for any single APK/split) |
+| Mirror storage | S3-compatible Telegram Drive backend (2–4GB per-file ceiling depending on account tier) |
 | Edge/CDN | Cloudflare Workers — single download endpoint fronting both GitHub Releases and the Telegram mirror, with failover |
+| Catalog database | Cloudflare D1 (pairs with Workers) — holds app metadata, ratings, counters; separate concern from APK binary storage above |
+| Delivery model | Split APKs (base + ABI/density/language config splits), further compressed, chunked into ≤200MB segments for OTA transfer — no single user-facing download exceeds ~200MB even for larger apps |
 
-*Two items mentioned alongside this setup are not yet included pending clarification: a "VPN" component (unclear if this refers to the earlier example sponsored-ad app or an actual network component) and "C2" (unclear meaning — commonly refers to command-and-control infrastructure for remotely controlling other devices, which would not be something this documentation can include). Both will be added once clarified.*
+No AWS or equivalent blob storage is needed for APK hosting under this model: no app in the catalog exceeds GitHub's/Telegram's per-file ceilings, and splitting keeps individual downloads small regardless. The two things GitHub/Telegram genuinely don't cover are (a) the catalog database itself — solved by D1 above — and (b) the fact that neither GitHub Releases nor the Telegram Bot API is designed to be used as a high-traffic CDN; that's a policy risk to monitor (5.f.ii), not a technical blocker at this scale.
+
+*One item mentioned alongside this setup is not yet included pending clarification: "C2" — unclear meaning, and commonly refers to command-and-control infrastructure for remotely controlling other devices, which would not be something this documentation can include. Will be added once clarified.*
 
 ---
 

@@ -264,6 +264,28 @@ Every leaf carries one of:
   - [ ] 5.d.iii.zi — Baseline test suite (unit + e2e smoke test for browse/download/rate)
   - [ ] 5.d.iii.zo — Catalog acceptance/moderation policy + patch ledger (`CHANGELOG.md`)
 
+**5.e — Split & Compressed Delivery (OTA chunking)**
+- 5.e.i — Build-time splitting
+  - [ ] 5.e.i.zi — Generate split APKs in CI (base + ABI/density/language config splits) so users only download what their device needs
+  - [ ] 5.e.i.zo — Compress each split beyond the APK's own compression before upload
+- 5.e.ii — Chunked transfer
+  - [ ] 5.e.ii.zi — Chunk each split into ≤200MB segments for over-the-air delivery
+  - [ ] 5.e.ii.zo — Resumable chunk download (retry the failed chunk only, not the whole file, on a dropped connection)
+- 5.e.iii — Client-side reassembly & install
+  - [ ] 5.e.iii.zi — D-Store Updater: reassemble chunks and install the split-APK set (builds on 5.c.i)
+  - [ ] 5.e.iii.zo — Per-chunk and per-split checksum verification before install
+
+**5.f — Catalog Database & Platform Risk**
+- 5.f.i — Catalog database
+  - [ ] 5.f.i.zi — Choose and provision the catalog database (Cloudflare D1 pairs naturally with Workers)
+  - [ ] 5.f.i.zo — Migrate schema from the existing Symfony/Doctrine `Application`/`Category` entities into D1
+- 5.f.ii — Platform risk documentation
+  - [ ] 5.f.ii.zi — Document GitHub Releases ToS/abuse-policy risk at CDN-level traffic
+  - [ ] 5.f.ii.zo — Document Telegram Bot API ToS/rate-limit risk at CDN-level traffic
+- 5.f.iii — Quota monitoring
+  - [ ] 5.f.iii.zi — GitHub API rate-limit monitoring/alerting
+  - [ ] 5.f.iii.zo — Telegram & Workers request-quota monitoring/alerting
+
 ---
 
 ## 3. Standing Handoff Process (mandatory, every session)
