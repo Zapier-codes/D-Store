@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `0.h.i.zi`** *(Geo-Regionalization Foundation — Global `ipapi.co` client wrapper: typed response, timeout, graceful fallback to a default region on error/429/rate-limit, never blocks rendering. Part of Phase 0, UI revamp priority, see Section 2. The one Phase 0 leaf allowed a real external call — see the `0.h` heading note. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
+> **Next leaf to work: `0.h.i.zo`** *(Geo-Regionalization Foundation — Region-context provider: calls the client (`0.h.i.zi`) once per visitor session, cached (cookie or edge cache, not per-request), exposes detected country/region to the component tree; no catalog coupling yet. Part of Phase 0, UI revamp priority, see Section 2. `5.f.i.zi` — provision Supabase — resumes once Phase 0 is complete.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -144,7 +144,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **0.h — Geo-Regionalization Foundation** *(new — see "Scope addition" note above. The one Phase 0 track allowed a real external call; everything catalog-side still runs on dummy data.)*
 - 0.h.i — IP geolocation client (ipapi.co)
-  - [ ] 0.h.i.zi — Global `ipapi.co` client wrapper (typed response, timeout, graceful fallback to a default region on error/429/rate-limit — never blocks rendering)
+  - [x] 0.h.i.zi — Global `ipapi.co` client wrapper (typed response, timeout, graceful fallback to a default region on error/429/rate-limit — never blocks rendering) — `lib/ipapi.ts`, `lookupRegion()`. Scope deliberately narrow: just the client. Hits `https://ipapi.co/json/` with a 2.5s `AbortController` timeout; treats both a non-2xx status *and* ipapi.co's own in-body `{ error: true }` shape (their free tier returns HTTP 200 with an error body for some failure modes, not only a 4xx/5xx status) as failures; any of those, a timeout, or a network/parse error all fall back the same way to a fixed `DEFAULT_REGION` (`US`) rather than throwing or returning `null` — callers never have to special-case a missing result. No caching/session-dedup (0.h.i.zo, next), no React context or cookie wiring (same leaf), no catalog coupling (`available_regions` doesn't exist yet, 0.h.ii.zi) — all explicitly out of scope here per the `0.h` heading note. `next build` passes clean; manually verified the actual fallback path (not just reasoned about it) by running `lookupRegion()` standalone via `npx tsx` — this sandbox's own network egress doesn't allowlist `ipapi.co`, so the real fetch fails immediately, and it correctly resolved `{ country_code: "US", country_name: "United States", source: "default" }` in 83ms without throwing.
   - [ ] 0.h.i.zo — Region-context provider: calls the client once per visitor session (cached — cookie or edge cache, not per-request), exposes detected country/region to the component tree; no catalog coupling yet
 - 0.h.ii — Region-aware dummy catalog scaffold
   - [ ] 0.h.ii.zi — Extend `lib/mock-data.ts` `App` shape with a dummy `available_regions: string[]` field (still 100% local dummy data — no live catalog calls)
