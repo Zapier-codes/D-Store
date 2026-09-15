@@ -158,6 +158,11 @@ export const categories: Category[] = [
   { slug: "reading", name: "Reading", icon: "menu_book" },
   { slug: "writing", name: "Writing", icon: "edit" },
   { slug: "development", name: "Development", icon: "code" },
+  // Finance — leaf 0.i.i.zo. Not in screenshot_1.png like everything
+  // above; added specifically as the category the "Vault" CategoryTheme
+  // register (lib/category-theme.ts) attaches to. Zero apps until the
+  // dummy entry below.
+  { slug: "finance", name: "Finance", icon: "account_balance" },
 ];
 
 /**
@@ -683,6 +688,93 @@ export const apps: App[] = [
     developer_slug: "greyscale-theme",
     available_regions: ["US", "CA"],
   },
+  // The two entries below are new — leaf 0.i.i.zo. Unlike everything
+  // above (seeded from the legacy Doctrine entity / screenshots per the
+  // header comment on this file), neither app nor its category existed
+  // in the catalog before this leaf. They exist specifically to give
+  // the "Vault" and "Sanctuary" CategoryTheme registers
+  // (lib/category-theme.ts) a real app/category to attach to and
+  // preview against, per the "Priority override" note in HANDOVER.md.
+  {
+    id: "14",
+    slug: "ledger-vault",
+    name: "Ledger Vault",
+    summary: "Offline personal finance & budget ledger",
+    description:
+      "A local-first budgeting and net-worth ledger — accounts, envelopes, and recurring transactions tracked entirely on-device, no bank linking, no cloud sync.\n\n" +
+      "Built for people who want the discipline of double-entry bookkeeping without a subscription, a server, or a data-sharing agreement attached to it.",
+    site: null,
+    source: "https://github.com/ledger-vault-app/ledger-vault",
+    tracker: "https://github.com/ledger-vault-app/ledger-vault/issues",
+    donate: null,
+    icon: "ledger-vault.png",
+    primary_color: "#0F6D4C",
+    secondary_color: "#B8942E",
+    tertiary_color: "#0A2E22",
+    apk: "app.ledgervault.android_21.apk",
+    version: "2.1",
+    license: "GPL-3.0",
+    is_published: true,
+    category: "finance",
+    created_at: "2017-01-12T00:00:00Z",
+    updated_at: "2017-05-30T00:00:00Z",
+
+    install_count: 9640,
+    avg_rating: 4.5,
+    rating_count: 312,
+    is_featured: false,
+    is_editors_pick: true,
+    min_android_version: "5.0",
+    size_mb: 9.2,
+    sha256_checksum: "7c3f9a1d4e8b62057fca9b3d1e6f8a2c04b7d9e5f1a3c6082b4d7e9f0a1c2d3e",
+    signing_certificate_fingerprint: "4A:1F:0C:8E:D5:3B:7A:29:F6:C1:D8:04:E2:9B:56:A7:3C:F0:1D:8E:64:2A:B9:07:D5:3E:1C:A8:F4:60:9D:2B",
+    play_store_rejection_reason: null,
+    permissions: ["WRITE_EXTERNAL_STORAGE"],
+    screenshots: ["/mock/screenshots/ledger-vault-1.png", "/mock/screenshots/ledger-vault-2.png"],
+    changelog: "Added recurring-transaction rules and a net-worth trendline.",
+    developer_slug: "ledger-vault-app",
+    available_regions: [...ALL_REGIONS],
+  },
+  {
+    id: "15",
+    slug: "quiet-verse",
+    name: "Quiet Verse",
+    summary: "Offline scripture reading & daily reflection",
+    description:
+      "A distraction-free scripture reader — full offline text, adjustable type size, and a daily reading plan with space for short written reflections alongside each passage.\n\n" +
+      "No accounts, no social layer, no notifications beyond an optional daily reading reminder.",
+    site: null,
+    source: "https://github.com/quiet-verse/quiet-verse-android",
+    tracker: "https://github.com/quiet-verse/quiet-verse-android/issues",
+    donate: null,
+    icon: "quiet-verse.png",
+    primary_color: "#5B7FBD",
+    secondary_color: "#C7D6F0",
+    tertiary_color: "#2E4876",
+    apk: "org.quietverse.reader_14.apk",
+    version: "1.4",
+    license: "MIT",
+    is_published: true,
+    category: "reading",
+    created_at: "2016-09-02T00:00:00Z",
+    updated_at: "2017-02-18T00:00:00Z",
+
+    install_count: 5310,
+    avg_rating: 4.8,
+    rating_count: 198,
+    is_featured: false,
+    is_editors_pick: true,
+    min_android_version: "4.4",
+    size_mb: 12.4,
+    sha256_checksum: "1e9d4b6a2f7c30581bde6a4f9c2b7d0158e3a6f9c1b4d7e0a2c5f8b1d4e7a0c3",
+    signing_certificate_fingerprint: "8D:2A:F6:1C:09:B4:E7:53:A0:D8:6F:12:C4:97:3E:B0:5D:A9:2F:1C:68:03:E4:B7:9A:0D:5C:F2:81:4E:06:39",
+    play_store_rejection_reason: null,
+    permissions: [],
+    screenshots: ["/mock/screenshots/quiet-verse-1.png", "/mock/screenshots/quiet-verse-2.png"],
+    changelog: "Added adjustable type size and a daily reading reminder toggle.",
+    developer_slug: "quiet-verse",
+    available_regions: [...ALL_REGIONS],
+  },
 ];
 
 /**
@@ -784,6 +876,22 @@ export const developers: Developer[] = [
     bio: "Stays as close to stock AOSP as possible — no vendor color accents, ever.",
     profile_url: "https://github.com/greyscale-theme",
     joined_at: "2016-04-01T00:00:00Z",
+  },
+  // The two entries below are new — leaf 0.i.i.zo, alongside their apps
+  // in the `apps` array above.
+  {
+    slug: "ledger-vault-app",
+    name: "Ledger Vault",
+    bio: "Local-first personal finance tools — no bank linking, no cloud sync.",
+    profile_url: "https://github.com/ledger-vault-app",
+    joined_at: "2016-11-20T00:00:00Z",
+  },
+  {
+    slug: "quiet-verse",
+    name: "Quiet Verse",
+    bio: "A small, distraction-free scripture reader with no accounts and no social layer.",
+    profile_url: "https://github.com/quiet-verse",
+    joined_at: "2016-06-15T00:00:00Z",
   },
 ];
 
