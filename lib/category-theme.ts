@@ -87,6 +87,14 @@ export type CategoryThemeRegistry = Partial<Record<Category["slug"], CategoryThe
  * "professional" the same way `0.b`'s light theme is flat for
  * "clinical precision") so the two variants read as different moods,
  * not one hue at two brightness levels.
+ *
+ * WCAG AA contrast audit (leaf `0.i.iii.zo`, relative-luminance method,
+ * same as `0.b.ii.zo`'s original audit): both `accent` and
+ * `accentStrong` clear 4.5:1 (normal-text AA) against both `bg` and
+ * `surface`, in both modes — dark `accent` #c9a227 is 8.28:1 / 7.76:1,
+ * dark `accentStrong` #a17e18 is 5.26:1 / 4.93:1; light `accent`
+ * #0f6d4c is 6.01:1 / 6.34:1, light `accentStrong` #0a4f37 is
+ * 9.11:1 / 9.60:1. No change needed for this register.
  */
 const VAULT_THEME: CategoryTheme = {
   categorySlug: "finance",
@@ -123,6 +131,21 @@ const VAULT_THEME: CategoryTheme = {
  * deep indigo/navy plus a pale-lavender "starlight" accent instead,
  * so the accent glows against the dark surface rather than the surface
  * itself just being a dimmed version of the light one.
+ *
+ * WCAG AA contrast audit (leaf `0.i.iii.zo`): dark clears 4.5:1 easily
+ * — `accent` #b8c4f0 is 10.74:1 / 9.74:1 (bg/surface), `accentStrong`
+ * #9aa8e8 is 8.05:1 / 7.30:1. Light's `accentStrong` #3f5f95 also
+ * clears it (5.78:1 / 6.11:1), but light's original `accent` did not:
+ * `--color-accent` is used as normal-size `color` (not just large
+ * text/UI elements) across this repo's components (`Header`, `Footer`,
+ * `Hero`, `AppCard`, `RatingSummary`, etc.), so the AA bar here is
+ * 4.5:1, not the 3:1 large-text/UI-only threshold — the original
+ * #5b7fbd only reached 3.64:1 / 3.84:1, a real AA failure for that
+ * usage. Darkened along the same hue (uniform ~15% RGB scale-down,
+ * keeping it visibly lighter/airier than `accentStrong` rather than
+ * converging on it) to #4d6ca1, which reaches 4.77:1 / 5.04:1 — this
+ * is the one real fix this audit leaf makes; every other accent/
+ * accentStrong pairing in both registers already passed.
  */
 const SANCTUARY_THEME: CategoryTheme = {
   categorySlug: "reading",
@@ -140,7 +163,7 @@ const SANCTUARY_THEME: CategoryTheme = {
   light: {
     bg: "#eef4fb",
     surface: "#f7fafd",
-    accent: "#5b7fbd",
+    accent: "#4d6ca1",
     accentStrong: "#3f5f95",
     border: "#d3e0f0",
     gradient: "radial-gradient(ellipse 100% 60% at 50% -10%, rgba(91, 127, 189, 0.08), transparent 60%)",
