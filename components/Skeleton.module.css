@@ -1,0 +1,44 @@
+/*
+ * Shared shimmer primitive — leaf 3.a.iii.zi.
+ *
+ * The single `.shimmer` class every skeleton component (`SkeletonBlock`
+ * and everything built on it — `SkeletonCard`, `SkeletonHero`,
+ * `SkeletonShelf`) composes via CSS Modules' `composes: ... from`, so
+ * the animation is defined in exactly one place. Built on the 0.b
+ * design tokens (`--color-border`/`--color-surface`) so it re-themes
+ * automatically, same convention as every other component here.
+ *
+ * Gated behind `@media (prefers-reduced-motion: no-preference)`, same
+ * convention `ScrollReveal` (3.a.i.zi), the hero mount animation
+ * (0.d.i.zo), press states (3.a.ii.zi), and the install-button fill
+ * (3.a.iv.zo) all use. A reduced-motion visitor still sees the static
+ * muted block shape — still legibly "this is loading," just without
+ * the sweep.
+ */
+
+.shimmer {
+  display: block;
+  background-color: var(--color-border);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shimmer {
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgba(242, 236, 224, 0.15),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer-sweep 1.6s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-sweep {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}

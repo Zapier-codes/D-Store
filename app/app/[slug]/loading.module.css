@@ -1,0 +1,19 @@
+/*
+ * App detail loading skeleton — leaf 3.a.iii.zi. `.shimmer` composes
+ * the shared animation so the header icon placeholder animates like
+ * every other skeleton piece; `.section` stands in for the page's
+ * many distinct sections as generic shimmering blocks (see loading.tsx's
+ * header comment for why this isn't a per-section mirror).
+ */
+
+.shimmer {
+  composes: shimmer from "../../../components/Skeleton.module.css";
+}
+
+.gapTop {
+  margin-top: 0.35rem;
+}
+
+.section {
+  border-radius: 12px;
+}

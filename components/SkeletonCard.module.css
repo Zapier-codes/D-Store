@@ -1,0 +1,32 @@
+/*
+ * SkeletonCard styles — leaf 3.a.iii.zi.
+ *
+ * Dimensions copied from AppCard.module.css (card padding, border,
+ * icon aspect-ratio/radius) so the skeleton grid holds exactly the
+ * footprint the real AppCard grid will have once data resolves — no
+ * layout shift on swap.
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  min-height: 44px;
+}
+
+.icon {
+  composes: shimmer from "./Skeleton.module.css";
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 20%;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}

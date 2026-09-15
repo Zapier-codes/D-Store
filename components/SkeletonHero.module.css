@@ -1,0 +1,39 @@
+/*
+ * SkeletonHero styles — leaf 3.a.iii.zi.
+ *
+ * Padding/gap/icon-size copied from Hero.module.css so the skeleton
+ * occupies the exact same footprint the real hero will once its app
+ * data resolves — no layout shift on swap. No per-app gradient here
+ * (Hero.module.css's .scrim + inline background); a flat surface
+ * color is the right "nothing to show yet" treatment.
+ */
+
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 3rem 2rem;
+  border-radius: 16px;
+  margin: 1.5rem 1rem;
+  background-color: var(--color-surface);
+  flex-wrap: wrap;
+}
+
+.icon {
+  composes: shimmer from "./Skeleton.module.css";
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border-radius: 22%;
+}
+
+.text {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gapTop {
+  margin-top: 0.6rem;
+}

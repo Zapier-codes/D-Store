@@ -1,0 +1,13 @@
+/*
+ * Developer profile loading skeleton — leaf 3.a.iii.zi. `.shimmer`
+ * composes the shared animation onto page.module.css's own `.avatar`
+ * shape (circle, 72px), same pattern used by `app/app/[slug]/loading.module.css`.
+ */
+
+.shimmer {
+  composes: shimmer from "../../../components/Skeleton.module.css";
+}
+
+.gapTop {
+  margin-top: 0.35rem;
+}
