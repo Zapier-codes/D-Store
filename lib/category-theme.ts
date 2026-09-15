@@ -169,6 +169,32 @@ export const CATEGORY_THEMES: CategoryThemeRegistry = {
  * are already in scope), `0.i.iii.zi` is about *auditing and
  * documenting* that that's correct across every category, not new
  * behavior this resolver still needs.
+ *
+ * Leaf `0.i.iii.zi` audit result: every one of the 12 current
+ * `categories` (`lib/mock-data.ts`) was checked against
+ * `CATEGORY_THEMES` — only `finance` ("Vault") and `reading`
+ * ("Sanctuary") have a register; the other 10 (`system`, `multimedia`,
+ * `games`, `internet`, `navigation`, `science-education`, `theming`,
+ * `time`, `writing`, `development`) correctly resolve to `undefined`
+ * in both modes, which `CategoryThemeScope` renders as `children` with
+ * no wrapping element — meaning those pages are never left unstyled,
+ * they simply keep whatever `0.b` base tokens `app/globals.css`'s
+ * `[data-theme]` block already applied at the document root. Verified
+ * two ways: (1) a faithful reimplementation of this lookup run for all
+ * 12 slugs × both modes confirmed `hasRegister === (resolved tokens
+ * truthy)` with zero mismatches; (2) `next build` + `next start`,
+ * fetching `/categories/games` (unregistered) and `/categories/finance`
+ * (registered) — `games` has zero `--color-bg` occurrences anywhere in
+ * the HTML (no scoped override emitted at all) while still carrying
+ * `data-theme="dark"` on `<html>` (the base theme, applied via
+ * `globals.css`'s attribute selector, not inline style — this is what
+ * "never unstyled" actually rests on), and `finance` does emit its
+ * Vault dark token (`--color-bg:#07080a`) as expected. No code change
+ * was needed for this to hold — this leaf is the audit that confirms
+ * it holds for every category today and stays true as new categories
+ * are added, since a new unregistered slug takes the exact same path
+ * through `resolveCategoryTheme` and `CategoryThemeScope` that every
+ * currently-unregistered category already does.
  */
 export function resolveCategoryTheme(
   categorySlug: Category["slug"] | undefined,
