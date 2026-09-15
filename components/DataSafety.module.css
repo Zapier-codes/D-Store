@@ -1,0 +1,64 @@
+/*
+ * Data safety disclosure styles — leaf 0.j.iii.zo. Same always-visible
+ * callout shell as PermissionsDisclosure (0.f.ii.zo) / PlayStoreDisclosure
+ * (0.f.ii.zi) for visual consistency across the Transparency subsection —
+ * .wrapper/.label/.list/.item/.code/.empty are copied verbatim from
+ * PermissionsDisclosure.module.css rather than inventing a fourth variant
+ * of the same look. .facts is the one new rule this component needs, for
+ * the three always-shown yes/no lines below the data-types list.
+ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  margin: 0;
+}
+
+.code {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  font-size: 0.8rem;
+}
+
+.empty {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.4rem 0 0;
+  padding: 0.6rem 0 0;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--color-border);
+}

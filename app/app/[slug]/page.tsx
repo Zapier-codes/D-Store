@@ -10,6 +10,7 @@ import ChecksumDisplay from "@/components/ChecksumDisplay";
 import SignatureInfo from "@/components/SignatureInfo";
 import PlayStoreDisclosure from "@/components/PlayStoreDisclosure";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
+import DataSafety from "@/components/DataSafety";
 import ReportAppForm from "@/components/ReportAppForm";
 import InstallButton from "@/components/InstallButton";
 import StickyInstallBar from "@/components/StickyInstallBar";
@@ -35,7 +36,10 @@ import styles from "./page.module.css";
  * (content/age rating, e.g. "Everyone", added to the same stats row
  * next to the star rating — the `0.j.iii` audit note's first finding:
  * a real Play Store trust signal this repo had nowhere in its data
- * model at all until this leaf). This is the route
+ * model at all until this leaf), and now 0.j.iii.zo ("Data Safety"
+ * section — what data the app collects and whether it's shared,
+ * distinct from Permissions above; the audit note's second finding).
+ * This is the route
  * `/app/[slug]` itself (created by 0.e.i.zi) — every card/hero link
  * built so far (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as
  * a forward reference.
@@ -182,6 +186,13 @@ export default async function AppDetailPage({
           Permissions
         </h2>
         <PermissionsDisclosure permissions={app.permissions} />
+      </section>
+
+      <section aria-labelledby="data-safety-heading">
+        <h2 id="data-safety-heading" className={styles.sectionTitle}>
+          Data Safety
+        </h2>
+        <DataSafety dataSafety={app.data_safety} />
       </section>
 
       <section aria-labelledby="report-heading">

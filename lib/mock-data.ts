@@ -118,10 +118,43 @@ export interface App {
    * instead of a loose `string`.
    */
   content_rating: ContentRating;
+
+  /**
+   * Dummy — leaf 0.j.iii.zo (the `0.j.iii` audit note's second finding:
+   * distinct from `permissions[]`, 0.f.ii.zo — permissions are the
+   * Android runtime grants an app can request; data safety is what
+   * actually happens to any data once collected. Zero mentions of this
+   * disclosure anywhere in `docs/D-STORE.md` or this file before the
+   * `0.j.iii` audit).
+   *
+   * `shared_with_third_parties` is `false` for every app here on
+   * purpose, not left unconsidered: no app in this catalog ships an ad
+   * SDK or analytics vendor (FOSS-only catalog; D-Store's own
+   * Sponsored shelf cards, Section 4A, are house ads at the shelf
+   * level, never a per-app third-party integration), so there's no
+   * honest way to model real third-party sharing for any of the 15.
+   * `collects_data` does genuinely vary though: several apps read
+   * something purely on-device to do their actual job (Battery Live
+   * reads battery stats, MinCal Widget reads calendar events, Ledger
+   * Vault stores financial entries locally) without that data ever
+   * leaving the device — that's still "collects" per Play's own
+   * definition, just never shared or transmitted.
+   */
+  data_safety: DataSafetyInfo;
 }
 
 /** Play Store's actual content/age rating tiers. Every app in this dummy catalog is `"Everyone"` — see the `content_rating` field comment on `App` for why. */
 export type ContentRating = "Everyone" | "Everyone 10+" | "Teen" | "Mature 17+" | "Adults only 18+";
+
+/** See the `data_safety` field comment on `App` for why `shared_with_third_parties` is uniformly `false` while `collects_data`/`data_types` vary per app. */
+export interface DataSafetyInfo {
+  collects_data: boolean;
+  /** Play's actual per-app category names (e.g. "Financial info", "App activity"). Empty when `collects_data` is `false`. */
+  data_types: string[];
+  shared_with_third_parties: boolean;
+  data_encrypted_in_transit: boolean;
+  can_request_data_deletion: boolean;
+}
 
 /**
  * ISO 3166-1 alpha-2 codes this dummy catalog treats as "available" —
@@ -236,6 +269,13 @@ export const apps: App[] = [
     changelog: "Improved repo index signature verification and faster mirror fallback.",
     developer_slug: "fdroid",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: true,
+      data_types: ["App info and performance"],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -276,6 +316,13 @@ export const apps: App[] = [
     changelog: "Updated icon pack for CM12.1 compatibility.",
     developer_slug: "afzalmakkelamba",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -316,6 +363,13 @@ export const apps: App[] = [
     changelog: "Initial release.",
     developer_slug: "nagracks",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: true,
+      data_types: ["Device or other IDs"],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: ["US", "GB", "IN"],
   },
   {
@@ -356,6 +410,13 @@ export const apps: App[] = [
     changelog: "Added a saved-colors palette.",
     developer_slug: "blackjackdavy",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -396,6 +457,13 @@ export const apps: App[] = [
     changelog: "Fixed toggle state not persisting across reboot.",
     developer_slug: "jamiesanson",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: true,
+      data_types: ["Device or other IDs"],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: ["US", "GB", "CA", "AU"],
   },
   {
@@ -436,6 +504,13 @@ export const apps: App[] = [
     changelog: "Added widget resize handles for 4x2 and 4x3 layouts.",
     developer_slug: "tommy-geenexus",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: true,
+      data_types: ["Personal info"],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -476,6 +551,13 @@ export const apps: App[] = [
     changelog: "Smoother glow animation curve.",
     developer_slug: "dreamingincodezh",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: ["US", "DE", "FR", "JP"],
   },
   {
@@ -516,6 +598,13 @@ export const apps: App[] = [
     changelog: "Added icons for 12 more apps.",
     developer_slug: "klaernie",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -556,6 +645,13 @@ export const apps: App[] = [
     changelog: "Fixed status bar icon contrast on CM13.",
     developer_slug: "amexia-theme",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -596,6 +692,13 @@ export const apps: App[] = [
     changelog: "Initial release for CM13.",
     developer_slug: "enhancement-theme",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: ["US", "GB", "DE"],
   },
   {
@@ -636,6 +739,13 @@ export const apps: App[] = [
     changelog: "Updated to Fira Sans 4.2 metrics.",
     developer_slug: "mozilla",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -676,6 +786,13 @@ export const apps: App[] = [
     changelog: "Added 40 new app icons.",
     developer_slug: "icecons",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -716,6 +833,13 @@ export const apps: App[] = [
     changelog: "Initial release.",
     developer_slug: "greyscale-theme",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: false,
+      data_types: [],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: ["US", "CA"],
   },
   // The two entries below are new — leaf 0.i.i.zo. Unlike everything
@@ -764,6 +888,13 @@ export const apps: App[] = [
     changelog: "Added recurring-transaction rules and a net-worth trendline.",
     developer_slug: "ledger-vault-app",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: true,
+      data_types: ["Financial info", "App activity"],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -805,6 +936,13 @@ export const apps: App[] = [
     changelog: "Added adjustable type size and a daily reading reminder toggle.",
     developer_slug: "quiet-verse",
     content_rating: "Everyone",
+    data_safety: {
+      collects_data: true,
+      data_types: ["App activity"],
+      shared_with_third_parties: false,
+      data_encrypted_in_transit: true,
+      can_request_data_deletion: true,
+    },
     available_regions: [...ALL_REGIONS],
   },
 ];
