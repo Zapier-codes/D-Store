@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `1.a.i.zo`** *(Phase 1 — Foundation, Data Model Migration — Add `is_featured`, `is_editors_pick` flags to the app entity. Phase 0 — UI Revamp is complete as of `0.h.ii.zo`; sequencing reverts to the original phase order. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `1.a.ii.zi`** *(Phase 1 — Foundation, Data Model Migration, Trust & safety fields — Add `sha256_checksum` field to the app entity. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -157,7 +157,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 **1.a — Data Model Migration**
 - 1.a.i — Core metrics fields
   - [x] 1.a.i.zi — Add `install_count`, `avg_rating`, `rating_count` to the app entity
-  - [ ] 1.a.i.zo — Add `is_featured`, `is_editors_pick` flags
+  - [x] 1.a.i.zo — Add `is_featured`, `is_editors_pick` flags — real data-model migration (distinct from the same-named dummy fields already in `lib/mock-data.ts`'s `App` interface, added earlier as part of Phase 0's UI scaffold, `0.a.ii.zi`). `legacy-symfony/src/Melodycode/FossdroidBundle/Entity/Application.php` gains two `boolean` properties plus `setIsFeatured`/`getIsFeatured`/`setIsEditorsPick`/`getIsEditorsPick`, placed and styled identically to `1.a.i.zi`'s `install_count`/`avg_rating`/`rating_count` addition (same PHPDoc shape, same fluent-setter-returns-`$this` convention, same boolean-getter naming as the existing `getIsPublished`, not an `isX()`-style name). `Application.orm.yml` gains matching `is_featured`/`is_editors_pick` boolean columns with `options: default: false` — same "safe against existing rows" reasoning `1.a.i.zi`'s numeric fields used `default: 0` for, rather than leaving them nullable/undefined the way `is_published` (an original-schema column, always explicitly set at insert time) is. No PHP interpreter available in this sandbox to run a real syntax check, so verified by inspection instead: brace/paren counts across the whole file are balanced pre- and post-edit, the file still ends on the class's closing brace, and the new methods are byte-for-byte structurally identical to `getIsPublished`/`setIsPublished`'s template. The YAML was validated for real, parsed with `yaml.safe_load` to confirm both new fields deserialize with the correct `type`/`options.default`. This is real backend-schema work sitting alongside a still-Phase-0-scaffolded dummy-data UI — the two `is_featured`/`is_editors_pick` concepts stay independent until Supabase (`5.f.i`) actually replaces `lib/catalog.ts`'s internals; nothing in `lib/` or `app/` was touched by this leaf.
 - 1.a.ii — Trust & safety fields
   - [ ] 1.a.ii.zi — Add `sha256_checksum` field
   - [ ] 1.a.ii.zo — Add `play_store_rejection_reason` field

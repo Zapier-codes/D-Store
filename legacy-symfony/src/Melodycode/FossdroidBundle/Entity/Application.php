@@ -110,6 +110,16 @@ class Application
     private $rating_count;
 
     /**
+     * @var boolean
+     */
+    private $is_featured;
+
+    /**
+     * @var boolean
+     */
+    private $is_editors_pick;
+
+    /**
      * @var \DateTime
      */
     private $created_at;
@@ -583,6 +593,52 @@ class Application
     public function getRatingCount()
     {
         return $this->rating_count;
+    }
+
+    /**
+     * Set is_featured
+     *
+     * @param boolean $isFeatured
+     * @return Application
+     */
+    public function setIsFeatured($isFeatured)
+    {
+        $this->is_featured = $isFeatured;
+
+        return $this;
+    }
+
+    /**
+     * Get is_featured
+     *
+     * @return boolean 
+     */
+    public function getIsFeatured()
+    {
+        return $this->is_featured;
+    }
+
+    /**
+     * Set is_editors_pick
+     *
+     * @param boolean $isEditorsPick
+     * @return Application
+     */
+    public function setIsEditorsPick($isEditorsPick)
+    {
+        $this->is_editors_pick = $isEditorsPick;
+
+        return $this;
+    }
+
+    /**
+     * Get is_editors_pick
+     *
+     * @return boolean 
+     */
+    public function getIsEditorsPick()
+    {
+        return $this->is_editors_pick;
     }
 
     /**

@@ -61,6 +61,14 @@ Melodycode\FossdroidBundle\Entity\Application:
             type: integer
             options:
                 default: 0
+        is_featured:
+            type: boolean
+            options:
+                default: false
+        is_editors_pick:
+            type: boolean
+            options:
+                default: false
         created_at:
             type: date
         updated_at:
