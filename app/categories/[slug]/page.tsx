@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getCategoryBySlug, getApps } from "@/lib/catalog";
+import { getTheme } from "@/lib/theme";
+import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import CategoryFilters from "@/components/CategoryFilters";
@@ -30,6 +32,12 @@ import styles from "./page.module.css";
  * category at all" from "filters excluded everything" — the search
  * page above uses the same component for its own, differently-worded
  * empty case.
+ *
+ * `<main>` is now wrapped in `CategoryThemeScope` (`0.i.ii.zo`),
+ * `categorySlug={slug}` directly — this page already *is* one
+ * category's context, unlike the app detail page which has to reach
+ * for `app.category`. Re-skins when `slug` has a register
+ * (`lib/category-theme.ts`), does nothing otherwise.
  */
 export default async function CategoryPage({
   params,
@@ -54,37 +62,40 @@ export default async function CategoryPage({
     license: license || undefined,
     maxSizeMb: maxSize ? Number(maxSize) : undefined,
   });
+  const mode = await getTheme();
 
   return (
-    <main className={styles.main}>
-      <h1 className={styles.heading}>{category.name}</h1>
+    <CategoryThemeScope categorySlug={slug} mode={mode}>
+      <main className={styles.main}>
+        <h1 className={styles.heading}>{category.name}</h1>
 
-      {allApps.length > 0 && (
-        <CategoryFilters
-          categorySlug={slug}
-          licenses={licenses}
-          selectedLicense={license}
-          selectedMaxSize={maxSize}
-        />
-      )}
+        {allApps.length > 0 && (
+          <CategoryFilters
+            categorySlug={slug}
+            licenses={licenses}
+            selectedLicense={license}
+            selectedMaxSize={maxSize}
+          />
+        )}
 
-      {apps.length === 0 ? (
-        <EmptyState
-          kind="filter"
-          heading={allApps.length === 0 ? "No apps yet" : "No matches"}
-          message={
-            allApps.length === 0
-              ? "No apps in this category yet."
-              : "No apps in this category match the selected filters."
-          }
-        />
-      ) : (
-        <ShelfGrid>
-          {apps.map((app) => (
-            <AppCard key={app.slug} app={app} />
-          ))}
-        </ShelfGrid>
-      )}
-    </main>
+        {apps.length === 0 ? (
+          <EmptyState
+            kind="filter"
+            heading={allApps.length === 0 ? "No apps yet" : "No matches"}
+            message={
+              allApps.length === 0
+                ? "No apps in this category yet."
+                : "No apps in this category match the selected filters."
+            }
+          />
+        ) : (
+          <ShelfGrid>
+            {apps.map((app) => (
+              <AppCard key={app.slug} app={app} />
+            ))}
+          </ShelfGrid>
+        )}
+      </main>
+    </CategoryThemeScope>
   );
 }

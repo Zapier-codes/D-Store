@@ -1,0 +1,13 @@
+/*
+ * Leaf 0.i.ii.zo. Not a new transition mechanism — the same
+ * background-color/color fade `app/globals.css` already defines on
+ * `body` for the light/dark toggle (0.b.iii.zo), same duration,
+ * easing, and prefers-reduced-motion gating, just also applied to
+ * this wrapper so a category-themed section's own background/border
+ * fades along with it rather than only the page background doing so.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .scope {
+    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+  }
+}

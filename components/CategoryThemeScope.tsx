@@ -2,14 +2,15 @@ import type { CSSProperties } from "react";
 import type { Category } from "@/lib/mock-data";
 import type { Theme } from "@/lib/theme";
 import { resolveCategoryTheme, type CategoryThemeTokens } from "@/lib/category-theme";
+import styles from "./CategoryThemeScope.module.css";
 
 /**
- * Category-theme scope — leaf 0.i.ii.zi, the "emit it as scoped CSS
- * custom properties" half of the resolver. Wiring this into the
- * actual detail/browse pages is a separate leaf (0.i.ii.zo) — nothing
- * imports this component into a real page yet, same build-the-
- * primitive-before-the-consumer pattern this repo has followed
- * throughout (e.g. ShelfGrid, 0.c.ii.zi, before any card populated it).
+ * Category-theme scope — leaf 0.i.ii.zi (resolver + scoped emission),
+ * wired into real pages by 0.i.ii.zo: `app/app/[slug]/page.tsx` (App
+ * Detail, 0.e) wraps its `<main>` with this, `categorySlug={app.category}`;
+ * `app/categories/[slug]/page.tsx` (category browse, 0.g.ii) does the
+ * same with `categorySlug={slug}` directly, since that page already
+ * *is* one category's context.
  *
  * Server-rendered, no client JS: the inline `style` block is computed
  * during render from `resolveCategoryTheme()`, the same no-flash
@@ -23,7 +24,18 @@ import { resolveCategoryTheme, type CategoryThemeTokens } from "@/lib/category-t
  * a `<div>` — CSS custom properties cascade to descendants the normal
  * way, so nothing inside needs to know it's inside a category skin
  * versus the plain base theme; it just reads the same variable names
- * either way.
+ * either way. Both consumers wrap only their page's own `<main>`, never
+ * anything in `app/layout.tsx` (`Header`/`Footer`) — those live
+ * structurally outside this component entirely, in the shared layout,
+ * so "never leaks into the global header/footer/nav chrome" (this
+ * leaf's own requirement) falls out of where this component is placed,
+ * not anything it has to actively guard against.
+ *
+ * `CategoryThemeScope.module.css`'s `.scope` reuses `0.b.iii.zo`'s
+ * exact fade convention (same duration/easing/reduced-motion gating)
+ * rather than inventing a new transition mechanism, applied here too
+ * so a category-themed section's own background/border fades the same
+ * way the page background already does on a light/dark toggle.
  *
  * When the category has no register, `resolveCategoryTheme` returns
  * `undefined` and this renders children with no wrapping element at
@@ -45,7 +57,11 @@ export default function CategoryThemeScope({
     return <>{children}</>;
   }
 
-  return <div style={tokensToStyle(tokens)}>{children}</div>;
+  return (
+    <div className={styles.scope} style={tokensToStyle(tokens)}>
+      {children}
+    </div>
+  );
 }
 
 function tokensToStyle(tokens: CategoryThemeTokens): CSSProperties {
