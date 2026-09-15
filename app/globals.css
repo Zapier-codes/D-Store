@@ -34,6 +34,21 @@
   /* Hairlines, dividers, card outlines */
   --color-border: #2a2419;
 
+  /*
+   * --color-accent-strong — leaf 3.a.ii.zi. The light theme (0.b.ii.zo)
+   * defined this token for hover/active/pressed feedback but the dark
+   * theme never got the equivalent, so any component using it would
+   * have silently fallen back to an unset variable in dark mode. A
+   * darker, more saturated gold than --color-accent, for the same
+   * reason 0.b.ii.zo's light-theme variant is deliberately
+   * higher-contrast than the resting accent: pressed-state feedback
+   * needs to read clearly, not just repeat the hover color. Approx.
+   * contrast (relative-luminance formula, sRGB) against near-black
+   * --color-bg/--color-surface: ~7.5:1 — clears AA (4.5:1) and the 3:1
+   * bar for large text/UI components with margin to spare.
+   */
+  --color-accent-strong: #b8942e;
+
   /* Cinematic vignette: subtle gold glow up top, darkened edges */
   --gradient-vignette:
     radial-gradient(ellipse 120% 60% at 50% -10%, rgba(212, 175, 55, 0.10), transparent 55%),

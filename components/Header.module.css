@@ -64,6 +64,17 @@
   display: block;
 }
 
+/* Press state — leaf 3.a.ii.zi. A real tappable icon button, so the scale-down treatment fits, same as ThemeToggle's. */
+@media (prefers-reduced-motion: no-preference) {
+  .navToggleLabel {
+    transition: transform 100ms ease;
+  }
+
+  .navToggleLabel:active {
+    transform: scale(0.9);
+  }
+}
+
 .navCheckbox:focus-visible ~ .navToggleLabel {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -79,11 +90,17 @@
   color: inherit;
   text-decoration: none;
   font-size: 0.95rem;
+  transition: color 150ms ease;
 }
 
 .navLink:hover,
 .navLink:focus-visible {
   color: var(--color-accent);
+}
+
+/* Press state — leaf 3.a.ii.zi, same text-link opacity-dim treatment as ExpandableDescription's toggle. */
+.navLink:active {
+  opacity: 0.65;
 }
 
 @media (max-width: 640px) {

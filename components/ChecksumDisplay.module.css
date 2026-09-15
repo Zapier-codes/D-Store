@@ -43,12 +43,30 @@
   border-radius: 6px;
   cursor: pointer;
   min-width: 4.5rem;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
 .copyButton:hover,
 .copyButton:focus-visible {
   background: var(--color-accent);
   color: var(--color-bg);
+}
+
+/* Press state — leaf 3.a.ii.zi, same treatment as SignatureInfo's identical copyButton. */
+.copyButton:active {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+  color: var(--color-bg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .copyButton {
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease;
+  }
+
+  .copyButton:active {
+    transform: scale(0.97);
+  }
 }
 
 .srOnly {

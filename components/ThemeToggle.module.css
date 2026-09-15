@@ -12,6 +12,7 @@
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
+  transition: border-color 150ms ease;
 }
 
 .toggle:hover,
@@ -27,4 +28,15 @@
 .toggle:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* Press state — leaf 3.a.ii.zi. */
+@media (prefers-reduced-motion: no-preference) {
+  .toggle {
+    transition: border-color 150ms ease, transform 100ms ease;
+  }
+
+  .toggle:not(:disabled):active {
+    transform: scale(0.9);
+  }
 }

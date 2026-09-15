@@ -80,6 +80,27 @@
   border-radius: 999px;
 }
 
+/*
+ * Press state — leaf 3.a.ii.zi. `.navButton` already carries a static
+ * `translateY(-50%)` for vertical centering (see below) — its `:active`
+ * has to compose `scale()` alongside that, not replace it, or the
+ * press feedback would also un-center the button.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .closeButton,
+  .navButton {
+    transition: transform 100ms ease;
+  }
+
+  .closeButton:active {
+    transform: scale(0.9);
+  }
+
+  .navButton:active {
+    transform: translateY(-50%) scale(0.9);
+  }
+}
+
 .navButton {
   position: absolute;
   top: 50%;

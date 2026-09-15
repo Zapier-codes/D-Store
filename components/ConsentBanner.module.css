@@ -46,6 +46,7 @@
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
+  transition: opacity 150ms ease, background-color 150ms ease, border-color 150ms ease;
 }
 
 .button:hover,
@@ -61,4 +62,26 @@
 .button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/*
+ * Press state — leaf 3.a.ii.zi. Uses --color-accent-strong (added this
+ * leaf for dark-theme parity) rather than repeating the hover opacity
+ * dim, so a press reads as a distinct, deliberate darker tone instead
+ * of "the same hover, held a bit longer."
+ */
+.button:not(:disabled):active {
+  opacity: 1;
+  background-color: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .button {
+    transition: opacity 150ms ease, background-color 150ms ease, border-color 150ms ease, transform 100ms ease;
+  }
+
+  .button:not(:disabled):active {
+    transform: scale(0.97);
+  }
 }

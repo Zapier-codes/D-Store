@@ -52,3 +52,14 @@
 .toggle:focus-visible {
   text-decoration: underline;
 }
+
+/*
+ * Press state — leaf 3.a.ii.zi. A plain text-style link-button (no
+ * bordered box), so a scale-transform would look out of place here
+ * the way it doesn't for the chip/pill-shaped buttons elsewhere — an
+ * opacity dim reads as "pressed" without implying the text itself
+ * shrank.
+ */
+.toggle:active {
+  opacity: 0.65;
+}

@@ -45,6 +45,7 @@
   padding: 0.4rem 0.9rem;
   border-radius: 6px;
   cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
 .submit:disabled {
@@ -56,6 +57,23 @@
 .submit:not(:disabled):focus-visible {
   background: var(--color-accent);
   color: var(--color-bg);
+}
+
+/* Press state — leaf 3.a.ii.zi, same --color-accent-strong convention as ConsentBanner's button. */
+.submit:not(:disabled):active {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+  color: var(--color-bg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .submit {
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease;
+  }
+
+  .submit:not(:disabled):active {
+    transform: scale(0.97);
+  }
 }
 
 .confirmation {

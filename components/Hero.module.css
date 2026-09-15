@@ -130,6 +130,7 @@
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  transition: background-color 150ms ease;
 }
 
 .cta:hover,
@@ -140,6 +141,26 @@
 .cta:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/*
+ * Press state — leaf 3.a.ii.zi. Uses --color-accent-strong (the
+ * dark-theme value added this same leaf) rather than the hover's
+ * lighter color-mix — pressed reads as a distinct darker tone, not
+ * "the hover, but held."
+ */
+.cta:active {
+  background-color: var(--color-accent-strong);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cta {
+    transition: background-color 150ms ease, transform 100ms ease;
+  }
+
+  .cta:active {
+    transform: scale(0.97);
+  }
 }
 
 @media (max-width: 560px) {

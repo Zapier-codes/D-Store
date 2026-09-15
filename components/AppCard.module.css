@@ -20,6 +20,7 @@
   text-decoration: none;
   color: inherit;
   min-height: 44px;
+  transition: border-color 150ms ease;
 }
 
 .card:hover,
@@ -30,6 +31,26 @@
 .card:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/*
+ * Press state — leaf 3.a.ii.zi. Hover/focus (above) already existed
+ * from 0.c.ii.zo but had no transition (an instant color snap) and no
+ * distinct tactile feedback for an actual tap/click vs. just hovering.
+ * A slight scale-down on :active gives that "the card physically
+ * responded to your press" feedback Play-Store-style dense grids rely
+ * on, gated behind prefers-reduced-motion since it's a transform, the
+ * same convention every other transform-based effect in this repo
+ * follows (ScrollReveal, Hero mount reveal, Lightbox fade).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .card {
+    transition: border-color 150ms ease, transform 100ms ease;
+  }
+
+  .card:active {
+    transform: scale(0.97);
+  }
 }
 
 .icon {

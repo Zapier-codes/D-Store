@@ -62,6 +62,17 @@
   border-radius: 16px;
 }
 
+/* Press state — leaf 3.a.ii.zi. */
+@media (prefers-reduced-motion: no-preference) {
+  .slideButton {
+    transition: transform 100ms ease;
+  }
+
+  .slideButton:active {
+    transform: scale(0.97);
+  }
+}
+
 .placeholder {
   /* Portrait phone-screenshot aspect ratio. */
   width: 62vw;
