@@ -1,14 +1,16 @@
 /*
- * Install-button styles — leaf 3.a.iv.zi.
+ * Install-button styles — leaf 3.a.iv.zi, extended by 3.a.iv.zo
+ * (progress-fill animation on `.fill`, below).
  *
  * Filled pill button, same shape/token set as Hero's `.cta`
  * (components/Hero.module.css) so it reads as the same "primary
  * action" affordance wherever it appears. `[data-state]` drives the
- * three visual states; `3.a.iv.zo` adds the progress-fill on top of
- * `[data-state="installing"]` without needing a new state here.
+ * three visual states.
  */
 
 .button {
+  position: relative;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -54,8 +56,52 @@
   font-weight: 700;
 }
 
+/* 3.a.iv.zo — sits above the button's own background, under the label text. */
+.label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background-color: var(--color-accent-strong);
+  z-index: 0;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .button {
     transition: filter 150ms ease, background-color 150ms ease;
   }
+
+  /* animation-duration is set inline per-render from InstallButton.tsx's
+     SIMULATED_INSTALL_MS, so the visual fill always matches the real
+     setTimeout that flips the button to "installed" — one constant
+     driving both. */
+  .fill {
+    animation: install-fill linear forwards;
+  }
+
+  @keyframes install-fill {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
 }
+
+/* Reduced-motion fallback: no bar at all, just the flat dimmed
+   "installing" state 3.a.iv.zi already shipped — same "already
+   revealed, no animation" fallback ScrollReveal (3.a.i.zi) uses. */
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    display: none;
+  }
+}
+
