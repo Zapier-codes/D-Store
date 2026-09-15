@@ -1,0 +1,35 @@
+/*
+ * Scroll-reveal animation — leaf 3.a.i.zi.
+ *
+ * Fade + slide-up, a common and unobtrusive "content settles into
+ * place" reveal rather than anything flashier — this is a utility
+ * meant to be reused across many different sections (3.a.i.zo), so it
+ * needs to read as a subtle assist, not draw attention to itself on
+ * every shelf/hero it eventually wraps.
+ *
+ * The `prefers-reduced-motion` block here is a CSS-level backstop for
+ * the same check `lib/useScrollReveal.ts` already does in JS: the hook
+ * sets `isRevealed` true immediately for a reduced-motion visitor, but
+ * this covers the sliver of time between first paint and that effect
+ * running, so nothing ever animates for that visitor, not even
+ * briefly.
+ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
