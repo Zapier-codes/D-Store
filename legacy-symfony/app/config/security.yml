@@ -1,12 +1,39 @@
 security:
+    encoders:
+        Symfony\Component\Security\Core\User\User: bcrypt
+
     providers:
         in_memory:
-            memory: ~
+            memory:
+                users:
+                    # Password hash comes from %admin_password_hash% (see
+                    # app/config/parameters.yml.dist) — not committed in
+                    # plaintext or hardcoded here. Generate a real hash
+                    # per-deployment, e.g. via Symfony's
+                    # `security:encode-password` console command.
+                    admin:
+                        password: "%admin_password_hash%"
+                        roles: "ROLE_ADMIN"
 
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
+        # Leaf 2.b.iii.zo — gates the admin report queue. HTTP Basic
+        # (not a login form/session) because there's exactly one admin
+        # route so far and no broader admin-auth system yet; a real
+        # login flow is Phase 3's job (3.c, Admin/Editorial Tools),
+        # which will very likely replace this firewall wholesale rather
+        # than extend it.
+        admin:
+            pattern: ^/admin
+            http_basic:
+                realm: "D-Store Admin"
+            anonymous: ~
+
         default:
             anonymous: ~
+
+    access_control:
+        - { path: ^/admin, roles: ROLE_ADMIN }

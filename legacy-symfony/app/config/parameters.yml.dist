@@ -14,6 +14,13 @@ parameters:
     locale:            en
     secret:            ThisTokenIsNotSoSecretChangeIt
 
+    # Leaf 2.b.iii.zo — bcrypt hash for the single in-memory "admin"
+    # user gating /admin (app/config/security.yml). Generate a real
+    # hash per-deployment (e.g. `php app/console security:encode-password`)
+    # and set it in the untracked parameters.yml — never commit a real
+    # hash here, this .dist file is version-controlled.
+    admin_password_hash: ~
+
     debug_toolbar:          true
     debug_redirects:        false
     use_assetic_controller: true

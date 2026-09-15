@@ -22,3 +22,6 @@ s:
         _controller: FrameworkBundle:Redirect:redirect
         route: homepage
         permanent: true
+admin_report_queue:
+    path: /admin/reports
+    defaults: { _controller: MelodycodeFossdroidBundle:Admin:reportQueue }

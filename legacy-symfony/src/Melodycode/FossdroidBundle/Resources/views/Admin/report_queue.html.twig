@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Report queue — D-Store Admin</title>
+        <meta name="robots" content="noindex, nofollow">
+        <style>
+            body { font-family: sans-serif; margin: 2rem; color: #222; }
+            h1 { font-size: 1.25rem; }
+            table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+            th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #ddd; vertical-align: top; }
+            th { font-size: 0.85rem; text-transform: uppercase; color: #666; }
+            .empty { color: #666; margin-top: 1rem; }
+        </style>
+    </head>
+    <body>
+        {#
+            Standalone template — deliberately does NOT extend
+            MelodycodeFossdroidBundle::base.html.twig. That base pulls in
+            the public storefront's search widget and category nav via
+            render(controller(...)) calls, which don't belong on an
+            internal admin tool. Kept intentionally plain; a styled admin
+            shell is Phase 3's job (3.c, Admin/Editorial Tools).
+        #}
+        <h1>Open reports</h1>
+
+        {% if reports|length == 0 %}
+            <p class="empty">No open reports.</p>
+        {% else %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>App</th>
+                        <th>Reason</th>
+                        <th>Details</th>
+                        <th>Reported</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                        <tr>
+                            <td>
+                                {% if report.application %}
+                                    <a href="{{ path('application', { slug: report.application.slug }) }}">{{ report.application.name }}</a>
+                                {% else %}
+                                    <em>(app deleted)</em>
+                                {% endif %}
+                            </td>
+                            <td>{{ report.reason }}</td>
+                            <td>{{ report.details|default('—') }}</td>
+                            <td>{{ report.createdAt ? report.createdAt|date('Y-m-d H:i') : '—' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </body>
+</html>
