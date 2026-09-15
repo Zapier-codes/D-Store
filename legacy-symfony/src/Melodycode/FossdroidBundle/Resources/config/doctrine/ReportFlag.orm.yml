@@ -1,0 +1,26 @@
+Melodycode\FossdroidBundle\Entity\ReportFlag:
+    type: entity
+    repositoryClass: Melodycode\FossdroidBundle\Entity\ReportFlagRepository
+    table: report_flag
+    id:
+        id:
+            type: string
+            id: true
+    fields:
+        reason:
+            type: string
+        details:
+            type: text
+            nullable: true
+        status:
+            type: string
+            options:
+                default: open
+        created_at:
+            type: date
+    manyToOne:
+        application:
+          targetEntity: Melodycode\FossdroidBundle\Entity\Application
+          joinColumn:
+            name: application_id
+            referencedColumnName: id

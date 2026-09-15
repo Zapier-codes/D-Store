@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `1.a.iii.zo`** *(Phase 1 — Foundation, Data Model Migration, New entities — Create `ReportFlag` entity (anonymous app reports), closing out `1.a.iii` and all of `1.a`. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `2.b.iii.zo`** *(Phase 2 — Discovery & Trust, Trust & Safety, Moderation — Report review queue (admin), the one real backend leaf inside an otherwise-superseded `2.b` (see `0.f`). Builds on the `ReportFlag` entity from `1.a.iii.zo`. `1.a` (Data Model Migration) is now fully complete, and the `1.b`–`1.d`/`2.a`/`2.c` sections have been batch-marked superseded now that Phase 0 has shipped — see the housekeeping note under `1.a.iii.zo`. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -163,75 +163,77 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [x] 1.a.ii.zo — Add `play_store_rejection_reason` field — same file pair, same append-before-`created_at` ordering (added directly after `sha256_checksum`), and same reasoning `1.a.ii.zi` used: `Application.php` gains a `string` property plus `setPlayStoreRejectionReason`/`getPlayStoreRejectionReason`, byte-for-byte structurally identical to the `setSha256Checksum`/`getSha256Checksum` template. `Application.orm.yml` gains `play_store_rejection_reason: { type: string, nullable: true }` — `nullable: true`, not a `default:`, for the same reason `sha256_checksum` used it: a rejection reason has no sensible zero-value default to backfill existing rows with. This closes out `1.a.ii` (Trust & safety fields) in full. Ties to the existing dummy "Why not on Play Store" disclosure UI (`0.f.ii.zi`) the same way `sha256_checksum` ties to the "Verify this APK" UI — the entity-level field is exclusively the real backend schema catching up; the dummy UI's data source stays `lib/mock-data.ts` until Supabase (`5.f.i`) lands. No PHP interpreter in this sandbox; verified by inspection (brace/paren counts balanced pre/post-edit — 55/55 braces, 54/54 parens — file still ends on the class's closing brace) and the YAML validated for real via `yaml.safe_load`.
 - 1.a.iii — New entities
   - [x] 1.a.iii.zi — Create `Review` entity (anonymous, rate-limited) — new files, not an addition to `Application.php`: `Entity/Review.php`, `Entity/ReviewRepository.php` (custom `countByIpHashSince($ipHash, $applicationId, \DateTime $since)` finder, styled after `ApplicationRepository::findByPublished`'s query-builder pattern), and `Resources/config/doctrine/Review.orm.yml`. Fields: `id` (string PK, same style as `Application`'s), `rating` (integer), `comment` (text, nullable — reviews may be rating-only), `ip_hash` (string, nullable) and `created_at` (date) together are what make the entity "anonymous, rate-limited": no author/user reference at all (anonymous), and `ip_hash`+`created_at` are exactly what a rate-limit query needs (`ReviewRepository::countByIpHashSince` provides that query) — raw IPs are deliberately not stored, only a hash, consistent with the no-accounts privacy posture. `manyToOne` relation to `Application` via `application_id` → `id`, mirroring `Application`'s own `category` relation (`category_slug` → `slug`) in shape. Actual rate-limit *enforcement* (the concrete N-per-window rule and the controller that rejects over-limit submissions) is out of scope for this leaf — there's no API layer yet to enforce it in; this leaf only shapes the schema to make that enforcement possible later. Ties to the existing dummy "anonymous rating submission widget" UI (`0.e.iii.zo`) the same way `1.a.ii`'s fields tie to their dummy UI counterparts — this is exclusively the real backend schema; the dummy UI keeps reading from `lib/mock-data.ts` until Supabase (`5.f.i`) lands. No PHP interpreter in this sandbox; verified by inspection (brace/paren counts balanced in both new files — `Review.php` 13/13 braces, 14/14 parens; `ReviewRepository.php` 2/2 braces, 16/16 parens — both end on their class's closing brace) and the YAML validated for real via `yaml.safe_load`.
-  - [ ] 1.a.iii.zo — Create `ReportFlag` entity
+  - [x] 1.a.iii.zo — Create `ReportFlag` entity (anonymous app reports) — new files, same shape as `1.a.iii.zi`'s `Review`: `Entity/ReportFlag.php`, `Entity/ReportFlagRepository.php` (`findByStatus($status)` finder, newest-first, styled after `ApplicationRepository::findByPublished`), `Resources/config/doctrine/ReportFlag.orm.yml`. Fields: `id` (string PK), `reason` (string) and `details` (text, nullable) mirror the dummy `ReportAppForm.tsx`'s (`0.f.iii.zi`) fixed reason categories and optional free-text field exactly; `status` (string, default `'open'`) doesn't come from the dummy form — it exists for the future admin review queue (`2.b.iii.zo`) to filter on. Deliberately no `ip_hash`/rate-limit support here, unlike `Review`: `docs/D-STORE.md` §7 only calls `Review` "rate-limited", not `ReportFlag`, so that field would be speculative rather than spec-driven. `manyToOne` to `Application` via `application_id` → `id`, same shape as `Review`'s relation. Closes out `1.a.iii` and all of `1.a` (Data Model Migration). No PHP interpreter in this sandbox; verified by inspection (brace/paren counts balanced in both new files — `ReportFlag.php` 13/13 braces, 16/16 parens; `ReportFlagRepository.php` 2/2 braces, 11/11 parens — both end on their class's closing brace) and the YAML validated for real via `yaml.safe_load`.
 
-**1.b — Design Tokens** *(superseded — see `0.b`; leave open here, mark done only once its `0.b` counterpart ships)*
+**Housekeeping — Phase 0 supersession cleanup.** Since `1.a` closed out `1.a.iii.zo` above, and `HANDOVER.md`'s own standing instruction says to check off `1.b`–`1.d`/`2.a`/`2.c` (and `2.b`'s display leaves) "once its `0.b` [etc.] counterpart ships" — Phase 0 has been complete since before this session started — this session also batch-marked all of those as `[x]` with a pointer to the `0.x` leaf that actually shipped them. No code changed for that cleanup, only checkbox state; `2.b.iii.zo` (the one real, non-superseded leaf inside `2.b`) was left open.
+
+**1.b — Design Tokens** *(superseded — see `0.b`)*
 - 1.b.i — Dark theme, "Cinematic Gold"
-  - [ ] 1.b.i.zi — Define color tokens (bg, surface, accent, border)
-  - [ ] 1.b.i.zo — Define vignette/gradient background treatment
+  - [x] 1.b.i.zi — Define color tokens (bg, surface, accent, border) — superseded, shipped as `0.b.i.zi`
+  - [x] 1.b.i.zo — Define vignette/gradient background treatment — superseded, shipped as `0.b.i.zo`
 - 1.b.ii — Light theme, "Scientific Blue"
-  - [ ] 1.b.ii.zi — Define color tokens
-  - [ ] 1.b.ii.zo — Contrast-check accent variants (WCAG AA)
+  - [x] 1.b.ii.zi — Define color tokens — superseded, shipped as `0.b.ii.zi`
+  - [x] 1.b.ii.zo — Contrast-check accent variants (WCAG AA) — superseded, shipped as `0.b.ii.zo`
 - 1.b.iii — Theme persistence
-  - [ ] 1.b.iii.zi — Cookie-based theme storage, read server-side
-  - [ ] 1.b.iii.zo — Theme toggle transition animation (no flash)
+  - [x] 1.b.iii.zi — Cookie-based theme storage, read server-side — superseded, shipped as `0.b.iii.zi`
+  - [x] 1.b.iii.zo — Theme toggle transition animation (no flash) — superseded, shipped as `0.b.iii.zo`
 
 **1.c — Core Layout Shell** *(superseded — see `0.c`)*
 - 1.c.i — Header
-  - [ ] 1.c.i.zi — Responsive nav + search bar
-  - [ ] 1.c.i.zo — Theme toggle integration
+  - [x] 1.c.i.zi — Responsive nav + search bar — superseded, shipped as `0.c.i.zi`
+  - [x] 1.c.i.zo — Theme toggle integration — superseded, shipped as `0.c.i.zo`
 - 1.c.ii — Grid system
-  - [ ] 1.c.ii.zi — Responsive shelf-grid (2→6 columns)
-  - [ ] 1.c.ii.zo — Small/dense app-card component
+  - [x] 1.c.ii.zi — Responsive shelf-grid (2→6 columns) — superseded, shipped as `0.c.ii.zi`
+  - [x] 1.c.ii.zo — Small/dense app-card component — superseded, shipped as `0.c.ii.zo`
 - 1.c.iii — Footer
-  - [ ] 1.c.iii.zi — Legal links (Privacy, Terms, DMCA)
-  - [ ] 1.c.iii.zo — RSS link + "no account required" notice
+  - [x] 1.c.iii.zi — Legal links (Privacy, Terms, DMCA) — superseded, shipped as `0.c.iii.zi`
+  - [x] 1.c.iii.zo — RSS link + "no account required" notice — superseded, shipped as `0.c.iii.zo`
 
 **1.d — Home Page** *(superseded — see `0.d`)*
 - 1.d.i — Hero
-  - [ ] 1.d.i.zi — Cinematic hero for one featured app
-  - [ ] 1.d.i.zo — Reveal animation (respects `prefers-reduced-motion`)
+  - [x] 1.d.i.zi — Cinematic hero for one featured app — superseded, shipped as `0.d.i.zi`
+  - [x] 1.d.i.zo — Reveal animation (respects `prefers-reduced-motion`) — superseded, shipped as `0.d.i.zo`
 - 1.d.ii — Shelves
-  - [ ] 1.d.ii.zi — Featured shelf
-  - [ ] 1.d.ii.zo — Trending shelf (sorted by installs)
+  - [x] 1.d.ii.zi — Featured shelf — superseded, shipped as `0.d.ii.zi`
+  - [x] 1.d.ii.zo — Trending shelf (sorted by installs) — superseded, shipped as `0.d.ii.zo`
 - 1.d.iii — Editorial
-  - [ ] 1.d.iii.zi — Editor's Picks shelf
-  - [ ] 1.d.iii.zo — Sponsored card slot (native, clearly labeled)
+  - [x] 1.d.iii.zi — Editor's Picks shelf — superseded, shipped as `0.d.iii.zi`
+  - [x] 1.d.iii.zo — Sponsored card slot (native, clearly labeled) — superseded, shipped as `0.d.iii.zo`
 
 ### Phase 2 — Discovery & Trust
 
 **2.a — App Detail Page** *(superseded — see `0.e`)*
 - 2.a.i — Media
-  - [ ] 2.a.i.zi — Screenshot carousel
-  - [ ] 2.a.i.zo — Lightbox viewer
+  - [x] 2.a.i.zi — Screenshot carousel — superseded, shipped as `0.e.i.zi`
+  - [x] 2.a.i.zo — Lightbox viewer — superseded, shipped as `0.e.i.zo`
 - 2.a.ii — Content
-  - [ ] 2.a.ii.zi — Expandable description
-  - [ ] 2.a.ii.zo — "What's New" changelog block
+  - [x] 2.a.ii.zi — Expandable description — superseded, shipped as `0.e.ii.zi`
+  - [x] 2.a.ii.zo — "What's New" changelog block — superseded, shipped as `0.e.ii.zo`
 - 2.a.iii — Ratings
-  - [ ] 2.a.iii.zi — Rating stars + histogram
-  - [ ] 2.a.iii.zo — Anonymous rating submission (rate-limited)
+  - [x] 2.a.iii.zi — Rating stars + histogram — superseded, shipped as `0.e.iii.zi`
+  - [x] 2.a.iii.zo — Anonymous rating submission (rate-limited) — superseded, shipped as `0.e.iii.zo`
 
 **2.b — Trust & Safety** *(display/UI leaves superseded — see `0.f`; `2.b.iii.zo` admin queue is real backend work, not superseded)*
 - 2.b.i — APK verification
-  - [ ] 2.b.i.zi — SHA256 checksum display
-  - [ ] 2.b.i.zo — Digital signature info display
+  - [x] 2.b.i.zi — SHA256 checksum display — superseded, shipped as `0.f.i.zi`
+  - [x] 2.b.i.zo — Digital signature info display — superseded, shipped as `0.f.i.zo`
 - 2.b.ii — Transparency
-  - [ ] 2.b.ii.zi — "Why not on Play Store" disclosure UI
-  - [ ] 2.b.ii.zo — Permissions disclosure list
+  - [x] 2.b.ii.zi — "Why not on Play Store" disclosure UI — superseded, shipped as `0.f.ii.zi`
+  - [x] 2.b.ii.zo — Permissions disclosure list — superseded, shipped as `0.f.ii.zo`
 - 2.b.iii — Moderation
-  - [ ] 2.b.iii.zi — Anonymous "Report app" form
+  - [x] 2.b.iii.zi — Anonymous "Report app" form — superseded, shipped as `0.f.iii.zi`
   - [ ] 2.b.iii.zo — Report review queue (admin)
 
 **2.c — Search & Category** *(superseded — see `0.g`)*
 - 2.c.i — Search
-  - [ ] 2.c.i.zi — Instant search suggestions
-  - [ ] 2.c.i.zo — Search results page
+  - [x] 2.c.i.zi — Instant search suggestions — superseded, shipped as `0.g.i.zi`
+  - [x] 2.c.i.zo — Search results page — superseded, shipped as `0.g.i.zo`
 - 2.c.ii — Category browse
-  - [ ] 2.c.ii.zi — Category grid page
-  - [ ] 2.c.ii.zo — Advanced filters (license, size)
+  - [x] 2.c.ii.zi — Category grid page — superseded, shipped as `0.g.ii.zi`
+  - [x] 2.c.ii.zo — Advanced filters (license, size) — superseded, shipped as `0.g.ii.zo`
 - 2.c.iii — Related content
-  - [ ] 2.c.iii.zi — Similar-apps rail
-  - [ ] 2.c.iii.zo — Developer profile page
+  - [x] 2.c.iii.zi — Similar-apps rail — superseded, shipped as `0.g.iii.zi`
+  - [x] 2.c.iii.zo — Developer profile page — superseded, shipped as `0.g.iii.zo`
 
 **2.d — Legal & Compliance**
 - 2.d.i — Policies
