@@ -104,7 +104,24 @@ export interface App {
    * works on, not just a no-op over an always-everywhere catalog.
    */
   available_regions: string[];
+
+  /**
+   * Dummy — leaf 0.j.iii.zi (the `0.j.iii` audit note's first finding:
+   * not in `docs/D-STORE.md` §5's original field list, not in this
+   * interface, before this leaf). Every app in this catalog is
+   * genuinely `"Everyone"` — FOSS wallpaper/theming/utility/reading
+   * apps, nothing here warrants a higher rating — so this isn't
+   * introducing narrower dummy variety the way `available_regions`
+   * did; `ContentRating` is still a full, typed vocabulary (matching
+   * Play Store's actual rating tiers) so a future catalog addition
+   * that *does* need a higher tier has a real value to reach for
+   * instead of a loose `string`.
+   */
+  content_rating: ContentRating;
 }
+
+/** Play Store's actual content/age rating tiers. Every app in this dummy catalog is `"Everyone"` — see the `content_rating` field comment on `App` for why. */
+export type ContentRating = "Everyone" | "Everyone 10+" | "Teen" | "Mature 17+" | "Adults only 18+";
 
 /**
  * ISO 3166-1 alpha-2 codes this dummy catalog treats as "available" —
@@ -218,6 +235,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/f-droid-1.png", "/mock/screenshots/f-droid-2.png"],
     changelog: "Improved repo index signature verification and faster mirror fallback.",
     developer_slug: "fdroid",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -257,6 +275,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/materialos-1.png"],
     changelog: "Updated icon pack for CM12.1 compatibility.",
     developer_slug: "afzalmakkelamba",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -296,6 +315,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/battery-live-1.png"],
     changelog: "Initial release.",
     developer_slug: "nagracks",
+    content_rating: "Everyone",
     available_regions: ["US", "GB", "IN"],
   },
   {
@@ -335,6 +355,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/simply-solid-1.png"],
     changelog: "Added a saved-colors palette.",
     developer_slug: "blackjackdavy",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -374,6 +395,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/night-mode-enabler-1.png"],
     changelog: "Fixed toggle state not persisting across reboot.",
     developer_slug: "jamiesanson",
+    content_rating: "Everyone",
     available_regions: ["US", "GB", "CA", "AU"],
   },
   {
@@ -413,6 +435,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/mincal-widget-1.png", "/mock/screenshots/mincal-widget-2.png"],
     changelog: "Added widget resize handles for 4x2 and 4x3 layouts.",
     developer_slug: "tommy-geenexus",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -452,6 +475,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/awesomewallpaper-1.png"],
     changelog: "Smoother glow animation curve.",
     developer_slug: "dreamingincodezh",
+    content_rating: "Everyone",
     available_regions: ["US", "DE", "FR", "JP"],
   },
   {
@@ -491,6 +515,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/paper-foss-theme-1.png"],
     changelog: "Added icons for 12 more apps.",
     developer_slug: "klaernie",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -530,6 +555,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/amexia-1.png"],
     changelog: "Fixed status bar icon contrast on CM13.",
     developer_slug: "amexia-theme",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -569,6 +595,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/enhancement-1.png"],
     changelog: "Initial release for CM13.",
     developer_slug: "enhancement-theme",
+    content_rating: "Everyone",
     available_regions: ["US", "GB", "DE"],
   },
   {
@@ -608,6 +635,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/fira-font-1.png"],
     changelog: "Updated to Fira Sans 4.2 metrics.",
     developer_slug: "mozilla",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -647,6 +675,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/icecons-1.png"],
     changelog: "Added 40 new app icons.",
     developer_slug: "icecons",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -686,6 +715,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/greyscale-1.png"],
     changelog: "Initial release.",
     developer_slug: "greyscale-theme",
+    content_rating: "Everyone",
     available_regions: ["US", "CA"],
   },
   // The two entries below are new — leaf 0.i.i.zo. Unlike everything
@@ -733,6 +763,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/ledger-vault-1.png", "/mock/screenshots/ledger-vault-2.png"],
     changelog: "Added recurring-transaction rules and a net-worth trendline.",
     developer_slug: "ledger-vault-app",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -773,6 +804,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/quiet-verse-1.png", "/mock/screenshots/quiet-verse-2.png"],
     changelog: "Added adjustable type size and a daily reading reminder toggle.",
     developer_slug: "quiet-verse",
+    content_rating: "Everyone",
     available_regions: [...ALL_REGIONS],
   },
 ];

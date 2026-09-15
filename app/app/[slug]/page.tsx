@@ -27,11 +27,15 @@ import styles from "./page.module.css";
  * 0.f.ii.zi ("Why not on Play Store" disclosure), 0.f.ii.zo
  * (permissions disclosure), 0.f.iii.zi (anonymous "Report app" form),
  * 0.g.iii.zi (similar-apps rail), 0.g.iii.zo (developer credit link),
- * and now 0.j.i.zi (header trust-signal stats row — rating/reviews/
- * installs/Editors' Choice, plus size/version/min-Android next to the
- * Install button — see HANDOVER.md's "Play Store Parity Pass" note for
- * why this page's own header was thinner on these signals than the
- * home page's `Hero` already is for the same app). This is the route
+ * 0.j.i.zi (header trust-signal stats row — rating/reviews/installs/
+ * Editors' Choice, plus size/version/min-Android next to the Install
+ * button — see HANDOVER.md's "Play Store Parity Pass" note for why
+ * this page's own header was thinner on these signals than the home
+ * page's `Hero` already is for the same app), and now 0.j.iii.zi
+ * (content/age rating, e.g. "Everyone", added to the same stats row
+ * next to the star rating — the `0.j.iii` audit note's first finding:
+ * a real Play Store trust signal this repo had nowhere in its data
+ * model at all until this leaf). This is the route
  * `/app/[slug]` itself (created by 0.e.i.zi) — every card/hero link
  * built so far (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as
  * a forward reference.
@@ -111,6 +115,7 @@ export default async function AppDetailPage({
               <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
               <span className={styles.statMuted}> ({app.rating_count.toLocaleString()})</span>
             </span>
+            <span className={styles.statMuted}>{app.content_rating}</span>
             <span className={styles.statMuted}>{app.install_count.toLocaleString()}+ installs</span>
             {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
           </div>
