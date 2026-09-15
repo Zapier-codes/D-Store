@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `2.d.i.zi`** *(Phase 2 — Discovery & Trust, Legal & Compliance, Policies — Privacy Policy page. Genuinely new work, not superseded by anything in Phase 0. `2.a`/`2.b`/`2.c` are now all fully closed out — see the housekeeping note under `1.a.iii.zo` and `2.b.iii.zo`'s completion above. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `2.d.i.zo`** *(Phase 2 — Discovery & Trust, Legal & Compliance, Policies — Terms of Service page, closing out `2.d.i`. Same forward-reference pattern as `2.d.i.zi`: the footer's "Terms" link (`0.c.iii.zi`) already points at `/terms`. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -237,7 +237,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **2.d — Legal & Compliance**
 - 2.d.i — Policies
-  - [ ] 2.d.i.zi — Privacy Policy page
+  - [x] 2.d.i.zi — Privacy Policy page — `app/privacy/page.tsx` + `page.module.css`, the route the footer's "Privacy" link (`Footer.tsx`, `0.c.iii.zi`) has pointed at as a forward reference since Phase 0. Content is grounded in the app's actual data practices, not boilerplate — pulled from the real implementations: the two real cookies (`d-store-theme` from `lib/theme.ts`/`0.b.iii.zi`, `d-store-region` from `lib/region.ts`/`0.h.i.zo`), the `ipapi.co` region lookup (`lib/ipapi.ts`/`0.h.i.zi`, disclosed as a third-party processor), and the deliberate asymmetry between `Review`'s hashed-IP rate-limiting (`1.a.iii.zi`) and `ReportFlag`'s fully-identifier-free reports (`1.a.iii.zo`) — each section describes what the code actually does, not generic legal boilerplate. Placeholders needing real legal review before production (contact address, governing jurisdiction) are called out in a code comment, not silently assumed. Links to `/dmca` (not yet built, `2.d.ii.zo`) the same forward-reference way `Footer.tsx` already does. Layout follows the categories/search pages' max-width shell (`0.g.ii.zi`), narrowed to 720px and extended with prose styles since this page is long-form text, not a grid. `next build` passes clean (`/privacy` now a real route); manually verified via `next start` that the page renders full content including the header/footer, and that both the `/dmca` link on this page and the footer's `/privacy` link on the home page resolve to the expected paths.
   - [ ] 2.d.i.zo — Terms of Service page
 - 2.d.ii — Consent
   - [ ] 2.d.ii.zi — Cookie/ad consent banner

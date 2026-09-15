@@ -1,0 +1,54 @@
+/*
+ * Privacy Policy layout — leaf 2.d.i.zi. Same max-width/padding shell
+ * as the categories and search pages (app/categories/page.module.css),
+ * extended with prose styles since this page is long-form text rather
+ * than a grid.
+ */
+
+.main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.6;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.updated {
+  margin: 0 0 1rem;
+  color: var(--color-border);
+  font-size: 0.9rem;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.section h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+
+.section p,
+.section ul {
+  margin: 0 0 0.75rem;
+}
+
+.section ul {
+  padding-left: 1.25rem;
+}
+
+.section li {
+  margin-bottom: 0.4rem;
+}
+
+.section a {
+  color: var(--color-accent);
+}
