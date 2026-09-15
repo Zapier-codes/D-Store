@@ -54,9 +54,24 @@ The direction: the storefront should feel different depending on *what* the visi
 - The catalog's current dummy categories (`lib/mock-data.ts`: System, Multimedia, Games, Internet, Navigation, Science & Education, Theming, Time, Reading, Writing, Development) don't yet include a Finance/Banking category or a named Bible/scripture app — `0.i.i.zo` below adds representative dummy entries for both, specifically so "Vault"/"Sanctuary" have something real to attach to and preview.
 - Every leaf here is `[ ]` open — none of this is built yet, only scoped and prioritized.
 
+**Priority override — Play Store Parity Pass (`0.j`, new):** direct product-owner feedback: several already-shipped screens are thinner than the real Google Play Store equivalent they're meant to rival, specifically around trust/social-proof signals near the primary Install action. Same weight as the `0.h`/`0.i` overrides, same mechanism: **Current position moves to `0.j.i.zi` below, ahead of resuming `0.i.ii.zi`.** `0.i.ii` and everything gated behind it resumes once `0.j` is complete.
+
+Grounded in a live check of current (2026) Play Store behavior rather than guesswork:
+- The app detail-page hero is Play's densest trust-signal moment: icon, verified-developer mark, name, star rating + review count + install count, an Editors' Choice ribbon where earned, and age/content rating — all above the fold, all before the Install button, not buried in a lower section. (Source: live product research, Sept 2026.)
+- Play's Install control itself is a pill-shaped Material You button (already matched by `InstallButton`, `3.a.iv.zi`/`zo` — that piece is not being redone) that swaps to an **Open** primary action once installed, with **Uninstall** reachable from the same control rather than being a dead end. (Source: Android Authority/9to5Google APK teardowns, 2022–2026.)
+- Long listings get a persistent/sticky install affordance so the action never scrolls out of reach. (Source: Android Authority, Oct 2024 teardown — rolling out.)
+
+This repo already has real pieces of this (`Hero.tsx` on the home page already renders rating/review/install-count; `RatingSummary` already does a Play-accurate fractional-star histogram; `AppCard` already has an Editors' Pick badge) — `0.j` is specifically about carrying that same rigor onto the one screen that's currently thinner than its own home-page hero: the app detail page header.
+
+- 0.j.i — App detail page header, trust signals
+  - [x] 0.j.i.zi — Add a compact stats row to the app-detail header (`app/app/[slug]/page.tsx`), next to/above the Install button: star rating + review count + install count (reuse `Hero.tsx`'s existing formatting convention rather than inventing a new one) and an Editors' Choice ribbon when `app.is_editors_pick` (reuse `AppCard`'s existing badge convention) — closing the gap where this page currently shows less trust signal than the home page's own hero for the same app — also added a size/version/min-Android line beside the Install button (`{size_mb} MB · v{version} · Android {min_android_version}+`), matching Play's pattern of surfacing that info right next to the install decision rather than only in a lower section. `page.module.css`: new `.stats`/`.rating`/`.statMuted`/`.badge` rules copy `Hero.module.css`/`AppCard.module.css`'s existing values verbatim rather than inventing a third variant of the same rating-pill/badge look. `next build` passes clean.
+  - [ ] 0.j.i.zo — Post-install state: replace the current dead-end checkmark-only `installed` state (`InstallButton.tsx`) with a primary **Open** action, plus an **Uninstall** affordance reachable from the same control (overflow or secondary action) — same "no real APK/launch, click-to-simulate" dummy convention the button already uses, just carrying it one state further per Play's actual current install-control pattern
+- 0.j.ii — Long-listing install accessibility
+  - [ ] 0.j.ii.zi — Sticky/anchored install action for long app-detail listings, so Install/Open never scrolls out of reach on a long description/screenshot/permissions page — respects `prefers-reduced-motion` for its reveal/pin transition, same convention every other animated leaf in this repo already follows
+
 ### Current position
 
-> **Next leaf to work: `0.i.ii.zi`** *(Priority override — Category-Adaptive Theming, "Contextual Skins." Category-theme resolver: given the active app/category and current dark/light mode, pick the matching `CategoryTheme` variant and emit it as scoped CSS custom properties. `3.b.i.zi` — install-count increment endpoint — resumes once `0.i` is complete. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `0.j.i.zo`** *(Priority override — Play Store Parity Pass. Post-install state: replace the dead-end checkmark-only `installed` state with a primary Open action plus a reachable Uninstall affordance. `0.i.ii.zi` — category-theme resolver — resumes once `0.j` is complete. `3.b.i.zi`/`5.f.i.zi` remain gated behind `0.i` and Phases 1–4 respectively, per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---

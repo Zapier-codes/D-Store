@@ -62,6 +62,53 @@
 /* 3.a.iv.zi — install button sits in the page header, under the developer credit link. */
 .installRow {
   margin-top: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/*
+ * Trust-signal stats row — leaf 0.j.i.zi (Play Store Parity Pass).
+ * Same visual language as Hero.module.css's `.meta`/`.rating` (the
+ * home page's hero for this same app) and AppCard.module.css's
+ * `.badge` (Editors' Pick) — carried onto this page rather than
+ * inventing a third convention for the same two pieces of data.
+ */
+.stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.statMuted {
+  color: var(--color-border);
+}
+
+.badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Size/version/min-Android — sits beside the Install button, not inside it, so InstallButton's own label/state machine (3.a.iv.zi) stays untouched. */
+.installMeta {
+  font-size: 0.8rem;
+  color: var(--color-border);
 }
 
 .sectionTitle {
