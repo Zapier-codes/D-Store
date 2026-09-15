@@ -141,6 +141,27 @@ export interface App {
    * definition, just never shared or transmitted.
    */
   data_safety: DataSafetyInfo;
+
+  /**
+   * Dummy — leaf 0.j.iv.zi (Play Store Parity Pass, disclosure gaps).
+   * Both are uniformly `false` for all 15 apps here, and unlike
+   * `available_regions` this isn't a case for inventing narrower
+   * dummy variety to exercise the UI on a non-trivial case: F-Droid's
+   * actual inclusion criteria prohibit ads and non-free/anti-features
+   * dependencies outright, so a real F-Droid-sourced catalog entry
+   * with either field `true` wouldn't be honest sample data, it would
+   * misrepresent what this catalog actually is. Real Play Store
+   * doesn't show a tag at all for an app with neither — same as here:
+   * this leaf's UI only renders something when at least one is `true`,
+   * so on this catalog the indicator correctly renders nothing for
+   * every app, which is the accurate outcome, not a bug or an
+   * unexercised code path (see `MonetizationDisclosure.tsx`'s own
+   * header comment for how the "renders nothing" case was verified
+   * given no catalog entry can exercise the "renders something" case
+   * honestly).
+   */
+  contains_ads: boolean;
+  has_in_app_purchases: boolean;
 }
 
 /** Play Store's actual content/age rating tiers. Every app in this dummy catalog is `"Everyone"` — see the `content_rating` field comment on `App` for why. */
@@ -276,6 +297,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -323,6 +346,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -370,6 +395,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: ["US", "GB", "IN"],
   },
   {
@@ -417,6 +444,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -464,6 +493,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: ["US", "GB", "CA", "AU"],
   },
   {
@@ -511,6 +542,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -558,6 +591,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: ["US", "DE", "FR", "JP"],
   },
   {
@@ -605,6 +640,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -652,6 +689,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -699,6 +738,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: ["US", "GB", "DE"],
   },
   {
@@ -746,6 +787,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -793,6 +836,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -840,6 +885,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: ["US", "CA"],
   },
   // The two entries below are new — leaf 0.i.i.zo. Unlike everything
@@ -895,6 +942,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
   {
@@ -943,6 +992,8 @@ export const apps: App[] = [
       data_encrypted_in_transit: true,
       can_request_data_deletion: true,
     },
+    contains_ads: false,
+    has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
   },
 ];

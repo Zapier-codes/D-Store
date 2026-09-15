@@ -13,6 +13,7 @@ import PermissionsDisclosure from "@/components/PermissionsDisclosure";
 import DataSafety from "@/components/DataSafety";
 import ReportAppForm from "@/components/ReportAppForm";
 import InstallButton from "@/components/InstallButton";
+import MonetizationDisclosure from "@/components/MonetizationDisclosure";
 import StickyInstallBar from "@/components/StickyInstallBar";
 import AppIcon from "@/components/AppIcon";
 import Shelf from "@/components/Shelf";
@@ -134,6 +135,10 @@ export default async function AppDetailPage({
               {app.size_mb.toFixed(1)} MB &middot; v{app.version} &middot; Android {app.min_android_version}+
             </span>
           </div>
+          <MonetizationDisclosure
+            containsAds={app.contains_ads}
+            hasInAppPurchases={app.has_in_app_purchases}
+          />
         </div>
       </header>
 

@@ -1,0 +1,11 @@
+/*
+ * Leaf 0.j.iv.zi. Same weight/color as the size/version/Android line
+ * right above it (app/app/[slug]/page.module.css's .installMeta),
+ * copied verbatim rather than inventing a second variant of the same
+ * "small muted line near the install row" look.
+ */
+.line {
+  font-size: 0.8rem;
+  color: var(--color-border);
+  margin: 0.35rem 0 0;
+}
