@@ -125,6 +125,11 @@ class Application
     private $sha256_checksum;
 
     /**
+     * @var string
+     */
+    private $play_store_rejection_reason;
+
+    /**
      * @var \DateTime
      */
     private $created_at;
@@ -667,6 +672,29 @@ class Application
     public function getSha256Checksum()
     {
         return $this->sha256_checksum;
+    }
+
+    /**
+     * Set play_store_rejection_reason
+     *
+     * @param string $playStoreRejectionReason
+     * @return Application
+     */
+    public function setPlayStoreRejectionReason($playStoreRejectionReason)
+    {
+        $this->play_store_rejection_reason = $playStoreRejectionReason;
+
+        return $this;
+    }
+
+    /**
+     * Get play_store_rejection_reason
+     *
+     * @return string 
+     */
+    public function getPlayStoreRejectionReason()
+    {
+        return $this->play_store_rejection_reason;
     }
 
     /**

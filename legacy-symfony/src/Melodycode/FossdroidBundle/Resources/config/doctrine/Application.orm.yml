@@ -72,6 +72,9 @@ Melodycode\FossdroidBundle\Entity\Application:
         sha256_checksum:
             type: string
             nullable: true
+        play_store_rejection_reason:
+            type: string
+            nullable: true
         created_at:
             type: date
         updated_at:
