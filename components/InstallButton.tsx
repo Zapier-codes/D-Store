@@ -53,6 +53,15 @@ export default function InstallButton({
   function runSimulatedInstall() {
     if (uiState !== "idle") return;
     setUiState("installing");
+    // Fire-and-forget — leaf 3.b.i.zi. Only a fresh install bumps the
+    // count, not an "Update" re-run of this same simulated flow (real
+    // install counters don't increment on update, and `status` here
+    // is read before `markInstalled` below changes it). Errors are
+    // swallowed deliberately: a failed counter ping must never block
+    // or roll back the (dummy, local-only) install itself.
+    if (status !== "outdated") {
+      fetch(`/api/apps/${appSlug}/install`, { method: "POST" }).catch(() => {});
+    }
     setTimeout(() => {
       markInstalled(currentVersion);
       setUiState("idle");

@@ -105,6 +105,30 @@ export async function getAppBySlug(slug: string): Promise<App | null> {
   return resolveAfterDelay(app);
 }
 
+/**
+ * Increment an app's `install_count` by one — leaf `3.b.i.zi` (Metrics
+ * Pipeline, Counters). First *write* in this file; every function
+ * above is read-only. Follows the same seam this module's header
+ * comment already commits to: mutates the in-memory dummy `apps`
+ * array today, and gets swapped for a real Supabase `UPDATE`/RPC call
+ * once `5.f.i` provisions it — the route handler that calls this
+ * (`app/api/apps/[slug]/install/route.ts`) and the `InstallButton`
+ * click site that calls the route handler both stay unchanged when
+ * that swap happens.
+ *
+ * Returns the app's new `install_count`, or `null` if no app matches
+ * `slug` — the route handler maps that to a 404, the same "not found"
+ * shape `getAppBySlug` already established for reads.
+ */
+export async function incrementInstallCount(slug: string): Promise<number | null> {
+  const app = apps.find((a) => a.slug === slug);
+  if (!app) {
+    return resolveAfterDelay(null);
+  }
+  app.install_count += 1;
+  return resolveAfterDelay(app.install_count);
+}
+
 // --- Home page shelves (0.d) -------------------------------------------
 
 export async function getFeaturedApps(limit = 6): Promise<App[]> {
