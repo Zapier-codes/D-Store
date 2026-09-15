@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `3.a.i.zo`** *(Phase 3 — Motion, Metrics & Charts, Animation System, Scroll reveal — apply the `ScrollReveal` utility (`3.a.i.zi`) to shelves/hero, closing out `3.a.i`. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `3.a.ii.zi`** *(Phase 3 — Motion, Metrics & Charts, Animation System, Micro-interactions — button/card hover & press states. `3.a.i` is now fully closed out. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -251,7 +251,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 **3.a — Animation System**
 - 3.a.i — Scroll reveal
   - [x] 3.a.i.zi — Intersection-observer reveal utility — `lib/useScrollReveal.ts` (a plain `IntersectionObserver` hook, no library, matching `ScreenshotCarousel`'s (`0.e.i.zi`) existing preference for native browser APIs) plus `components/ScrollReveal.tsx` + `.module.css`, a wrapper consumers pass children through. Per D-STORE.md §4.C — "Scroll-triggered reveal, respecting `prefers-reduced-motion`" is one requirement, not two — `prefers-reduced-motion` is checked directly in this leaf (both in the hook, which returns already-revealed with no observer for a reduced-motion visitor, and as a CSS backstop for the gap before that effect runs), not deferred to the later `3.d.iii` reduced-motion audit. Reveals once per element and disconnects. Utility only — not applied to any page yet, that's `3.a.i.zo` next, the same "utility this leaf, consumers next leaf" split `ShelfGrid`/`AppCard` (`0.c.ii.zi`/`0.c.ii.zo`) already used. `next build` passes clean.
-  - [ ] 3.a.i.zo — Apply reveal to shelves/hero
+  - [x] 3.a.i.zo — Apply reveal to shelves/hero — wrapped `Hero` and each `Shelf` (Featured, Trending, Editor's Picks) in `ScrollReveal` (`3.a.i.zi`) in `app/page.tsx`, closing out `3.a.i` in full. `ScrollReveal` only takes `children`, so neither `Hero` nor `Shelf` changed — both stay server components, composed as children of the client wrapper, the standard Next.js pattern for adding a client-only concern (the `IntersectionObserver`) around server-rendered content. Per `ScrollReveal.module.css`'s own header comment ("every shelf/hero it eventually wraps"), the hero was in scope despite already having its own separate `0.d.i.zo` mount animation — the two don't conflict: `ScrollReveal` fires immediately for the hero since it's already in the viewport on first paint, so it just layers a no-op transition on top rather than fighting the mount animation. `next build` passes clean (`next build` output confirms `/` compiles with no new client-boundary warnings).
 - 3.a.ii — Micro-interactions
   - [ ] 3.a.ii.zi — Button/card hover & press states
   - [ ] 3.a.ii.zo — Install-button progress animation

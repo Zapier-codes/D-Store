@@ -2,6 +2,7 @@ import { getFeaturedApps, getTrendingApps, getEditorsPicks } from "@/lib/catalog
 import Hero from "@/components/Hero";
 import Shelf from "@/components/Shelf";
 import SponsoredCard from "@/components/SponsoredCard";
+import ScrollReveal from "@/components/ScrollReveal";
 
 /**
  * Home page — leaf 0.d.i.zi wired in the hero, replacing the Phase 0
@@ -33,6 +34,22 @@ import SponsoredCard from "@/components/SponsoredCard";
  * styled like an organic card and clearly labeled "Sponsored" per
  * docs/D-STORE.md §6, woven in after the curated picks rather than
  * replacing or reordering any of them.
+ *
+ * 3.a.i.zo wraps the hero and each shelf in `ScrollReveal`
+ * (`components/ScrollReveal.tsx`, built in `3.a.i.zi`) — per that
+ * utility's own header comment, this is "every shelf/hero it
+ * eventually wraps." `ScrollReveal` only takes `children`, so `Hero`
+ * and `Shelf` stay exactly as they were (still server components,
+ * still rendered server-side) — they're just composed as children of
+ * the client wrapper here, the standard Next.js pattern for adding a
+ * client-only concern (the `IntersectionObserver` in
+ * `useScrollReveal`) around server-rendered content without
+ * converting that content into a client component itself. The hero
+ * keeps its own separate 0.d.i.zo mount animation in
+ * `Hero.module.css` — `ScrollReveal` fires immediately for it since
+ * it's already in the viewport on first paint, so the two don't
+ * conflict, just layer (mount animation, then no further scroll
+ * transition since it never leaves/re-enters view).
  */
 export default async function Home() {
   const [featured, trending, editorsPicks] = await Promise.all([
@@ -44,14 +61,24 @@ export default async function Home() {
 
   return (
     <main>
-      {heroApp && <Hero app={heroApp} />}
-      <Shelf title="Featured" apps={restFeatured} />
-      <Shelf title="Trending" apps={trending} />
-      <Shelf
-        title="Editor's Picks"
-        apps={editorsPicks}
-        extraSlot={<SponsoredCard />}
-      />
+      {heroApp && (
+        <ScrollReveal>
+          <Hero app={heroApp} />
+        </ScrollReveal>
+      )}
+      <ScrollReveal>
+        <Shelf title="Featured" apps={restFeatured} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <Shelf title="Trending" apps={trending} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <Shelf
+          title="Editor's Picks"
+          apps={editorsPicks}
+          extraSlot={<SponsoredCard />}
+        />
+      </ScrollReveal>
     </main>
   );
 }
