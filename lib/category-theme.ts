@@ -1,4 +1,5 @@
 import type { Category } from "./mock-data";
+import type { Theme } from "./theme";
 
 /**
  * CategoryTheme token schema — leaf 0.i.i.zi (Priority override,
@@ -150,3 +151,32 @@ export const CATEGORY_THEMES: CategoryThemeRegistry = {
   finance: VAULT_THEME,
   reading: SANCTUARY_THEME,
 };
+
+/**
+ * Resolver — leaf 0.i.ii.zi. Given a category slug and the current
+ * dark/light mode (`lib/theme.ts`'s `Theme`, already read server-side
+ * by every page via `getTheme()`), returns the matching register's
+ * token set for that mode, or `undefined` if the category has no
+ * register — most categories won't (`CATEGORY_THEMES` is `Partial`),
+ * and `undefined` is the correct, unremarkable result of that, not an
+ * error case this function needs to handle specially.
+ *
+ * The dedicated "no register" *fallback* behavior (rendering the
+ * plain `0.b` base tokens instead, and re-auditing contrast once every
+ * register exists) is `0.i.iii.zi`/`zo` — separate leaves. What this
+ * function does for `undefined` is already the fallback in substance
+ * (nothing to apply, so the caller naturally inherits whatever tokens
+ * are already in scope), `0.i.iii.zi` is about *auditing and
+ * documenting* that that's correct across every category, not new
+ * behavior this resolver still needs.
+ */
+export function resolveCategoryTheme(
+  categorySlug: Category["slug"] | undefined,
+  mode: Theme
+): CategoryThemeTokens | undefined {
+  if (!categorySlug) {
+    return undefined;
+  }
+  const theme = CATEGORY_THEMES[categorySlug];
+  return theme ? theme[mode] : undefined;
+}
