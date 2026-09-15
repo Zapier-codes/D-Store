@@ -69,6 +69,9 @@ Melodycode\FossdroidBundle\Entity\Application:
             type: boolean
             options:
                 default: false
+        sha256_checksum:
+            type: string
+            nullable: true
         created_at:
             type: date
         updated_at:

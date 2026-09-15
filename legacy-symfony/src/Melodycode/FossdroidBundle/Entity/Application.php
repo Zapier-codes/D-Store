@@ -120,6 +120,11 @@ class Application
     private $is_editors_pick;
 
     /**
+     * @var string
+     */
+    private $sha256_checksum;
+
+    /**
      * @var \DateTime
      */
     private $created_at;
@@ -639,6 +644,29 @@ class Application
     public function getIsEditorsPick()
     {
         return $this->is_editors_pick;
+    }
+
+    /**
+     * Set sha256_checksum
+     *
+     * @param string $sha256Checksum
+     * @return Application
+     */
+    public function setSha256Checksum($sha256Checksum)
+    {
+        $this->sha256_checksum = $sha256Checksum;
+
+        return $this;
+    }
+
+    /**
+     * Get sha256_checksum
+     *
+     * @return string 
+     */
+    public function getSha256Checksum()
+    {
+        return $this->sha256_checksum;
     }
 
     /**
