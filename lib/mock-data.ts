@@ -91,7 +91,32 @@ export interface App {
    * `Developer.bio`/`joined_at` are the actual dummy parts.
    */
   developer_slug: string;
+
+  /**
+   * Dummy — leaf 0.h.ii.zi. Real FOSS Android apps are essentially
+   * never region-locked (no licensing/DRM reason to be), so this isn't
+   * modeling a real constraint the way most of the §7 fields model a
+   * real Play-Store-shaped one — it exists purely to give the
+   * region-filter helper (0.h.ii.zo, next) something to actually
+   * narrow against. Most apps below carry `ALL_REGIONS` (the honest
+   * default for FOSS software); a few carry a deliberately narrower
+   * dummy subset so that filter has a non-trivial case to prove it
+   * works on, not just a no-op over an always-everywhere catalog.
+   */
+  available_regions: string[];
 }
+
+/**
+ * ISO 3166-1 alpha-2 codes this dummy catalog treats as "available" —
+ * a small representative set of large markets, not an exhaustive list
+ * of all ~195 countries (this is Phase 0 scaffolding, not a real
+ * geo-availability system). `"US"` being in this set is deliberate: it
+ * matches `lib/ipapi.ts`'s `DEFAULT_REGION`, so a visitor whose
+ * geolocation lookup fell back to the default still lands in a region
+ * every app in `ALL_REGIONS` supports, rather than a fallback value
+ * that happens to filter everything out.
+ */
+export const ALL_REGIONS = ["US", "GB", "DE", "FR", "CA", "AU", "IN", "BR", "JP"] as const;
 
 /**
  * Developer profile — leaf 0.g.iii.zo (Search & Category Browse →
@@ -188,6 +213,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/f-droid-1.png", "/mock/screenshots/f-droid-2.png"],
     changelog: "Improved repo index signature verification and faster mirror fallback.",
     developer_slug: "fdroid",
+    available_regions: [...ALL_REGIONS],
   },
   {
     id: "2",
@@ -226,6 +252,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/materialos-1.png"],
     changelog: "Updated icon pack for CM12.1 compatibility.",
     developer_slug: "afzalmakkelamba",
+    available_regions: [...ALL_REGIONS],
   },
   {
     id: "3",
@@ -264,6 +291,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/battery-live-1.png"],
     changelog: "Initial release.",
     developer_slug: "nagracks",
+    available_regions: ["US", "GB", "IN"],
   },
   {
     id: "4",
@@ -302,6 +330,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/simply-solid-1.png"],
     changelog: "Added a saved-colors palette.",
     developer_slug: "blackjackdavy",
+    available_regions: [...ALL_REGIONS],
   },
   {
     id: "5",
@@ -340,6 +369,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/night-mode-enabler-1.png"],
     changelog: "Fixed toggle state not persisting across reboot.",
     developer_slug: "jamiesanson",
+    available_regions: ["US", "GB", "CA", "AU"],
   },
   {
     id: "6",
@@ -378,6 +408,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/mincal-widget-1.png", "/mock/screenshots/mincal-widget-2.png"],
     changelog: "Added widget resize handles for 4x2 and 4x3 layouts.",
     developer_slug: "tommy-geenexus",
+    available_regions: [...ALL_REGIONS],
   },
   {
     id: "7",
@@ -416,6 +447,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/awesomewallpaper-1.png"],
     changelog: "Smoother glow animation curve.",
     developer_slug: "dreamingincodezh",
+    available_regions: ["US", "DE", "FR", "JP"],
   },
   {
     id: "8",
@@ -454,6 +486,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/paper-foss-theme-1.png"],
     changelog: "Added icons for 12 more apps.",
     developer_slug: "klaernie",
+    available_regions: [...ALL_REGIONS],
   },
   {
     id: "9",
@@ -492,6 +525,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/amexia-1.png"],
     changelog: "Fixed status bar icon contrast on CM13.",
     developer_slug: "amexia-theme",
+    available_regions: [...ALL_REGIONS],
   },
   {
     id: "10",
@@ -530,6 +564,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/enhancement-1.png"],
     changelog: "Initial release for CM13.",
     developer_slug: "enhancement-theme",
+    available_regions: ["US", "GB", "DE"],
   },
   {
     id: "11",
@@ -568,6 +603,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/fira-font-1.png"],
     changelog: "Updated to Fira Sans 4.2 metrics.",
     developer_slug: "mozilla",
+    available_regions: [...ALL_REGIONS],
   },
   {
     id: "12",
@@ -606,6 +642,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/icecons-1.png"],
     changelog: "Added 40 new app icons.",
     developer_slug: "icecons",
+    available_regions: [...ALL_REGIONS],
   },
   {
     id: "13",
@@ -644,6 +681,7 @@ export const apps: App[] = [
     screenshots: ["/mock/screenshots/greyscale-1.png"],
     changelog: "Initial release.",
     developer_slug: "greyscale-theme",
+    available_regions: ["US", "CA"],
   },
 ];
 
