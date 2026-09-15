@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getAppBySlug, getSimilarApps } from "@/lib/catalog";
+import Link from "next/link";
+import { getAppBySlug, getSimilarApps, getDeveloperBySlug } from "@/lib/catalog";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
@@ -21,7 +22,8 @@ import styles from "./page.module.css";
  * 0.f.i.zi (SHA-256 checksum), 0.f.i.zo (digital signature info),
  * 0.f.ii.zi ("Why not on Play Store" disclosure), 0.f.ii.zo
  * (permissions disclosure), 0.f.iii.zi (anonymous "Report app" form),
- * and now 0.g.iii.zi (similar-apps rail, this leaf). This is the route
+ * 0.g.iii.zi (similar-apps rail), and now 0.g.iii.zo (developer credit
+ * link, below). This is the route
  * `/app/[slug]` itself (created by 0.e.i.zi) — every card/hero link
  * built so far (AppCard 0.c.ii.zo, Hero 0.d.i.zi) has pointed here as
  * a forward reference.
@@ -36,8 +38,10 @@ import styles from "./page.module.css";
  * their own different reasons.
  *
  * `0.e`, `0.f` (Trust & Safety UI), and now `0.g.iii` (Related content)
- * are complete for this page. `0.g.iii.zo` (developer profile page)
- * lands on a new route, not here.
+ * are complete for this page. `0.g.iii.zo`'s actual profile page lands
+ * on a new route, `/developer/[slug]`, not here — this file's only
+ * change for that leaf is the "by {developer}" credit link in the
+ * header below, which is what makes that new route reachable at all.
  *
  * Dynamic route (`notFound()` on an unknown slug) — no
  * `generateStaticParams` yet since the whole catalog is still an
@@ -58,6 +62,7 @@ export default async function AppDetailPage({
   }
 
   const similarApps = await getSimilarApps(app.slug);
+  const developer = await getDeveloperBySlug(app.developer_slug);
   const initial = app.name.trim().charAt(0).toUpperCase();
 
   return (
@@ -73,6 +78,11 @@ export default async function AppDetailPage({
         <div>
           <h1 className={styles.name}>{app.name}</h1>
           <p className={styles.summary}>{app.summary}</p>
+          {developer && (
+            <Link href={`/developer/${developer.slug}`} className={styles.developerLink}>
+              by {developer.name}
+            </Link>
+          )}
         </div>
       </header>
 

@@ -81,6 +81,38 @@ export interface App {
   permissions: string[];
   screenshots: string[];
   changelog: string;
+
+  /**
+   * Links to `Developer.slug` below — leaf 0.g.iii.zo. Unlike the rest
+   * of this interface's "new fields" block, this isn't an invented
+   * value: it's the GitHub/GitLab username or org already present in
+   * this app's own real `source` URL, just pulled out into its own
+   * field so a developer profile page has something stable to key on.
+   * `Developer.bio`/`joined_at` are the actual dummy parts.
+   */
+  developer_slug: string;
+}
+
+/**
+ * Developer profile — leaf 0.g.iii.zo (Search & Category Browse →
+ * Related content → developer profile pages, per docs/D-STORE.md line
+ * 35). Not in the legacy entity at all (Application.php has no author
+ * concept) and not in §7's field list either — same "new, clearly
+ * dummy" treatment `signing_certificate_fingerprint` got from 0.f.i.zo,
+ * with one difference: `slug`, `name`, and `profile_url` aren't
+ * invented, they're read directly off each app's real `source` repo
+ * URL (e.g. `github.com/afzalmakkelamba/MaterialOS` → the developer
+ * `afzalmakkelamba`). Only `bio` and `joined_at` are placeholder values.
+ */
+export interface Developer {
+  slug: string;
+  name: string;
+  /** Dummy — no real bio exists for these accounts, this is placeholder copy. */
+  bio: string;
+  /** The real profile/org URL the app's `source` field already links into. */
+  profile_url: string;
+  /** Dummy — a plausible account-creation date, not a real one. */
+  joined_at: string; // ISO date
 }
 
 /**
@@ -155,6 +187,7 @@ export const apps: App[] = [
     permissions: ["INTERNET", "ACCESS_NETWORK_STATE", "REQUEST_INSTALL_PACKAGES", "WRITE_EXTERNAL_STORAGE"],
     screenshots: ["/mock/screenshots/f-droid-1.png", "/mock/screenshots/f-droid-2.png"],
     changelog: "Improved repo index signature verification and faster mirror fallback.",
+    developer_slug: "fdroid",
   },
   {
     id: "2",
@@ -192,6 +225,7 @@ export const apps: App[] = [
     permissions: ["WRITE_SETTINGS"],
     screenshots: ["/mock/screenshots/materialos-1.png"],
     changelog: "Updated icon pack for CM12.1 compatibility.",
+    developer_slug: "afzalmakkelamba",
   },
   {
     id: "3",
@@ -229,6 +263,7 @@ export const apps: App[] = [
     permissions: ["BATTERY_STATS"],
     screenshots: ["/mock/screenshots/battery-live-1.png"],
     changelog: "Initial release.",
+    developer_slug: "nagracks",
   },
   {
     id: "4",
@@ -266,6 +301,7 @@ export const apps: App[] = [
     permissions: ["SET_WALLPAPER"],
     screenshots: ["/mock/screenshots/simply-solid-1.png"],
     changelog: "Added a saved-colors palette.",
+    developer_slug: "blackjackdavy",
   },
   {
     id: "5",
@@ -303,6 +339,7 @@ export const apps: App[] = [
     permissions: ["WRITE_SECURE_SETTINGS"],
     screenshots: ["/mock/screenshots/night-mode-enabler-1.png"],
     changelog: "Fixed toggle state not persisting across reboot.",
+    developer_slug: "jamiesanson",
   },
   {
     id: "6",
@@ -340,6 +377,7 @@ export const apps: App[] = [
     permissions: ["READ_CALENDAR"],
     screenshots: ["/mock/screenshots/mincal-widget-1.png", "/mock/screenshots/mincal-widget-2.png"],
     changelog: "Added widget resize handles for 4x2 and 4x3 layouts.",
+    developer_slug: "tommy-geenexus",
   },
   {
     id: "7",
@@ -377,6 +415,7 @@ export const apps: App[] = [
     permissions: [],
     screenshots: ["/mock/screenshots/awesomewallpaper-1.png"],
     changelog: "Smoother glow animation curve.",
+    developer_slug: "dreamingincodezh",
   },
   {
     id: "8",
@@ -414,6 +453,7 @@ export const apps: App[] = [
     permissions: [],
     screenshots: ["/mock/screenshots/paper-foss-theme-1.png"],
     changelog: "Added icons for 12 more apps.",
+    developer_slug: "klaernie",
   },
   {
     id: "9",
@@ -451,6 +491,7 @@ export const apps: App[] = [
     permissions: ["WRITE_SETTINGS"],
     screenshots: ["/mock/screenshots/amexia-1.png"],
     changelog: "Fixed status bar icon contrast on CM13.",
+    developer_slug: "amexia-theme",
   },
   {
     id: "10",
@@ -488,6 +529,7 @@ export const apps: App[] = [
     permissions: ["WRITE_SETTINGS"],
     screenshots: ["/mock/screenshots/enhancement-1.png"],
     changelog: "Initial release for CM13.",
+    developer_slug: "enhancement-theme",
   },
   {
     id: "11",
@@ -525,6 +567,7 @@ export const apps: App[] = [
     permissions: [],
     screenshots: ["/mock/screenshots/fira-font-1.png"],
     changelog: "Updated to Fira Sans 4.2 metrics.",
+    developer_slug: "mozilla",
   },
   {
     id: "12",
@@ -562,6 +605,7 @@ export const apps: App[] = [
     permissions: [],
     screenshots: ["/mock/screenshots/icecons-1.png"],
     changelog: "Added 40 new app icons.",
+    developer_slug: "icecons",
   },
   {
     id: "13",
@@ -599,6 +643,109 @@ export const apps: App[] = [
     permissions: ["WRITE_SETTINGS"],
     screenshots: ["/mock/screenshots/greyscale-1.png"],
     changelog: "Initial release.",
+    developer_slug: "greyscale-theme",
+  },
+];
+
+/**
+ * Developer profiles — leaf 0.g.iii.zo. One per `App.developer_slug`
+ * above, `slug`/`name`/`profile_url` read off each app's real `source`
+ * URL (see the field comment on `Developer` for why), `bio`/`joined_at`
+ * are dummy placeholders. `joined_at` is pinned a little before that
+ * developer's earliest `created_at` in `apps` — plausible account age,
+ * not a real signup date.
+ */
+export const developers: Developer[] = [
+  {
+    slug: "fdroid",
+    name: "F-Droid",
+    bio: "Maintainers of the F-Droid client and the default f-droid.org repository — an installable catalog of FOSS Android apps.",
+    profile_url: "https://gitlab.com/fdroid",
+    joined_at: "2010-11-01T00:00:00Z",
+  },
+  {
+    slug: "afzalmakkelamba",
+    name: "Afzal Makkelamba",
+    bio: "Builds Material Design themes for custom Android ROMs.",
+    profile_url: "https://github.com/afzalmakkelamba",
+    joined_at: "2014-09-10T00:00:00Z",
+  },
+  {
+    slug: "nagracks",
+    name: "nagracks",
+    bio: "Small, focused Android utilities — no accounts, no ads.",
+    profile_url: "https://github.com/nagracks",
+    joined_at: "2015-05-18T00:00:00Z",
+  },
+  {
+    slug: "blackjackdavy",
+    name: "BlackjackDavy",
+    bio: "One app, one job. Minimal wallpaper and personalization tools.",
+    profile_url: "https://github.com/BlackjackDavy",
+    joined_at: "2014-02-27T00:00:00Z",
+  },
+  {
+    slug: "jamiesanson",
+    name: "Jamie Sanson",
+    bio: "Android developer poking at hidden system APIs so you don't have to root your phone.",
+    profile_url: "https://github.com/jamiesanson",
+    joined_at: "2015-11-30T00:00:00Z",
+  },
+  {
+    slug: "tommy-geenexus",
+    name: "tommy-geenexus",
+    bio: "Home screen widgets that do exactly what the label says and nothing more.",
+    profile_url: "https://github.com/tommy-geenexus",
+    joined_at: "2012-10-05T00:00:00Z",
+  },
+  {
+    slug: "dreamingincodezh",
+    name: "DreaminginCodeZH",
+    bio: "Battery-friendly live wallpapers and Android UI experiments.",
+    profile_url: "https://github.com/DreaminginCodeZH",
+    joined_at: "2015-08-14T00:00:00Z",
+  },
+  {
+    slug: "klaernie",
+    name: "klaernie",
+    bio: "Paper-cutout style icon packs for the FOSS Android app ecosystem.",
+    profile_url: "https://github.com/klaernie",
+    joined_at: "2014-12-01T00:00:00Z",
+  },
+  {
+    slug: "amexia-theme",
+    name: "Amexia Theme",
+    bio: "Ports and maintains CyanogenMod theme packs across device families.",
+    profile_url: "https://github.com/amexia-theme",
+    joined_at: "2014-03-15T00:00:00Z",
+  },
+  {
+    slug: "enhancement-theme",
+    name: "Enhancement Theme",
+    bio: "Clean, minimal white themes for CyanogenMod builds.",
+    profile_url: "https://github.com/enhancement-theme",
+    joined_at: "2016-01-20T00:00:00Z",
+  },
+  {
+    slug: "mozilla",
+    name: "Mozilla",
+    bio: "Makers of Firefox and the Fira typeface family, packaged here for the CyanogenMod system font engine.",
+    profile_url: "https://github.com/mozilla",
+    joined_at: "2013-08-01T00:00:00Z",
+  },
+  {
+    slug: "icecons",
+    name: "ICEcons",
+    bio: "An all-white, consistent-stroke icon pack covering common FOSS and AOSP apps.",
+    profile_url: "https://github.com/icecons",
+    joined_at: "2015-06-22T00:00:00Z",
+  },
+  {
+    slug: "greyscale-theme",
+    name: "Greyscale Theme",
+    bio: "Stays as close to stock AOSP as possible — no vendor color accents, ever.",
+    profile_url: "https://github.com/greyscale-theme",
+    joined_at: "2016-04-01T00:00:00Z",
   },
 ];
 

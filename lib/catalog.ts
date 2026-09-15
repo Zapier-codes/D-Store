@@ -16,9 +16,9 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, appCountByCategory, type App, type Category } from "./mock-data";
+import { apps, categories, developers, appCountByCategory, type App, type Category, type Developer } from "./mock-data";
 
-export type { App, Category };
+export type { App, Category, Developer };
 
 const SIMULATED_LATENCY_MS = 200;
 
@@ -115,5 +115,19 @@ export async function getSimilarApps(appSlug: string, limit = 6): Promise<App[]>
   const source = apps.find((a) => a.slug === appSlug);
   if (!source) return resolveAfterDelay([]);
   const result = apps.filter((app) => app.category === source.category && app.slug !== appSlug).slice(0, limit);
+  return resolveAfterDelay(result);
+}
+
+/** Backs the developer profile page (0.g.iii.zo), `/developer/[slug]`. */
+export async function getDeveloperBySlug(slug: string): Promise<Developer | null> {
+  const developer = developers.find((d) => d.slug === slug) ?? null;
+  return resolveAfterDelay(developer);
+}
+
+/** Every published app by a given developer, most recently updated first — the profile page's app list. */
+export async function getAppsByDeveloper(developerSlug: string): Promise<App[]> {
+  const result = [...apps]
+    .filter((app) => app.developer_slug === developerSlug)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   return resolveAfterDelay(result);
 }
