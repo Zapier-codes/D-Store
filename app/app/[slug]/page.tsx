@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAppBySlug, getSimilarApps, getDeveloperBySlug } from "@/lib/catalog";
+import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getCategoryBySlug } from "@/lib/catalog";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
@@ -12,6 +12,7 @@ import PlayStoreDisclosure from "@/components/PlayStoreDisclosure";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
 import ReportAppForm from "@/components/ReportAppForm";
 import Shelf from "@/components/Shelf";
+import AppStructuredData from "@/components/AppStructuredData";
 import styles from "./page.module.css";
 
 /**
@@ -43,6 +44,14 @@ import styles from "./page.module.css";
  * change for that leaf is the "by {developer}" credit link in the
  * header below, which is what makes that new route reachable at all.
  *
+ * Also renders `AppStructuredData` (`2.d.iii.zo`, Legal & Compliance,
+ * SEO) — a `<script type="application/ld+json">` tag, not a visible
+ * section, so it has no header/`<section>` of its own the way every
+ * leaf above does. Needs the category's display name (not just
+ * `app.category`'s slug), so this is the first fetch on this page to
+ * call `getCategoryBySlug` alongside the existing `getDeveloperBySlug`
+ * lookup.
+ *
  * Dynamic route (`notFound()` on an unknown slug) — no
  * `generateStaticParams` yet since the whole catalog is still an
  * in-memory dummy array (`lib/mock-data.ts`) that can change shape
@@ -63,10 +72,16 @@ export default async function AppDetailPage({
 
   const similarApps = await getSimilarApps(app.slug);
   const developer = await getDeveloperBySlug(app.developer_slug);
+  const category = await getCategoryBySlug(app.category);
   const initial = app.name.trim().charAt(0).toUpperCase();
 
   return (
     <main className={styles.main}>
+      <AppStructuredData
+        app={app}
+        categoryName={category?.name ?? null}
+        developerName={developer?.name ?? null}
+      />
       <header className={styles.header}>
         <div
           className={styles.icon}
