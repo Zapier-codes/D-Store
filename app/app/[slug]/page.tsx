@@ -11,6 +11,7 @@ import SignatureInfo from "@/components/SignatureInfo";
 import PlayStoreDisclosure from "@/components/PlayStoreDisclosure";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
 import ReportAppForm from "@/components/ReportAppForm";
+import InstallButton from "@/components/InstallButton";
 import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
 import styles from "./page.module.css";
@@ -98,6 +99,9 @@ export default async function AppDetailPage({
               by {developer.name}
             </Link>
           )}
+          <div className={styles.installRow}>
+            <InstallButton appName={app.name} />
+          </div>
         </div>
       </header>
 

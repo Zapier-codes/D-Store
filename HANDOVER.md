@@ -48,7 +48,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 ### Current position
 
-> **Next leaf to work: `3.a.iv.zi`** *(Phase 3 — Motion, Metrics & Charts, Animation System, new milestone `3.a.iv` (Install Button) — build the dummy install button itself (idle/installing/installed, click-to-simulate) on the app detail page. This milestone was split out of `3.a.ii.zo` this session because that leaf assumed a button that was never actually built in Phase 0 — see `3.a.ii.zo`'s note. `3.a.iii` (Loading states, untouched) still comes before `3.a.iv` in the file but has no ordering dependency on it — either can be picked up next; `3.a.iv.zi` is listed here since it's the direct unblock for the originally-requested progress animation. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `3.a.iv.zo`** *(Phase 3 — Motion, Metrics & Charts, Animation System, Install Button — progress-fill animation on the button while "installing" (`3.a.ii.zo`'s original scope, now correctly sequenced after its prerequisite, `3.a.iv.zi`). `3.a.iii` (Loading states, still untouched) remains available to pick up instead. `5.f.i.zi` — provision Supabase — remains gated behind Phases 1–4 per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -259,7 +259,7 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
   - [ ] 3.a.iii.zi — Skeleton shimmer components
   - [ ] 3.a.iii.zo — Empty/error/404 state designs
 - 3.a.iv — Install Button *(new, split out of `3.a.ii.zo` this session — see that leaf's note)*
-  - [ ] 3.a.iv.zi — Dummy install button (idle/installing/installed states, click-to-simulate, no real APK download) on the app detail page
+  - [x] 3.a.iv.zi — Dummy install button (idle/installing/installed states, click-to-simulate, no real APK download) on the app detail page — `components/InstallButton.tsx` + `InstallButton.module.css`, rendered in `app/app/[slug]/page.tsx`'s header below the developer credit link. Same "anonymous, local-state-only" dummy convention `RateThisApp` (`0.e.iii.zo`)/`ReportAppForm` (`0.f.iii.zi`) already use — click drives a `setTimeout` (`SIMULATED_INSTALL_MS`) through `idle → installing → installed`, no API call. `installing` is a flat disabled/dimmed state, not an animated fill — the fill is `3.a.iv.zo`'s scope, not this leaf's, same "utility this leaf, animate it next leaf" split `ScrollReveal` (`3.a.i.zi`/`zo`) already used. Filled-pill shape/hover/press styling matches `Hero`'s `.cta` and the `3.a.ii.zi` `--color-accent-strong` press convention. No reset/uninstall affordance once `installed`, matching `RateThisApp`'s one-way `submitted` state. `next build` passes clean across the full route tree (10 routes)
   - [ ] 3.a.iv.zo — Progress-fill animation on that button while "installing" (`3.a.ii.zo`'s original scope)
 
 **3.b — Metrics Pipeline**

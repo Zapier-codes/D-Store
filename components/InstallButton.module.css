@@ -1,0 +1,61 @@
+/*
+ * Install-button styles — leaf 3.a.iv.zi.
+ *
+ * Filled pill button, same shape/token set as Hero's `.cta`
+ * (components/Hero.module.css) so it reads as the same "primary
+ * action" affordance wherever it appears. `[data-state]` drives the
+ * three visual states; `3.a.iv.zo` adds the progress-fill on top of
+ * `[data-state="installing"]` without needing a new state here.
+ */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 999px;
+  border: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Press state — leaf 3.a.ii.zi's convention (filled buttons press to --color-accent-strong). */
+.button:active:not(:disabled) {
+  background-color: var(--color-accent-strong);
+}
+
+.button[data-state="installing"] {
+  background-color: var(--color-border);
+  color: var(--color-bg);
+  cursor: default;
+  opacity: 0.85;
+}
+
+.button[data-state="installed"] {
+  background-color: var(--color-surface);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  cursor: default;
+}
+
+.check {
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .button {
+    transition: filter 150ms ease, background-color 150ms ease;
+  }
+}

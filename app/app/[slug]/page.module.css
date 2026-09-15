@@ -59,6 +59,11 @@
   text-decoration: underline;
 }
 
+/* 3.a.iv.zi — install button sits in the page header, under the developer credit link. */
+.installRow {
+  margin-top: 0.85rem;
+}
+
 .sectionTitle {
   margin: 0 0 0.75rem;
   font-size: 1.1rem;
