@@ -1,0 +1,64 @@
+/*
+ * Cookie consent banner styles — leaf 2.d.ii.zi.
+ *
+ * Fixed to the bottom of the viewport, above everything else, so it's
+ * visible regardless of scroll position without shifting page layout
+ * (it overlays rather than pushing content, same trade-off most
+ * consent banners make). Built on the same 0.b design tokens as the
+ * rest of the shell so it re-themes automatically.
+ */
+
+.banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  padding: 0.85rem 1rem;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+.text {
+  margin: 0;
+  font-size: 0.85rem;
+  max-width: 640px;
+  text-align: center;
+}
+
+.link {
+  color: var(--color-accent);
+}
+
+.button {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.button:hover,
+.button:focus-visible {
+  opacity: 0.9;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

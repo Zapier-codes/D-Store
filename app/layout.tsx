@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { getTheme } from "@/lib/theme";
 import { getRegion } from "@/lib/region";
+import { hasGivenConsent } from "@/lib/consent";
 import RegionProvider from "@/components/RegionProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ConsentBanner from "@/components/ConsentBanner";
 
 export const metadata: Metadata = {
   title: "D-Store",
@@ -28,6 +30,13 @@ export default async function RootLayout({
   // reading a value, not triggering the ipapi.co lookup itself.
   const region = await getRegion();
 
+  // Consent is read the same server-side-cookie way (lib/consent.ts,
+  // 2.d.ii.zi) — if the visitor already acknowledged the notice on a
+  // prior visit, the banner is simply absent from the first rendered
+  // HTML rather than flashing in and then disappearing after a client
+  // check.
+  const consented = await hasGivenConsent();
+
   return (
     <html lang="en" data-theme={theme}>
       <body>
@@ -35,6 +44,7 @@ export default async function RootLayout({
           <Header theme={theme} />
           {children}
           <Footer />
+          {!consented && <ConsentBanner />}
         </RegionProvider>
       </body>
     </html>
