@@ -69,6 +69,16 @@ export interface App {
 
   // --- New fields (docs/D-STORE.md §7), dummy values for Phase 0 ---
   install_count: number;
+  /**
+   * Genuinely new, like `signing_certificate_fingerprint` below — not
+   * in §5's/§7's original field list, added by leaf `3.b.i.zo` to
+   * support §4E's "View counters (powers Trending)" row, which the
+   * original list never gave a backing field for. A plausible dummy
+   * seed value per app, not a real count; the real counter is
+   * `incrementViewCount` (`lib/catalog.ts`), mutated from the app
+   * detail page via `app/api/apps/[slug]/view/route.ts`.
+   */
+  view_count: number;
   avg_rating: number;
   rating_count: number;
   is_featured: boolean;
@@ -275,6 +285,7 @@ export const apps: App[] = [
     updated_at: "2016-11-30T00:00:00Z",
 
     install_count: 128430,
+    view_count: 214800,
     avg_rating: 4.6,
     rating_count: 3021,
     is_featured: true,
@@ -325,6 +336,7 @@ export const apps: App[] = [
     updated_at: "2016-06-11T00:00:00Z",
 
     install_count: 18230,
+    view_count: 29800,
     avg_rating: 4.1,
     rating_count: 402,
     is_featured: true,
@@ -374,6 +386,7 @@ export const apps: App[] = [
     updated_at: "2016-01-20T00:00:00Z",
 
     install_count: 5410,
+    view_count: 8900,
     avg_rating: 3.9,
     rating_count: 88,
     is_featured: false,
@@ -423,6 +436,7 @@ export const apps: App[] = [
     updated_at: "2015-09-14T00:00:00Z",
 
     install_count: 9870,
+    view_count: 15600,
     avg_rating: 4.3,
     rating_count: 210,
     is_featured: false,
@@ -472,6 +486,7 @@ export const apps: App[] = [
     updated_at: "2016-10-02T00:00:00Z",
 
     install_count: 22740,
+    view_count: 35100,
     avg_rating: 4.4,
     rating_count: 560,
     is_featured: true,
@@ -521,6 +536,7 @@ export const apps: App[] = [
     updated_at: "2016-04-19T00:00:00Z",
 
     install_count: 31200,
+    view_count: 47300,
     avg_rating: 4.5,
     rating_count: 890,
     is_featured: false,
@@ -570,6 +586,7 @@ export const apps: App[] = [
     updated_at: "2016-07-03T00:00:00Z",
 
     install_count: 4120,
+    view_count: 6800,
     avg_rating: 4.0,
     rating_count: 61,
     is_featured: false,
@@ -619,6 +636,7 @@ export const apps: App[] = [
     updated_at: "2016-03-11T00:00:00Z",
 
     install_count: 2870,
+    view_count: 4650,
     avg_rating: 4.2,
     rating_count: 47,
     is_featured: false,
@@ -668,6 +686,7 @@ export const apps: App[] = [
     updated_at: "2015-12-08T00:00:00Z",
 
     install_count: 6540,
+    view_count: 10200,
     avg_rating: 3.8,
     rating_count: 134,
     is_featured: false,
@@ -717,6 +736,7 @@ export const apps: App[] = [
     updated_at: "2016-04-01T00:00:00Z",
 
     install_count: 3110,
+    view_count: 5200,
     avg_rating: 3.7,
     rating_count: 52,
     is_featured: false,
@@ -766,6 +786,7 @@ export const apps: App[] = [
     updated_at: "2014-02-04T00:00:00Z",
 
     install_count: 12980,
+    view_count: 19700,
     avg_rating: 4.4,
     rating_count: 298,
     is_featured: false,
@@ -815,6 +836,7 @@ export const apps: App[] = [
     updated_at: "2016-05-25T00:00:00Z",
 
     install_count: 7650,
+    view_count: 11900,
     avg_rating: 4.3,
     rating_count: 176,
     is_featured: false,
@@ -864,6 +886,7 @@ export const apps: App[] = [
     updated_at: "2016-09-28T00:00:00Z",
 
     install_count: 4980,
+    view_count: 7600,
     avg_rating: 4.0,
     rating_count: 73,
     is_featured: false,
@@ -921,6 +944,7 @@ export const apps: App[] = [
     updated_at: "2017-05-30T00:00:00Z",
 
     install_count: 9640,
+    view_count: 14800,
     avg_rating: 4.5,
     rating_count: 312,
     is_featured: false,
@@ -971,6 +995,7 @@ export const apps: App[] = [
     updated_at: "2017-02-18T00:00:00Z",
 
     install_count: 5310,
+    view_count: 8100,
     avg_rating: 4.8,
     rating_count: 198,
     is_featured: false,

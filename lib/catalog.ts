@@ -129,6 +129,28 @@ export async function incrementInstallCount(slug: string): Promise<number | null
   return resolveAfterDelay(app.install_count);
 }
 
+/**
+ * Increment an app's `view_count` by one — leaf `3.b.i.zo`, the
+ * second half of the "Counters" milestone. Same shape and same seam
+ * as `incrementInstallCount` immediately above: mutates the in-memory
+ * dummy `apps` array today, swaps for a real Supabase call once
+ * `5.f.i` lands, and its caller (`app/api/apps/[slug]/view/route.ts`)
+ * doesn't need to change when that happens.
+ *
+ * `view_count` itself is a genuinely new field (`lib/mock-data.ts`,
+ * this leaf) — see that file's field comment for why it wasn't
+ * already there. Returns the app's new `view_count`, or `null` for an
+ * unknown slug, same "not found" shape every other lookup here uses.
+ */
+export async function incrementViewCount(slug: string): Promise<number | null> {
+  const app = apps.find((a) => a.slug === slug);
+  if (!app) {
+    return resolveAfterDelay(null);
+  }
+  app.view_count += 1;
+  return resolveAfterDelay(app.view_count);
+}
+
 // --- Home page shelves (0.d) -------------------------------------------
 
 export async function getFeaturedApps(limit = 6): Promise<App[]> {

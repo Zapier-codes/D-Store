@@ -20,6 +20,7 @@ import StickyInstallBar from "@/components/StickyInstallBar";
 import AppIcon from "@/components/AppIcon";
 import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
+import ViewPing from "@/components/ViewPing";
 import styles from "./page.module.css";
 
 /**
@@ -103,6 +104,7 @@ export default async function AppDetailPage({
   return (
     <CategoryThemeScope categorySlug={app.category} mode={mode}>
       <main className={styles.main}>
+        <ViewPing appSlug={app.slug} />
         <AppStructuredData
           app={app}
           categoryName={category?.name ?? null}
