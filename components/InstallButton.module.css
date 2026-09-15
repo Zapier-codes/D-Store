@@ -46,6 +46,21 @@
 }
 
 /*
+ * device-aware status states (lib/install-status.ts).
+ * "checking" — first client render, before localStorage has been read;
+ * same flat/dimmed treatment as "installing" since both are non-interactive.
+ * "update" gets no override: it deliberately falls through to the base
+ * `.button` rule, same "next primary action, not a muted state" reasoning
+ * `data-state="open"` already uses below.
+ */
+.button[data-state="checking"] {
+  background-color: var(--color-border);
+  color: var(--color-bg);
+  cursor: default;
+  opacity: 0.6;
+}
+
+/*
  * 0.j.i.zo — post-install button group ("Open" + "Uninstall").
  *
  * `.group` is a plain flex row, no card/border of its own — it just

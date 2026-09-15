@@ -1,74 +1,97 @@
 "use client";
 
 import { useState } from "react";
+import { useInstallStatus } from "@/lib/install-status";
 import styles from "./InstallButton.module.css";
 
 /**
- * Dummy install button — leaf 3.a.iv.zi (Animation System →
- * Install Button, split out of `3.a.ii.zo` — see that leaf's note in
- * HANDOVER.md for why this milestone exists at all: the progress
- * animation it originally asked for had no button underneath it),
- * extended by `3.a.iv.zo` (progress-fill animation) and now `0.j.i.zo`
- * (Play Store Parity Pass — post-install state).
+ * Install button — leaf 3.a.iv.zi/zo (dummy install + progress-fill),
+ * extended by `0.j.i.zo` (Open/Uninstall post-install group), and now
+ * layered with device-aware status via `lib/install-status.ts` (same
+ * session as `0.j.ii.zi`, at explicit product-owner request — see that
+ * module's header comment for exactly what a website can and can't
+ * really detect about installed apps, and why this is a device-local
+ * simulated record rather than a true OS-level install query).
  *
- * Four states — idle / installing / installed / (installed →) open —
- * click-to-simulate, no real APK fetch. Same "anonymous,
- * local-state-only" dummy convention `RateThisApp` (0.e.iii.zo) and
- * `ReportAppForm` (0.f.iii.zi) already use: clicking doesn't call any
- * API — there is none yet, the real download/install pipeline is
- * Phase 5 — it just drives this component's own state.
+ * Still click-to-simulate, still no real APK fetch — there is no real
+ * download pipeline yet (Phase 5). What's new: the button now checks
+ * this device's own `localStorage` record for this app and renders one
+ * of three real outcomes instead of always starting from "Install":
  *
- * `installing` drives a `setTimeout` (`SIMULATED_INSTALL_MS`) to reach
- * `installed`; `3.a.iv.zo`'s CSS `.fill` bar (unchanged by this leaf)
- * still runs underneath that transition. Gated behind
- * `@media (prefers-reduced-motion: no-preference)` in
- * `InstallButton.module.css` — the same convention `ScrollReveal`
- * (`3.a.i.zi`), the hero mount animation (`0.d.i.zo`), and the
- * `3.a.ii.zi` press states already use.
+ *   - no record for this app here            -> "Install"
+ *   - record version === catalog version     -> "Open" / "Uninstall" (0.j.i.zo's group)
+ *   - record version <  catalog version      -> "Update" (re-runs the same
+ *                                               install animation, then
+ *                                               overwrites the record with
+ *                                               the current version)
  *
- * `0.j.i.zo` replaces the old dead-end: `installed` used to render a
- * disabled checkmark-only pill with no way out (see HANDOVER.md's
- * "Play Store Parity Pass" note — real Play swaps to an **Open**
- * primary action with **Uninstall** reachable from the same control,
- * not a inert end state). This now renders a primary "Open" pill
- * (`.button`, same shape as `idle`'s "Install" pill, matching Play's
- * pattern of Open being the *next* primary action, not a disabled
- * state) plus a secondary "Uninstall" pill next to it — the "secondary
- * action" option HANDOVER.md's leaf note offers as an alternative to
- * an overflow menu; a second always-visible button is simpler than
- * introducing a client-side menu-open state for one item, and stays
- * consistent with this codebase's general preference for the plainest
- * interaction that satisfies the requirement.
- *
- * "Open" has nothing real to launch (there's no installed APK — this
- * is still the click-to-simulate dummy convention noted above), so its
- * click handler is intentionally a no-op; it's rendered as a real
- * `<button>` (not a disabled placeholder) purely so it reads as the
- * correct *next* primary action per Play's pattern, matching the
- * leaf's requirement that `installed` no longer be a dead end even
- * though "launch a dummy app" isn't a real operation to perform.
- * "Uninstall" is the actual state transition this leaf adds: it resets
- * back to `idle`, so a visitor can replay the install flow instead of
- * hitting a permanent end state.
+ * So a returning visitor on the same browser/device who already
+ * "installed" this app sees that reflected automatically, and a
+ * catalog version bump flips a previously up-to-date app over to
+ * "Update" on its own — both derived from `useInstallStatus`, not
+ * tracked as separate local state here.
  */
 const SIMULATED_INSTALL_MS = 1800;
 
-type InstallState = "idle" | "installing" | "installed";
+type UiState = "idle" | "installing";
 
-export default function InstallButton({ appName }: { appName: string }) {
-  const [state, setState] = useState<InstallState>("idle");
+export default function InstallButton({
+  appSlug,
+  appName,
+  currentVersion,
+}: {
+  appSlug: string;
+  appName: string;
+  currentVersion: string;
+}) {
+  const { loaded, status, markInstalled, markUninstalled } = useInstallStatus(
+    appSlug,
+    currentVersion,
+  );
+  const [uiState, setUiState] = useState<UiState>("idle");
 
-  function handleInstallClick() {
-    if (state !== "idle") return;
-    setState("installing");
-    setTimeout(() => setState("installed"), SIMULATED_INSTALL_MS);
+  function runSimulatedInstall() {
+    if (uiState !== "idle") return;
+    setUiState("installing");
+    setTimeout(() => {
+      markInstalled(currentVersion);
+      setUiState("idle");
+    }, SIMULATED_INSTALL_MS);
   }
 
-  function handleUninstallClick() {
-    setState("idle");
+  // First client render, before localStorage has been read — a neutral
+  // disabled "Checking…" state avoids briefly flashing "Install" for an
+  // app this device may already have, then snapping to "Open"/"Update".
+  if (!loaded) {
+    return (
+      <button type="button" className={styles.button} data-state="checking" disabled>
+        <span className={styles.label}>Checking&hellip;</span>
+      </button>
+    );
   }
 
-  if (state === "installed") {
+  if (uiState === "installing") {
+    const label = status === "outdated" ? "Updating\u2026" : "Installing\u2026";
+    return (
+      <button
+        type="button"
+        className={styles.button}
+        data-state="installing"
+        disabled
+        aria-live="polite"
+        aria-label={`${label} ${appName}`}
+      >
+        <span
+          className={styles.fill}
+          aria-hidden="true"
+          style={{ animationDuration: `${SIMULATED_INSTALL_MS}ms` }}
+        />
+        <span className={styles.label}>{label}</span>
+      </button>
+    );
+  }
+
+  if (status === "up-to-date") {
     return (
       <span className={styles.group} aria-live="polite">
         <button
@@ -83,7 +106,7 @@ export default function InstallButton({ appName }: { appName: string }) {
           type="button"
           className={styles.uninstallButton}
           aria-label={`Uninstall ${appName}`}
-          onClick={handleUninstallClick}
+          onClick={markUninstalled}
         >
           Uninstall
         </button>
@@ -91,26 +114,40 @@ export default function InstallButton({ appName }: { appName: string }) {
     );
   }
 
-  const label = state === "idle" ? "Install" : "Installing…";
+  if (status === "outdated") {
+    return (
+      <span className={styles.group} aria-live="polite">
+        <button
+          type="button"
+          className={styles.button}
+          data-state="update"
+          aria-label={`Update ${appName}`}
+          onClick={runSimulatedInstall}
+        >
+          Update
+        </button>
+        <button
+          type="button"
+          className={styles.uninstallButton}
+          aria-label={`Uninstall ${appName}`}
+          onClick={markUninstalled}
+        >
+          Uninstall
+        </button>
+      </span>
+    );
+  }
 
   return (
     <button
       type="button"
       className={styles.button}
-      data-state={state}
-      disabled={state !== "idle"}
+      data-state="idle"
       aria-live="polite"
-      aria-label={`${label} ${appName}`}
-      onClick={handleInstallClick}
+      aria-label={`Install ${appName}`}
+      onClick={runSimulatedInstall}
     >
-      {state === "installing" && (
-        <span
-          className={styles.fill}
-          aria-hidden="true"
-          style={{ animationDuration: `${SIMULATED_INSTALL_MS}ms` }}
-        />
-      )}
-      <span className={styles.label}>{label}</span>
+      <span className={styles.label}>Install</span>
     </button>
   );
 }

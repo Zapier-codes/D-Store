@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Category } from "@/lib/catalog";
+import AppIcon from "./AppIcon";
 import styles from "./CategoryCard.module.css";
 
 /**
@@ -31,8 +32,16 @@ export default function CategoryCard({
 }) {
   return (
     <Link href={`/categories/${category.slug}`} className={styles.card}>
-      <div className={styles.icon} aria-hidden="true">
-        {category.name.trim().charAt(0).toUpperCase()}
+      <div className={styles.icon}>
+        {/* Categories have no per-category color fields (see file-header
+            comment), so every tile uses the shared accent token in place
+            of app-specific primary/secondary/tertiary colors. */}
+        <AppIcon
+          name={category.name}
+          primaryColor="var(--color-accent)"
+          secondaryColor="var(--color-accent-strong)"
+          tertiaryColor="var(--color-surface)"
+        />
       </div>
       <div className={styles.info}>
         <p className={styles.name}>{category.name}</p>

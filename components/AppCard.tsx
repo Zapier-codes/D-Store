@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
+import AppIcon from "./AppIcon";
 import styles from "./AppCard.module.css";
 
 /**
@@ -27,19 +28,15 @@ import styles from "./AppCard.module.css";
  * (tap anywhere on the card, not just the icon or the name).
  */
 export default function AppCard({ app }: { app: App }) {
-  const initial = app.name.trim().charAt(0).toUpperCase();
-
   return (
     <Link href={`/app/${app.slug}`} className={styles.card}>
-      <div
-        className={styles.icon}
-        style={{
-          backgroundColor: app.primary_color,
-          color: app.secondary_color,
-        }}
-        aria-hidden="true"
-      >
-        {initial}
+      <div className={styles.icon}>
+        <AppIcon
+          name={app.name}
+          primaryColor={app.primary_color}
+          secondaryColor={app.secondary_color}
+          tertiaryColor={app.tertiary_color}
+        />
       </div>
 
       <div className={styles.info}>

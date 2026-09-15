@@ -1,3 +1,4 @@
+import AppIcon from "./AppIcon";
 import styles from "./SponsoredCard.module.css";
 
 /**
@@ -30,12 +31,13 @@ import styles from "./SponsoredCard.module.css";
 export default function SponsoredCard() {
   return (
     <div className={styles.card} aria-label="Sponsored">
-      <div
-        className={styles.icon}
-        style={{ backgroundColor: "var(--color-accent)", color: "var(--color-surface)" }}
-        aria-hidden="true"
-      >
-        ★
+      <div className={styles.icon}>
+        <AppIcon
+          name="Sponsored"
+          primaryColor="var(--color-accent)"
+          secondaryColor="var(--color-accent-strong)"
+          tertiaryColor="var(--color-surface)"
+        />
       </div>
 
       <div className={styles.info}>

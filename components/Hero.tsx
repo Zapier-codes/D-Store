@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
+import AppIcon from "./AppIcon";
 import styles from "./Hero.module.css";
 
 /**
@@ -37,8 +38,6 @@ import styles from "./Hero.module.css";
  * without an IntersectionObserver — this stays a server component.
  */
 export default function Hero({ app }: { app: App }) {
-  const initial = app.name.trim().charAt(0).toUpperCase();
-
   const backgroundStyle: React.CSSProperties = {
     background: [
       `radial-gradient(ellipse 90% 80% at 15% 20%, ${app.primary_color}66, transparent 60%)`,
@@ -52,12 +51,13 @@ export default function Hero({ app }: { app: App }) {
       <div className={styles.scrim} />
 
       <div className={styles.panel}>
-        <div
-          className={styles.icon}
-          style={{ backgroundColor: app.primary_color, color: app.secondary_color }}
-          aria-hidden="true"
-        >
-          {initial}
+        <div className={styles.icon}>
+          <AppIcon
+            name={app.name}
+            primaryColor={app.primary_color}
+            secondaryColor={app.secondary_color}
+            tertiaryColor={app.tertiary_color}
+          />
         </div>
 
         <div className={styles.content}>

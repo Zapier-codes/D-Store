@@ -1,0 +1,73 @@
+/*
+ * Sticky install bar — leaf 0.j.ii.zi.
+ *
+ * Fixed to the viewport bottom, built on the same 0.b design tokens as
+ * every other surface in this repo so it re-themes automatically.
+ * Hidden by default (`data-visible="false"`) — StickyInstallBar.tsx
+ * only flips this once the header's install row has scrolled out of
+ * view. Kept in the DOM at all times (not conditionally rendered) so
+ * the reveal can animate rather than pop.
+ */
+
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  padding-bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(100%);
+}
+
+.bar[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bar {
+    transition: transform 220ms ease, opacity 220ms ease, visibility 220ms;
+  }
+}
+
+/* Reduced-motion visitor: instant show/hide, no slide/fade. */
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.icon {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 20%;
+  overflow: hidden;
+}
+
+.name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

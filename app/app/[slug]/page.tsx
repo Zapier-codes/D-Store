@@ -12,6 +12,8 @@ import PlayStoreDisclosure from "@/components/PlayStoreDisclosure";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
 import ReportAppForm from "@/components/ReportAppForm";
 import InstallButton from "@/components/InstallButton";
+import StickyInstallBar from "@/components/StickyInstallBar";
+import AppIcon from "@/components/AppIcon";
 import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
 import styles from "./page.module.css";
@@ -78,7 +80,6 @@ export default async function AppDetailPage({
   const similarApps = await getSimilarApps(app.slug);
   const developer = await getDeveloperBySlug(app.developer_slug);
   const category = await getCategoryBySlug(app.category);
-  const initial = app.name.trim().charAt(0).toUpperCase();
 
   return (
     <main className={styles.main}>
@@ -88,12 +89,13 @@ export default async function AppDetailPage({
         developerName={developer?.name ?? null}
       />
       <header className={styles.header}>
-        <div
-          className={styles.icon}
-          style={{ backgroundColor: app.primary_color, color: app.secondary_color }}
-          aria-hidden="true"
-        >
-          {initial}
+        <div className={styles.icon}>
+          <AppIcon
+            name={app.name}
+            primaryColor={app.primary_color}
+            secondaryColor={app.secondary_color}
+            tertiaryColor={app.tertiary_color}
+          />
         </div>
         <div>
           <h1 className={styles.name}>{app.name}</h1>
@@ -113,8 +115,12 @@ export default async function AppDetailPage({
             {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
           </div>
 
-          <div className={styles.installRow}>
-            <InstallButton appName={app.name} />
+          <div className={styles.installRow} id="primary-install-row">
+            <InstallButton
+              appSlug={app.slug}
+              appName={app.name}
+              currentVersion={app.version}
+            />
             <span className={styles.installMeta}>
               {app.size_mb.toFixed(1)} MB &middot; v{app.version} &middot; Android {app.min_android_version}+
             </span>
@@ -181,6 +187,24 @@ export default async function AppDetailPage({
       </section>
 
       <Shelf title="Similar Apps" apps={similarApps} />
+
+      {/*
+       * 0.j.ii.zi — sticky/anchored install action. Watches the primary
+       * install row above (`#primary-install-row`) via IntersectionObserver
+       * and only reveals a fixed bottom bar once that row has scrolled out
+       * of view, so Install/Open/Update never scrolls out of reach on a
+       * long description/screenshot/permissions listing. See
+       * StickyInstallBar.tsx for the observer + reduced-motion details.
+       */}
+      <StickyInstallBar
+        appSlug={app.slug}
+        appName={app.name}
+        currentVersion={app.version}
+        primaryColor={app.primary_color}
+        secondaryColor={app.secondary_color}
+        tertiaryColor={app.tertiary_color}
+        watchTargetId="primary-install-row"
+      />
     </main>
   );
 }
