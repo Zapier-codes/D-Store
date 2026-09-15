@@ -3,15 +3,19 @@ import styles from "./Footer.module.css";
 
 /**
  * Site footer — leaf 0.c.iii.zi (legal links: Privacy, Terms, DMCA),
- * extended by 0.c.iii.zo (RSS link + "no account required" notice).
+ * extended by 0.c.iii.zo (RSS link + "no account required" notice)
+ * and 0.j.iv.zo (About link — the nav's aria-label changed from
+ * "Legal" to "Site" accordingly, since About isn't a legal page).
  *
  * A pure server component, styled entirely from the 0.b design tokens
  * (same convention as Header.tsx) so it re-themes automatically with
  * no per-component theme logic.
  *
- * /privacy, /terms, and /dmca don't exist as real pages yet — same
- * forward-reference pattern already used for /search and /categories
- * in Header.tsx. They'll 404 until a later leaf builds them.
+ * /privacy, /terms, and /dmca are now real pages (2.d.i.zi/zo,
+ * 2.d.ii.zo). /about is the one remaining forward reference from this
+ * list — same pattern, built by this leaf's own page.tsx alongside
+ * this Footer.tsx edit, so it's real too by the time this commit
+ * lands, not actually a dangling reference.
  *
  * /feed.xml is the same kind of forward-reference: the real RSS/Atom
  * feed (new & updated apps) is a Section-4 feature and lands at
@@ -29,7 +33,10 @@ export default function Footer() {
           &copy; {new Date().getFullYear()} D-Store &middot; No account required
         </span>
 
-        <nav className={styles.legal} aria-label="Legal">
+        <nav className={styles.legal} aria-label="Site">
+          <Link href="/about" className={styles.legalLink}>
+            About
+          </Link>
           <Link href="/privacy" className={styles.legalLink}>
             Privacy
           </Link>

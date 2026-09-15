@@ -1,0 +1,68 @@
+/*
+ * About/Help & FAQ layout — leaf 0.j.iv.zo. Identical shell to the
+ * Privacy Policy / Terms pages (app/privacy/page.module.css,
+ * 2.d.i.zi/zo) — same long-form prose page type, plus one small
+ * .faq addition for the Q&A pairs' tighter spacing than a regular
+ * .section.
+ */
+
+.main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.6;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.updated {
+  margin: 0 0 1rem;
+  color: var(--color-border);
+  font-size: 0.9rem;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.section h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+
+.section p,
+.section ul {
+  margin: 0 0 0.75rem;
+}
+
+.section ul {
+  padding-left: 1.25rem;
+}
+
+.section li {
+  margin-bottom: 0.4rem;
+}
+
+.section a {
+  color: var(--color-accent);
+}
+
+.faqItem {
+  margin-bottom: 1.1rem;
+}
+
+.faqItem h3 {
+  font-size: 1rem;
+  margin: 0 0 0.3rem;
+}
+
+.faqItem p {
+  margin: 0;
+}
