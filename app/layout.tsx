@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { getTheme } from "@/lib/theme";
+import { getRegion } from "@/lib/region";
+import RegionProvider from "@/components/RegionProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -20,12 +22,20 @@ export default async function RootLayout({
   // ("dark") for first-time visitors with no cookie yet.
   const theme = await getTheme();
 
+  // Region is read the same way (lib/region.ts, 0.h.i.zo) — by the
+  // time this renders, middleware.ts has already run for this request
+  // and set the cookie if it wasn't already present, so this is always
+  // reading a value, not triggering the ipapi.co lookup itself.
+  const region = await getRegion();
+
   return (
     <html lang="en" data-theme={theme}>
       <body>
-        <Header theme={theme} />
-        {children}
-        <Footer />
+        <RegionProvider region={region}>
+          <Header theme={theme} />
+          {children}
+          <Footer />
+        </RegionProvider>
       </body>
     </html>
   );
