@@ -49,8 +49,37 @@ export interface GetAppsOptions {
   limit?: number;
   license?: string;
   maxSizeMb?: number;
+  /** ISO 3166-1 alpha-2 code, e.g. from `lib/region.ts`'s `getRegion().country_code`. See `filterAppsByRegion` below. */
+  region?: string;
 }
 
+/**
+ * Region-filter helper — leaf 0.h.ii.zo, closing out `0.h` and Phase 0
+ * as a whole. Narrows a list of apps to those whose
+ * `App.available_regions` (0.h.ii.zi) includes the given region code.
+ * Exported standalone, not just inlined into `getApps` below, so a
+ * future region-aware shelf function (`getFeaturedApps`,
+ * `getTrendingApps`, etc.) can reuse the exact same check rather than
+ * re-deriving its own `.includes()` — none of those are wired to
+ * region today (see the module comment below for why not), but this
+ * is the seam they'd plug into.
+ */
+export function filterAppsByRegion(source: App[], regionCode: string): App[] {
+  return source.filter((app) => app.available_regions.includes(regionCode));
+}
+
+/**
+ * `getApps` is the only fetch function this leaf actually wires
+ * `region` into — deliberately not every shelf/search/similar-apps
+ * function above and below it. `0.h` is named "Geo-Regionalization
+ * *Foundation*," not "...Feature": per the `0.h` heading note and the
+ * "Scope addition" note at the top of this handover, turning region
+ * detection into catalog-wide filtering everywhere is real backend
+ * work for whoever picks up region-aware queries once Supabase
+ * (`5.f.i`) lands, not something to half-wire across a dozen call
+ * sites on dummy data now. `filterAppsByRegion` + this one option are
+ * the complete seam; nothing calls `getApps({ region: ... })` yet.
+ */
 export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
   let result = apps;
   if (options.category) {
@@ -61,6 +90,9 @@ export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
   }
   if (options.maxSizeMb !== undefined) {
     result = result.filter((app) => app.size_mb <= options.maxSizeMb!);
+  }
+  if (options.region) {
+    result = filterAppsByRegion(result, options.region);
   }
   if (options.limit) {
     result = result.slice(0, options.limit);
