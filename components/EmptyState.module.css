@@ -1,0 +1,68 @@
+/*
+ * EmptyState — leaf 3.a.iii.zo. Styled entirely from the `0.b` design
+ * tokens, same convention as every other component so far, so it
+ * re-themes automatically across dark/light with no per-kind overrides.
+ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 3rem 1.5rem;
+  margin: 0 auto;
+  max-width: 28rem;
+}
+
+.icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--color-accent);
+  opacity: 0.85;
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.message {
+  margin: 0;
+  color: var(--color-border);
+  line-height: 1.5;
+}
+
+.action {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 150ms ease, transform 100ms ease;
+}
+
+.action:hover {
+  background-color: var(--color-accent-strong);
+}
+
+.action:active {
+  background-color: var(--color-accent-strong);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .action:active {
+    transform: scale(0.97);
+  }
+}

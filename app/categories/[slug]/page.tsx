@@ -3,6 +3,7 @@ import { getCategoryBySlug, getApps } from "@/lib/catalog";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import CategoryFilters from "@/components/CategoryFilters";
+import EmptyState from "@/components/EmptyState";
 import styles from "./page.module.css";
 
 /**
@@ -23,6 +24,12 @@ import styles from "./page.module.css";
  * fetched separately (`allApps`) purely to derive which licenses are
  * actually present — see `CategoryFilters`'s header comment for why
  * that can't just be every license in the whole catalog.
+ *
+ * The two empty-result messages now render through `EmptyState`
+ * (3.a.iii.zo) instead of a bare `<p>`, distinguishing "no apps in this
+ * category at all" from "filters excluded everything" — the search
+ * page above uses the same component for its own, differently-worded
+ * empty case.
  */
 export default async function CategoryPage({
   params,
@@ -62,11 +69,15 @@ export default async function CategoryPage({
       )}
 
       {apps.length === 0 ? (
-        <p className={styles.message}>
-          {allApps.length === 0
-            ? "No apps in this category yet."
-            : "No apps in this category match the selected filters."}
-        </p>
+        <EmptyState
+          kind="filter"
+          heading={allApps.length === 0 ? "No apps yet" : "No matches"}
+          message={
+            allApps.length === 0
+              ? "No apps in this category yet."
+              : "No apps in this category match the selected filters."
+          }
+        />
       ) : (
         <ShelfGrid>
           {apps.map((app) => (

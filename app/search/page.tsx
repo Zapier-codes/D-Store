@@ -1,6 +1,7 @@
 import { searchApps } from "@/lib/catalog";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
+import EmptyState from "@/components/EmptyState";
 import styles from "./page.module.css";
 
 /**
@@ -19,6 +20,10 @@ import styles from "./page.module.css";
  * `searchParams` (a plain server-rendered page, not a client
  * component) and passed straight to the existing `searchApps` — no
  * new data-fetching logic, this leaf is the page around it.
+ *
+ * The "no query yet" and "zero matches" messages now render through
+ * `EmptyState` (3.a.iii.zo) instead of a bare `<p>` — same component
+ * `/categories/[slug]` uses for its own empty case, below.
  */
 export default async function SearchPage({
   searchParams,
@@ -41,10 +46,20 @@ export default async function SearchPage({
         )}
       </h1>
 
-      {!query && <p className={styles.message}>Type something in the search bar above to get started.</p>}
+      {!query && (
+        <EmptyState
+          kind="search"
+          heading="Search for an app"
+          message="Type something in the search bar above to get started."
+        />
+      )}
 
       {query && results.length === 0 && (
-        <p className={styles.message}>No apps matched &ldquo;{query}&rdquo;.</p>
+        <EmptyState
+          kind="search"
+          heading="No results"
+          message={`No apps matched \u201c${query}\u201d.`}
+        />
       )}
 
       {results.length > 0 && (
