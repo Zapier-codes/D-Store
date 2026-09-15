@@ -1,0 +1,25 @@
+Melodycode\FossdroidBundle\Entity\Review:
+    type: entity
+    repositoryClass: Melodycode\FossdroidBundle\Entity\ReviewRepository
+    table: review
+    id:
+        id:
+            type: string
+            id: true
+    fields:
+        rating:
+            type: integer
+        comment:
+            type: text
+            nullable: true
+        ip_hash:
+            type: string
+            nullable: true
+        created_at:
+            type: date
+    manyToOne:
+        application:
+          targetEntity: Melodycode\FossdroidBundle\Entity\Application
+          joinColumn:
+            name: application_id
+            referencedColumnName: id
