@@ -181,7 +181,7 @@ export default async function AppDetailPage({
             Ratings
           </h2>
           <RatingSummary app={app} />
-          <RateThisApp />
+          <RateThisApp appSlug={app.slug} />
         </section>
 
         <section aria-labelledby="verify-heading">

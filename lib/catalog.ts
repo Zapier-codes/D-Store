@@ -16,7 +16,7 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, developers, appCountByCategory, type App, type Category, type Developer } from "./mock-data";
+import { apps, categories, developers, reviews, appCountByCategory, type App, type Category, type Developer, type Review } from "./mock-data";
 
 export type { App, Category, Developer };
 
@@ -149,6 +149,69 @@ export async function incrementViewCount(slug: string): Promise<number | null> {
   }
   app.view_count += 1;
   return resolveAfterDelay(app.view_count);
+}
+
+/**
+ * Submit a star rating and fold it into the app's denormalized
+ * `avg_rating`/`rating_count` — leaf `3.b.ii.zi`, the leaf this
+ * milestone is named for ("Denormalized avg_rating/review_count job").
+ * This is the job: rather than computing the average fresh from every
+ * `Review` row on every read (`RatingSummary` would need to scan all
+ * of `reviews` on every page render), the aggregate lives denormalized
+ * on the `App` row itself and gets updated incrementally, right here,
+ * the moment a new `Review` comes in.
+ *
+ * The incremental-average update: `newAvg = (oldAvg * oldCount +
+ * stars) / (oldCount + 1)`. This specifically treats the *existing*
+ * `avg_rating`/`rating_count` — dummy seed values with no real
+ * `Review` rows behind them, same as every other aggregate-only field
+ * in `lib/mock-data.ts` — as a valid prior to blend into, not
+ * something to discard or overwrite. The alternative (deriving
+ * `avg_rating`/`rating_count` purely from `reviews`, which starts
+ * empty) would make the very first real rating submitted crash
+ * `rating_count` from e.g. 47 down to 1 and snap `avg_rating` to
+ * exactly that one star value — a worse, more visibly-broken dummy
+ * behavior than the thing `RateThisApp`'s own doc comment already
+ * flagged as too misleading to fake. Blending preserves continuity:
+ * a new 5-star rating nudges the average up slightly, the way a real
+ * incremental counter would, instead of resetting it.
+ *
+ * Also appends the raw submission to `reviews` (not read by anything
+ * yet — `RatingSummary`'s histogram still synthesizes from the
+ * aggregate, per its own doc comment — but this is the row a future
+ * leaf building a real per-star histogram, or Phase 5's `Review`
+ * entity migration, would read from instead of recomputing).
+ *
+ * Rejects out-of-range `stars` (must be an integer 1–5) before
+ * touching anything, same validate-before-mutate posture as every
+ * write in this file. Returns the app's new `{ avg_rating,
+ * rating_count }`, or `null` for an unknown slug — same "not found"
+ * shape every other lookup here uses.
+ */
+export async function submitReview(
+  slug: string,
+  stars: number
+): Promise<{ avg_rating: number; rating_count: number } | null> {
+  const app = apps.find((a) => a.slug === slug);
+  if (!app) {
+    return resolveAfterDelay(null);
+  }
+
+  const review: Review = {
+    id: `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    app_slug: slug,
+    stars,
+    created_at: new Date().toISOString(),
+  };
+  reviews.push(review);
+
+  const newCount = app.rating_count + 1;
+  const newAvg = (app.avg_rating * app.rating_count + stars) / newCount;
+
+  app.rating_count = newCount;
+  app.avg_rating = Math.round(newAvg * 10) / 10; // one decimal, matches every displayed avg_rating already in mock-data.ts
+
+  return resolveAfterDelay({ avg_rating: app.avg_rating, rating_count: app.rating_count });
 }
 
 // --- Home page shelves (0.d) -------------------------------------------

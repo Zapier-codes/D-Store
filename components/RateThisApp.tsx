@@ -6,32 +6,50 @@ import styles from "./RateThisApp.module.css";
 /**
  * Anonymous rating submission — leaf 0.e.iii.zo (App Detail Page →
  * Ratings), sibling to RatingSummary (0.e.iii.zi) in the same section.
- * Per HANDOVER.md 0.e.iii.zo: "dummy — updates local state only, no
- * backend."
  *
- * "Local state only" is scoped to this component's own submission flow:
- * picking a star and pressing Submit doesn't call any API — there is
- * none yet, `Review` (docs/D-STORE.md §7) is a Phase 5 entity — and
- * only updates this component's own `submitted` state to show a
- * confirmation. It deliberately does NOT reach up into RatingSummary
- * (0.e.iii.zi) to recompute the aggregate average or histogram:
- * simulating that merge convincingly (bumping `avg_rating` in place) is
- * a real aggregation a backend does, and faking it here would be more
- * misleading dummy behavior than useful, not less — noted as a
- * deliberate scope line, not a missed connection between the two
- * components.
+ * Originally "dummy — updates local state only, no backend" per
+ * HANDOVER.md's 0.e.iii.zo note, deliberately *not* reaching up into
+ * RatingSummary to recompute the aggregate: there was no real
+ * aggregation to reach into yet, and faking that merge would have
+ * been more misleading than useful. Leaf `3.b.ii.zi` built that real
+ * aggregation (`submitReview`, `lib/catalog.ts`), so this component
+ * now does reach it — a real `POST /api/apps/[slug]/reviews`, not a
+ * simulation. `submitted` still only tracks *this component's own*
+ * confirmation state (which star value to show in the thank-you
+ * message); it isn't holding the app's aggregate, which lives back on
+ * the server and shows up correctly on this page's next full load
+ * (`RatingSummary` reads `App.avg_rating`/`rating_count` fresh every
+ * request, same as it always has) — this component doesn't attempt
+ * to optimistically patch that number in place mid-session, which
+ * would be a separate, not-yet-scoped piece of work.
  *
  * Anonymous, so there's no identity check and nothing stops submitting
  * more than once in a session — matches "anonymous" in the leaf name.
  * Rate-limiting it for real is explicitly a real-backend concern
- * (docs/D-STORE.md §7: "Review (anonymous, rate-limited)").
+ * (docs/D-STORE.md §7: "Review (anonymous, rate-limited)"), same as
+ * noted on the endpoint itself.
+ *
+ * The submit click still resolves to the confirmation view even if
+ * the request fails — same "never block the dummy interaction on a
+ * failed ping" posture `InstallButton`/`ViewPing` already take, since
+ * a star-rating confirmation isn't worth stalling on a network round
+ * trip the person didn't ask to wait for.
  */
-export default function RateThisApp() {
+export default function RateThisApp({ appSlug }: { appSlug: string }) {
   const [selected, setSelected] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [submitted, setSubmitted] = useState<number | null>(null);
 
   const display = hovered || selected;
+
+  function handleSubmit() {
+    setSubmitted(selected);
+    fetch(`/api/apps/${appSlug}/reviews`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stars: selected }),
+    }).catch(() => {});
+  }
 
   if (submitted !== null) {
     return (
@@ -73,7 +91,7 @@ export default function RateThisApp() {
         type="button"
         className={styles.submit}
         disabled={selected === 0}
-        onClick={() => setSubmitted(selected)}
+        onClick={handleSubmit}
       >
         Submit rating
       </button>

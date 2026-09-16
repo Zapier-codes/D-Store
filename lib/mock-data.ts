@@ -45,6 +45,25 @@ export interface Category {
   icon: string;
 }
 
+/**
+ * Individual star-rating submission — leaf `3.b.ii.zi` (Metrics
+ * Pipeline, Aggregation). `docs/D-STORE.md` §5 lists `Review`
+ * (anonymous, rate-limited) as a needed new entity but doesn't spec
+ * its fields beyond that; scoped narrowly here to exactly what
+ * `RateThisApp` (`0.e.iii.zo`) actually collects — a 1–5 star value,
+ * no written text — rather than inventing a text-review UI that
+ * doesn't otherwise exist anywhere in this codebase. Rate-limiting is
+ * still a separately-scoped real-backend concern (`5.d.ii.zi`), same
+ * as the install/view counters.
+ */
+export interface Review {
+  id: string;
+  app_slug: string; // App.slug
+  stars: number; // 1-5
+  created_at: string; // ISO date
+}
+
+
 export interface App {
   id: string;
   slug: string;
@@ -1022,6 +1041,20 @@ export const apps: App[] = [
     available_regions: [...ALL_REGIONS],
   },
 ];
+
+/**
+ * Individual `Review` rows — leaf `3.b.ii.zi`. Starts empty
+ * deliberately, unlike `apps` above: every app's existing
+ * `avg_rating`/`rating_count` is itself an aggregate-only dummy seed
+ * with no underlying per-review rows to backfill (same as
+ * `install_count`/`view_count` never had backing "install event"/
+ * "view event" rows) — so there's nothing honest to pre-populate this
+ * with. Real reviews accumulate here from `submitReview`
+ * (`lib/catalog.ts`) onward; see that function for how a fresh
+ * `Review` folds into the pre-existing seed aggregate rather than
+ * discarding or double-counting it.
+ */
+export const reviews: Review[] = [];
 
 /**
  * Developer profiles — leaf 0.g.iii.zo. One per `App.developer_slug`
