@@ -300,6 +300,37 @@ export async function getEditorsPicks(limit = 12): Promise<App[]> {
   return resolveAfterDelay(result);
 }
 
+/**
+ * Top Free chart — leaf `3.b.iii.zi` (Metrics Pipeline, Charts). §2's
+ * Play Store benchmark and §4E both name "Top Free" as its own chart,
+ * distinct from Trending (`getTrendingApps`, `view_count`-ranked,
+ * `3.b.ii.zo`) and New & Updated (`getNewAndUpdated`, `updated_at`-
+ * ranked). Real Play Store "Top Free" ranks free apps by popularity
+ * (installs) as a genuine competing dimension against "Top Paid" —
+ * this catalog has no paid-apps concept at all (every app here is
+ * FOSS), so there's no non-free tier to exclude; "Top Free" here is
+ * honestly just every app in the catalog ranked by `install_count`.
+ *
+ * Deliberately *not* the same lazy-TTL-snapshot treatment
+ * `getTrendingApps` got (`3.b.ii.zo`) — that leaf's "daily
+ * materialized" framing was specific to Trending's naming, not a
+ * general pattern every chart needs; a cumulative install-count
+ * ranking is naturally far more stable call to call than a
+ * view-count one anyway (an install total doesn't reorder on every
+ * page load the way raw view counts would), so a plain live sort is
+ * honest and cheap enough at this catalog's size without inventing a
+ * caching layer this leaf doesn't call for.
+ *
+ * No `limit` default cap the way the home-page shelf fetchers have
+ * one (`getFeaturedApps`/`getTrendingApps`/`getEditorsPicks` all
+ * default to a home-shelf-sized slice) — a chart page's whole point
+ * is showing the full ranked list, not a preview of it.
+ */
+export async function getTopFreeApps(): Promise<App[]> {
+  const result = [...apps].sort((a, b) => b.install_count - a.install_count);
+  return resolveAfterDelay(result);
+}
+
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
 export async function getNewAndUpdated(limit = 12): Promise<App[]> {
   const result = [...apps]

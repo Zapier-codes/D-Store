@@ -26,11 +26,20 @@ import styles from "./AppCard.module.css";
  * is a single link out to the (not-yet-built, 0.e) app detail page at
  * /app/[slug], which is the dense-grid convention Play Store itself uses
  * (tap anywhere on the card, not just the icon or the name).
+ *
+ * Optional `rank` — leaf `3.b.iii.zi` (Top Free chart page). Rather than
+ * building a separate ranked-list component just for chart pages, this
+ * stays the one card every grid in the app already uses (search,
+ * categories, shelves) and grows a small numbered badge over the icon
+ * when a caller supplies a position — keeping charts visually
+ * consistent with every other listing instead of introducing a second
+ * card style, per §3's grid-density decision applying uniformly.
  */
-export default function AppCard({ app }: { app: App }) {
+export default function AppCard({ app, rank }: { app: App; rank?: number }) {
   return (
     <Link href={`/app/${app.slug}`} className={styles.card}>
       <div className={styles.icon}>
+        {rank !== undefined && <span className={styles.rank}>{rank}</span>}
         <AppIcon
           name={app.name}
           primaryColor={app.primary_color}

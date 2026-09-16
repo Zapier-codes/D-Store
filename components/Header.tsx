@@ -25,6 +25,11 @@ import styles from "./Header.module.css";
  * 0.g (Search & Category Browse). Linking to them now is intentional,
  * the same forward-reference pattern used for design tokens ahead of
  * their consumers; they'll 404 until then.
+ *
+ * `/charts/top-free` added by leaf `3.b.iii.zi` once that page existed
+ * (unlike `/search`/`/categories` above, not a forward reference —
+ * chart pages arrive one at a time, `3.b.iii.zo`'s New & Updated chart
+ * doesn't have a nav entry yet since it doesn't exist yet either).
  */
 export default function Header({ theme }: { theme: Theme }) {
   return (
@@ -58,6 +63,9 @@ export default function Header({ theme }: { theme: Theme }) {
           </Link>
           <Link href="/categories" className={styles.navLink}>
             Categories
+          </Link>
+          <Link href="/charts/top-free" className={styles.navLink}>
+            Top Free
           </Link>
           <ThemeToggle theme={theme} />
         </nav>
