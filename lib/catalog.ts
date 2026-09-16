@@ -16,9 +16,9 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, developers, reviews, appCountByCategory, type App, type Category, type Developer, type Review } from "./mock-data";
+import { apps, categories, developers, reviews, sponsoredSlots, appCountByCategory, type App, type Category, type Developer, type Review, type SponsoredSlot } from "./mock-data";
 
-export type { App, Category, Developer };
+export type { App, Category, Developer, SponsoredSlot };
 
 const SIMULATED_LATENCY_MS = 200;
 
@@ -408,4 +408,112 @@ export async function getAppsByDeveloper(developerSlug: string): Promise<App[]> 
     .filter((app) => app.developer_slug === developerSlug)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   return resolveAfterDelay(result);
+}
+
+// --- Sponsored-slot scheduling (3.c.i.zo) -------------------------------------------
+
+/**
+ * Sponsored-slot scheduling tool — leaf `3.c.i.zo`, the second leaf of
+ * `3.c.i` (Featuring). `SponsoredCard` (`0.d.iii.zo`) has always
+ * rendered one hardcoded placeholder ("Your app could be here"); this
+ * is the admin-facing seam that lets a scheduled booking take over that
+ * slot for its date range instead, backing `/admin/sponsored`.
+ *
+ * All four functions below share the same in-memory-array seam as
+ * every other mutator in this file (`setAppFeaturing` immediately
+ * above being the most recent), operating on `sponsoredSlots`
+ * (`lib/mock-data.ts`) instead of `apps` — swaps for real Supabase
+ * reads/writes once `5.f.i` lands.
+ */
+
+/** Every scheduled slot, most recently created first — backs the admin listing at `/admin/sponsored`. */
+export async function getSponsoredSlots(): Promise<SponsoredSlot[]> {
+  const result = [...sponsoredSlots].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+  return resolveAfterDelay(result);
+}
+
+/**
+ * The slot `SponsoredCard` should actually render today, or `null` if
+ * none is scheduled — `SponsoredCard` falls back to its existing
+ * static placeholder in that case, so scheduling a slot is additive,
+ * never a regression from what already shipped in `0.d.iii.zo`.
+ *
+ * "Active" means today's date falls within `[start_date, end_date]`
+ * inclusive, compared at day granularity (both sides normalized to
+ * midnight UTC) since `SponsoredSlot` only stores dates, not
+ * timestamps — a slot scheduled to end "today" is still active for
+ * all of today, not cut off at midnight of the day it was created.
+ *
+ * If more than one slot's window overlaps today — a real scheduling
+ * conflict an admin UI should prevent going forward, but nothing in
+ * `createSponsoredSlot` below rejects it yet — the most recently
+ * *created* one wins (`getSponsoredSlots`' own sort order), rather
+ * than throwing or silently picking whichever happens to be first in
+ * the underlying array; deterministic, and consistent with "last
+ * write wins" being the simplest reasonable default for a Phase 3
+ * dummy-data tool with no real conflict-resolution UI yet.
+ *
+ * `referenceDate` defaults to `new Date()` but is accepted as a
+ * parameter so this is exercisable without depending on the system
+ * clock (a fixed date can be passed directly) — no test runner exists
+ * in this sandbox to actually wire that up as an automated test, but
+ * the seam is there for whoever adds one.
+ */
+export async function getActiveSponsoredSlot(referenceDate: Date = new Date()): Promise<SponsoredSlot | null> {
+  const today = referenceDate.toISOString().slice(0, 10); // YYYY-MM-DD, matches SponsoredSlot's date format
+  const active = (await getSponsoredSlots()).find(
+    (slot) => slot.start_date <= today && today <= slot.end_date
+  );
+  return active ?? null;
+}
+
+export interface CreateSponsoredSlotInput {
+  name: string;
+  summary: string;
+  start_date: string; // YYYY-MM-DD
+  end_date: string; // YYYY-MM-DD
+}
+
+/** Schedules a new sponsored slot. No overlap validation — see `getActiveSponsoredSlot`'s comment on how an overlap is resolved if one occurs. */
+export async function createSponsoredSlot(input: CreateSponsoredSlotInput): Promise<SponsoredSlot> {
+  const slot: SponsoredSlot = {
+    id: `sponsored-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: input.name,
+    summary: input.summary,
+    start_date: input.start_date,
+    end_date: input.end_date,
+    created_at: new Date().toISOString(),
+  };
+  sponsoredSlots.push(slot);
+  return resolveAfterDelay(slot);
+}
+
+export type UpdateSponsoredSlotInput = Partial<CreateSponsoredSlotInput>;
+
+/** Edits an existing slot's creative or schedule. Returns the updated slot, or `null` if `id` doesn't match one. */
+export async function updateSponsoredSlot(
+  id: string,
+  updates: UpdateSponsoredSlotInput
+): Promise<SponsoredSlot | null> {
+  const slot = sponsoredSlots.find((s) => s.id === id);
+  if (!slot) {
+    return resolveAfterDelay(null);
+  }
+  if (updates.name !== undefined) slot.name = updates.name;
+  if (updates.summary !== undefined) slot.summary = updates.summary;
+  if (updates.start_date !== undefined) slot.start_date = updates.start_date;
+  if (updates.end_date !== undefined) slot.end_date = updates.end_date;
+  return resolveAfterDelay(slot);
+}
+
+/** Removes a scheduled slot. Returns whether a slot was actually found and removed. */
+export async function deleteSponsoredSlot(id: string): Promise<boolean> {
+  const index = sponsoredSlots.findIndex((s) => s.id === id);
+  if (index === -1) {
+    return resolveAfterDelay(false);
+  }
+  sponsoredSlots.splice(index, 1);
+  return resolveAfterDelay(true);
 }

@@ -75,3 +75,13 @@
   color: var(--color-accent);
   white-space: nowrap;
 }
+
+/* Caption — leaf 3.c.i.zo, an active scheduled slot's summary line.
+   Mirrors AppCard.module.css's own .caption class-for-class (added by
+   3.b.iii.zo for the New & Updated chart's date line) per this file's
+   header comment's "mirrors AppCard class-for-class" convention. */
+.caption {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--color-border);
+}

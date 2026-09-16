@@ -63,6 +63,38 @@ export interface Review {
   created_at: string; // ISO date
 }
 
+/**
+ * A scheduled sponsored-slot booking — leaf `3.c.i.zo` (Admin/Editorial
+ * Tools, Featuring). Distinct from `SponsoredCard`'s own hardcoded
+ * "Your app could be here" placeholder content (`0.d.iii.zo`): that
+ * component's doc comment explains why sponsored content doesn't live
+ * in the `App[]` catalog (no slug/detail page/rating of its own) — this
+ * is the same reasoning applied to *scheduled* sponsored content, kept
+ * as its own array rather than folded into `App` for the same reason.
+ *
+ * `name`/`summary` are the only creative fields, matching exactly what
+ * `SponsoredCard` already renders (a name line + the "Sponsored" badge)
+ * — no click-through URL yet, since the card itself isn't a `<Link>`
+ * (see that component's comment on why: "no real click-through yet").
+ * `start_date`/`end_date` are ISO dates (day granularity, no time-of-day
+ * scheduling); a slot is active when today falls within `[start_date,
+ * end_date]` inclusive — see `getActiveSponsoredSlot` in
+ * `lib/catalog.ts` for the exact comparison.
+ *
+ * Empty by default: no sponsored slot is scheduled out of the box, so
+ * `SponsoredCard` keeps rendering its existing static placeholder until
+ * an admin schedules one via `/admin/sponsored` — the same "empty until
+ * populated" posture `reviews` above already established.
+ */
+export interface SponsoredSlot {
+  id: string;
+  name: string;
+  summary: string;
+  start_date: string; // ISO date, YYYY-MM-DD
+  end_date: string; // ISO date, YYYY-MM-DD
+  created_at: string; // ISO date
+}
+
 
 export interface App {
   id: string;
@@ -1055,6 +1087,9 @@ export const apps: App[] = [
  * discarding or double-counting it.
  */
 export const reviews: Review[] = [];
+
+/** Scheduled sponsored-slot bookings — leaf `3.c.i.zo`. See `SponsoredSlot` above for why this is empty by default. */
+export const sponsoredSlots: SponsoredSlot[] = [];
 
 /**
  * Developer profiles — leaf 0.g.iii.zo. One per `App.developer_slug`

@@ -115,7 +115,7 @@ Two distinct problems bundled in one report, both real:
 
 ### Current position
 
-> **Next leaf to work: `3.c.i.zo`** *(Admin/Editorial Tools — Featuring — sponsored-slot scheduling tool. `3.c.i.zi` (admin toggle for `is_featured`/`is_editors_pick`) is done: `lib/catalog.ts` gained `setAppFeaturing(slug, updates)`, a new `PATCH /api/admin/apps/[slug]/featuring` route, and a plain (unthemed, no storefront chrome) `/admin/featuring` page listing every app with two toggle switches each, optimistic-update-with-rollback on the client side. The "own auth-gated surface vs. dev-only route" question this line used to flag was decided for this leaf: stays unauthenticated for now — see the route handler's own doc comment for why, and revisit once `5.g.iii.zi` gives this repo a real notion of privileged/account state to key a check off of. That same decision should be treated as the default for the rest of `3.c` too, not re-litigated per leaf, unless something about a specific leaf calls for otherwise. `5.f.i.zi` remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `3.c.ii.zi`** *(Admin/Editorial Tools — Analytics — traffic dashboard. `3.c.i` (Featuring) is now complete in full: `3.c.i.zi` (admin toggle for `is_featured`/`is_editors_pick`) and `3.c.i.zo` (sponsored-slot scheduling tool) both done. `3.c.i.zo` added a new `SponsoredSlot` type + empty `sponsoredSlots` array (`lib/mock-data.ts`), a `getSponsoredSlots`/`getActiveSponsoredSlot`/`createSponsoredSlot`/`updateSponsoredSlot`/`deleteSponsoredSlot` seam (`lib/catalog.ts`), a `PATCH`/`DELETE`-capable admin API under `/api/admin/sponsored`, and a plain `/admin/sponsored` page to actually schedule bookings — `components/SponsoredCard.tsx` now reads `getActiveSponsoredSlot()` and falls back to its original static placeholder when nothing's scheduled for today, so the tool actually closes the loop back to the storefront rather than being a CRUD screen nothing reads from. Continues the unauthenticated-dev-route decision `3.c.i.zi` made for the rest of `3.c`. `5.f.i.zi` remains gated behind Phases 1–4 per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -355,7 +355,7 @@ Two distinct problems bundled in one report, both real:
 **3.c — Admin/Editorial Tools**
 - 3.c.i — Featuring
   - [x] 3.c.i.zi — Admin toggle for `is_featured`/`is_editors_pick`
-  - [ ] 3.c.i.zo — Sponsored-slot scheduling tool
+  - [x] 3.c.i.zo — Sponsored-slot scheduling tool
 - 3.c.ii — Analytics
   - [ ] 3.c.ii.zi — Traffic dashboard
   - [ ] 3.c.ii.zo — Top-searches dashboard

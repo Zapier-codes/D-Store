@@ -1,3 +1,4 @@
+import { getActiveSponsoredSlot } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
 import styles from "./SponsoredCard.module.css";
 
@@ -27,13 +28,30 @@ import styles from "./SponsoredCard.module.css";
  * `Shelf.tsx`), landing after the curated picks rather than before —
  * so it reads as "woven into" the listing, not interrupting the
  * curated order those apps were fetched in.
+ *
+ * `3.c.i.zo` (sponsored-slot scheduling tool) wires this into
+ * `getActiveSponsoredSlot` (`lib/catalog.ts`): if an admin has
+ * scheduled a slot whose `[start_date, end_date]` window covers today
+ * (via `/admin/sponsored`), that slot's `name`/`summary` render here
+ * instead of the static "Your app could be here" copy below. No slot
+ * scheduled, or none active today, falls back to that original
+ * placeholder unchanged — scheduling is additive, not a prerequisite
+ * for this card to render something. Making this component `async`
+ * (it wasn't before) is safe at its one call site: `app/page.tsx` is
+ * itself an async server component already awaiting sibling catalog
+ * calls, and Next's App Router renders async server components as
+ * children the same way as sync ones.
  */
-export default function SponsoredCard() {
+export default async function SponsoredCard() {
+  const activeSlot = await getActiveSponsoredSlot();
+  const name = activeSlot?.name ?? "Your app could be here";
+  const summary = activeSlot?.summary;
+
   return (
     <div className={styles.card} aria-label="Sponsored">
       <div className={styles.icon}>
         <AppIcon
-          name="Sponsored"
+          name={name}
           primaryColor="var(--color-accent)"
           secondaryColor="var(--color-accent-strong)"
           tertiaryColor="var(--color-surface)"
@@ -41,7 +59,8 @@ export default function SponsoredCard() {
       </div>
 
       <div className={styles.info}>
-        <p className={styles.name}>Your app could be here</p>
+        <p className={styles.name}>{name}</p>
+        {summary && <p className={styles.caption}>{summary}</p>}
 
         <p className={styles.meta}>
           <span className={styles.badge}>Sponsored</span>
