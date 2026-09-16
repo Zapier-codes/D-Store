@@ -115,7 +115,7 @@ Two distinct problems bundled in one report, both real:
 
 ### Current position
 
-> **Next leaf to work: `3.c.ii.zi`** *(Admin/Editorial Tools — Analytics — traffic dashboard. `3.c.i` (Featuring) is now complete in full: `3.c.i.zi` (admin toggle for `is_featured`/`is_editors_pick`) and `3.c.i.zo` (sponsored-slot scheduling tool) both done. `3.c.i.zo` added a new `SponsoredSlot` type + empty `sponsoredSlots` array (`lib/mock-data.ts`), a `getSponsoredSlots`/`getActiveSponsoredSlot`/`createSponsoredSlot`/`updateSponsoredSlot`/`deleteSponsoredSlot` seam (`lib/catalog.ts`), a `PATCH`/`DELETE`-capable admin API under `/api/admin/sponsored`, and a plain `/admin/sponsored` page to actually schedule bookings — `components/SponsoredCard.tsx` now reads `getActiveSponsoredSlot()` and falls back to its original static placeholder when nothing's scheduled for today, so the tool actually closes the loop back to the storefront rather than being a CRUD screen nothing reads from. Continues the unauthenticated-dev-route decision `3.c.i.zi` made for the rest of `3.c`. `5.f.i.zi` remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `3.c.ii.zo`** *(Admin/Editorial Tools — Analytics — top-searches dashboard. `3.c.ii.zi` (traffic dashboard) is done: new `getTrafficSummary()` (`lib/catalog.ts`) sums `install_count`/`view_count` across the catalog and ranks every app by `view_count` descending; new read-only `/admin/traffic` page renders three summary stat cards, a hand-rolled inline-SVG bar chart (no chart library in `package.json`), and a full per-app breakdown table — same unauthenticated dev-route posture as the rest of `3.c`. **Flagging before `3.c.ii.zo` is started, not discovered mid-leaf:** `searchApps` (`lib/catalog.ts`) does not log or persist queries anywhere — there is currently no data source at all for a "top searches" dashboard to read from, unlike `3.c.ii.zi` which had `install_count`/`view_count` already sitting on every `App` row. `3.c.ii.zo` will need to add search-query logging (most plausibly: a new dummy in-memory array analogous to `sponsoredSlots`, appended to from `searchApps` itself or from `app/search/page.tsx`'s call site, since neither exists yet) before there's anything for a dashboard to aggregate — this is real scope inside that leaf, not a blocker to raise a decision about first, since there's no ambiguity in the direction (log queries, then aggregate them), just work that hasn't happened yet. `5.f.i.zi` remains gated behind Phases 1–4 per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -357,7 +357,7 @@ Two distinct problems bundled in one report, both real:
   - [x] 3.c.i.zi — Admin toggle for `is_featured`/`is_editors_pick`
   - [x] 3.c.i.zo — Sponsored-slot scheduling tool
 - 3.c.ii — Analytics
-  - [ ] 3.c.ii.zi — Traffic dashboard
+  - [x] 3.c.ii.zi — Traffic dashboard
   - [ ] 3.c.ii.zo — Top-searches dashboard
 - 3.c.iii — Moderation
   - [ ] 3.c.iii.zi — Report-flag queue UI

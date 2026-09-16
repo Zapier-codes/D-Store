@@ -517,3 +517,59 @@ export async function deleteSponsoredSlot(id: string): Promise<boolean> {
   sponsoredSlots.splice(index, 1);
   return resolveAfterDelay(true);
 }
+
+// --- Traffic dashboard (3.c.ii.zi) -------------------------------------------
+
+/** One row of `TrafficSummary.perApp` — just the fields the dashboard actually renders, not a whole `App`. */
+export interface TrafficSummaryRow {
+  slug: string;
+  name: string;
+  install_count: number;
+  view_count: number;
+}
+
+export interface TrafficSummary {
+  totalInstalls: number;
+  totalViews: number;
+  appCount: number;
+  /** Every app, `view_count` descending — the dashboard's own ranking, independent of `getTopFreeApps`' `install_count` ranking or `getTrendingApps`' cached one. */
+  perApp: TrafficSummaryRow[];
+}
+
+/**
+ * Traffic dashboard data — leaf `3.c.ii.zi`, the first leaf of `3.c.ii`
+ * (Analytics). Backs `/admin/traffic`: the two totals across the whole
+ * catalog, plus a per-app breakdown ranked by `view_count` (the same
+ * field `getTrendingApps`, `3.b.ii.zo`, already treats as the
+ * "attention right now" signal, reused here for the same reason).
+ *
+ * Deliberately a fresh live sum/sort on every call, not a materialized
+ * snapshot the way `getTrendingApps` is — this dashboard has no
+ * "daily" framing to justify that caching layer (same reasoning
+ * `getTopFreeApps`, `3.b.iii.zi`, already gave for skipping it), and
+ * an admin dashboard specifically should show current totals, not a
+ * cached-until-tomorrow number.
+ *
+ * `perApp` returns the whole catalog, not a capped preview — same
+ * "a dashboard's whole point is the full list" reasoning
+ * `getTopFreeApps` already established for chart pages.
+ */
+export async function getTrafficSummary(): Promise<TrafficSummary> {
+  const totalInstalls = apps.reduce((sum, app) => sum + app.install_count, 0);
+  const totalViews = apps.reduce((sum, app) => sum + app.view_count, 0);
+  const perApp = [...apps]
+    .map((app) => ({
+      slug: app.slug,
+      name: app.name,
+      install_count: app.install_count,
+      view_count: app.view_count,
+    }))
+    .sort((a, b) => b.view_count - a.view_count);
+
+  return resolveAfterDelay({
+    totalInstalls,
+    totalViews,
+    appCount: apps.length,
+    perApp,
+  });
+}
