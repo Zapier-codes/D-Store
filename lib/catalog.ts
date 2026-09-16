@@ -16,9 +16,9 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, developers, reviews, sponsoredSlots, appCountByCategory, type App, type Category, type Developer, type Review, type SponsoredSlot } from "./mock-data";
+import { apps, categories, developers, reviews, sponsoredSlots, searchQueries, appCountByCategory, type App, type Category, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
 
-export type { App, Category, Developer, SponsoredSlot };
+export type { App, Category, Developer, SponsoredSlot, SearchQueryLog };
 
 const SIMULATED_LATENCY_MS = 200;
 
@@ -388,6 +388,30 @@ export async function searchApps(query: string): Promise<App[]> {
   return resolveAfterDelay(result);
 }
 
+/**
+ * Records a search for the `3.c.ii.zo` top-searches dashboard.
+ * Deliberately called from `app/search/page.tsx`'s call site, not from
+ * `searchApps` itself: `searchApps` also backs `SearchBar`'s debounced
+ * instant-suggestions dropdown (`lib/search-actions.ts`), which fires
+ * on every settled keystroke pause, not just a completed search — an
+ * app slug typed one pause at a time ("c", "ch", "cha", "chat") would
+ * log four fragment rows for one real search. `/search`'s own page
+ * load only happens once per actual submission (Enter, a suggestion
+ * click that navigates, or a direct `/search?q=...` link), so that's
+ * the one call site that represents a finished query, not a keystroke.
+ *
+ * No-op on a blank query, same guard `searchApps` itself already has.
+ */
+export async function logSearchQuery(query: string): Promise<void> {
+  const trimmed = query.trim();
+  if (!trimmed) return;
+  searchQueries.push({
+    id: `search-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    query: trimmed,
+    created_at: new Date().toISOString(),
+  });
+}
+
 /** Other apps in the same category, excluding the app itself — backs the "Similar apps" rail on the detail page. */
 export async function getSimilarApps(appSlug: string, limit = 6): Promise<App[]> {
   const source = apps.find((a) => a.slug === appSlug);
@@ -571,5 +595,58 @@ export async function getTrafficSummary(): Promise<TrafficSummary> {
     totalViews,
     appCount: apps.length,
     perApp,
+  });
+}
+
+// --- Top-searches dashboard (3.c.ii.zo) --------------------------------------
+
+/** One ranked row of `TopSearchesSummary.topQueries`. */
+export interface TopSearchRow {
+  query: string;
+  count: number;
+}
+
+export interface TopSearchesSummary {
+  totalSearches: number;
+  /** Distinct query count after case-folding — e.g. "Chat" and "chat" are one entry, not two. */
+  distinctQueryCount: number;
+  /** Ranked by `count` descending, case-folded and deduplicated; not capped, same "a dashboard's whole point is the full list" reasoning `getTrafficSummary` already used. */
+  topQueries: TopSearchRow[];
+}
+
+/**
+ * Top-searches dashboard data — leaf `3.c.ii.zo`, the second leaf of
+ * `3.c.ii` (Analytics). Backs `/admin/search`: aggregates every row
+ * `logSearchQuery` has appended to `searchQueries` (`lib/mock-data.ts`)
+ * into query counts, case-folded so casing variants of the same search
+ * don't split a query's count across multiple rows. The *display*
+ * label for each ranked row is the first-seen casing for that
+ * case-folded query, not a re-lowercased string — reads more like a
+ * real search term this way rather than an all-lowercase log dump.
+ *
+ * A fresh live aggregation on every call, not a materialized snapshot
+ * — same reasoning `getTrafficSummary` already gave for skipping that
+ * caching layer.
+ */
+export async function getTopSearches(): Promise<TopSearchesSummary> {
+  const countsByKey = new Map<string, { display: string; count: number }>();
+  for (const entry of searchQueries) {
+    const key = entry.query.toLowerCase();
+    const existing = countsByKey.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      countsByKey.set(key, { display: entry.query, count: 1 });
+    }
+  }
+
+  const topQueries = Array.from(countsByKey.values())
+    .map(({ display, count }) => ({ query: display, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return resolveAfterDelay({
+    totalSearches: searchQueries.length,
+    distinctQueryCount: topQueries.length,
+    topQueries,
   });
 }

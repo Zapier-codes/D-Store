@@ -1092,6 +1092,21 @@ export const reviews: Review[] = [];
 export const sponsoredSlots: SponsoredSlot[] = [];
 
 /**
+ * One recorded search — leaf `3.c.ii.zo`. `query` is stored exactly as
+ * typed (for display / debugging a specific hit); aggregation for the
+ * top-searches dashboard case-folds it, so `"Chat"` and `"chat"` count
+ * toward the same ranked row without needing two stored variants here.
+ */
+export interface SearchQueryLog {
+  id: string;
+  query: string;
+  created_at: string; // ISO datetime
+}
+
+/** Logged searches — leaf `3.c.ii.zo`. Empty by default, same "empty until populated" posture `reviews`/`sponsoredSlots` above already established; fills up as `/search` is hit. */
+export const searchQueries: SearchQueryLog[] = [];
+
+/**
  * Developer profiles — leaf 0.g.iii.zo. One per `App.developer_slug`
  * above, `slug`/`name`/`profile_url` read off each app's real `source`
  * URL (see the field comment on `Developer` for why), `bio`/`joined_at`

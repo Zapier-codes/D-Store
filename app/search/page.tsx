@@ -1,4 +1,4 @@
-import { searchApps } from "@/lib/catalog";
+import { searchApps, logSearchQuery } from "@/lib/catalog";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import EmptyState from "@/components/EmptyState";
@@ -24,6 +24,11 @@ import styles from "./page.module.css";
  * The "no query yet" and "zero matches" messages now render through
  * `EmptyState` (3.a.iii.zo) instead of a bare `<p>` — same component
  * `/categories/[slug]` uses for its own empty case, below.
+ *
+ * Also the call site for `logSearchQuery` (`3.c.ii.zo`) — see that
+ * function's own comment in `lib/catalog.ts` for why this page load,
+ * specifically, is where a search gets logged rather than inside
+ * `searchApps` itself.
  */
 export default async function SearchPage({
   searchParams,
@@ -32,6 +37,9 @@ export default async function SearchPage({
 }) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
+  if (query) {
+    await logSearchQuery(query);
+  }
   const results = query ? await searchApps(query) : [];
 
   return (
