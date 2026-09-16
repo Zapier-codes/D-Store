@@ -20,6 +20,12 @@ import ScrollReveal from "@/components/ScrollReveal";
  * the two lists legitimately overlap rather than partitioning one
  * result set.
  *
+ * `3.b.ii.zo` later re-sorted `getTrendingApps` onto `view_count`
+ * (matching docs/D-STORE.md §4E's "View counters (powers Trending)")
+ * and made it read from a lazily-refreshed daily snapshot rather than
+ * a live sort on every call — nothing changes at this call site either
+ * way, same seam-stability every `lib/catalog.ts` swap has had so far.
+ *
  * This leaf (0.d.iii.zi) adds the Editor's Picks shelf below Trending,
  * from `getEditorsPicks()` — filtered on the dummy `is_editors_pick`
  * flag (see lib/catalog.ts), a third independent dimension from both

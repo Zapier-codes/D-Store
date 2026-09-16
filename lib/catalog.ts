@@ -221,8 +221,77 @@ export async function getFeaturedApps(limit = 6): Promise<App[]> {
   return resolveAfterDelay(result);
 }
 
+/**
+ * Daily materialized Trending cache — leaf `3.b.ii.zo`. Two things
+ * this leaf changes about `getTrendingApps`:
+ *
+ * 1. **Sort key**: `install_count` → `view_count`. Flagged by
+ *    `3.b.i.zo`, fixed here: docs/D-STORE.md §4E frames this row as
+ *    "View counters (powers Trending)" — a cumulative install total
+ *    barely reorders day to day and isn't what "trending" means
+ *    anyway (an app someone installed once six months ago
+ *    contributes to it forever); `view_count` is the closer real-world
+ *    analogue of a "how much attention is this getting right now"
+ *    signal, and it's the field the counter this row was named after
+ *    (`3.b.i.zo`) already built.
+ *
+ * 2. **Materialization**: previously recomputed a full-catalog sort
+ *    on every call. Real "daily materialized" means a snapshot
+ *    computed periodically and read cheaply in between — the read
+ *    path shouldn't pay for the sort on every request. Modeled here
+ *    with a lazy TTL cache: `materializeTrendingCache()` snapshots
+ *    the ranked slug order once, `getTrendingApps` reuses that
+ *    snapshot until it's more than `TRENDING_CACHE_TTL_MS` old, then
+ *    recomputes. This is genuinely the shape a periodic job + cached
+ *    read would take — not faked — but it's honestly a same-process,
+ *    in-memory cache, same limitation the rest of this dummy data
+ *    layer already has (a real deployment with multiple serverless
+ *    instances wouldn't share this cache between them; that needs an
+ *    actual scheduled job writing to Supabase once `5.f.i` exists,
+ *    which this stands in for ahead of).
+ *
+ * Snapshotting slugs rather than `App` objects directly means a
+ * later `incrementViewCount` call between materializations doesn't
+ * retroactively reorder an already-served ranking mid-TTL-window (the
+ * whole point of "daily" — the order is supposed to hold steady for
+ * the window, not jitter on every view), while the actual `App` data
+ * returned is still looked up fresh each call, so display fields
+ * (name, icon, current counts shown alongside the ranking) are never
+ * stale even though the *order* intentionally is, within the window.
+ */
+interface TrendingCacheEntry {
+  computedAt: number; // epoch ms
+  rankedSlugs: string[];
+}
+
+let trendingCache: TrendingCacheEntry | null = null;
+const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // "daily"
+
+function materializeTrendingCache(): TrendingCacheEntry {
+  const rankedSlugs = [...apps]
+    .sort((a, b) => b.view_count - a.view_count)
+    .map((app) => app.slug);
+  return { computedAt: Date.now(), rankedSlugs };
+}
+
+function getOrRefreshTrendingCache(): TrendingCacheEntry {
+  const isStale = !trendingCache || Date.now() - trendingCache.computedAt > TRENDING_CACHE_TTL_MS;
+  if (isStale) {
+    trendingCache = materializeTrendingCache();
+  }
+  // Non-null by construction: either the cache existed and wasn't
+  // stale, or it was just (re)assigned above. TS can't carry that
+  // narrowing across a module-level `let` on its own.
+  return trendingCache!;
+}
+
 export async function getTrendingApps(limit = 12): Promise<App[]> {
-  const result = [...apps].sort((a, b) => b.install_count - a.install_count).slice(0, limit);
+  const cache = getOrRefreshTrendingCache();
+
+  const result = cache.rankedSlugs
+    .map((slug) => apps.find((app) => app.slug === slug))
+    .filter((app): app is App => app !== undefined)
+    .slice(0, limit);
   return resolveAfterDelay(result);
 }
 
