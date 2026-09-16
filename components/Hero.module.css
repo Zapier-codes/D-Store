@@ -7,6 +7,12 @@
  * tokens — everything else here (panel surface, border, accent, text)
  * still runs off those tokens so the glass panel itself re-themes
  * normally even though the backdrop behind it doesn't.
+ *
+ * `.name`/`.summary`/`.metaMuted` were hardcoded to `#f2ece0` (the
+ * dark theme's off-white) instead of running off `--color-text` like
+ * this comment always said they should — leaf 0.b.iv.zi fixes that,
+ * same bug and same fix as the identical mistake on <body> in
+ * app/globals.css.
  */
 
 .hero {
@@ -79,13 +85,13 @@
   margin: 0;
   font-size: clamp(1.5rem, 4vw, 2.25rem);
   line-height: 1.15;
-  color: #f2ece0;
+  color: var(--color-text);
 }
 
 .summary {
   margin: 0;
   max-width: 60ch;
-  color: #f2ece0;
+  color: var(--color-text);
   opacity: 0.85;
   font-size: 0.95rem;
   /* Clamp so a long dummy summary can't push the CTA out of the initial viewport. */
@@ -113,7 +119,7 @@
 }
 
 .metaMuted {
-  color: #f2ece0;
+  color: var(--color-text);
   opacity: 0.7;
 }
 
