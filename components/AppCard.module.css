@@ -139,3 +139,12 @@
   color: var(--color-accent);
   white-space: nowrap;
 }
+
+/* Caption — leaf 3.b.iii.zo. Same muted tone as .meta, its own line
+   rather than crowded into that row, since .meta's rating/badge and a
+   date read as two different kinds of information. */
+.caption {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--color-border);
+}

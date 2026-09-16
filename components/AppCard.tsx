@@ -34,8 +34,26 @@ import styles from "./AppCard.module.css";
  * when a caller supplies a position — keeping charts visually
  * consistent with every other listing instead of introducing a second
  * card style, per §3's grid-density decision applying uniformly.
+ *
+ * Optional `caption` — leaf `3.b.iii.zo` (New & Updated chart page).
+ * That chart's own ordering (`updated_at` descending) isn't a "rank" in
+ * the sense installs are — recency isn't a competitive standing the way
+ * a Top Free position is — so `rank` doesn't fit there (per that leaf's
+ * own open question in HANDOVER.md). A one-line muted caption under the
+ * rating row is the substitute: New & Updated passes "Updated <date>"
+ * per app instead of a numbered badge, same "small optional addition to
+ * the one existing card" shape `rank` already established rather than a
+ * second bespoke chart-card component.
  */
-export default function AppCard({ app, rank }: { app: App; rank?: number }) {
+export default function AppCard({
+  app,
+  rank,
+  caption,
+}: {
+  app: App;
+  rank?: number;
+  caption?: string;
+}) {
   return (
     <Link href={`/app/${app.slug}`} className={styles.card}>
       <div className={styles.icon}>
@@ -61,6 +79,8 @@ export default function AppCard({ app, rank }: { app: App; rank?: number }) {
             <span className={styles.badge}>Editors&rsquo; Pick</span>
           )}
         </p>
+
+        {caption !== undefined && <p className={styles.caption}>{caption}</p>}
       </div>
     </Link>
   );

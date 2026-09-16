@@ -28,8 +28,8 @@ import styles from "./Header.module.css";
  *
  * `/charts/top-free` added by leaf `3.b.iii.zi` once that page existed
  * (unlike `/search`/`/categories` above, not a forward reference —
- * chart pages arrive one at a time, `3.b.iii.zo`'s New & Updated chart
- * doesn't have a nav entry yet since it doesn't exist yet either).
+ * chart pages arrive one at a time). `/charts/new` added the same way
+ * by leaf `3.b.iii.zo`, closing out all of Phase 3's chart pages.
  */
 export default function Header({ theme }: { theme: Theme }) {
   return (
@@ -66,6 +66,9 @@ export default function Header({ theme }: { theme: Theme }) {
           </Link>
           <Link href="/charts/top-free" className={styles.navLink}>
             Top Free
+          </Link>
+          <Link href="/charts/new" className={styles.navLink}>
+            New &amp; Updated
           </Link>
           <ThemeToggle theme={theme} />
         </nav>
