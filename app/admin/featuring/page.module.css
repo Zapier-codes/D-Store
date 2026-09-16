@@ -1,0 +1,117 @@
+/*
+ * Admin featuring toggle — leaf 3.c.i.zi. Deliberately plain, not
+ * themed: this page's own doc comment explains why it skips
+ * CategoryThemeScope and the public storefront chrome. Same overall
+ * page shell (`.main`/`.heading`/`.subheading`) as
+ * /charts/top-free/page.module.css for consistency with the rest of
+ * the app, plus a table + toggle-switch treatment neither of those
+ * pages needed.
+ */
+
+.main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subheading {
+  margin: -1rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.th {
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-border);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:not(:last-child) .td {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.td {
+  padding: 0.6rem 1rem;
+  vertical-align: middle;
+}
+
+.appCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.error {
+  display: block;
+  font-size: 0.75rem;
+  color: #c94b4b;
+  margin-top: 0.2rem;
+}
+
+.toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.toggleOn {
+  background: var(--color-accent);
+  border-color: var(--color-accent-strong);
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-text);
+  transition: transform 0.15s ease;
+}
+
+.toggleOn .toggleKnob {
+  transform: translateX(18px);
+  background: var(--color-surface);
+}

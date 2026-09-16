@@ -214,6 +214,43 @@ export async function submitReview(
   return resolveAfterDelay({ avg_rating: app.avg_rating, rating_count: app.rating_count });
 }
 
+/**
+ * Admin featuring toggle — leaf `3.c.i.zi` (Admin/Editorial Tools,
+ * Featuring). Flips `is_featured` and/or `is_editors_pick` on a single
+ * app; either flag is optional so a caller can update just one without
+ * clobbering the other. Same seam as every other mutator in this file:
+ * writes through the in-memory dummy `apps` array today, swaps for a
+ * real Supabase `UPDATE` once `5.f.i` lands, and its caller
+ * (`app/api/admin/apps/[slug]/featuring/route.ts`) doesn't change when
+ * that happens.
+ *
+ * `getFeaturedApps`/`getEditorsPicks` above already read these two
+ * fields straight off the `App` row with no separate cache to
+ * invalidate, so a toggle here is immediately reflected the next time
+ * either shelf is fetched — no extra bookkeeping needed the way
+ * `getTrendingApps`'s materialized cache would require.
+ *
+ * Returns the updated `App`, or `null` for an unknown slug — same
+ * "not found" shape every other slug-keyed lookup/mutator in this file
+ * uses.
+ */
+export async function setAppFeaturing(
+  slug: string,
+  updates: { is_featured?: boolean; is_editors_pick?: boolean }
+): Promise<App | null> {
+  const app = apps.find((a) => a.slug === slug);
+  if (!app) {
+    return resolveAfterDelay(null);
+  }
+  if (updates.is_featured !== undefined) {
+    app.is_featured = updates.is_featured;
+  }
+  if (updates.is_editors_pick !== undefined) {
+    app.is_editors_pick = updates.is_editors_pick;
+  }
+  return resolveAfterDelay(app);
+}
+
 // --- Home page shelves (0.d) -------------------------------------------
 
 export async function getFeaturedApps(limit = 6): Promise<App[]> {

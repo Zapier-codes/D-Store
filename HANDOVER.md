@@ -115,7 +115,7 @@ Two distinct problems bundled in one report, both real:
 
 ### Current position
 
-> **Next leaf to work: `3.c.i.zi`** *(Admin/Editorial Tools — Featuring — admin toggle for `is_featured`/`is_editors_pick`. `3.b` (Metrics Pipeline) is now complete in full — all three of `3.b.i` (Counters), `3.b.ii` (Aggregation), and `3.b.iii` (Charts). This whole `3.c` track is admin-facing, not storefront-facing — worth deciding early whether it needs its own auth-gated surface or can stay a dev-only route for Phase 0/3's dummy-data scope, since D-STORE.md's "no login" rule (§3) was written about the public storefront, not necessarily an internal admin tool. `5.f.i.zi` remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `3.c.i.zo`** *(Admin/Editorial Tools — Featuring — sponsored-slot scheduling tool. `3.c.i.zi` (admin toggle for `is_featured`/`is_editors_pick`) is done: `lib/catalog.ts` gained `setAppFeaturing(slug, updates)`, a new `PATCH /api/admin/apps/[slug]/featuring` route, and a plain (unthemed, no storefront chrome) `/admin/featuring` page listing every app with two toggle switches each, optimistic-update-with-rollback on the client side. The "own auth-gated surface vs. dev-only route" question this line used to flag was decided for this leaf: stays unauthenticated for now — see the route handler's own doc comment for why, and revisit once `5.g.iii.zi` gives this repo a real notion of privileged/account state to key a check off of. That same decision should be treated as the default for the rest of `3.c` too, not re-litigated per leaf, unless something about a specific leaf calls for otherwise. `5.f.i.zi` remains gated behind Phases 1–4 per existing ordering.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -354,7 +354,7 @@ Two distinct problems bundled in one report, both real:
 
 **3.c — Admin/Editorial Tools**
 - 3.c.i — Featuring
-  - [ ] 3.c.i.zi — Admin toggle for `is_featured`/`is_editors_pick`
+  - [x] 3.c.i.zi — Admin toggle for `is_featured`/`is_editors_pick`
   - [ ] 3.c.i.zo — Sponsored-slot scheduling tool
 - 3.c.ii — Analytics
   - [ ] 3.c.ii.zi — Traffic dashboard
