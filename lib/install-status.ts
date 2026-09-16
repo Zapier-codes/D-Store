@@ -141,3 +141,54 @@ export function useInstallStatus(appSlug: string, currentVersion: string) {
 
   return { loaded, status, installedVersion: record?.version ?? null, markInstalled, markUninstalled };
 }
+
+/**
+ * Shared "is this app's install/update animation currently running"
+ * flag — separate from `InstalledRecord` above because it's transient
+ * UI state (true only for the ~1.8s the simulated install/update is
+ * running), not something worth persisting to `localStorage` or
+ * surviving a reload. Exists so `InstallButton`'s click handler and a
+ * sibling element elsewhere on the page — the app-icon's
+ * `WavyProgressRing` overlay (0.j.v.zi, Play Store Parity Pass: match
+ * the real Android app's circular wavy/crinkled progress ring around
+ * the app icon, not just the button's own linear fill) — can react to
+ * the same install run without a shared parent to lift state into,
+ * same same-tab-custom-event approach `CHANGE_EVENT` above already
+ * uses for cross-instance sync.
+ *
+ * Plain in-module `Map`, not `localStorage`: this only ever needs to
+ * be read within the current page's lifetime — a reload mid-"install"
+ * should NOT resume showing a ring (there's no real download to
+ * resume), so it deliberately doesn't persist.
+ */
+export const SIMULATED_INSTALL_MS = 1800;
+
+const PROGRESS_EVENT = "d-store-install-progress";
+const activeInstalls = new Map<string, boolean>();
+
+export function setInstallProgressActive(appSlug: string, active: boolean) {
+  if (active) {
+    activeInstalls.set(appSlug, true);
+  } else {
+    activeInstalls.delete(appSlug);
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(PROGRESS_EVENT, { detail: { appSlug } }));
+  }
+}
+
+export function useInstallProgress(appSlug: string): boolean {
+  const [active, setActive] = useState(() => activeInstalls.get(appSlug) ?? false);
+
+  useEffect(() => {
+    function onChange(e: Event) {
+      const detail = (e as CustomEvent<{ appSlug: string }>).detail;
+      if (detail?.appSlug === appSlug) setActive(activeInstalls.get(appSlug) ?? false);
+    }
+    setActive(activeInstalls.get(appSlug) ?? false);
+    window.addEventListener(PROGRESS_EVENT, onChange);
+    return () => window.removeEventListener(PROGRESS_EVENT, onChange);
+  }, [appSlug]);
+
+  return active;
+}

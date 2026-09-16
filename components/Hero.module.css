@@ -1,80 +1,134 @@
 /*
- * Hero styles — leaf 0.d.i.zi.
+ * Hero styles — leaf 0.d.i.zi, redesigned by leaf 0.j.v.zo (Play Store
+ * Parity Pass — compact rectangular card, glass across the whole
+ * surface rather than a bottom strip over a solid banner, blended into
+ * the page rather than sitting on top of it as a big color block, plus
+ * a periodic light-flare sweep). See Hero.tsx's docstring for the full
+ * rationale.
  *
- * The one deliberate glassmorphism moment on the home page, per
- * D-STORE.md §4C. Background gradient colors come inline from the
- * featured app's own dummy palette (Hero.tsx), not from the 0.b design
- * tokens — everything else here (panel surface, border, accent, text)
- * still runs off those tokens so the glass panel itself re-themes
- * normally even though the backdrop behind it doesn't.
+ * `.panel` (the glass surface) now *is* the card, not a strip pinned
+ * to its bottom edge — everything (icon + content) lives inside it, so
+ * the frosted/blurred treatment applies across the whole thing and the
+ * page's own background shows through everywhere, not just behind a
+ * bottom band. Still runs off the 0.b design tokens (border, surface,
+ * text, accent) so it re-themes normally; only the soft background
+ * glow behind the glass (Hero.tsx's inline `backgroundStyle`) comes
+ * from the featured app's own dummy palette.
  *
- * `.name`/`.summary`/`.metaMuted` were hardcoded to `#f2ece0` (the
- * dark theme's off-white) instead of running off `--color-text` like
- * this comment always said they should — leaf 0.b.iv.zi fixes that,
- * same bug and same fix as the identical mistake on <body> in
- * app/globals.css.
+ * `.name`/`.summary`/`.metaMuted` run off `--color-text` per 0.b.iv.zi's
+ * fix (same bug/fix as the identical mistake on <body> in app/globals.css).
  */
 
 .hero {
   position: relative;
   isolation: isolate;
-  display: flex;
-  align-items: flex-end;
-  min-height: min(70vh, 560px);
-  border-radius: 20px;
+  border-radius: 18px;
   overflow: hidden;
   margin: 1rem;
-}
-
-/* Reuses the same vignette treatment as <body> (0.b.i.zo) layered over
-   the app-color gradient, so the hero reads as part of the same
-   "Cinematic Gold" visual language rather than a disconnected banner. */
-.scrim {
-  position: absolute;
-  inset: 0;
-  background-image: var(--gradient-vignette), linear-gradient(0deg, rgba(0, 0, 0, 0.55), transparent 55%);
-  z-index: 1;
 }
 
 .panel {
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: flex-end;
-  gap: 1.25rem;
-  width: 100%;
-  padding: 1.5rem;
-  background-color: color-mix(in srgb, var(--color-surface) 55%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--color-border);
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1.1rem 1.4rem;
+  background-color: color-mix(in srgb, var(--color-surface) 52%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+/*
+ * Light flare — leaf 0.j.v.zo. A soft diagonal highlight band that
+ * periodically sweeps left-to-right across the glass, the same
+ * "glossy sheen catching the light" motif real frosted-glass UI
+ * surfaces use. Sits above `.panel` (z-index 3) with
+ * `mix-blend-mode: overlay` so it reads as a reflection on the glass's
+ * front surface rather than a flat highlight, and stays convincing in
+ * both light and dark themes since `overlay` scales with whatever's
+ * underneath rather than always brightening by a fixed amount.
+ * `pointer-events: none` — purely decorative, never intercepts clicks
+ * on the CTA/content beneath it.
+ */
+.flare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.flare::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -45%;
+  width: 32%;
+  height: 180%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.02) 35%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.02) 65%,
+    transparent 100%
+  );
+  mix-blend-mode: overlay;
+  transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .flare::before {
+    animation: hero-flare-sweep 6.5s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-flare-sweep {
+  0%,
+  30% {
+    transform: translateX(0);
+  }
+  65%,
+  100% {
+    transform: translateX(330%);
+  }
+}
+
+/* Reduced-motion fallback: the flare simply doesn't render — same
+   "no motion, no substitute animation" posture every other decorative
+   animation in this repo takes. */
+@media (prefers-reduced-motion: reduce) {
+  .flare::before {
+    display: none;
+  }
 }
 
 .icon {
   flex-shrink: 0;
-  width: 88px;
-  height: 88px;
+  width: 64px;
+  height: 64px;
   border-radius: 22%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  font-weight: 700;
   line-height: 1;
   user-select: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
   min-width: 0;
+  flex: 1;
 }
 
 .eyebrow {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -83,7 +137,7 @@
 
 .name {
   margin: 0;
-  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
   line-height: 1.15;
   color: var(--color-text);
 }
@@ -93,10 +147,11 @@
   max-width: 60ch;
   color: var(--color-text);
   opacity: 0.85;
-  font-size: 0.95rem;
-  /* Clamp so a long dummy summary can't push the CTA out of the initial viewport. */
+  font-size: 0.88rem;
+  /* Single line — the card is compact/rectangular now, not a tall
+     banner with room to spare (0.j.v.zo). */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -105,9 +160,8 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.9rem;
-  font-size: 0.85rem;
-  margin-top: 0.15rem;
+  gap: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .rating {
@@ -124,16 +178,15 @@
 }
 
 .cta {
-  align-self: flex-start;
-  margin-top: 0.6rem;
-  padding: 0.65rem 1.25rem;
+  flex-shrink: 0;
+  padding: 0.55rem 1.1rem;
   border-radius: 999px;
   background-color: var(--color-accent);
   color: var(--color-bg);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-decoration: none;
-  min-height: 44px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   transition: background-color 150ms ease;
@@ -171,14 +224,12 @@
 
 @media (max-width: 560px) {
   .panel {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .icon {
-    width: 64px;
-    height: 64px;
-    font-size: 1.75rem;
+    width: 52px;
+    height: 52px;
   }
 }
 

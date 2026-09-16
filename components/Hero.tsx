@@ -4,30 +4,39 @@ import AppIcon from "./AppIcon";
 import styles from "./Hero.module.css";
 
 /**
- * Cinematic hero — leaf 0.d.i.zi (part of 0.d, Home Page).
+ * Cinematic hero — leaf 0.d.i.zi (part of 0.d, Home Page), redesigned
+ * by leaf 0.j.v.zo (Play Store Parity Pass — "blend into the shell,
+ * don't sit on top of it as a big colored banner").
  *
  * Per docs/D-STORE.md §4A ("Cinematic hero — one featured app, one
  * deliberate visual moment") and §4C ("Glassmorphism — used once
- * deliberately (header, hero, modals), not on every card"). This is
- * that one deliberate glass moment for the home page — AppCard (0.c.ii.zo)
- * and the rest of the shell stay flat/opaque on purpose.
+ * deliberately (header, hero, modals), not on every card"). Still that
+ * one deliberate glass moment for the home page — AppCard (0.c.ii.zo)
+ * and the rest of the shell stay flat/opaque on purpose — but 0.j.v.zo
+ * walks back how loud that moment reads: the original full-bleed,
+ * near-viewport-height section with a bold saturated app-color
+ * gradient filling the whole card read as a big banner block sitting
+ * *on* the page rather than a glass surface blended *into* it. This
+ * version is a compact rectangular card — the glass panel now covers
+ * the entire card (not just a bottom strip over a solid backdrop), so
+ * the page's own background/vignette shows through the whole thing,
+ * with only a soft, low-opacity hint of the app's own color glowing
+ * behind the glass rather than a solid fill.
  *
- * Takes a single `App` and renders it full-bleed. Callers pick which
- * app — this component doesn't know about "featured" as a concept; the
- * home page (app/page.tsx) calls `getFeaturedApps()` and hands the
- * first result in, same prop-in pattern AppCard already uses.
+ * Takes a single `App` and renders it. Callers pick which app — this
+ * component doesn't know about "featured" as a concept; the home page
+ * (app/page.tsx) calls `getFeaturedApps()` and hands the first result
+ * in, same prop-in pattern AppCard already uses.
  *
- * Background: unlike the rest of the shell (which runs entirely off
- * the 0.b design tokens so it re-themes automatically), the hero's
- * background gradient is built from the *app's own* dummy
- * primary/secondary/tertiary colors — the "cinematic, one deliberate
- * moment" is deliberately app-specific artwork, not a themed surface.
- * A dark scrim + `--gradient-vignette` (reused from 0.b.i.zo) sits on
- * top so panel text stays legible against any app's color set, in both
- * themes. No real screenshot/banner art exists yet (`App.screenshots`
- * are dummy `/mock/...` paths that don't resolve to real images), so
- * the gradient stands in for hero artwork for now — swapping in a real
- * banner image later only touches this file's background layer.
+ * Light flare — leaf 0.j.v.zo — a soft diagonal highlight band
+ * (`.flare`) that periodically sweeps across the glass, the same
+ * "glossy sheen catching the light" motif real glass/frosted UI
+ * surfaces use. Gated behind `prefers-reduced-motion`, same as every
+ * other animation in this file.
+ *
+ * No real screenshot/banner art exists yet (`App.screenshots` are
+ * dummy `/mock/...` paths that don't resolve to real images) — the
+ * soft app-color glow stands in for hero artwork for now.
  *
  * Reveal animation — leaf 0.d.i.zo — lives entirely in Hero.module.css
  * (`.panel`/`.icon` `animation`, gated behind
@@ -38,17 +47,19 @@ import styles from "./Hero.module.css";
  * without an IntersectionObserver — this stays a server component.
  */
 export default function Hero({ app }: { app: App }) {
+  // A soft, low-opacity glow hinting at the app's own palette — not a
+  // solid fill — so the page's own background still reads through the
+  // glass everywhere else on the card. See docstring above (0.j.v.zo).
   const backgroundStyle: React.CSSProperties = {
     background: [
-      `radial-gradient(ellipse 90% 80% at 15% 20%, ${app.primary_color}66, transparent 60%)`,
-      `radial-gradient(ellipse 80% 90% at 85% 30%, ${app.secondary_color}4d, transparent 65%)`,
-      `linear-gradient(160deg, ${app.tertiary_color}, ${app.primary_color})`,
+      `radial-gradient(ellipse 70% 100% at 0% 50%, ${app.primary_color}33, transparent 70%)`,
+      `radial-gradient(ellipse 60% 100% at 100% 30%, ${app.secondary_color}26, transparent 70%)`,
     ].join(", "),
   };
 
   return (
     <section className={styles.hero} style={backgroundStyle} aria-label="Featured app">
-      <div className={styles.scrim} />
+      <div className={styles.flare} aria-hidden="true" />
 
       <div className={styles.panel}>
         <div className={styles.icon}>

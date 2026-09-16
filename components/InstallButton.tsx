@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useInstallStatus } from "@/lib/install-status";
+import { useInstallStatus, setInstallProgressActive, SIMULATED_INSTALL_MS } from "@/lib/install-status";
 import styles from "./InstallButton.module.css";
 
 /**
@@ -31,7 +31,6 @@ import styles from "./InstallButton.module.css";
  * "Update" on its own — both derived from `useInstallStatus`, not
  * tracked as separate local state here.
  */
-const SIMULATED_INSTALL_MS = 1800;
 
 type UiState = "idle" | "installing";
 
@@ -53,6 +52,11 @@ export default function InstallButton({
   function runSimulatedInstall() {
     if (uiState !== "idle") return;
     setUiState("installing");
+    // 0.j.v.zi — flips the shared cross-component progress flag so the
+    // app-icon's WavyProgressRing overlay (header + StickyInstallBar)
+    // starts its sweep in lockstep with this same button click, even
+    // though the icon lives in a separate element/component tree.
+    setInstallProgressActive(appSlug, true);
     // Fire-and-forget — leaf 3.b.i.zi. Only a fresh install bumps the
     // count, not an "Update" re-run of this same simulated flow (real
     // install counters don't increment on update, and `status` here
@@ -64,6 +68,7 @@ export default function InstallButton({
     }
     setTimeout(() => {
       markInstalled(currentVersion);
+      setInstallProgressActive(appSlug, false);
       setUiState("idle");
     }, SIMULATED_INSTALL_MS);
   }

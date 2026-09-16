@@ -1,0 +1,73 @@
+/*
+ * Wavy progress ring styles — leaf 0.j.v.zi.
+ *
+ * Positioned by the caller (AppIconLive.module.css's `.wrapper`) as an
+ * absolutely-positioned overlay slightly larger than the icon it
+ * wraps, so the ring sits just outside the icon's own edge rather than
+ * over it.
+ */
+
+.ring {
+  position: absolute;
+  inset: -14%;
+  width: 128%;
+  height: 128%;
+  pointer-events: none;
+  transform: rotate(0deg);
+}
+
+.track {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 3.5;
+  opacity: 0.5;
+}
+
+.sweep {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sweep {
+    animation: wavy-ring-sweep linear forwards;
+  }
+
+  .ring {
+    /* Continuous slow rotation layered on top of the determinate sweep
+       — the "curling" liquid-like motion, independent of progress. */
+    animation: wavy-ring-spin 2.4s linear infinite;
+  }
+
+  @keyframes wavy-ring-sweep {
+    from {
+      stroke-dashoffset: 100;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes wavy-ring-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+/* Reduced-motion fallback: ring doesn't render at all rather than
+   sitting frozen mid-sweep — same "no ring" posture InstallButton's
+   own `.fill` takes (InstallButton.module.css), consistent across
+   both install-progress visuals. */
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    display: none;
+  }
+}

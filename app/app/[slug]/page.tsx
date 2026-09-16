@@ -17,7 +17,7 @@ import ReportAppForm from "@/components/ReportAppForm";
 import InstallButton from "@/components/InstallButton";
 import MonetizationDisclosure from "@/components/MonetizationDisclosure";
 import StickyInstallBar from "@/components/StickyInstallBar";
-import AppIcon from "@/components/AppIcon";
+import AppIconLive from "@/components/AppIconLive";
 import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
 import ViewPing from "@/components/ViewPing";
@@ -112,7 +112,8 @@ export default async function AppDetailPage({
         />
         <header className={styles.header}>
           <div className={styles.icon}>
-            <AppIcon
+            <AppIconLive
+              appSlug={app.slug}
               name={app.name}
               primaryColor={app.primary_color}
               secondaryColor={app.secondary_color}

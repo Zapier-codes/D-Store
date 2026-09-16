@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import InstallButton from "./InstallButton";
-import AppIcon from "./AppIcon";
+import AppIconLive from "./AppIconLive";
 import styles from "./StickyInstallBar.module.css";
 
 /**
@@ -80,7 +80,8 @@ export default function StickyInstallBar({
     >
       <div className={styles.identity}>
         <div className={styles.icon}>
-          <AppIcon
+          <AppIconLive
+            appSlug={appSlug}
             name={appName}
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
