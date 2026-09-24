@@ -1,0 +1,117 @@
+name: Aptoide Catalog Ingestion
+
+# Leaf 5.h.ii.zo. `scripts/ingest-aptoide.ts` (5.h.ii.zi) is the callable
+# piece; what was missing was the actual scheduler — this is that piece.
+# GitHub's runners have normal internet access, unlike the sandboxes both
+# `5.h.ii.zi` and this leaf were built in, so this is also where the
+# live-fetch path (`fetchAptoideApp`/`fetchAptoideSearch`) gets its first
+# real end-to-end exercise beyond the single operator-probe seed.
+#
+# Deliberately NOT wired to a real package list yet. Two things
+# HANDOVER.md flags under "Current position" are genuine blockers, not
+# session-scoping details, and neither is this workflow's to resolve:
+#   - ❓2 (Aptoide's re-presentation/linking terms) is still unchecked.
+#   - A real target package list is a product decision, not one a
+#     workflow file should make by inventing packages.
+# Until both are settled, leave the `APTOIDE_INGEST_PACKAGES` /
+# APTOIDE_INGEST_SEARCHES repo Variables (Settings -> Secrets and
+# variables -> Actions -> Variables) unset. The "Skip if nothing
+# configured" step below makes that the quiet, green-checkmark default
+# rather than a scheduled failure — nothing else about this workflow
+# needs to change once an operator has made both calls; just populate
+# the two variables (or pass one-off values via "Run workflow").
+#
+# Output is a pull request, not a direct push to master. `storage/
+# downloads/aptoide-snapshot.json` is a committed file (lib/sources/
+# aptoide.ts reads it at request time, never Aptoide live), so refreshing
+# it is a real content change reviewers should see the diff for — same
+# "hand off, don't auto-merge" posture Section 3 uses for code changes,
+# applied here to a data refresh instead of a patch file.
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: "Comma-separated Aptoide package names (overrides the APTOIDE_INGEST_PACKAGES repo variable for this run only)"
+        required: false
+        default: ""
+      searches:
+        description: "Comma-separated search queries (overrides APTOIDE_INGEST_SEARCHES for this run only)"
+        required: false
+        default: ""
+  schedule:
+    # Weekly, once packages/searches are actually configured (see the
+    # header comment). No-ops until then. Cadence is a placeholder, not
+    # a reviewed decision against real traffic/terms — cheap to revisit.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Resolve package/search lists
+        id: config
+        env:
+          DISPATCH_PACKAGES: ${{ inputs.packages }}
+          DISPATCH_SEARCHES: ${{ inputs.searches }}
+          VAR_PACKAGES: ${{ vars.APTOIDE_INGEST_PACKAGES }}
+          VAR_SEARCHES: ${{ vars.APTOIDE_INGEST_SEARCHES }}
+        run: |
+          PACKAGES="${DISPATCH_PACKAGES:-$VAR_PACKAGES}"
+          SEARCHES="${DISPATCH_SEARCHES:-$VAR_SEARCHES}"
+          echo "packages=$PACKAGES" >> "$GITHUB_OUTPUT"
+          echo "searches=$SEARCHES" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if nothing configured
+        if: steps.config.outputs.packages == '' && steps.config.outputs.searches == ''
+        run: |
+          echo "::notice::Nothing to ingest — APTOIDE_INGEST_PACKAGES / APTOIDE_INGEST_SEARCHES repo variables are unset and no dispatch inputs were given. This is intentional until the ❓2 terms check and a real package list are settled (see this workflow's header comment and HANDOVER.md's Current position note for 5.h.ii.zo). Skipping."
+
+      - name: Install dependencies
+        if: steps.config.outputs.packages != '' || steps.config.outputs.searches != ''
+        run: npm ci
+
+      - name: Run ingestion
+        if: steps.config.outputs.packages != '' || steps.config.outputs.searches != ''
+        env:
+          PACKAGES: ${{ steps.config.outputs.packages }}
+          SEARCHES: ${{ steps.config.outputs.searches }}
+        run: |
+          set -euo pipefail
+          ARGS=()
+          if [ -n "$PACKAGES" ]; then
+            ARGS+=(--packages "$PACKAGES")
+          fi
+          if [ -n "$SEARCHES" ]; then
+            IFS=',' read -ra QUERIES <<< "$SEARCHES"
+            for q in "${QUERIES[@]}"; do
+              ARGS+=(--search "$q")
+            done
+          fi
+          npx tsx scripts/ingest-aptoide.ts "${ARGS[@]}"
+
+      - name: Open PR with updated snapshot
+        if: steps.config.outputs.packages != '' || steps.config.outputs.searches != ''
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "5.h.ii.zo: refresh Aptoide catalog snapshot"
+          branch: aptoide-ingest/snapshot-refresh
+          delete-branch: true
+          title: "Aptoide catalog snapshot refresh"
+          body: |
+            Automated run of `scripts/ingest-aptoide.ts` via the
+            `ingest-aptoide.yml` scheduled workflow (leaf `5.h.ii.zo`).
+
+            Review the diff to `storage/downloads/aptoide-snapshot.json`
+            before merging — this workflow does not auto-merge.
+          add-paths: storage/downloads/aptoide-snapshot.json
