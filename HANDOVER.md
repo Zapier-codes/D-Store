@@ -70,6 +70,34 @@ What follows from that:
 
 Still open, and not decided here: where the Console publishes the index (its own endpoint, object storage, or a static host); whether D-Store's admin and editorial tools (`2.b.iii.zo` report queue, `3.c`) move to the Console's admin, as Google runs the equivalents on its own side (they are done leaves, nothing was changed); how the Console reads and replies to reviews (this repo would need to expose them); and staged rollout, since a no-account store has no stable device identity to hash.
 
+**Resolved — catalog sources (product owner, this session): the store is populated through the Aptoide MCP, and Zealot's apps are always seen first.** Two sources feed the storefront:
+- **First-party:** Zealot's signed catalog index (Zealot Tasks 27, 29). Verified, org-signed, downloaded from Zealot's stable route.
+- **Third-party:** Aptoide, through its MCP. Breadth of catalog, not verified by us.
+
+Rules that follow (recorded now, built in `5.h`):
+- **Home page:** a first-party section is always first, and the hero prefers a first-party app. If Zealot has no live apps yet, the section is omitted (no empty shell) and Aptoide content fills the page. Shelves below rank first-party ahead of third-party.
+- **Merge:** the same package in both sources shows only the Zealot entry.
+- **Trust labelling:** third-party apps are labelled "Third-party (via Aptoide)", download from Aptoide's own delivery, and never show Zealot-derived claims: no Verified developer badge, no org signing-fingerprint "Verify this APK" (`0.f.i`). Fields Aptoide does not provide (data safety, content rating and the like) render "Not provided", not an invented default, following the honesty rule `0.j.iii` already set for dummy data.
+- **Ingestion:** a server-side job calls the MCP on a schedule and snapshots the result into `storage/downloads`. Never per-request calls, the same cache rule as Section 3. MCP servers are built for AI clients, so this repo should treat it as a data source to snapshot, not as a runtime dependency.
+
+**Open ❓ (do not guess):** (1) which Aptoide MCP: the official `Aptoide/aptoide-mcp` (Python, MIT, listed on Aptoide's GitHub) or the third-party "Aptoide Ultimate API" actor on Apify (pay-per-query, hosted by Apify); neither was inspected beyond its public listing. (2) Aptoide's terms for re-presenting its catalog and linking to its downloads: not checked. (3) Ranking outside the home page: recommendation is relevance first, first-party wins ties, origin always labelled. (4) How third-party apps get region availability and counters. `5.h.ii.zo` stays held until (1) and (2) are answered.
+
+**Priority override — first-party-first home page (`5.h.i`, new):** direct product-owner rule, same mechanism as the `0.h`/`0.i`/`0.j` overrides: **Current position moves to `5.h.i.zi`.** It is buildable now on dummy data through the `lib/catalog.ts` seam, like Phase 0, with no backend needed. This is a sequencing choice made by the session that recorded the rule; the product owner can move it.
+
+**Cross-repo review with Zealot — recommended answers (session recommendations, awaiting product-owner confirmation; no leaf status was changed on their basis except the holds and additions named below):**
+1. **Index fields (`5.g.i.zo`):** Zealot's index v1 lacks fields this repo renders. Zealot's Task 29 proposes v2: slug, summary, category (shared fixed vocabulary), license, links, regions, content rating, data safety, ads/IAP flags, developer profile, compatibility metadata, per-version history with status, editorial blocks, and index-level sequence and expiry. Store-owned and correctly excluded: install and view counts, average rating and rating count. Revise before Zealot signs and publishes anything.
+2. **Vercel has no persistent runtime disk**, so "cache to `storage/downloads`" cannot be written at request time. Recommendation: build-time snapshot plus a Vercel Deploy Hook called by Zealot after it publishes (`5.g.iv.zi`).
+3. **Key trust:** pin the index public key in this repo's config and accept two keys during rotation; never treat a key fetched from the same place as the index as the trust anchor (`5.g.iv.zo`).
+4. **Admin tools (Zealot ❓6):** editorial controls move to Zealot and arrive in the index (`5.g.v.zi`); traffic, searches and reports need a read-only, token-authenticated endpoint here (`5.g.v.zo`); moderation actions stay in a small authenticated admin here so Zealot never writes to this repo. `3.c.iii.zi`/`zo` are held. The current `/admin/*` and `/api/admin/*` routes are unauthenticated by design and are deployed on Vercel: gate or remove them before real data exists (`3.c.iv.zi`).
+5. **Reviews (Zealot ❓4):** `Review` holds only `id`, `app_slug`, `stars`, `created_at`; there is no text to reply to. Owners get aggregates only until text reviews exist, and those need moderation and throttling (`5.d.ii.zo`) first.
+6. **`1.a` reconciliation:** option (b), leave the merged Doctrine leaves. The two prepared SQL migrations alter an `application` table that no longer exists in Supabase's plan (catalog fields now come from the index), so they should be deleted, and `5.f.i.zo` should be superseded. Not done here; awaiting confirmation.
+7. **`5.g.ii.zi`:** confirm the download link to Zealot's stable route. Caveat from Zealot's code: that route sends people to a login page if the release's channel is password-protected, so store apps need a public channel.
+8. **Geolocation in production:** replace ipapi.co (free tier is about 1,000 lookups a day) with Vercel's country request header in the existing middleware, keeping ipapi.co only as a development fallback. No leaf added yet.
+9. **Held leaves** `5.a.iii.zo`, `5.b.iii`, `5.e.ii`/`5.e.iii`, `5.f.ii`, `5.f.iii`: Zealot's index v1 publishes a whole APK from its own route, with no Telegram or Cloudflare edge and no chunking, so these can be superseded. Not changed here; awaiting confirmation.
+10. **Staged rollout:** skipped (Zealot decision); no leaf here depends on it.
+
+**Play-parity program:** Zealot's `handover.md` Tasks 28–36 lay out the full Play Console / Play Store mirror. This repo's leaves in it are `5.c.i` (the Updater's store side), `5.g.iv`, `5.g.v` and `5.h`.
+
 **Priority override — UI revamp first:** before any further backend/infra work, the storefront UI gets rebuilt end to end on dummy data and deployed to Vercel for real-time preview. See the new **Phase 0** at the top of Section 2. It pulls forward the UI-facing leaves from Phase 1 (`1.b`–`1.d`) and Phase 2 (`2.a`–`2.c`), so those original leaves are marked superseded rather than duplicated — check them off once their Phase 0 counterpart ships. Backend/infra sequencing (starting at `5.f.i.zi`, provision Supabase) resumes once Phase 0 is complete.
 
 **Repo layout (update, part of `0.a.i.zi`):** the Next.js app now lives at the **repo root** (`package.json`, `app/`, `next.config.mjs`, `tsconfig.json`), not a `frontend/` subdirectory — this lets Vercel auto-detect the framework on import with zero manual configuration, permanently, not just on the first import. The old Symfony app (`app/`, `src/`, `web/`, `composer.json`) was moved into **`legacy-symfony/`** to make room; its internal relative paths (composer autoload, kernel bootstrap, parameters file) are all resolved relative to `legacy-symfony/composer.json` itself, so nothing inside it needed to change. Their internal Linux server deployment for the Symfony app should point at `legacy-symfony/` going forward.
@@ -137,7 +165,7 @@ Two distinct problems bundled in one report, both real:
 
 ### Current position
 
-> **Next leaf to work: `3.c.iii.zi`** *(Admin/Editorial Tools — Moderation — report-flag queue UI. `3.c.ii.zo` (top-searches dashboard) is done: new `SearchQueryLog` type + empty `searchQueries` array (`lib/mock-data.ts`), a `logSearchQuery()` writer and `getTopSearches()` aggregator (`lib/catalog.ts`), and a new read-only `/admin/search` page — same unauthenticated dev-route posture and hand-rolled-inline-bar-chart shape as `/admin/traffic`. Logging happens from `app/search/page.tsx`'s call site (once per actual search submission), not from inside `searchApps` itself — that function is also what `SearchBar`'s debounced instant-suggestions dropdown calls on every settled keystroke pause, and logging there would record search fragments ("c", "ch", "cha") rather than finished queries. Aggregation case-folds each query so casing variants collapse into one ranked row, displayed under whichever casing was first seen. `next build` passes clean; manually verified via `next start` (four `/search?q=...` requests — `"Chat"`, `"chat"`, `"chat"`, `"Photo Editor"`, plus one whitespace-only query) that `/admin/search` renders `Total searches: 4`, `Distinct queries: 2`, and a `Chat: 3` / `Photo Editor: 1` breakdown — confirming case-folding, blank-query exclusion, and count aggregation all work — and that the pre-search empty state message renders correctly on a clean server start. Closes out `3.c.ii`. `3.c.iii` (Moderation) is next: `2.b.iii.zo`'s HTTP-Basic-gated Symfony table was explicitly built as a placeholder for this leaf's real admin-shell UI, not a duplicate of it. `5.f.i.zi` remains gated behind Phases 1–4 per existing ordering.)*
+> **Next leaf to work: `5.h.i.zi`** *(Catalog Sources — first-party-first. Product-owner rule: Zealot's apps are always seen first on the home page, and the store is populated through the Aptoide MCP — see "Resolved — catalog sources" and the `5.h.i` priority override in Section 0. `3.c.iii.zi`/`zo` (moderation queues) are held pending the Zealot ❓6 outcome, so the next open leaf in path order, `3.d.i.zi`, is deliberately not the one to take next. `3.c.ii.zo` (top-searches dashboard) is done; its details are in its leaf entry.)*
 > *(Update this line every session — see Section 3, step 4.)*
 
 ---
@@ -382,8 +410,10 @@ Two distinct problems bundled in one report, both real:
   - [x] 3.c.ii.zi — Traffic dashboard
   - [x] 3.c.ii.zo — Top-searches dashboard
 - 3.c.iii — Moderation
-  - [ ] 3.c.iii.zi — Report-flag queue UI
-  - [ ] 3.c.iii.zo — Review moderation queue UI
+  - [ ] 3.c.iii.zi — Report-flag queue UI *(Held — Zealot ❓6 outcome: moderation stays here only as a small authenticated admin; see "Cross-repo review" in Section 0. Do not start until revisited.)*
+  - [ ] 3.c.iii.zo — Review moderation queue UI *(Held — same reason; also `Review` has no text today.)*
+- 3.c.iv — Admin hardening *(new)*
+  - [ ] 3.c.iv.zi — Gate or remove the unauthenticated `/admin/*` and `/api/admin/*` routes before any real data exists (they are deployed on Vercel). Editorial toggles and sponsored slots go away once `5.g.v.zi` makes the index the source of truth; anything kept sits behind real authentication.
 
 **3.d — Accessibility & Performance**
 - 3.d.i — Accessibility
@@ -511,13 +541,30 @@ Two distinct problems bundled in one report, both real:
 *This repo never submits, uploads, authenticates developers, compiles, signs or stores binaries — it only reads the signed catalog index the separate Console (Zealot) publishes and links to the APK the Console holds. These leaves are about the read-side contract, not building the Console itself.*
 - 5.g.i — Metadata read contract
   - [ ] 5.g.i.zi — Signed-index reader in this repo: fetch the Console's catalog index, verify its signature and timestamp, verify each referenced file's SHA-256, cache to `storage/downloads`. Read-only — no write access, no login, matches the no-account scope decision. *(Replaces the read-only Supabase client; see "Resolved — catalog contract" in Section 0.)*
-  - [ ] 5.g.i.zo — Review the Console's index schema (Zealot Task 27a) as the consumer, and sign off the field names/types this repo needs. It must carry the pointer to the Zealot-held APK: a stable download URL (never a short-lived signed storage URL), SHA-256, size, version, and the org signing fingerprint (these feed `0.f.i` "Verify this APK"). The schema is owned and versioned by the Console; this repo does not define it.
+  - [ ] 5.g.i.zo — Review the Console's index schema (Zealot Task 27a) as the consumer, and sign off the field names/types this repo needs. It must carry the pointer to the Zealot-held APK: a stable download URL (never a short-lived signed storage URL), SHA-256, size, version, and the org signing fingerprint (these feed `0.f.i` "Verify this APK"). The schema is owned and versioned by the Console; this repo does not define it. *(Field checklist and Zealot's v2 proposal: see "Cross-repo review", item 1, in Section 0.)*
 - 5.g.ii — Binary hand-off (Zealot compiles, signs and stores; this repo only links)
   - [ ] 5.g.ii.zi — Download button/link resolves to the stable download URL carried by the contract (Zealot's download route) — never a stored signed URL, never a copy hosted here. *(Replaces the original `bundletool` compile leaf, which is now Zealot's. **Assumed, not yet confirmed by the product owner** — confirm before starting.)*
   - [-] 5.g.ii.zo — Publish the compiled APK to the Telegram S3-compatible drive as the distributed copy; GitHub Releases is not used for binary distribution, and the raw AAB never leaves the Console/build environment *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
 - 5.g.iii — Developer trust signals
   - [ ] 5.g.iii.zi — "Verified developer" badge on the app detail page, sourced from the verified-developer flag in the Console's signed index
   - [ ] 5.g.iii.zo — Footer link to the Console site as the submission entry point (no submission UI lives in this repo)
+- 5.g.iv — Snapshot and trust anchor *(new)*
+  - [ ] 5.g.iv.zi — Build-time index snapshot: a prebuild step fetches the index (through the GitHub API for the Pages repo, not the Pages CDN, so it never reads a stale copy), verifies signature, timestamp and every referenced file's SHA-256 per `5.g.i.zi`, and writes the result to `storage/downloads` so it ships with the deployment. Zealot calls a Vercel Deploy Hook after each publish. If the fetch fails, the build keeps the last good snapshot. Reason: Vercel serverless functions have no persistent local disk at runtime.
+  - [ ] 5.g.iv.zo — Pin the index public key(s) in this repo's configuration and accept two during a rotation window; refuse an unknown major `schema_version`, an index with a sequence lower than the cached one, and an index past its `expires_at`. Never take the trust anchor from the same place the index comes from.
+- 5.g.v — Editorial and stats contract *(new)*
+  - [ ] 5.g.v.zi — Read featured, Editors' Pick, sponsored slots and collections from the index (Zealot Task 31a) instead of local admin toggles; this repo stays write-free on the editorial side.
+  - [ ] 5.g.v.zo — Read-only, token-authenticated stats endpoint for Zealot's admin: traffic, top searches, report counts, review aggregates. Requires `5.f.i`.
+
+**5.h — Catalog Sources (first-party Zealot + third-party Aptoide)** *(new — see "Resolved — catalog sources" in Section 0.)*
+- 5.h.i — First-party first
+  - [ ] 5.h.i.zi — Add an `origin` field (`"zealot"` or `"aptoide"`) to `App` in `lib/mock-data.ts`, with dummy catalog entries of both origins (uniform values would repeat the dishonest-variety mistake `0.j.iii` avoided, so mark entries by what they would really be), threaded through the `lib/catalog.ts` seam. `next build` must pass.
+  - [ ] 5.h.i.zo — Home page: a first-party section always first, the hero preferring a first-party app, the section omitted when it has no apps, shelves below ranking first-party ahead of third-party, and an origin label on cards.
+- 5.h.ii — Aptoide source
+  - [ ] 5.h.ii.zi — Source adapter behind `lib/catalog.ts`: a `CatalogSource` interface with an index adapter and an Aptoide adapter, merged with dedupe by package name (the Zealot entry wins).
+  - [ ] 5.h.ii.zo — Aptoide ingestion job: server-side and scheduled, calls the chosen Aptoide MCP, normalizes results to `App`, snapshots into `storage/downloads`; never a per-request call. *(Held — depends on the MCP choice and Aptoide's terms, both open ❓ in Section 0.)*
+- 5.h.iii — Third-party trust labelling
+  - [ ] 5.h.iii.zi — "Third-party (via Aptoide)" label on cards and the detail page; the download goes to Aptoide's delivery; suppress the Verified developer badge and the org-fingerprint "Verify this APK" block for third-party apps.
+  - [ ] 5.h.iii.zo — Missing-data states: fields Aptoide does not provide render "Not provided", not an invented default.
 
 ---
 
