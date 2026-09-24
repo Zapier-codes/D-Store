@@ -173,7 +173,8 @@ New entities: `Review` (anonymous, rate-limited), `ReportFlag` (anonymous app re
 | Build & signing | **Not this repo.** The Developer Console (Zealot) compiles the AAB, signs with the organisation key, and splits/checksums. This repo has no compile pipeline |
 | APK storage | **Held by the Console (Zealot)** in its own release storage. This repo stores no binaries |
 | Edge/CDN | Open — whether a CDN/edge fronts the Console's download route is undecided |
-| Metadata database | **Supabase (Postgres)** — app metadata, ratings, install/view counters, developer/agreement status. Holds metadata only, including the pointer to the Console-held APK; binaries are never in Supabase |
+| Catalog source | The **Console's signed catalog index** — listing text, asset references with SHA-256, versions, the pointer to the Console-held APK, publisher and verified-developer flag. Read-only here, cached locally |
+| Store-owned data | **Supabase (Postgres)** — ratings, reviews, install/view counters, abuse reports: what users generate on the store. Never binaries, and no longer the catalog |
 | Delivery model | Produced by the Console: split APKs (base + ABI/density/language config splits), further compressed, chunked into ≤200MB segments for OTA transfer — no single user-facing download exceeds ~200MB even for larger apps |
 
 This repo needs no blob storage of its own: binaries live with the Console (Zealot), and this repo only holds catalog metadata (Supabase, above) plus the link to the download. The earlier Telegram-drive and Cloudflare-Worker storage design is superseded; see "Resolved — binary ownership" in `HANDOVER.md`.
@@ -198,8 +199,10 @@ D-Store is two systems, not one:
 1. Developer uploads a signed `.aab` to the Console and accepts the distribution agreement.
 2. The Console runs **bundletool** in its own pipeline to generate a signed, distributable APK (or split-APK set) from the AAB, signed with the organisation key — the same approach Play Store's own Play App Signing uses.
 3. The **compiled APK is stored by the Console** — a derived copy, not the original AAB. The raw AAB never leaves the Console/build environment and is never publicly exposed.
-4. Metadata (app info, version, developer/agreement status, and the pointer to the compiled APK) is written to Supabase.
-5. This repo reads that Supabase metadata and links downloads to the Console-held APK — it never sees or handles the AAB, and never stores the APK.
+4. The Console publishes a **signed, versioned catalog index** (app info, versions, developer/agreement status as a verified flag, and the pointer to the compiled APK), with a SHA-256 for every referenced file.
+5. This repo reads that index, verifies it, and links downloads to the Console-held APK — it never sees or handles the AAB, never stores the APK, and never writes catalog data.
+
+**Reference model.** This split mirrors Google Play: Play Console is where developers work (identity, builds, signing, review, release management, listing, analytics, replying to reviews) and the Play Store app only displays and serves, while users' reviews and ratings are the store's own data that the console reads. F-Droid supplies the catalog mechanism: clients read only a signed index and verify every file by hash.
 
 This is the same posture Play Store takes with app bundles: what end users receive is a platform-generated artifact derived from the developer's upload, not the raw upload itself.
 

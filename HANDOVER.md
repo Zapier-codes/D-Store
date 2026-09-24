@@ -61,7 +61,14 @@ What follows from that:
 - The download button links to Zealot's stable download route, never a stored signed storage URL (those expire). **This is an assumption the product owner has not confirmed** — confirm before `5.g.ii.zi`.
 - Sections 7 and 8 of `docs/D-STORE.md` were updated to match.
 
-Still open across the two repos (neither decided here): the field contract (`5.g.i.zo`, this repo's leaf), and how the Console writes to Supabase — directly, or through a small API such as a Supabase Edge Function (see the `5.f` requirement note) — including whether it can before `5.f.i.zi` provisions Supabase.
+**Resolved — catalog contract (product owner approved this direction, after researching how Google Play, Apple, Huawei, Samsung and F-Droid split console from store):** the model is Play Console (Zealot) and Play Store (this repo). The Console **publishes a signed, versioned catalog index** — F-Droid-style — and this repo only **reads** it. That replaces the earlier plan of the Console writing catalog rows into Supabase, and settles both of the old open questions (the field contract, and how the Console writes) with one artifact.
+
+- **The index** carries everything the storefront shows for an app: listing text, icon and screenshot references with a SHA-256 for every file, versions, the pointer to the Zealot-held APK (stable download URL, SHA-256, size, signing fingerprint), publisher name, and the verified-developer flag. The Console signs it with an index-signing key that is separate from the APK-signing key. It is published atomically with a strictly increasing timestamp, so a reader never sees a half-written or older index.
+- **This repo's side:** fetch the index, verify its signature and timestamp, verify every referenced file by SHA-256, cache the result in `storage/downloads` (Section 3), and read only from that cache. `lib/catalog.ts` remains the seam; its internals read the cached index rather than Supabase for catalog data.
+- **Supabase's job narrows** to data the store itself owns: ratings, reviews, view/install counters, abuse reports. Play works the same way — users write reviews on the store, and the developer console only reads and replies. Catalog and developer/agreement metadata no longer live in Supabase.
+- The index schema is defined on the Console side (Zealot Task 27a); `5.g.i.zo` here is this repo's review of it as the consumer.
+
+Still open, and not decided here: where the Console publishes the index (its own endpoint, object storage, or a static host); whether D-Store's admin and editorial tools (`2.b.iii.zo` report queue, `3.c`) move to the Console's admin, as Google runs the equivalents on its own side (they are done leaves, nothing was changed); how the Console reads and replies to reviews (this repo would need to expose them); and staged rollout, since a no-account store has no stable device identity to hash.
 
 **Priority override — UI revamp first:** before any further backend/infra work, the storefront UI gets rebuilt end to end on dummy data and deployed to Vercel for real-time preview. See the new **Phase 0** at the top of Section 2. It pulls forward the UI-facing leaves from Phase 1 (`1.b`–`1.d`) and Phase 2 (`2.a`–`2.c`), so those original leaves are marked superseded rather than duplicated — check them off once their Phase 0 counterpart ships. Backend/infra sequencing (starting at `5.f.i.zi`, provision Supabase) resumes once Phase 0 is complete.
 
@@ -491,7 +498,7 @@ Two distinct problems bundled in one report, both real:
 - This applies retroactively to `5.f.i.zi`/`5.f.i.zo` below: provisioning Supabase and migrating the schema means writing the migration files here first, then pointing the CLI at a real project — not the reverse.
 - Local dev/preview never needs a live Supabase project because of this — `supabase start` (the CLI's local Postgres via Docker) can run the exact same committed migrations, matching Phase 0's existing no-live-backend-dependency posture.
 - 5.f.i — Catalog database
-  - [ ] 5.f.i.zi — Provision Supabase (Postgres) as the metadata store — app info, ratings, counters, developer/agreement status — via a committed `supabase/migrations/` file per the requirement above, not dashboard-authored SQL
+  - [ ] 5.f.i.zi — Provision Supabase (Postgres) as the store-owned data store — ratings, reviews, counters, abuse reports (catalog and developer/agreement metadata come from the Console's signed index, `5.g`) — via a committed `supabase/migrations/` file per the requirement above, not dashboard-authored SQL
   - [ ] 5.f.i.zo — Migrate schema from existing Symfony/Doctrine `Application`/`Category` entities into Supabase — as additional committed migration files, same requirement
 - 5.f.ii — Platform risk documentation
   - [ ] 5.f.ii.zi — Document GitHub Actions/API quota risk (CI/workflow usage only — GitHub no longer serves download/distribution traffic) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
@@ -501,15 +508,15 @@ Two distinct problems bundled in one report, both real:
   - [ ] 5.f.iii.zo — Telegram & Workers request-quota monitoring/alerting (primary traffic path) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
 
 **5.g — Developer Console Integration (cross-repo contract)**
-*This repo never submits, uploads, authenticates developers, compiles, signs or stores binaries — it only reads what the separate Console (Zealot) writes to Supabase and links to the APK the Console holds. These leaves are about the read-side contract, not building the Console itself.*
+*This repo never submits, uploads, authenticates developers, compiles, signs or stores binaries — it only reads the signed catalog index the separate Console (Zealot) publishes and links to the APK the Console holds. These leaves are about the read-side contract, not building the Console itself.*
 - 5.g.i — Metadata read contract
-  - [ ] 5.g.i.zi — Read-only Supabase client in this repo (no write access, no login, matches the no-account scope decision)
-  - [ ] 5.g.i.zo — Define the shared schema contract (field names/types) this repo expects from Console-written rows. It must also carry the pointer to the Zealot-held APK: a stable download URL (never a short-lived signed storage URL), SHA-256, size, version, and the org signing fingerprint (these feed `0.f.i` "Verify this APK")
+  - [ ] 5.g.i.zi — Signed-index reader in this repo: fetch the Console's catalog index, verify its signature and timestamp, verify each referenced file's SHA-256, cache to `storage/downloads`. Read-only — no write access, no login, matches the no-account scope decision. *(Replaces the read-only Supabase client; see "Resolved — catalog contract" in Section 0.)*
+  - [ ] 5.g.i.zo — Review the Console's index schema (Zealot Task 27a) as the consumer, and sign off the field names/types this repo needs. It must carry the pointer to the Zealot-held APK: a stable download URL (never a short-lived signed storage URL), SHA-256, size, version, and the org signing fingerprint (these feed `0.f.i` "Verify this APK"). The schema is owned and versioned by the Console; this repo does not define it.
 - 5.g.ii — Binary hand-off (Zealot compiles, signs and stores; this repo only links)
   - [ ] 5.g.ii.zi — Download button/link resolves to the stable download URL carried by the contract (Zealot's download route) — never a stored signed URL, never a copy hosted here. *(Replaces the original `bundletool` compile leaf, which is now Zealot's. **Assumed, not yet confirmed by the product owner** — confirm before starting.)*
   - [-] 5.g.ii.zo — Publish the compiled APK to the Telegram S3-compatible drive as the distributed copy; GitHub Releases is not used for binary distribution, and the raw AAB never leaves the Console/build environment *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
 - 5.g.iii — Developer trust signals
-  - [ ] 5.g.iii.zi — "Verified developer" badge on the app detail page, sourced from the Console's agreement-signing status in Supabase
+  - [ ] 5.g.iii.zi — "Verified developer" badge on the app detail page, sourced from the verified-developer flag in the Console's signed index
   - [ ] 5.g.iii.zo — Footer link to the Console site as the submission entry point (no submission UI lives in this repo)
 
 ---
