@@ -156,7 +156,7 @@
   border-radius: 999px;
   border: 1px solid var(--color-border);
   color: var(--color-border);
-  white-space: nowrap;
+  line-height: 1.2; /* 5.h.iii.zi — the label is longer than the old "Aptoide" chip and may wrap on a narrow card, so no nowrap here */
 }
 
 /* Caption — leaf 3.b.iii.zo. Same muted tone as .meta, its own line

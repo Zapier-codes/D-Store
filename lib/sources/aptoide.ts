@@ -47,6 +47,9 @@ interface AptoideFile {
   vercode: number;
   md5sum: string;
   filesize: number;
+  /** Aptoide's own APK delivery URL (`pool.apk.aptoide.com/...`). `path_alt` is the same in every ingested response. */
+  path?: string;
+  path_alt?: string;
   signature?: AptoideSignature;
   hardware?: { sdk?: number };
 }
@@ -189,6 +192,18 @@ function slugify(input: string): string {
  * anyway. `sha256_checksum` is "Not provided" for the same class of
  * reason: Aptoide gives `md5sum`, not a SHA-256 of the APK.
  */
+/**
+ * `5.h.iii.zi` — third-party downloads go to Aptoide's own delivery,
+ * never through this store. Only an `https://` URL is accepted; anything
+ * else (missing, empty, another scheme) becomes `""` so a malformed
+ * snapshot entry can't turn the download button into a `javascript:` or
+ * otherwise unexpected link.
+ */
+function aptoideDownloadUrl(raw: AptoideRawApp): string {
+  const candidate = raw.file.path || raw.file.path_alt || "";
+  return candidate.startsWith("https://") ? candidate : "";
+}
+
 export function normalizeAptoideApp(raw: AptoideRawApp): App {
   const slug = raw.uname || slugify(raw.name);
   const sizeMb = Math.round((raw.file.filesize / (1024 * 1024)) * 10) / 10;
@@ -220,7 +235,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     primary_color: "#4a4a4a", // no brand palette in Aptoide's response; theming (0.i) falls back per-category, not per-app, for third-party apps
     secondary_color: "#6a6a6a",
     tertiary_color: "#8a8a8a",
-    apk: "", // resolved to Aptoide's own delivery at render time by 5.h.iii.zi's trust labelling, not stored as a static field here
+    apk: aptoideDownloadUrl(raw), // 5.h.iii.zi — Aptoide's own delivery URL, straight from the snapshot; empty when the response has no usable https path (the detail page then shows no download button rather than a dead one)
     version: raw.file.vername,
     license: "Not provided",
     is_published: true,
@@ -244,6 +259,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     changelog: raw.media.news?.trim() || "No changelog provided.",
 
     developer_slug: slugify(raw.developer.name),
+    developer_name: raw.developer.name, // 5.h.iii.zi — no static Developer row exists for third-party publishers
 
     available_regions: [...ALL_REGIONS], // Aptoide's response carries no per-country availability; conservative default, same as most first-party dummy entries
 

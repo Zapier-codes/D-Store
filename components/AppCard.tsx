@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
+import { thirdPartyLabel } from "@/lib/trust";
 import styles from "./AppCard.module.css";
 
 /**
@@ -44,12 +45,10 @@ import styles from "./AppCard.module.css";
  * other card would just be noise, the same reasoning `is_editors_pick`
  * already uses for its own badge (rendered only when true, not a
  * "not an editors' pick" tag on everything else). Deliberately a
- * plain, neutral "Aptoide" tag — not the fuller "Third-party (via
- * Aptoide)" trust-badge wording HANDOVER.md's `5.h.iii.zi` leaf is
- * still scoped to add, alongside suppressing the Verified-developer
- * badge and the org-fingerprint "Verify this APK" block for these same
- * apps. This leaf only satisfies "an origin label on cards"; the fuller
- * trust-labelling treatment stays `5.h.iii`'s to build.
+ * plain, neutral "Aptoide" tag. Superseded by `5.h.iii.zi`: the chip
+ * now reads "Third-party (via Aptoide)" (`lib/trust.ts`), the wording
+ * HANDOVER.md specifies. The detail page carries the fuller treatment
+ * (download routing, no Verify block); the card only needs the label.
  *
  * Optional `caption` — leaf `3.b.iii.zo` (New & Updated chart page).
  * That chart's own ordering (`updated_at` descending) isn't a "rank" in
@@ -94,8 +93,8 @@ export default function AppCard({
           {app.is_editors_pick && (
             <span className={styles.badge}>Editors&rsquo; Pick</span>
           )}
-          {app.origin === "aptoide" && (
-            <span className={styles.origin}>Aptoide</span>
+          {thirdPartyLabel(app) && (
+            <span className={styles.origin}>{thirdPartyLabel(app)}</span>
           )}
         </p>
 

@@ -21,6 +21,9 @@ import AppIconLive from "@/components/AppIconLive";
 import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
 import ViewPing from "@/components/ViewPing";
+import ThirdPartyDownloadButton from "@/components/ThirdPartyDownloadButton";
+import ThirdPartyNotice, { ThirdPartyBadge } from "@/components/ThirdPartyNotice";
+import { isThirdParty, thirdPartyLabel, sourceName } from "@/lib/trust";
 import styles from "./page.module.css";
 
 /**
@@ -101,6 +104,13 @@ export default async function AppDetailPage({
   const category = await getCategoryBySlug(app.category);
   const mode = await getTheme();
 
+  // 5.h.iii.zi — third-party apps (Aptoide) never carry Zealot-derived
+  // claims: no "Verify this APK" block, no simulated install, and the
+  // download goes to the source's own delivery. See lib/trust.ts.
+  const thirdParty = isThirdParty(app);
+  const originLabel = thirdPartyLabel(app);
+  const developerName = developer?.name ?? app.developer_name ?? null;
+
   return (
     <CategoryThemeScope categorySlug={app.category} mode={mode}>
       <main className={styles.main}>
@@ -108,7 +118,7 @@ export default async function AppDetailPage({
         <AppStructuredData
           app={app}
           categoryName={category?.name ?? null}
-          developerName={developer?.name ?? null}
+          developerName={developerName}
         />
         <header className={styles.header}>
           <div className={styles.icon}>
@@ -123,10 +133,14 @@ export default async function AppDetailPage({
           <div>
             <h1 className={styles.name}>{app.name}</h1>
             <p className={styles.summary}>{app.summary}</p>
-            {developer && (
+            {developer ? (
               <Link href={`/developer/${developer.slug}`} className={styles.developerLink}>
                 by {developer.name}
               </Link>
+            ) : (
+              // 5.h.iii.zi — third-party publishers have no /developer/[slug] page (no static
+              // Developer row), so the name is plain text rather than a link to a 404.
+              developerName && <span className={styles.developerLink}>by {developerName}</span>
             )}
 
             <div className={styles.stats}>
@@ -137,14 +151,24 @@ export default async function AppDetailPage({
               <span className={styles.statMuted}>{app.content_rating}</span>
               <span className={styles.statMuted}>{app.install_count.toLocaleString()}+ installs</span>
               {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
+              {originLabel && <ThirdPartyBadge label={originLabel} />}
             </div>
 
             <div className={styles.installRow} id="primary-install-row">
-              <InstallButton
-                appSlug={app.slug}
-                appName={app.name}
-                currentVersion={app.version}
-              />
+              {thirdParty ? (
+                <ThirdPartyDownloadButton
+                  appSlug={app.slug}
+                  appName={app.name}
+                  downloadUrl={app.apk}
+                  sourceName={sourceName(app)}
+                />
+              ) : (
+                <InstallButton
+                  appSlug={app.slug}
+                  appName={app.name}
+                  currentVersion={app.version}
+                />
+              )}
               <span className={styles.installMeta}>
                 {app.size_mb.toFixed(1)} MB &middot; v{app.version} &middot; Android {app.min_android_version}+
               </span>
@@ -153,6 +177,7 @@ export default async function AppDetailPage({
               containsAds={app.contains_ads}
               hasInAppPurchases={app.has_in_app_purchases}
             />
+            {thirdParty && <ThirdPartyNotice sourceName={sourceName(app)} />}
           </div>
         </header>
 
@@ -185,13 +210,15 @@ export default async function AppDetailPage({
           <RateThisApp appSlug={app.slug} />
         </section>
 
-        <section aria-labelledby="verify-heading">
-          <h2 id="verify-heading" className={styles.sectionTitle}>
-            Verify this APK
-          </h2>
-          <ChecksumDisplay checksum={app.sha256_checksum} />
-          <SignatureInfo fingerprint={app.signing_certificate_fingerprint} />
-        </section>
+        {!thirdParty && (
+          <section aria-labelledby="verify-heading">
+            <h2 id="verify-heading" className={styles.sectionTitle}>
+              Verify this APK
+            </h2>
+            <ChecksumDisplay checksum={app.sha256_checksum} />
+            <SignatureInfo fingerprint={app.signing_certificate_fingerprint} />
+          </section>
+        )}
 
         <section aria-labelledby="play-store-heading">
           <h2 id="play-store-heading" className={styles.sectionTitle}>
@@ -239,6 +266,7 @@ export default async function AppDetailPage({
           secondaryColor={app.secondary_color}
           tertiaryColor={app.tertiary_color}
           watchTargetId="primary-install-row"
+          thirdParty={thirdParty ? { downloadUrl: app.apk, sourceName: sourceName(app) } : undefined}
         />
       </main>
     </CategoryThemeScope>

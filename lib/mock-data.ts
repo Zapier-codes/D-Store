@@ -242,6 +242,14 @@ export interface App {
    * deduped against another one by accident.
    */
   package_name?: string;
+  /**
+   * Publisher name as the source reports it — leaf `5.h.iii.zi`. Only
+   * set for third-party apps, whose developers have no static
+   * `Developer` row (so `getDeveloperBySlug` returns null for them and
+   * the detail page had nothing to show); first-party apps keep
+   * resolving their name through `Developer`.
+   */
+  developer_name?: string;
 }
 
 /**

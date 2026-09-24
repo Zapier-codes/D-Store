@@ -1,0 +1,18 @@
+/* 5.h.iii.zi — badge mirrors the detail page's `.badge` shape but in the muted border tone, so it reads as a label, not an endorsement. */
+.badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  color: var(--color-border);
+  white-space: nowrap;
+}
+
+.notice {
+  margin: 0.5rem 0 0;
+  max-width: 42ch;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--color-border);
+}

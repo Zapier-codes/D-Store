@@ -1,0 +1,19 @@
+/*
+ * 5.h.iii.zi — reuses InstallButton's pill via `composes`, so the
+ * third-party control looks like the same primary action without
+ * copying its rules. The anchor only needs the link resets a <button>
+ * doesn't; the disabled state matches InstallButton's dimmed
+ * non-interactive treatment.
+ */
+.button {
+  composes: button from "./InstallButton.module.css";
+  text-decoration: none;
+  justify-content: center;
+}
+
+.button[data-state="unavailable"] {
+  background-color: var(--color-border);
+  color: var(--color-bg);
+  cursor: default;
+  opacity: 0.6;
+}

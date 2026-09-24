@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import InstallButton from "./InstallButton";
+import ThirdPartyDownloadButton from "./ThirdPartyDownloadButton";
 import AppIconLive from "./AppIconLive";
 import styles from "./StickyInstallBar.module.css";
 
@@ -44,6 +45,7 @@ export default function StickyInstallBar({
   secondaryColor,
   tertiaryColor,
   watchTargetId,
+  thirdParty,
 }: {
   appSlug: string;
   appName: string;
@@ -52,6 +54,8 @@ export default function StickyInstallBar({
   secondaryColor: string;
   tertiaryColor: string;
   watchTargetId: string;
+  /** 5.h.iii.zi — when set, render the real download link instead of the simulated install button. */
+  thirdParty?: { downloadUrl: string; sourceName: string };
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -90,7 +94,16 @@ export default function StickyInstallBar({
         </div>
         <span className={styles.name}>{appName}</span>
       </div>
-      <InstallButton appSlug={appSlug} appName={appName} currentVersion={currentVersion} />
+      {thirdParty ? (
+        <ThirdPartyDownloadButton
+          appSlug={appSlug}
+          appName={appName}
+          downloadUrl={thirdParty.downloadUrl}
+          sourceName={thirdParty.sourceName}
+        />
+      ) : (
+        <InstallButton appSlug={appSlug} appName={appName} currentVersion={currentVersion} />
+      )}
     </div>
   );
 }
