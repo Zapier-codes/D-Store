@@ -140,6 +140,25 @@
   white-space: nowrap;
 }
 
+/*
+ * Origin label — leaf 5.h.i.zo. Same pill shape as .badge above, but
+ * built off --color-border instead of --color-accent: .badge marks an
+ * editorial achievement (Editors' Pick) and earns the accent color;
+ * this is a plain provenance tag every third-party card carries, not
+ * something to award, so it reads as neutral/muted rather than
+ * competing with .badge for attention when both appear on the same
+ * card.
+ */
+.origin {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  color: var(--color-border);
+  white-space: nowrap;
+}
+
 /* Caption — leaf 3.b.iii.zo. Same muted tone as .meta, its own line
    rather than crowded into that row, since .meta's rating/badge and a
    date read as two different kinds of information. */

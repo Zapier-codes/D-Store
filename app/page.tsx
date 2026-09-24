@@ -1,4 +1,4 @@
-import { getFeaturedApps, getTrendingApps, getEditorsPicks } from "@/lib/catalog";
+import { getFeaturedApps, getTrendingApps, getEditorsPicks, getFirstPartyApps } from "@/lib/catalog";
 import Hero from "@/components/Hero";
 import Shelf from "@/components/Shelf";
 import SponsoredCard from "@/components/SponsoredCard";
@@ -56,14 +56,57 @@ import ScrollReveal from "@/components/ScrollReveal";
  * it's already in the viewport on first paint, so the two don't
  * conflict, just layer (mount animation, then no further scroll
  * transition since it never leaves/re-enters view).
+ *
+ * Leaf `5.h.i.zo` adds the first-party section and the hero's
+ * first-party preference, per HANDOVER.md's "Resolved — catalog
+ * sources" rule: "a first-party section is always first, and the hero
+ * prefers a first-party app... Shelves below rank first-party ahead of
+ * third-party." Three changes:
+ *
+ * 1. A new "First-party" shelf, sourced from `getFirstPartyApps()`
+ *    (`5.h.i.zo`, merged-catalog apps filtered to `origin: "zealot"`),
+ *    placed directly below the hero and above every other shelf — the
+ *    "always first" part of the rule. `Shelf` already renders nothing
+ *    for an empty `apps` array (0.d.ii.zi), which is exactly
+ *    HANDOVER.md's "if Zealot has no live apps yet, the section is
+ *    omitted (no empty shell)" — no separate empty-state branch needed
+ *    here.
+ * 2. `heroApp` is now resolved explicitly rather than just taken as
+ *    `featured[0]`: prefer a first-party app within `featured`, then
+ *    any first-party app at all, then fall back to whatever's
+ *    available so the hero still shows *something* rather than
+ *    disappearing outright on the day Zealot's index is briefly empty
+ *    ("Aptoide content fills the page"). In practice this normally
+ *    still resolves to the old `featured[0]` — `getFeaturedApps` is
+ *    editorial and first-party-only by construction
+ *    (`lib/sources/aptoide.ts` always sets a third-party app's
+ *    `is_featured: false`) — but it's resolved this way rather than
+ *    assumed, since "prefers a first-party app" is a rule this file
+ *    should honor on its own terms, not something that happens to be
+ *    true today as a side effect of a different leaf's editorial gate.
+ * 3. Both the Featured and First-party shelves below the hero exclude
+ *    whichever app the hero actually used (by slug, not just "drop the
+ *    first element" — `heroApp` may not be `featured[0]` once the
+ *    fallback chain above is in play), the same "hero takes one, the
+ *    shelf renders the rest" pattern `0.d.ii.zi` established for
+ *    Featured alone.
  */
 export default async function Home() {
-  const [featured, trending, editorsPicks] = await Promise.all([
+  const [firstParty, featured, trending, editorsPicks] = await Promise.all([
+    getFirstPartyApps(),
     getFeaturedApps(),
     getTrendingApps(),
     getEditorsPicks(),
   ]);
-  const [heroApp, ...restFeatured] = featured;
+
+  const heroApp =
+    featured.find((app) => app.origin === "zealot") ??
+    firstParty[0] ??
+    featured[0] ??
+    trending[0];
+
+  const restFirstParty = firstParty.filter((app) => app.slug !== heroApp?.slug);
+  const restFeatured = featured.filter((app) => app.slug !== heroApp?.slug);
 
   return (
     <main>
@@ -72,6 +115,9 @@ export default async function Home() {
           <Hero app={heroApp} />
         </ScrollReveal>
       )}
+      <ScrollReveal>
+        <Shelf title="First-party" apps={restFirstParty} />
+      </ScrollReveal>
       <ScrollReveal>
         <Shelf title="Featured" apps={restFeatured} />
       </ScrollReveal>

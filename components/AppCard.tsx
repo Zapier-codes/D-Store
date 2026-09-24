@@ -35,6 +35,22 @@ import styles from "./AppCard.module.css";
  * consistent with every other listing instead of introducing a second
  * card style, per §3's grid-density decision applying uniformly.
  *
+ * Origin label — leaf `5.h.i.zo`. HANDOVER.md's "Resolved — catalog
+ * sources" rule says origin is "always labelled"; this is the one
+ * shared card every listing (shelves, search, categories) already
+ * renders through, so labelling here covers all of them at once. Shown
+ * only for `origin: "aptoide"` apps — first-party is the storefront's
+ * implicit default, so an explicit "Zealot"/first-party tag on every
+ * other card would just be noise, the same reasoning `is_editors_pick`
+ * already uses for its own badge (rendered only when true, not a
+ * "not an editors' pick" tag on everything else). Deliberately a
+ * plain, neutral "Aptoide" tag — not the fuller "Third-party (via
+ * Aptoide)" trust-badge wording HANDOVER.md's `5.h.iii.zi` leaf is
+ * still scoped to add, alongside suppressing the Verified-developer
+ * badge and the org-fingerprint "Verify this APK" block for these same
+ * apps. This leaf only satisfies "an origin label on cards"; the fuller
+ * trust-labelling treatment stays `5.h.iii`'s to build.
+ *
  * Optional `caption` — leaf `3.b.iii.zo` (New & Updated chart page).
  * That chart's own ordering (`updated_at` descending) isn't a "rank" in
  * the sense installs are — recency isn't a competitive standing the way
@@ -77,6 +93,9 @@ export default function AppCard({
           </span>
           {app.is_editors_pick && (
             <span className={styles.badge}>Editors&rsquo; Pick</span>
+          )}
+          {app.origin === "aptoide" && (
+            <span className={styles.origin}>Aptoide</span>
           )}
         </p>
 

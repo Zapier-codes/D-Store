@@ -318,6 +318,38 @@ export async function getFeaturedApps(limit = 6): Promise<App[]> {
 }
 
 /**
+ * First-party (Zealot-origin) apps only — leaf `5.h.i.zo`, backing the
+ * home page's dedicated first-party section. HANDOVER.md's "Resolved —
+ * catalog sources" rule: "a first-party section is always first, and
+ * the hero prefers a first-party app... Shelves below rank first-party
+ * ahead of third-party." This function is the first-party section's
+ * own data source (the "always first" section itself, not a ranking
+ * tweak on a mixed list) and also backs `app/page.tsx`'s hero-selection
+ * fallback chain.
+ *
+ * Reads the merged catalog (`getMergedApps`, `5.h.ii.zi`) rather than
+ * the raw first-party `apps` array directly, so this stays correct
+ * once `5.g.i.zi` swaps Zealot's side of `createZealotSource()` for a
+ * real signed-index read — same seam-stability every other
+ * `getMergedApps()`-backed export in this file already has. Today
+ * that's a distinction without a difference (nothing non-Zealot is
+ * ever `origin: "zealot"`), but filtering the merged result is the
+ * honest way to express "first-party" as a catalog-wide concept rather
+ * than as "whatever `lib/mock-data.ts`'s `apps` array happens to hold."
+ *
+ * No `Shelf`-level empty-state handling needed here: `Shelf` (0.d.ii.zi)
+ * already renders nothing when handed an empty `apps` array, which is
+ * exactly HANDOVER.md's "If Zealot has no live apps yet, the section
+ * is omitted (no empty shell)" rule — this function doesn't need its
+ * own version of that check.
+ */
+export async function getFirstPartyApps(limit = 6): Promise<App[]> {
+  const merged = await getMergedApps();
+  const result = merged.filter((app) => app.origin === "zealot").slice(0, limit);
+  return resolveAfterDelay(result);
+}
+
+/**
  * Daily materialized Trending cache — leaf `3.b.ii.zo`. Two things
  * this leaf changes about `getTrendingApps`:
  *
@@ -363,17 +395,34 @@ interface TrendingCacheEntry {
 let trendingCache: TrendingCacheEntry | null = null;
 const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // "daily"
 
-function materializeTrendingCache(): TrendingCacheEntry {
-  const rankedSlugs = [...apps]
-    .sort((a, b) => b.view_count - a.view_count)
+/**
+ * `5.h.i.zo` widens this from the first-party-only `apps` array to the
+ * full merged catalog, and adds origin as the primary sort key —
+ * HANDOVER.md's "Shelves below rank first-party ahead of third-party"
+ * rule. `view_count` (this shelf's existing metric) still breaks ties
+ * within each origin group, so a first-party app never loses its
+ * relative Trending position to another first-party app just because
+ * this leaf touched the function — origin only ever reorders *across*
+ * the zealot/aptoide boundary, never within one side of it. Every
+ * ingested Aptoide app currently starts at `view_count: 0`
+ * (`lib/sources/aptoide.ts`), so in practice this mostly means
+ * third-party apps now appear at all on this shelf (previously they
+ * were invisible here, not merely ranked low, since `apps` never
+ * contained them) — always behind first-party ones, per the rule.
+ */
+async function materializeTrendingCache(): Promise<TrendingCacheEntry> {
+  const merged = await getMergedApps();
+  const originRank = (app: App) => (app.origin === "zealot" ? 0 : 1);
+  const rankedSlugs = [...merged]
+    .sort((a, b) => originRank(a) - originRank(b) || b.view_count - a.view_count)
     .map((app) => app.slug);
   return { computedAt: Date.now(), rankedSlugs };
 }
 
-function getOrRefreshTrendingCache(): TrendingCacheEntry {
+async function getOrRefreshTrendingCache(): Promise<TrendingCacheEntry> {
   const isStale = !trendingCache || Date.now() - trendingCache.computedAt > TRENDING_CACHE_TTL_MS;
   if (isStale) {
-    trendingCache = materializeTrendingCache();
+    trendingCache = await materializeTrendingCache();
   }
   // Non-null by construction: either the cache existed and wasn't
   // stale, or it was just (re)assigned above. TS can't carry that
@@ -382,10 +431,11 @@ function getOrRefreshTrendingCache(): TrendingCacheEntry {
 }
 
 export async function getTrendingApps(limit = 12): Promise<App[]> {
-  const cache = getOrRefreshTrendingCache();
+  const cache = await getOrRefreshTrendingCache();
+  const merged = await getMergedApps();
 
   const result = cache.rankedSlugs
-    .map((slug) => apps.find((app) => app.slug === slug))
+    .map((slug) => merged.find((app) => app.slug === slug))
     .filter((app): app is App => app !== undefined)
     .slice(0, limit);
   return resolveAfterDelay(result);
