@@ -58,6 +58,17 @@
   /* Body text — leaf 0.b.iv.zi. Unchanged value, now a token. */
   --color-text: #f2ece0;
 
+  /*
+   * --color-error — leaf 3.d.i.zi (WCAG 2.1 AA contrast audit). Was a
+   * hardcoded #c94b4b in the two admin form-validation stylesheets
+   * (app/admin/featuring, app/admin/sponsored), which doesn't re-theme
+   * and fails AA on dark --color-surface: 4.05:1 against #16130f (needs
+   * 4.5:1 for this text's size, 12–12.8px, well under the large-text
+   * threshold). #e57373 clears both dark surfaces with margin — 6.66:1
+   * vs --color-bg, 6.20:1 vs --color-surface.
+   */
+  --color-error: #e57373;
+
   /* Cinematic vignette: subtle gold glow up top, darkened edges */
   --gradient-vignette:
     radial-gradient(ellipse 120% 60% at 50% -10%, rgba(212, 175, 55, 0.10), transparent 55%),
@@ -143,6 +154,12 @@
    * copy of the dark theme's warm off-white — see contrast ratios in
    * the header comment above. */
   --color-text: #12151c;
+
+  /* --color-error — leaf 3.d.i.zi. Same fix as the dark-theme token
+   * above: the hardcoded #c94b4b it replaces also failed AA here
+   * (4.30:1 vs --color-bg, needs 4.5:1). #a83232 clears both light
+   * surfaces — 6.24:1 vs --color-bg, 6.63:1 vs --color-surface. */
+  --color-error: #a83232;
 
   /* "Scientific Blue" vignette — leaf 0.b.iv.zo. Cool cobalt glow up
    * top plus a faint diagonal sheen for a crisp, high-tech read; fades

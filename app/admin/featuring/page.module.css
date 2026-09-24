@@ -74,7 +74,7 @@
 .error {
   display: block;
   font-size: 0.75rem;
-  color: #c94b4b;
+  color: var(--color-error);
   margin-top: 0.2rem;
 }
 

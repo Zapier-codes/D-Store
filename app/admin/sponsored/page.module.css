@@ -102,7 +102,7 @@
 .error {
   margin: 0;
   font-size: 0.8rem;
-  color: #c94b4b;
+  color: var(--color-error);
 }
 
 .table {
