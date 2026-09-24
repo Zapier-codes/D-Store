@@ -230,6 +230,18 @@ export interface App {
    * integrity check that every literal below was updated.
    */
   origin: AppOrigin;
+
+  /**
+   * Android package identifier (e.g. `com.whatsapp`) — leaf `5.h.ii.zi`,
+   * added for the Aptoide source adapter (`lib/sources/aptoide.ts`).
+   * Optional because none of the current Zealot-origin dummy entries
+   * carry one yet (Zealot's real signed index, once `5.g` lands, will).
+   * `mergeCatalogSources` (`lib/sources/types.ts`) keys its dedupe on
+   * this field when present, falling back to `slug` when it isn't —
+   * see that function's comment for why a package-less app is never
+   * deduped against another one by accident.
+   */
+  package_name?: string;
 }
 
 /**
@@ -259,6 +271,19 @@ export interface DataSafetyInfo {
   shared_with_third_parties: boolean;
   data_encrypted_in_transit: boolean;
   can_request_data_deletion: boolean;
+  /**
+   * `false` when the source this app came from genuinely doesn't
+   * disclose a Play-style data-safety section — leaf `5.h.ii.zi`,
+   * added for the Aptoide adapter (Aptoide's API has no equivalent of
+   * Play's Data Safety form). Optional and defaults to `true` via
+   * `??` at every read site, so none of the existing dummy entries
+   * needed editing. `DataSafety.tsx` renders "Not provided by source"
+   * instead of the booleans below when this is `false` — following
+   * this file's own honesty rule (see `0.j.iii`'s note above): a
+   * `false` here does not mean "collects nothing," it means "unknown,"
+   * and those are not the same claim.
+   */
+  provided?: boolean;
 }
 
 /**

@@ -21,6 +21,20 @@ import styles from "./DataSafety.module.css";
  * sentence."
  */
 export default function DataSafety({ dataSafety }: { dataSafety: DataSafetyInfo }) {
+  const provided = dataSafety.provided ?? true;
+
+  if (!provided) {
+    return (
+      <div className={styles.wrapper}>
+        <span className={styles.label}>Data this app collects</span>
+        <p className={styles.empty}>
+          Not provided by source — this app&rsquo;s listing has no Play-style data-safety
+          disclosure.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.wrapper}>
       <span className={styles.label}>Data this app collects</span>

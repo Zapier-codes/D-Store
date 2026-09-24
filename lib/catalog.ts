@@ -17,6 +17,8 @@
  */
 
 import { apps, categories, developers, reviews, sponsoredSlots, searchQueries, appCountByCategory, type App, type AppOrigin, type Category, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
+import { mergeCatalogSources, type CatalogSource } from "./sources/types";
+import { createAptoideSource } from "./sources/aptoide";
 
 export type { App, AppOrigin, Category, Developer, SponsoredSlot, SearchQueryLog };
 
@@ -24,6 +26,42 @@ const SIMULATED_LATENCY_MS = 200;
 
 function resolveAfterDelay<T>(value: T): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), SIMULATED_LATENCY_MS));
+}
+
+/**
+ * The Zealot ("first-party") source — leaf `5.h.ii.zi`. There is no
+ * live Zealot index reader yet (`5.g.i.zi`, separate and not started),
+ * so this wraps the existing in-memory `apps` array from
+ * `lib/mock-data.ts` behind the same `CatalogSource` interface the
+ * Aptoide adapter uses, rather than special-casing it. When `5.g.i.zi`
+ * lands, only this function's body changes — every caller below stays
+ * the same, the same seam pattern this file's header comment already
+ * commits to for the eventual Supabase swap.
+ */
+function createZealotSource(): CatalogSource {
+  return {
+    origin: "zealot",
+    async getApps() {
+      return apps;
+    },
+  };
+}
+
+/**
+ * Merged catalog — Zealot first (so it wins any `package_name`
+ * collision per `mergeCatalogSources`), then Aptoide's ingested
+ * snapshot. Computed once per server lifetime and cached: the Aptoide
+ * side already reads from a cached snapshot file
+ * (`lib/sources/aptoide.ts`), and `apps` itself is a stable in-memory
+ * array, so nothing here needs to be recomputed on every call — mirrors
+ * `loadSnapshot`'s own caching in that file.
+ */
+let cachedMergedApps: App[] | null = null;
+
+async function getMergedApps(): Promise<App[]> {
+  if (cachedMergedApps) return cachedMergedApps;
+  cachedMergedApps = await mergeCatalogSources([createZealotSource(), createAptoideSource()]);
+  return cachedMergedApps;
 }
 
 // --- Categories -------------------------------------------------------
@@ -87,7 +125,7 @@ export function filterAppsByRegion(source: App[], regionCode: string): App[] {
  * the complete seam; nothing calls `getApps({ region: ... })` yet.
  */
 export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
-  let result = apps;
+  let result = await getMergedApps();
   if (options.category) {
     result = result.filter((app) => app.category === options.category);
   }
@@ -110,7 +148,8 @@ export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
 }
 
 export async function getAppBySlug(slug: string): Promise<App | null> {
-  const app = apps.find((a) => a.slug === slug) ?? null;
+  const merged = await getMergedApps();
+  const app = merged.find((a) => a.slug === slug) ?? null;
   return resolveAfterDelay(app);
 }
 
@@ -129,6 +168,17 @@ export async function getAppBySlug(slug: string): Promise<App | null> {
  * `slug` — the route handler maps that to a 404, the same "not found"
  * shape `getAppBySlug` already established for reads.
  */
+// NOTE (leaf 5.h.ii.zi, flagged not fixed): the three mutators below
+// (`incrementInstallCount`, `incrementViewCount`, and the rating
+// submission further down) still look up against the Zealot-origin
+// `apps` array only, not `getMergedApps()`'s combined result — so
+// clicking Install/viewing/rating an Aptoide-sourced app's detail page
+// returns "not found" (404 at the route-handler level) instead of
+// actually incrementing anything. Left as-is rather than silently
+// papered over: whether a third-party app should even have its own
+// store-native counters, versus deferring entirely to Aptoide's own
+// numbers, is a product call this leaf doesn't make. Surfaced for the
+// next session/leaf to decide.
 export async function incrementInstallCount(slug: string): Promise<number | null> {
   const app = apps.find((a) => a.slug === slug);
   if (!app) {
