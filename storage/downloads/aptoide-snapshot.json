@@ -338,5 +338,3637 @@
     },
     "soft_locks": [],
     "geo": null
+  },
+  {
+    "id": 75362615,
+    "name": "Termux",
+    "package": "com.termux",
+    "uname": "termux",
+    "size": 25343168,
+    "icon": "https://pool.img.aptoide.com/appupdater/72316c2c42f1bd7fae53246e871d7de6_icon.png",
+    "graphic": "https://pool.img.aptoide.com/appupdater/9cc65f776b487b34fc4c3b19f4fa0b74_fgraphic.png",
+    "added": "2021-01-25 15:23:19",
+    "modified": "2026-06-25 23:28:25",
+    "updated": "2026-09-22 11:35:05",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 107633,
+      "name": "Fredrik Fornwall",
+      "website": "https://termux.com/",
+      "email": "contact@termux.com",
+      "privacy": "https://termux.com/privacy-policy.html"
+    },
+    "store": {
+      "id": 2899481,
+      "name": "appupdater",
+      "avatar": "https://pool.img.aptoide.com/appupdater/64332bc9651ad8662141e9f5f5a2c034_ravatar.png",
+      "appearance": {
+        "theme": "default",
+        "description": "Update Apps"
+      },
+      "stats": {
+        "apps": 315758,
+        "subscribers": 116886,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "googleplay.2026.06.21",
+      "vercode": 141,
+      "md5sum": "dcdbda5a7a1ee33238667287bc6a608a",
+      "filesize": 1549284,
+      "signature": {
+        "sha1": "A9:66:C9:F8:87:F0:E7:EA:85:91:21:68:6F:75:2F:31:D0:69:74:0D",
+        "owner": "CN=mobilepearls.com, OU=Unknown, O=Mobile Pearls, L=Unknown, ST=Unknown, C=SE"
+      },
+      "added": "2026-06-25 23:28:25",
+      "path": "https://pool.apk.aptoide.com/appupdater/com-termux-141-75362615-dcdbda5a7a1ee33238667287bc6a608a.apk",
+      "path_alt": "https://pool.apk.aptoide.com/appupdater/com-termux-141-75362615-dcdbda5a7a1ee33238667287bc6a608a.apk",
+      "hardware": {
+        "sdk": 32,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "thirdparty_validated": {
+            "date": "2026-06-25",
+            "store": "Google Play"
+          },
+          "signature_validated": {
+            "date": "2026-06-25",
+            "status": "unknown",
+            "signature_from": "market"
+          }
+        },
+        "added": "2026-06-25 23:28:26",
+        "modified": "2026-09-22 11:35:06"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 1
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 3
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [],
+      "used_permissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
+        "android.permission.INTERNET",
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "com.termux.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        "com.termux.permission.TERMUX_INTERNAL"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "termux",
+        "tools"
+      ],
+      "description": "Termux combines powerful terminal emulation with an extensive Linux package collection.\n\n\u2022 Enjoy the bash and zsh shells.\n\u2022 Manage files with nnn and edit them with nano, vim or emacs.\n\u2022 Access servers over ssh.\n\u2022 Develop in C with clang, make and gdb.\n\u2022 Use the python console as a pocket calculator.\n\u2022 Check out projects with git.\n\u2022 Run text-based games with frotz.\n\nAt first start a small base system is installed - desired packages can then be installed using the apt package manager. Access the built-in help by long-pressing anywhere on the terminal and selecting the Help menu option to learn more.\n\nWant to read the wiki?\nhttps://wiki.termux.com\n\nWant to report bugs?\nhttps://bugs.termux.com\n\nWant to interact with a community of users?\nhttps://www.reddit.com/r/termux/",
+      "summary": "Terminal emulator and Linux environment.",
+      "news": "\u2022 Increase read buffer size from 4KB to 64KB.\n\n\u2022 Fix inverted typo in termcap values for KEYCODE_PAGE_UP and KEYCODE_PAGE_DOWN.\n\n\u2022 Bump bootstrap packages.\n\n\u2022 Update java dependencies.",
+      "videos": [],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/7ca96f4ea54a0a4900013045494b1031_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/c4aa5699d54e662b075487d47ab5c92d_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/69dbd6ba648d90481d25fd9418612509_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/e035011793c5fb88cae8e26dff031e21_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/df5769e9c2a7d486193d31361b10933a_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/11ab240ebc80ceeda82c83515c640c6e_screen.png",
+          "height": 800,
+          "width": 1280
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://termux.en.aptoide.com/?store_name=appupdater&app_id=75362615",
+      "m": "https://termux.en.aptoide.com/?store_name=appupdater&app_id=75362615"
+    },
+    "stats": {
+      "rating": {
+        "avg": 4,
+        "total": 4,
+        "votes": [
+          {
+            "value": 5,
+            "count": 3
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 1
+          }
+        ]
+      },
+      "prating": {
+        "avg": 4.4,
+        "total": 84,
+        "votes": [
+          {
+            "value": 5,
+            "count": 67
+          },
+          {
+            "value": 4,
+            "count": 3
+          },
+          {
+            "value": 3,
+            "count": 4
+          },
+          {
+            "value": 2,
+            "count": 1
+          },
+          {
+            "value": 1,
+            "count": 9
+          }
+        ]
+      },
+      "downloads": 10000000,
+      "pdownloads": 10000000
+    },
+    "aab": {
+      "required_split_types": [
+        "ABI",
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.x86_64",
+          "type": "ABI",
+          "md5sum": "5f3d5e7edecf6d3e7c86a471c6c3fce8",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-termux-141-75362615-5f3d5e7edecf6d3e7c86a471c6c3fce8-config-x86-64.apk",
+          "filesize": 23736693
+        },
+        {
+          "name": "config.mdpi",
+          "type": "DENSITY",
+          "md5sum": "69a56b9b88111c83068daa87f693a570",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-termux-141-75362615-69a56b9b88111c83068daa87f693a570-config-mdpi.apk",
+          "filesize": 32405
+        },
+        {
+          "name": "config.en",
+          "type": "LOCALE",
+          "md5sum": "26938ee6f7e2537c579543e727dc341f",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-termux-141-75362615-26938ee6f7e2537c579543e727dc341f-config-en.apk",
+          "filesize": 24786
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 76617017,
+    "name": "VLC for Android",
+    "package": "org.videolan.vlc",
+    "uname": "videolabs-vlc",
+    "size": 100960926,
+    "icon": "https://pool.img.aptoide.com/sirkesyone-applikes/42ead380c70ce272e5c6ab770724b9b2_icon.png",
+    "graphic": "https://pool.img.aptoide.com/sirkesyone-applikes/bdcf48ad406c94ffed6c66ee9c74a5b2_fgraphic.png",
+    "added": "2016-10-06 23:50:48",
+    "modified": "2026-09-14 17:01:19",
+    "updated": "2026-09-23 23:56:04",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 76853,
+      "name": "Videolabs",
+      "website": "http://www.videolan.org",
+      "email": "videolan.android@gmail.com",
+      "privacy": "https://www.videolan.org/vlc/privacy.html"
+    },
+    "store": {
+      "id": 1114106,
+      "name": "sirkesyone-applikes",
+      "avatar": "https://pool.img.aptoide.com/sirkesyone-applikes/98138c7153e65e7844f11589c077eefe_ravatar.png",
+      "appearance": {
+        "theme": "orange",
+        "description": "Get App's like a TRUTH Sir! Only the best from me for You."
+      },
+      "stats": {
+        "apps": 821,
+        "subscribers": 3871,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "3.7.2 Beta 2",
+      "vercode": 13070129,
+      "md5sum": "04b797eb66b061740bfc2949cf809901",
+      "filesize": 47960003,
+      "signature": {
+        "sha1": "4D:D5:44:A7:51:D3:D5:4C:17:D8:7E:1D:D3:60:F0:C6:40:A5:C1:50",
+        "owner": "C=FR, L=Paris, O=VideoLAN Mobile, CN=Jean-Baptiste Kempf"
+      },
+      "added": "2026-09-14 17:01:18",
+      "path": "https://pool.apk.aptoide.com/sirkesyone-applikes/org-videolan-vlc-13070129-76617017-04b797eb66b061740bfc2949cf809901.apk",
+      "path_alt": "https://pool.apk.aptoide.com/sirkesyone-applikes/org-videolan-vlc-13070129-76617017-04b797eb66b061740bfc2949cf809901.apk",
+      "hardware": {
+        "sdk": 32,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "signature_validated": {
+            "date": "2026-09-14",
+            "status": "review"
+          }
+        },
+        "added": "2026-09-14 17:01:25",
+        "modified": "2026-09-21 05:16:48"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 0
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [
+        "android.hardware.screen.landscape"
+      ],
+      "used_permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.CHANGE_NETWORK_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
+        "android.permission.INTERNET",
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.WRITE_SETTINGS",
+        "com.android.providers.tv.permission.READ_EPG_DATA",
+        "com.android.providers.tv.permission.WRITE_EPG_DATA",
+        "org.videolan.vlc.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        "org.videolan.vlc.MEDIA",
+        "org.videolan.vlc.permission.READ_EXTENSION_DATA"
+      ],
+      "tags": [
+        "input.pointer",
+        "leanback.input.pointer",
+        "beta"
+      ]
+    },
+    "media": {
+      "keywords": [
+        "videolan",
+        "video",
+        "players",
+        "editors"
+      ],
+      "description": "VLC media player is a free and open source cross-platform multimedia player that plays most multimedia files as well as discs, devices, and network streaming protocols.\n\nThis is the port of VLC media player to the Android\u2122 platform. VLC for Android can play any video and audio files, as well as network streams, network shares and drives, and DVD ISOs, like the desktop version of VLC.\n\nVLC for Android is a full audio player, with a complete database, an equalizer and filters, playing all weird audio formats.\n\nVLC is intended for everyone, is totally free, has no ads, no in-app-purchases, no spying and is developed by passionate volunteers. All the source code is available for free.\n\nFeatures\n\u2013\u2013\u2013\u2013\u2013\u2013\u2013\u2013\nVLC for Android\u2122 plays most local video and audio files, as well as network streams (including adaptive streaming), DVD ISOs, like the desktop version of VLC. It also support disk shares.\n\nAll formats are supported, including MKV, MP4, AVI, MOV, Ogg, FLAC, TS, M2TS, Wv and AAC. All codecs are included with no separate downloads. It supports subtitles, Teletext and Closed Captions.\n\nVLC for Android has a media library for audio and video files, and allows to browse folders directly.\n\nVLC has support for multi-track audio and subtitles. It supports auto-rotation, aspect-ratio adjustments and gestures to control volume, brightness and seeking.\n\nIt also includes a widget for audio control, supports audio headsets control, cover art and a complete audio media library.\n\nPermissions\n\u2013\u2013\u2013\u2013\u2013\u2013\u2013\u2013\u2013\u2013\u2013\u2013\nVLC for Android needs access to those categories:\n\u2022 \"Photos/Media/Files\" to read your all media files :)\n\u2022 \"Storage\" to read your all media files on SD cards :)\n\u2022 \"Other\" to check network connections, change the volume, set the ringtone, run on Android TV and display the popup view, see below for details.\n\nPermission Details :\n\u2022 It needs \"read the contents of your USB storage\", in to order to read your media files on it.\n\u2022 It needs \"modify or delete the contents of your USB storage\", in order to allow deletion of files and store subtitles.\n\n\u2022 It needs \"full network access\", to open network and internet streams.\n\u2022 It needs \"prevent phone from sleeping\" in order to prevent... your phone from sleeping when watching a video.\n\u2022 It needs \"change your audio settings\", in order to change audio volume.\n\u2022 It needs \"modify system settings\", in order to allow you to change your audio ringtone.\n\u2022 It needs \"view network connections\" in order to monitor whether device is connected or not.\n\u2022 It needs \"draw over other apps\" to start the custom picture-in-picture widget.\n\u2022 It needs \"control vibration\" to give feedback on the controls.\n\u2022 It needs \"run at startup\" to set recommendations on Android TV launcher screen, only used on Android TV devices.\n\u2022 It needs \"microphone\" to provide voice search on Android TV devices, only asked on Android TV devices.",
+      "summary": "VLC for Android is the best open source video and music player, fast and easy!",
+      "news": " * Equalizer fixes\n\n * Remote access: allow playing audio media in the browser\n\n * Add back the deletion for multiple file sin the browser\n\n * Update the remote access OTP code length\n\n * Improve the feedback UI\n\n * Add more size options for the subtitle size\n\n * Crash fixes",
+      "videos": [],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/a95c6f3521f58603626240a93b1a5397_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/85dc8c54cafb81356b3698276654515d_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/1dfb1f30ff8504f80fb40d0d68da1bc7_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/818f889b628eac4856ac3b9b0620ca36_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/3a0c58258c9984479cd151a4002b0b25_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/c0c130d7308b4469b35116287f8b23da_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/af624eb5678744dec17a99cf002223e0_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/66147950929f409dbb9832108f3652ae_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/07ba7f3e1da832196df6905185b27669_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/19f07495ed4ef04e2473153067d77772_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/1891a351422a57aab6e56fdeb0b8e316_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/6797fcc5a93abb1f49398ce59d4567b8_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/073ac579e1439f73e181fbe6f6525068_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/4d02170bdde5a027412cfb0086ab7ef7_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/e0666fd0497b3f190b85fc0086c0ab10_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/46828d9150bf8eab0c2a22e714612191_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/3f69bb8a0d5442f069dea72ab63a505e_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/b730d96cf30f1e39de67903be43e2c99_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/296686713f2718bdb5892cf876cef0f0_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/2e105924d3013e017233bdbb75d6fb26_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/ffa3fd4fbafb1240746834ee3251a788_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/51ce2eb918d54642f5a09a41ff9511ee_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/0ca5d36fc06bf57a87fe5cc8dd5d03ab_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/4936063cedc5008cc02858257827c8d0_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/09c3ff5590931bd77dbbfd71ece0160a_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/3aac95c63ade7ac94f8a9de9d794f144_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/33f207754a83c8a90cd91b713481d77e_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/f1a15b0bead06b16be4cfc94dc2eba6f_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/sirkesyone-applikes/983f69a979b299f5d5e6d5ddfd5eca91_screen.png",
+          "height": 720,
+          "width": 1280
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://videolabs-vlc.en.aptoide.com/?store_name=sirkesyone-applikes&app_id=76617017",
+      "m": "https://videolabs-vlc.en.aptoide.com/?store_name=sirkesyone-applikes&app_id=76617017"
+    },
+    "stats": {
+      "rating": {
+        "avg": 0,
+        "total": 0,
+        "votes": [
+          {
+            "value": 5,
+            "count": 0
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "prating": {
+        "avg": 4.44,
+        "total": 818,
+        "votes": [
+          {
+            "value": 5,
+            "count": 578
+          },
+          {
+            "value": 4,
+            "count": 106
+          },
+          {
+            "value": 3,
+            "count": 83
+          },
+          {
+            "value": 2,
+            "count": 16
+          },
+          {
+            "value": 1,
+            "count": 35
+          }
+        ]
+      },
+      "downloads": 500000000,
+      "pdownloads": 500000000
+    },
+    "aab": {
+      "required_split_types": [
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.arm64_v8a",
+          "type": "ABI",
+          "md5sum": "4d0676bc5943722c64ca8506063418ca",
+          "path": "https://pool.apk.aptoide.com/sirkesyone-applikes/org-videolan-vlc-13070129-76617017-4d0676bc5943722c64ca8506063418ca-config-arm64-v8a.apk",
+          "filesize": 52666804
+        },
+        {
+          "name": "config.xhdpi",
+          "type": "DENSITY",
+          "md5sum": "f1c63f04e92a7075de1fbaa38bf86a09",
+          "path": "https://pool.apk.aptoide.com/sirkesyone-applikes/org-videolan-vlc-13070129-76617017-f1c63f04e92a7075de1fbaa38bf86a09-config-xhdpi.apk",
+          "filesize": 334119
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 76765381,
+    "name": "Firefox Fast & Private Browser",
+    "package": "org.mozilla.firefox",
+    "uname": "firefox",
+    "size": 268540412,
+    "icon": "https://pool.img.aptoide.com/apkmolds/1b96934d2148bc9c11e3d699f98b83ae_icon.png",
+    "graphic": "https://pool.img.aptoide.com/apkmolds/ef922f7f7815f222f0889cff4f890ca9_fgraphic.jpg",
+    "added": "2018-08-23 14:02:40",
+    "modified": "2026-09-23 19:30:05",
+    "updated": "2026-09-23 21:34:18",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 3894,
+      "name": "Mozilla",
+      "website": "http://support.mozilla.org/mobile",
+      "email": "ffandroidhelp@mozilla.com",
+      "privacy": "http://www.mozilla.org/legal/privacy/firefox.html"
+    },
+    "store": {
+      "id": 2162170,
+      "name": "apkmolds",
+      "avatar": "https://pool.img.aptoide.com/apkmolds/4da954b8a5fce9600d0de6cad9c0ec5c_ravatar.png",
+      "appearance": {
+        "theme": "indigo",
+        "description": "Official apps from brazilian Play Store\n\n      \u26a0\ufe0f AVISO \u00c1 TODOS \u26a0\ufe0f\nInfelizmente o Aptoide esta caminhando para o fim,. O pr\u00f3prio aptoide esta barrando diversas atualiza\u00e7\u00f5es de aplicativos devido \u00e1 erros toscos e tamb\u00e9m por direitos de propriedade impedindo at\u00e9 mesmo as mais simples atualiza\u00e7\u00f5es. \nPor esse motivo estou criando um grupo no Telegram para ajudar quem precisar das atualiza\u00e7\u00f5es que s\u00e3o barradas por aqui, em breve deixarei o link do grupo no Telegram aqui."
+      },
+      "stats": {
+        "apps": 320,
+        "subscribers": 2321,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "156.0.1",
+      "vercode": 2016185927,
+      "md5sum": "79aa05021264ae6a3be29d285d70d033",
+      "filesize": 69582398,
+      "signature": {
+        "sha1": "92:0F:48:76:A6:A5:7B:4A:6A:2F:4C:CA:F6:5F:7D:29:CE:26:FF:2C",
+        "owner": "CN=Release Engineering, OU=Release Engineering, O=Mozilla Corporation, L=Mountain View, ST=California, C=US"
+      },
+      "added": "2026-09-23 19:30:05",
+      "path": "https://pool.apk.aptoide.com/apkmolds/org-mozilla-firefox-2016185927-76765381-79aa05021264ae6a3be29d285d70d033.apk",
+      "path_alt": "https://pool.apk.aptoide.com/apkmolds/org-mozilla-firefox-2016185927-76765381-79aa05021264ae6a3be29d285d70d033.apk",
+      "hardware": {
+        "sdk": 29,
+        "screen": "SMALL",
+        "gles": 2,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "signature_validated": {
+            "date": "2026-09-23",
+            "status": "unknown",
+            "signature_from": "market"
+          },
+          "thirdparty_validated": {
+            "date": "2026-09-23",
+            "store": "Google Play"
+          }
+        },
+        "added": "2026-09-23 19:30:06",
+        "modified": "2026-09-23 21:34:19"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 0
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [],
+      "used_permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_LOCAL_NETWORK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.CREDENTIAL_MANAGER_QUERY_CANDIDATE_CREDENTIALS",
+        "android.permission.CREDENTIAL_MANAGER_SET_ORIGIN",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.QUERY_ALL_PACKAGES",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.REQUEST_DELETE_PACKAGES",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "com.adjust.preinstall.READ_PERMISSION",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE",
+        "com.google.android.gms.permission.AD_ID",
+        "org.mozilla.firefox.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        "org.mozilla.firefox.permission.PROFILER_INTERNAL",
+        "org.mozilla.firefox.permission.RECEIVE_DOWNLOAD_BROADCAST"
+      ],
+      "tags": [
+        "input.pointer",
+        "leanback.input.pointer"
+      ]
+    },
+    "media": {
+      "keywords": [
+        "mozilla",
+        "firefox",
+        "communication"
+      ],
+      "description": "The internet. As it should be.\n\nFirefox is a private web browser designed to protect your data, block trackers and make browsing fast, secure and simple. Whether you\u2019re looking for an incognito browser, a private search experience, or a reliable browser for everyday use, Firefox puts you first.\n\nWhy people choose Firefox\n\nMore privacy, less tracking \u2013 Firefox automatically blocks social media trackers, cross-site cookies, crypto miners and fingerprinting scripts.\nPrivate browsing that protects you \u2013 Open private tabs that don\u2019t save your history, searches, or cookies. Lock them with your device security for extra protection.\nFast, smooth performance \u2013 Load pages faster by blocking trackers and reducing unnecessary data usage.\n Search your way \u2013 Use your preferred private search engine or switch easily from the search bar.\nPasswords made simple \u2013 Generate, store and autofill passwords securely.\nTabs that work for you \u2013 Easily organise and switch between tabs and sync them across devices to pick up where you left off.\nFocus without distractions \u2013 Reader View strips away clutter, while picture-in-picture lets you multitask with videos.\nControl your experience \u2013 Add extensions like ad blockers, customise settings and choose how you browse.\nMake it yours \u2013 Customise your home screen, layout and shortcuts for a more personal browsing experience.\nAI on your terms \u2013 Turn AI completely off or customise it feature by feature.\nQuick page summaries \u2013 Shake your phone to cut through long pages and get the key points.\nSync across devices \u2013 Access your bookmarks, tabs and passwords anywhere you use Firefox.\n\nPrivate by default\nFirefox is built to protect you. Enhanced Tracking Protection automatically blocks common trackers, while Total Cookie Protection keeps cookies isolated to the sites where they belong. When you need more privacy, private browsing mode ensures your history, searches and cookies aren\u2019t saved. Private tabs can also lock automatically, so your activity stays yours.\n\nYour browser. Your rules.\nFirefox puts you in charge of your internet. Add privacy or productivity extensions, including ad blockers, move your search bar, choose your default search engine and tailor your browser to how you use the web. Sync your data across devices for a seamless, consistent experience.\n\nFocus with Firefox. Fast, secure and built around you \nFirefox is designed to help you stay focused with faster, more secure browsing. Reader Mode removes clutter from articles, Picture-in-Picture keeps videos accessible while you multitask and Tracker Blocking helps pages load faster. Built-in password management and private browsing keep everyday browsing simple and protected.\n\nBuilt for people, not profit\nFirefox was created in 2004 by Mozilla as a faster, more private and customisable browser designed to put people first. Today, Mozilla remains a nonprofit working to make the internet \u2014 and the time you spend on it \u2014 better.\n\nLearn more about Mozilla: https://www.mozilla.org\nTerms of Use: https://www.mozilla.org/about/legal/terms/firefox/\nPrivacy Policy: https://www.mozilla.org/privacy/firefox\nLatest news: https://blog.mozilla.org",
+      "summary": "Private by default. Less tracking. Peace of mind built in.",
+      "news": "- Built-in VPN: Get 50 GB of protected browsing each month to help hide your IP address and location. Available in select countries, with more coming soon.\n\n- Better media controls: Skip forward or back and use the timeline to find your spot right from the media notification.\n\n- Android sharing: On Android 14 and later, sharing uses the familiar Android share menu, with additional Firefox options like Send tab to device and Scan QR code. Earlier Android versions keep the existing share screen.",
+      "videos": [
+        {
+          "type": "YOUTUBE",
+          "url": "https://www.youtube.com/embed/dgteUNwOVaU",
+          "thumbnail": "https://i2.ytimg.com/vi/dgteUNwOVaU/hqdefault.jpg"
+        }
+      ],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/eeb1a3fc17b6267dcb80774ef9e52a5c_screen.jpg",
+          "height": 800,
+          "width": 400
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/cc93cb30d7af2dc023ed75e1f6ad7d50_screen.jpg",
+          "height": 800,
+          "width": 400
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/41cd711c6f46710feabd864f2f138928_screen.jpg",
+          "height": 800,
+          "width": 400
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/61ac76c1afd356e5246e5f7f7ca0d9af_screen.jpg",
+          "height": 800,
+          "width": 400
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/bd8260959ad0395a26970a8c9f390703_screen.jpg",
+          "height": 800,
+          "width": 400
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/22040d9c3ac563dade0ea835f974534b_screen.jpg",
+          "height": 800,
+          "width": 400
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/8547d4da7b5e3c1c99594213580f1bb6_screen.jpg",
+          "height": 800,
+          "width": 400
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/3afc7589352254a7adf3fd72673e51f9_screen.jpg",
+          "height": 800,
+          "width": 400
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/4882180aea27841a607d09f265277c9f_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/0d1dbd8a6b35ddbef3e7cba19760ddfe_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/039409ed7c657ef492d98b752922fd85_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/92edb08e5234198ddbc034ef5f4b4f79_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/ae47785daa28533f708a6ac368512c11_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/2222d32c6d56a69db741b2736d575142_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/apkmolds/dd26cdae4d818feacb5a115e4263a243_screen.jpg",
+          "height": 768,
+          "width": 480
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://firefox.en.aptoide.com/?store_name=apkmolds&app_id=76765381",
+      "m": "https://firefox.en.aptoide.com/?store_name=apkmolds&app_id=76765381"
+    },
+    "stats": {
+      "rating": {
+        "avg": 4.47,
+        "total": 15,
+        "votes": [
+          {
+            "value": 5,
+            "count": 11
+          },
+          {
+            "value": 4,
+            "count": 2
+          },
+          {
+            "value": 3,
+            "count": 1
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 1
+          }
+        ]
+      },
+      "prating": {
+        "avg": 4.32,
+        "total": 1219,
+        "votes": [
+          {
+            "value": 5,
+            "count": 792
+          },
+          {
+            "value": 4,
+            "count": 192
+          },
+          {
+            "value": 3,
+            "count": 144
+          },
+          {
+            "value": 2,
+            "count": 20
+          },
+          {
+            "value": 1,
+            "count": 71
+          }
+        ]
+      },
+      "downloads": 500000000,
+      "pdownloads": 500000000
+    },
+    "aab": {
+      "required_split_types": [
+        "ABI",
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.arm64_v8a",
+          "type": "ABI",
+          "md5sum": "b2059125a721b12f05f19ce6cc9885ae",
+          "path": "https://pool.apk.aptoide.com/apkmolds/org-mozilla-firefox-2016185927-76765381-b2059125a721b12f05f19ce6cc9885ae-config-arm64-v8a.apk",
+          "filesize": 198845934
+        },
+        {
+          "name": "config.xxhdpi",
+          "type": "DENSITY",
+          "md5sum": "23bcc6de25e6dd71655636aa1ef9af9c",
+          "path": "https://pool.apk.aptoide.com/apkmolds/org-mozilla-firefox-2016185927-76765381-23bcc6de25e6dd71655636aa1ef9af9c-config-xxhdpi.apk",
+          "filesize": 112080
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 76770689,
+    "name": "Waze Navigation & Live Traffic",
+    "package": "com.waze",
+    "uname": "waze-gps-maps-traffic-alerts-sat-nav",
+    "size": 175747579,
+    "icon": "https://pool.img.aptoide.com/appupdater/3a84d64738faf282d9aac44e0ec8291e_icon.png",
+    "graphic": "https://pool.img.aptoide.com/appupdater/3103e86d5a2394d90c260c2959efce3c_fgraphic.png",
+    "added": "2020-11-27 12:04:12",
+    "modified": "2026-09-24 02:38:32",
+    "updated": "2026-09-24 08:49:35",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 6255,
+      "name": "Waze",
+      "website": "http://www.waze.com",
+      "email": "support@waze.com",
+      "privacy": "http://www.waze.com/legal/privacy/"
+    },
+    "store": {
+      "id": 2899481,
+      "name": "appupdater",
+      "avatar": "https://pool.img.aptoide.com/appupdater/64332bc9651ad8662141e9f5f5a2c034_ravatar.png",
+      "appearance": {
+        "theme": "default",
+        "description": "Update Apps"
+      },
+      "stats": {
+        "apps": 315758,
+        "subscribers": 116886,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "5.24.4.900",
+      "vercode": 1030731,
+      "md5sum": "cc30267e425c250c7db65a541d5f470c",
+      "filesize": 92803661,
+      "signature": {
+        "sha1": "35:B4:38:FE:1B:C6:9D:97:5D:C8:70:2D:C1:6A:B6:9E:BF:65:F2:6F",
+        "owner": "CN=Alex Agranovich, OU=Waze, O=Waze, L=Raanana, ST=Israel, C=Israel"
+      },
+      "added": "2026-09-24 02:38:32",
+      "path": "https://pool.apk.aptoide.com/appupdater/com-waze-1030731-76770689-cc30267e425c250c7db65a541d5f470c.apk",
+      "path_alt": "https://pool.apk.aptoide.com/appupdater/com-waze-1030731-76770689-cc30267e425c250c7db65a541d5f470c.apk",
+      "hardware": {
+        "sdk": 29,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "thirdparty_validated": {
+            "date": "2026-09-24",
+            "store": "Google Play"
+          },
+          "signature_validated": {
+            "date": "2026-09-24",
+            "status": "unknown",
+            "signature_from": "market"
+          }
+        },
+        "added": "2026-09-24 02:38:32",
+        "modified": "2026-09-24 02:38:35"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 0
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [
+        "android.hardware.faketouch",
+        "android.hardware.location",
+        "android.hardware.location.gps"
+      ],
+      "used_permissions": [
+        "android.car.permission.CAR_INFO",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_LOCATION_EXTRA_COMMANDS",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BROADCAST_STICKY",
+        "android.permission.CAMERA",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_CALENDAR",
+        "android.permission.READ_CONTACTS",
+        "android.permission.READ_PHONE_STATE",
+        "android.permission.READ_PROFILE",
+        "android.permission.READ_SYNC_SETTINGS",
+        "android.permission.READ_SYNC_STATS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.WRITE_SYNC_SETTINGS",
+        "androidx.car.app.ACCESS_SURFACE",
+        "androidx.car.app.NAVIGATION_TEMPLATES",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.google.android.gms.permission.AD_ID",
+        "com.waze.mobile.DYNAMIC_RECEIVER_EXPORTED_PERMISSION"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "waze",
+        "maps",
+        "navigation"
+      ],
+      "description": "Know what's ahead on the road with the help from other drivers. Waze is a live map that harnesses the local knowledge of tens of millions of drivers around the world. Drivers safely and confidently reach their everyday destinations thanks to Waze map\u2019s GPS navigation, live traffic updates, real-time safety alerts (including roadworks, accidents, crashes, police, potholes and more), and accurate ETAs.\n\nMake your next drive more predictable and stress-free:\n\u2022 Get there faster with real-time directions, accurate ETAs and automatic rerouting based on live traffic, incidents and road closures\n\u2022 Even if you know the way, avoid surprises on the road ahead with safety alerts for accidents, crashes, roadworks, objects on the road, potholes, speed bumps, sharp curves, bad weather, emergency vehicles, railway crossings and more\n\u2022 Steer clear of tickets by knowing where police and red light and speed cameras are located\n\u2022 Share what\u2019s happening on the road with other drivers by reporting live incidents and hazards\n\u2022 Stay informed of upcoming speed limit changes, and keep your speedometer in check \n\u2022 Know which lane to be in with multi-lane guidance \n\u2022 See toll pricing and choose to avoid tolls along your routes\n\u2022 Add road passes and vignettes for HOV lanes and restricted traffic zones\n\u2022 Find petrol/fuel stations and prices and EV charging stations along your route\n\u2022 Locate parking lots near your destination\n\u2022 Use voice-guided turn-by-turn navigation from a variety of languages, local accents and your favourite celebrities\n\u2022 Plan your next drive by checking ETAs by future departure or arrival times\n\u2022 Use your favourite audio apps (for podcasts, music, news, audiobooks) directly within Waze \n\u2022 Sync Waze to your car\u2019s built-in display through Android Auto\n\n* Some features are not available in all countries\n\n* Waze navigation is not intended for emergency or oversized vehicles\n\nYou can manage your in-app Waze privacy settings at any time. Learn more about the Waze privacy policy here, www.waze.com/legal/privacy.",
+      "summary": "Avoid delays. Get real-time GPS navigation, safety alerts and live traffic.",
+      "news": "This version includes several bug fixes and performance improvements.",
+      "videos": [
+        {
+          "type": "YOUTUBE",
+          "url": "https://www.youtube.com/embed/66jehpnKoUA",
+          "thumbnail": "https://i3.ytimg.com/vi/66jehpnKoUA/hqdefault.jpg"
+        }
+      ],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/b88851f2b06927814c09e29e8c5af5a8_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/9f787a98041f1d9235c16bcf9b735a9b_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/42b018e0354396fb70c5f3af4250efba_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/860a48bef4cbd96726bf512809ede2e2_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/6499975fd70cd3348f42694096f80d6b_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/bf9bb38b44a5972060200ce2b7d20691_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/bfb0989dde141a55c00c720d57127afd_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/988173d60ba273f7e2b39eaa8ec9a9c1_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/c5023bd26d53117d58a9ef7565cc5341_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/ca2769207ac0f69cea0d1a8e65ff4b2f_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/169771c71d2be7d7501b63b40c2f1a85_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/08be2b4e4b7289290822000a280227e9_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/c3bfeb4d11a2a9389db2e4b376bd68b1_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/52a7f34154c4c83af1bd5fe13c584fcb_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/79e0e4d8da0c58663187dd14476133b1_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/7aedf18c806e8bf37fa90f21c0282ab1_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/d4d1140c50d3c95d887a3e34015ccd81_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/81f4d306bb411520b4d0a658e4bf94ef_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/856ef2c6d36459314556f6883e4a2f0f_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/e7dd77c458c78b685a6922c6ddf204af_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/982306d5c35f8954b604e6335a319e79_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/4484b99299b1e940bf13fb9fad26f3fd_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/1a6957d8d7b4812ccb2f09fffc0e2931_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/e9250d0af85d8cb24543c804155ee48e_screen.jpg",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/a1f6bcaed5744105bd3a26826259f3f1_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/00c30e9ac519666dbcc18b7087f06390_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/22df913f0bf65ae204f9a5fa088901b6_screen.png",
+          "height": 768,
+          "width": 1024
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/eba42beb306cf9b7c0a95bee699a8d45_screen.png",
+          "height": 768,
+          "width": 1024
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://waze-gps-maps-traffic-alerts-sat-nav.en.aptoide.com/?store_name=appupdater&app_id=76770689",
+      "m": "https://waze-gps-maps-traffic-alerts-sat-nav.en.aptoide.com/?store_name=appupdater&app_id=76770689"
+    },
+    "stats": {
+      "rating": {
+        "avg": 4.5,
+        "total": 4,
+        "votes": [
+          {
+            "value": 5,
+            "count": 3
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 1
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "prating": {
+        "avg": 4.44,
+        "total": 1156,
+        "votes": [
+          {
+            "value": 5,
+            "count": 853
+          },
+          {
+            "value": 4,
+            "count": 108
+          },
+          {
+            "value": 3,
+            "count": 115
+          },
+          {
+            "value": 2,
+            "count": 15
+          },
+          {
+            "value": 1,
+            "count": 65
+          }
+        ]
+      },
+      "downloads": 500000000,
+      "pdownloads": 500000000
+    },
+    "aab": {
+      "required_split_types": [
+        "ABI",
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.armeabi_v7a",
+          "type": "ABI",
+          "md5sum": "f6c1d4bdfa7541f891b3a4a00d291162",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-waze-1030731-76770689-f6c1d4bdfa7541f891b3a4a00d291162-config-armeabi-v7a.apk",
+          "filesize": 74470291
+        },
+        {
+          "name": "config.xxhdpi",
+          "type": "DENSITY",
+          "md5sum": "2837489e50815941d846df7236b45b5c",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-waze-1030731-76770689-2837489e50815941d846df7236b45b5c-config-xxhdpi.apk",
+          "filesize": 8473627
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 76118052,
+    "name": "Khan Academy",
+    "package": "org.khanacademy.android",
+    "uname": "khan-academy",
+    "size": 31771541,
+    "icon": "https://pool.img.aptoide.com/appupdater/b0388bef4e1f98b0a95d6e19fdbdf43f_icon.png",
+    "graphic": "https://pool.img.aptoide.com/appupdater/593c6dbe70397406657257024076d060_fgraphic.png",
+    "added": "2020-12-16 02:22:26",
+    "modified": "2026-08-15 17:20:54",
+    "updated": "2026-08-15 17:20:55",
+    "main_package": null,
+    "age": {
+      "name": "pre-teen",
+      "title": "Low Maturity",
+      "pegi": "PEGI-12",
+      "rating": 12
+    },
+    "developer": {
+      "id": 110955,
+      "name": "Khan Academy",
+      "website": "https://www.khanacademy.org",
+      "email": "androidfeedback@khanacademy.org",
+      "privacy": "https://www.khanacademy.org/about/privacy-policy"
+    },
+    "store": {
+      "id": 2899481,
+      "name": "appupdater",
+      "avatar": "https://pool.img.aptoide.com/appupdater/64332bc9651ad8662141e9f5f5a2c034_ravatar.png",
+      "appearance": {
+        "theme": "default",
+        "description": "Update Apps"
+      },
+      "stats": {
+        "apps": 315758,
+        "subscribers": 116886,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "8.5.1",
+      "vercode": 104846,
+      "md5sum": "fdfa5307176daf11b1629b47a34deaf5",
+      "filesize": 18342602,
+      "signature": {
+        "sha1": "FC:D0:24:FD:95:AA:DC:BD:27:5A:BD:7D:42:77:5F:39:77:62:15:22",
+        "owner": "CN=Nacho Soto, OU=Mobile, O=Khan Academy, L=Mountain View, ST=CA, C=US"
+      },
+      "added": "2026-08-15 17:20:54",
+      "path": "https://pool.apk.aptoide.com/appupdater/org-khanacademy-android-104846-76118052-fdfa5307176daf11b1629b47a34deaf5.apk",
+      "path_alt": "https://pool.apk.aptoide.com/appupdater/org-khanacademy-android-104846-76118052-fdfa5307176daf11b1629b47a34deaf5.apk",
+      "hardware": {
+        "sdk": 28,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "thirdparty_validated": {
+            "date": "2026-08-15",
+            "store": "Google Play"
+          },
+          "signature_validated": {
+            "date": "2026-08-15",
+            "status": "passed",
+            "signature_from": "tester"
+          }
+        },
+        "added": "2026-08-15 17:20:55",
+        "modified": "2026-08-15 17:20:55"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 0
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [
+        "android.hardware.faketouch",
+        "android.hardware.wifi"
+      ],
+      "used_permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_NOTIFICATION_POLICY",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.INTERNET",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_PHONE_STATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE",
+        "org.khanacademy.android.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "khanacademy",
+        "android",
+        "education",
+        "khan",
+        "academy"
+      ],
+      "description": "Khan Academy is a free learning app for Class 1-12 students with videos, exercises and tests for math, science and more subjects. Our content is aligned to NCERT and CBSE syllabus and available in Hindi, English and many more regional languages.\n\nLearning app for building a strong conceptual understanding\n- Over 10,000 videos and practice exercises on math and science. All content mapped to NCERT and CBSE syllabus.\n- Master math (arithmetic, pre-algebra, algebra, geometry, trigonometry, statistics, calculus, linear algebra), science (biology, chemistry, physics), economics, and more.\n- Learn at your pace and build a strong foundation to do well in school, boards, CAT, GMAT, IIT-JEE and other exams.\n\nInteractive practice exercises and unit tests for exam preparation\n- Over 40,000 interactive practice exercises with instant feedback and step-by-step hints.\n- Prepare for your exams with quizzes and unit tests in math from classes 1-12 for NCERT and CBSE syllabus.\n- Get personalized recommendations on exercises to focus on and related videos to help you in exam preparation.\n\nKeep learning even when you\u2019re offline\n- Bookmark your favourite content for easy access, and download it to keep learning even when you\u2019re not connected to the internet.\n\nTeachers: Assign homework and practice on Khan Academy\n- Teachers can now assign homework aligned to NCERT and CBSE syllabus in the form of videos, articles, and exercises across a range of subjects and grades.\n- Homework can be assigned to an entire class or to specific students.\n- Students would be able to see and complete these assignments on the Khan Academy learning app.\n- Teachers can track progress and gather insights in real-time.\n- All of the above teacher functionalities can be accessed directly at www.khanacademy.org, not on the app.\n\nKey facts about Khan Academy\n- Our mission is to make free, world-class education available to millions of learners in India and around the world.\n- Khan Academy in India is a Section 8 registered nonprofit organization and is supported by Tata Trusts and CSF.\n- Today, Khan Academy is used by over 120 million learners in 190+ countries around the globe.\n- Our resources include 10,000+ videos and 50,000+ exercises in math, biology, chemistry, physics, history, economics, finance, grammar, preschool learning, and more aligned to NCERT and CBSE syllabus.\n- More than 200,00 teachers in India use Khan Academy to make their class more engaging with videos, to assign practice problems as homework, and to provide personalized attention to students using Khan Academy's learning app and coach dashboard.\n\nLearners and teachers can access all our content in English and Hindi on the app. For other languages, one can visit: \n- Hindi - hi.khanacademy.org\n- Gujarati - gu.khanacademy.org \n- Kannada - kn.khanacademy.org\n\nWe have also translated our Middle and High School content to Hinglish - bilingual Hindi and English - for those students who study at schools where the medium of instruction is English, but are more conversant with and comfortable understanding concepts in Hindi.\n\nHead over to www.khanacademy.org to learn more about us. Follow us on Facebook, Twitter and Instagram @khanacademy to get handy study-tips!",
+      "summary": "Education app for math, science & more. Videos, exercises & practice tests.",
+      "news": "\u2219 Bug fixes and performance improvements.",
+      "videos": [
+        {
+          "type": "YOUTUBE",
+          "url": "https://www.youtube.com/embed/hPM9VjehvHM",
+          "thumbnail": "https://i4.ytimg.com/vi/hPM9VjehvHM/hqdefault.jpg"
+        }
+      ],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/71df865fff856d2283f8874d9f6c08e2_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/6923d701f4235bf8d69fdc1926a1672f_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/5ecf69d26bf0d2e7983c0d66c612ed01_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/8874a4bb8f766af42ce6c8a3819608bd_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/f6f2a56a2f47f11fc58295380b4d1263_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/b308e8247b116c5e99dbf6899e3072d1_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/f777fcea61943e1f0e64f79f26600610_screen.png",
+          "height": 800,
+          "width": 1138
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/e16329b745b05d0b1215244415b28cd6_screen.png",
+          "height": 800,
+          "width": 1138
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/33727d54ef4d3484679e9cfe2c7b642b_screen.png",
+          "height": 800,
+          "width": 1138
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/aa1fa46d53c81ba5c9aea009d14f154f_screen.png",
+          "height": 800,
+          "width": 1138
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/d8a3b55a899f3b198242b8da47913b43_screen.png",
+          "height": 800,
+          "width": 1138
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/1d0cf2fa167590471d0f1c57e2c41fa2_screen.png",
+          "height": 800,
+          "width": 1138
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://khan-academy.en.aptoide.com/?store_name=appupdater&app_id=76118052",
+      "m": "https://khan-academy.en.aptoide.com/?store_name=appupdater&app_id=76118052"
+    },
+    "stats": {
+      "rating": {
+        "avg": 4,
+        "total": 1,
+        "votes": [
+          {
+            "value": 5,
+            "count": 0
+          },
+          {
+            "value": 4,
+            "count": 1
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "prating": {
+        "avg": 4.45,
+        "total": 38,
+        "votes": [
+          {
+            "value": 5,
+            "count": 28
+          },
+          {
+            "value": 4,
+            "count": 5
+          },
+          {
+            "value": 3,
+            "count": 2
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 3
+          }
+        ]
+      },
+      "downloads": 10000000,
+      "pdownloads": 10000000
+    },
+    "aab": {
+      "required_split_types": [
+        "ABI",
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.x86_64",
+          "type": "ABI",
+          "md5sum": "eda2b4517eb36269075231a21db61667",
+          "path": "https://pool.apk.aptoide.com/appupdater/org-khanacademy-android-104846-76118052-eda2b4517eb36269075231a21db61667-config-x86-64.apk",
+          "filesize": 12911823
+        },
+        {
+          "name": "config.mdpi",
+          "type": "DENSITY",
+          "md5sum": "a610a0de3608cc457074088bcfd8b718",
+          "path": "https://pool.apk.aptoide.com/appupdater/org-khanacademy-android-104846-76118052-a610a0de3608cc457074088bcfd8b718-config-mdpi.apk",
+          "filesize": 517116
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 39828787,
+    "name": "GO Launcher Prime",
+    "package": "com.gau.go.launcherex",
+    "uname": "launcher-dev-team-go",
+    "size": 31805550,
+    "icon": "https://pool.img.aptoide.com/b00j/716eefb7120792fc4d1c9e8e865aac46_icon.jpg",
+    "graphic": "https://pool.img.aptoide.com/b00j/f56abc6ea8f918c9c48524eca92bb116_fgraphic.png",
+    "added": "2018-08-26 23:27:47",
+    "modified": "2020-09-17 02:28:37",
+    "updated": "2026-05-07 23:05:36",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 625670,
+      "name": "go live llc",
+      "website": "http://www.gomo.com",
+      "email": "golauncher@goforandroid.com",
+      "privacy": "http://resource.gomocdn.com/GOMO_Limited/GOLauncher_privacy.html"
+    },
+    "store": {
+      "id": 2057491,
+      "name": "b00j",
+      "avatar": "https://pool.img.aptoide.com/b00j/d1b69952e1e616a26abfdcc9c8737a34_ravatar.jpg",
+      "appearance": {
+        "theme": "light-blue",
+        "description": "Latest Android apps and much more!"
+      },
+      "stats": {
+        "apps": 14,
+        "subscribers": 1687,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "7.31",
+      "vercode": 12131,
+      "md5sum": "b077f28ddff15af300c78f27cbb9ac23",
+      "filesize": 8133381,
+      "signature": {
+        "sha1": "4A:CE:2A:33:E9:CD:31:13:AD:BB:0E:BC:E4:EE:D9:0C:5F:43:33:8B",
+        "owner": "CN=3g.cn, OU=3g.cn, O=3g.cn, L=guangzhou, ST=guangdong, C=020"
+      },
+      "added": "2018-08-26 23:27:47",
+      "path": "https://pool.apk.aptoide.com/b00j/com-gau-go-launcherex-12131-39828787-b077f28ddff15af300c78f27cbb9ac23.apk",
+      "path_alt": "https://pool.apk.aptoide.com/b00j/com-gau-go-launcherex-12131-39828787-b077f28ddff15af300c78f27cbb9ac23.apk",
+      "hardware": {
+        "sdk": 11,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [
+          "armeabi",
+          "armeabi-v7a"
+        ],
+        "densities": [],
+        "dependencies": [
+          {
+            "type": "GMS",
+            "level": "HARD"
+          }
+        ]
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "signature_validated": {
+            "date": "2020-12-15",
+            "status": "passed",
+            "signature_from": "tester"
+          },
+          "scanned": {
+            "status": "passed",
+            "date": "2020-11-12 03:05:23",
+            "av_info": [
+              {
+                "infections": [],
+                "name": "zoner 1.11.0"
+              },
+              {
+                "infections": [],
+                "name": "drweb 9.01.2"
+              },
+              {
+                "infections": [],
+                "name": "vipre 3.0.3.374"
+              },
+              {
+                "infections": [],
+                "name": "mcafee"
+              },
+              {
+                "infections": [],
+                "name": "trendmicro 7.0.0.1443"
+              },
+              {
+                "infections": [],
+                "name": "ikarus 1.7.38"
+              },
+              {
+                "infections": [],
+                "name": "sophos 6.0.1789"
+              },
+              {
+                "infections": [],
+                "name": "norton"
+              }
+            ]
+          },
+          "manual_qa": {
+            "status": "passed",
+            "tester": "antonio.moura@aptoide.com",
+            "date": "2018/09/18"
+          }
+        },
+        "added": "2018-08-27 00:27:49",
+        "modified": "2021-02-08 16:33:19"
+      },
+      "flags": {
+        "review": "GOOD"
+      },
+      "used_features": [
+        "android.hardware.bluetooth",
+        "android.hardware.camera",
+        "android.hardware.location",
+        "android.hardware.location.gps",
+        "android.hardware.location.network",
+        "android.hardware.microphone",
+        "android.hardware.wifi"
+      ],
+      "used_permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_UPDATES",
+        "android.permission.ACCESS_DOWNLOAD_MANAGER",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_LOCATION_EXTRA_COMMANDS",
+        "android.permission.ACCESS_MOCK_LOCATION",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.ACCESS_WIMAX_STATE",
+        "android.permission.AUTHENTICATE_ACCOUNTS",
+        "android.permission.BATTERY_STATS",
+        "android.permission.BIND_ACCESSIBILITY_SERVICE",
+        "android.permission.BIND_APPWIDGET",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BODY_SENSORS",
+        "android.permission.BROADCAST_STICKY",
+        "android.permission.CALL_PHONE",
+        "android.permission.CAMERA",
+        "android.permission.CHANGE_CONFIGURATION",
+        "android.permission.CHANGE_NETWORK_STATE",
+        "android.permission.CHANGE_WIFI_MULTICAST_STATE",
+        "android.permission.CHANGE_WIFI_STATE",
+        "android.permission.CHANGE_WIMAX_STATE",
+        "android.permission.CLEAR_APP_CACHE",
+        "android.permission.DISABLE_KEYGUARD",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION",
+        "android.permission.EXPAND_STATUS_BAR",
+        "android.permission.FLASHLIGHT",
+        "android.permission.GET_ACCOUNTS",
+        "android.permission.GET_PACKAGE_SIZE",
+        "android.permission.GET_TASKS",
+        "android.permission.INTERACT_ACROSS_USERS_FULL",
+        "android.permission.INTERNET",
+        "android.permission.KILL_BACKGROUND_PROCESSES",
+        "android.permission.MANAGE_ACCOUNTS",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.MODIFY_PHONE_STATE",
+        "android.permission.MOUNT_UNMOUNT_FILESYSTEMS",
+        "android.permission.NFC",
+        "android.permission.PACKAGE_USAGE_STATS",
+        "android.permission.PERSISTENT_ACTIVITY",
+        "android.permission.PROCESS_OUTGOING_CALLS",
+        "android.permission.READ_CALENDAR",
+        "android.permission.READ_CALL_LOG",
+        "android.permission.READ_CELL_BROADCASTS",
+        "android.permission.READ_CONTACTS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_INSTALL_SESSIONS",
+        "android.permission.READ_LOGS",
+        "android.permission.READ_OWNER_DATA",
+        "android.permission.READ_PHONE_STATE",
+        "android.permission.READ_PROFILE",
+        "android.permission.READ_SECURE_SETTINGS",
+        "android.permission.READ_SETTINGS",
+        "android.permission.READ_SMS",
+        "android.permission.READ_SOCIAL_STREAM",
+        "android.permission.READ_SYNC_SETTINGS",
+        "android.permission.READ_SYNC_STATS",
+        "android.permission.READ_USER_DICTIONARY",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECEIVE_MMS",
+        "android.permission.RECEIVE_SMS",
+        "android.permission.RECEIVE_USER_PRESENT",
+        "android.permission.RECEIVE_WAP_PUSH",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.REORDER_TASKS",
+        "android.permission.RESTART_PACKAGES",
+        "android.permission.SEND_DOWNLOAD_COMPLETED_INTENTS",
+        "android.permission.SEND_SMS",
+        "android.permission.SET_PREFERRED_APPLICATIONS",
+        "android.permission.SET_TIME_ZONE",
+        "android.permission.SET_WALLPAPER",
+        "android.permission.SET_WALLPAPER_HINTS",
+        "android.permission.SUBSCRIBED_FEEDS_READ",
+        "android.permission.SUBSCRIBED_FEEDS_WRITE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.TRANSMIT_IR",
+        "android.permission.UPDATE_DEVICE_STATS",
+        "android.permission.USE_CREDENTIALS",
+        "android.permission.USE_SIP",
+        "android.permission.USES_POLICY_FORCE_LOCK",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.WRITE_APN_SETTINGS",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.WRITE_CALL_LOG",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.WRITE_OWNER_DATA",
+        "android.permission.WRITE_PROFILE",
+        "android.permission.WRITE_SECURE_SETTINGS",
+        "android.permission.WRITE_SETTINGS",
+        "android.permission.WRITE_SMS",
+        "android.permission.WRITE_SOCIAL_STREAM",
+        "android.permission.WRITE_SYNC_SETTINGS",
+        "android.permission.WRITE_USER_DICTIONARY",
+        "cn.nubia.launcher.permission.READ_SETTINGS",
+        "com.anddoes.launcher.permission.READ_SETTINGS",
+        "com.android.alarm.permission.SET_ALARM",
+        "com.android.browser.permission.READ_HISTORY_BOOKMARKS",
+        "com.android.browser.permission.WRITE_HISTORY_BOOKMARKS",
+        "com.android.launcher2.permission.READ_SETTINGS",
+        "com.android.launcher3.permission.READ_SETTINGS",
+        "com.android.launcher.permission.INSTALL_SHORTCUT",
+        "com.android.launcher.permission.READ_SETTINGS",
+        "com.android.launcher.permission.UNINSTALL_SHORTCUT",
+        "com.android.launcher.permission.WRITE_SETTINGS",
+        "com.android.mylauncher.permission.READ_SETTINGS",
+        "com.android.vending.BILLING",
+        "com.android.vending.CHECK_LICENSE",
+        "com.android.voicemail.permission.ADD_VOICEMAIL",
+        "com.cyanogenmod.trebuchet.permission.READ_SETTINGS",
+        "com.ebproductions.android.launcher.permission.READ_SETTINGS",
+        "com.fede.launcher.permission.READ_SETTINGS",
+        "com.fsck.k9.permission.READ_MESSAGES",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.google.android.gm.permission.READ_CONTENT_PROVIDER",
+        "com.google.android.gm.permission.READ_GMAIL",
+        "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
+        "com.google.android.gms.permission.AD_ID_NOTIFICATION",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.adsense",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.adwords",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.ah",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.android",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.androidsecure",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.blogger",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.cl",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.cp",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.dodgeball",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.finance",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.gbase",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.grandcentral",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.groups2",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.health",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.ig",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.jotspot",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.knol",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.lh2",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.local",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.mail",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.mobile",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.news",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.notebook",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.orkut",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.OTHER_SERVICES",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.print",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.sierra",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.sierraqa",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.sierrasandbox",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.sitemaps",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.speech",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.speechpersonalization",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.talk",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.wifi",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.wise",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.writely",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.youtube",
+        "com.google.android.googleapps.permission.GOOGLE_AUTH.YouTubeUser",
+        "com.google.android.launcher.permission.READ_SETTINGS",
+        "com.google.android.providers.gmail.permission.READ_GMAIL",
+        "com.google.android.providers.gsf.permission.READ_GSERVICES",
+        "com.google.android.providers.talk.permission.READ_ONLY",
+        "com.google.android.providers.talk.permission.WRITE_ONLY",
+        "com.htc.launcher.permission.READ_SETTINGS",
+        "com.huawei.android.launcher.permission.READ_SETTINGS",
+        "com.huawei.android.launcher.permission.WRITE_SETTINGS",
+        "com.huawei.launcher2.permission.READ_SETTINGS",
+        "com.huawei.launcher3.permission.READ_SETTINGS",
+        "com.jiubang.ggheart.appgame.download.DownloadService.GoLauncherEX",
+        "com.lenovo.launcher.permission.READ_SETTINGS",
+        "com.lge.launcher.permission.READ_SETTINGS",
+        "com.oppo.launcher.permission.READ_SETTINGS",
+        "com.qihoo360.launcher.permission.READ_SETTINGS",
+        "com.qihoo.appstore.rtservice.ACCESS_RTSERVICE",
+        "com.sec.android.app.twlauncher.settings.READ_SETTINGS",
+        "com.sec.android.provider.badge.permission.READ",
+        "com.sec.android.provider.badge.permission.WRITE",
+        "com.sohu.push.sdkexample.permission.MIPUSH_RECEIVE",
+        "com.tencent.qqlauncher.permission.READ_SETTINGS",
+        "com.tencent.tmsecurelite.permission.ACCESS_SERVICE",
+        "com.teslacoilsw.launcher.permission.READ_SETTINGS",
+        "com.yy.yymeet.permission.READ_CHARGE_MONTH_LEFT",
+        "dianxin.permission.ACCESS_LAUNCHER_DATA",
+        "getui.permission.GetuiService.com.moji.mjweather",
+        "home.solo.launcher.free.permission.READ_SETTINGS",
+        "net.qihoo.launcher.permission.READ_SETTINGS",
+        "org.adwfreak.launcher.permission.READ_SETTINGS",
+        "org.adw.launcher_donut.permission.READ_SETTINGS",
+        "org.adw.launcher.permission.READ_SETTINGS",
+        "telecom.mdesk.permission.READ_SETTINGS"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "launcherex",
+        "personalization",
+        "go\u684c\u9762"
+      ],
+      "description": "Tired of having the same old look on your phone? Don\u2019t worry, we\u2019ve got just the answer for you! GO Launcher Prime is here and it includes amazing features that will help you customize the look and feel of your phone from bottom to top!\n\nThis amazing Launcher includes incredible features such as over 10 000+ personalized themes, unbelievable transition animations, and a high-speed smooth operation provided by powerful 3D core!\n\nWhile enjoying this fun, full-featured app you\u2019ll come across a clean user interface; over 6+ jaw-dropping transition animations; the ability to keep your apps secure, with your very own security lock; 3D transitions (including cloth, crystal, snake, cross-fade, fly-in, curve and page turn); amazing wallpaper filters; and so much more!\n\nThis app includes a whole new UX and UI and it is extremely easy and simple to install and use!\n\nDon\u2019t wait any longer! Download GO Launcher now and get the chance to enjoy a whole new fun mobile experience!",
+      "summary": "GO Launcher-\u00f0\u009f\u0092\u008eCustomize your stylish phone with free themes & HD wallpapers!",
+      "news": "Bug fixes.",
+      "videos": [
+        {
+          "type": "YOUTUBE",
+          "url": "https://www.youtube.com/embed/f6uAO5H0kdw",
+          "thumbnail": "https://i4.ytimg.com/vi/f6uAO5H0kdw/hqdefault.jpg"
+        }
+      ],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/b00j/694fb5988fdf014f33eb9670f4cec835_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/b00j/e6f560e7c8ca34c48468102774d197b4_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/b00j/02074214ca2a35859e936c98c2a3f89c_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/b00j/e63b30496413df257f66ea8d085cc7ca_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/b00j/21faf4cd382487ae285ad52e18dd4e0d_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/b00j/246685acfa6698507ade197d1a01c61f_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/b00j/de7ab170a1d0b6e43dbf5ae6f3f16cf1_screen.jpg",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/b00j/bacc47f5405aad55174d15c45b8c8bce_screen.jpg",
+          "height": 800,
+          "width": 450
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://launcher-dev-team-go.en.aptoide.com/?store_name=b00j&app_id=39828787",
+      "m": "https://launcher-dev-team-go.en.aptoide.com/?store_name=b00j&app_id=39828787"
+    },
+    "stats": {
+      "rating": {
+        "avg": 4.15,
+        "total": 20,
+        "votes": [
+          {
+            "value": 5,
+            "count": 13
+          },
+          {
+            "value": 4,
+            "count": 2
+          },
+          {
+            "value": 3,
+            "count": 2
+          },
+          {
+            "value": 2,
+            "count": 1
+          },
+          {
+            "value": 1,
+            "count": 2
+          }
+        ]
+      },
+      "prating": {
+        "avg": 3.91,
+        "total": 637,
+        "votes": [
+          {
+            "value": 5,
+            "count": 218
+          },
+          {
+            "value": 4,
+            "count": 227
+          },
+          {
+            "value": 3,
+            "count": 145
+          },
+          {
+            "value": 2,
+            "count": 10
+          },
+          {
+            "value": 1,
+            "count": 37
+          }
+        ]
+      },
+      "downloads": 100000000,
+      "pdownloads": 100000000
+    },
+    "aab": null,
+    "obb": {
+      "main": {
+        "md5sum": "1c2e99111c1e7b362ff3fc03b3f4d815",
+        "filesize": 23672169,
+        "filename": "main.626.com.gau.go.launcherex.obb",
+        "path": "https://pool.obb.aptoide.com/b00j/main-626-com-gau-go-launcherex-1c2e99111c1e7b362ff3fc03b3f4d815.obb"
+      }
+    },
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 72682303,
+    "name": "Simple Alarm Clock",
+    "package": "com.better.alarm",
+    "uname": "smart-alarm-technology-simple-alarm-clock",
+    "size": 7259927,
+    "icon": "https://pool.img.aptoide.com/appupdater/1dafdc9a616c1f54922f296533c13754_icon.png",
+    "graphic": "https://pool.img.aptoide.com/appupdater/7368116976f931a21636232856839130_fgraphic.png",
+    "added": "2021-03-04 16:46:15",
+    "modified": "2025-12-06 02:11:52",
+    "updated": "2025-12-06 02:11:52",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 5268,
+      "name": "Smart Alarm Technology",
+      "website": "https://github.com/yuriykulikov/AlarmClock/",
+      "email": "yuriy.kulikov.87@gmail.com",
+      "privacy": "https://github.com/yuriykulikov/AlarmClock/wiki/Privacy-policy"
+    },
+    "store": {
+      "id": 2899481,
+      "name": "appupdater",
+      "avatar": "https://pool.img.aptoide.com/appupdater/64332bc9651ad8662141e9f5f5a2c034_ravatar.png",
+      "appearance": {
+        "theme": "default",
+        "description": "Update Apps"
+      },
+      "stats": {
+        "apps": 315758,
+        "subscribers": 116886,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "3.15.04",
+      "vercode": 31504,
+      "md5sum": "ec46e9997ab8e7b653a77410bc560552",
+      "filesize": 7151117,
+      "signature": {
+        "sha1": "CD:E2:99:57:B8:76:33:C5:35:70:07:5D:F9:30:AE:02:70:2B:B9:72",
+        "owner": "CN=Yuriy Kulikov"
+      },
+      "added": "2025-12-06 02:11:51",
+      "path": "https://pool.apk.aptoide.com/appupdater/com-better-alarm-31504-72682303-ec46e9997ab8e7b653a77410bc560552.apk",
+      "path_alt": "https://pool.apk.aptoide.com/appupdater/com-better-alarm-31504-72682303-ec46e9997ab8e7b653a77410bc560552.apk",
+      "hardware": {
+        "sdk": 16,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "thirdparty_validated": {
+            "date": "2025-12-06",
+            "store": "Google Play"
+          },
+          "signature_validated": {
+            "date": "2025-12-06",
+            "status": "passed",
+            "signature_from": "market"
+          }
+        },
+        "added": "2025-12-06 02:11:52",
+        "modified": "2025-12-06 02:11:52"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 0
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [
+        "android.hardware.faketouch"
+      ],
+      "used_permissions": [
+        "android.permission.DISABLE_KEYGUARD",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.USE_EXACT_ALARM",
+        "android.permission.USE_FULL_SCREEN_INTENT",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "com.android.alarm.permission.SET_ALARM"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "better",
+        "alarm",
+        "productivity",
+        "simple",
+        "clock"
+      ],
+      "description": "Simple Alarm Clock is the alarm clock doing one thing and doing it right: waking you up.\n\nThe interface of our Alarm clock is simple, intuitive and efficient. By removing what is not essential, we make access to everything you need even easier.\n\nApp highlights:\n- Any number of alarms, recurring or one-shot\n- Entering time with a phone-style keyboard (very fast!)\n- Choose interface colors and size to you liking\n- Configurable fade-in times (volume starting low and gradually increasing)\n- Gentle alarm can be enabled to wake up in the light sleep phase\n- Upcoming alarms can be skipped for one day if woke up early\n\nGuaranteed no ads!\n\nFAQ:\nQ: How can I install an MP3 sound?\nA: Use external MP3 Cutter application.\n\nQ:where can I get more ringtones:\nA: Install a 3rd party ringtone application.\n\nThis is an open source project. Additional feature requests are appreciated! You can submit bugreports and feature requests by sending an email to developers!",
+      "summary": "Simple, easy to use, no frills alarm clock with customizable colors",
+      "news": "Minor changes and Ukrainian translation.",
+      "videos": [],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/30354308ea3f680b9f8c7399677829f4_screen.png",
+          "height": 624,
+          "width": 373
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/eb6167242f869c0df4f66332f1ed034c_screen.png",
+          "height": 664,
+          "width": 369
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/69306bd3e5a45c68883032bb6312bdf5_screen.png",
+          "height": 668,
+          "width": 367
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/8b67e7217535de78f3b4d992f897ece9_screen.png",
+          "height": 670,
+          "width": 365
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/07e4e60855bea44ce5630f979a19bf32_screen.png",
+          "height": 657,
+          "width": 367
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://smart-alarm-technology-simple-alarm-clock.en.aptoide.com/?store_name=appupdater&app_id=72682303",
+      "m": "https://smart-alarm-technology-simple-alarm-clock.en.aptoide.com/?store_name=appupdater&app_id=72682303"
+    },
+    "stats": {
+      "rating": {
+        "avg": 0,
+        "total": 0,
+        "votes": [
+          {
+            "value": 5,
+            "count": 0
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "prating": {
+        "avg": 0,
+        "total": 0,
+        "votes": [
+          {
+            "value": 5,
+            "count": 0
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "downloads": 1000000,
+      "pdownloads": 1000000
+    },
+    "aab": {
+      "required_split_types": [
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.hdpi",
+          "type": "DENSITY",
+          "md5sum": "763be59de12412f6fab94383b08bbf70",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-better-alarm-31504-72682303-763be59de12412f6fab94383b08bbf70-config-hdpi.apk",
+          "filesize": 63345
+        },
+        {
+          "name": "config.en",
+          "type": "LOCALE",
+          "md5sum": "d91ae92bf72366f72567fad638732f6d",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-better-alarm-31504-72682303-d91ae92bf72366f72567fad638732f6d-config-en.apk",
+          "filesize": 45465
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 74874821,
+    "name": "ReadEra \u2013 book reader pdf epub",
+    "package": "org.readera",
+    "uname": "readera",
+    "size": 18792707,
+    "icon": "https://pool.img.aptoide.com/appupdater/7825fc224edabc5a341a014ad78041b9_icon.png",
+    "graphic": "https://pool.img.aptoide.com/appupdater/92a69f2b8fa5081e3dd9b9af08829ab3_fgraphic.png",
+    "added": "2020-12-12 08:36:36",
+    "modified": "2026-05-22 14:51:51",
+    "updated": "2026-09-11 13:35:06",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 184600,
+      "name": "READERA LLC",
+      "website": "https://readera.ru",
+      "email": "support@readera.ru",
+      "privacy": null
+    },
+    "store": {
+      "id": 2899481,
+      "name": "appupdater",
+      "avatar": "https://pool.img.aptoide.com/appupdater/64332bc9651ad8662141e9f5f5a2c034_ravatar.png",
+      "appearance": {
+        "theme": "default",
+        "description": "Update Apps"
+      },
+      "stats": {
+        "apps": 315758,
+        "subscribers": 116886,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "26.05.20+2300",
+      "vercode": 2300,
+      "md5sum": "f8522d4d7fb56134ba0a901fcdd59881",
+      "filesize": 12253095,
+      "signature": {
+        "sha1": "2A:61:64:0C:91:E9:5A:B7:66:9B:D5:19:ED:B5:46:C8:F0:ED:60:DA",
+        "owner": "CN=Dmitry Razdrokin, O=Readera LCC"
+      },
+      "added": "2026-05-22 14:51:50",
+      "path": "https://pool.apk.aptoide.com/appupdater/org-readera-2300-74874821-f8522d4d7fb56134ba0a901fcdd59881.apk",
+      "path_alt": "https://pool.apk.aptoide.com/appupdater/org-readera-2300-74874821-f8522d4d7fb56134ba0a901fcdd59881.apk",
+      "hardware": {
+        "sdk": 16,
+        "screen": "SMALL",
+        "gles": 1.1,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "thirdparty_validated": {
+            "date": "2026-05-22",
+            "store": "Google Play"
+          },
+          "signature_validated": {
+            "date": "2026-05-22",
+            "status": "passed",
+            "signature_from": "tester"
+          }
+        },
+        "added": "2026-05-22 14:51:51",
+        "modified": "2026-05-22 14:51:51"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 1
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [
+        "android.hardware.faketouch"
+      ],
+      "used_permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.INTERNET",
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE",
+        "org.readera.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "readera",
+        "books",
+        "reference"
+      ],
+      "description": "ReadEra \u2014 book reader allows reading books for free, offline in PDF, EPUB, Microsoft Word (DOC, DOCX, RTF), Kindle (MOBI, AZW3), DJVU, FB2, TXT, ODT and CHM formats.\n\nNo ads\nRead books without ads. The ReadEra program for reading books and viewing PDF documents neither contains ads nor imposes internal purchases.\n\nNo register\nWe\u2019ve made a fast, reliable reader app that doesn't compel users to use any specific services. The book reader works offline and is entirely free. Read books for free without limits!\n\nRead books of all formats\nReadEra is a set of reading apps in one app, which reads well multiple types of formats: book Epub, Kindle (MOBI, AZW3), Fb2; business PDF, Djvu; office Microsoft Word (DOC, DOCX, RTF), ODT; text TXT and others. Reading books, viewing Microsoft Word documents and PDF files from zip archives.\n\nThe book reader combines in it all advantages of different reading apps.\nPDF reader \u2013 margin cropping for pdf files in pdf viewer. The single-column mode will split a double-page spread image from a scanned pdf book into two separate pages. Opens large pdf documents.\nEPUB reader & MOBI reader reveals all advantages of the EPUB and MOBI formats for eBooks.\nWORD reader forms contents of a book by titles.\nFB2 reader opens books of fb2 format from zip archive; no need to unpack.\nThe reader for books, ReadEra, reads all popular formats of books, journals, articles and other documents in one app.\n\nBest book manager for your library\nAuto-detection of books and documents. Just download an Epub book, PDF journal, Microsoft Word documents or PDF article from the Internet so they appear in the reader for reading. Easy navigation through folders and downloads. Grouping books by authors and series. Book reading lists: To Read, Have Read, Favorites. The Collections tool (bookshelves) allows creating personal thematic collections. Books and documents can be added to one or several collections at the same time. We do our best to ensure order in your eBook library.\n\nNavigation through a book\nQuick access to the reading settings, table of contents, bookmarks, text highlights, quotes, notes, page browsing history in a book and other eBook options. Navigate the book using the page pointer or the progress line. Footnote texts in Epub, Mobi, Docx, Fb2 formats are printed at the bottom of the page, as in a paper book. Displays the total number of pages of a book and separately pages of a reading chapter.\n\nConvenient reading settings\nAuto-saving the current reading page. Nice color modes while reading books: day, night, sepia, console. Horizontal or vertical page flipping mode. Screen orientation, brightness and page margins adjustment, including PDF and DjVu. Adjustable type font, size, boldness, line spacing and hyphenation for Microsoft Word, Epub, Kindle (Mobi, Azw3), Fb2, TXT and ODT. Zoom option for PDF file and Djvu file when you read PDF and read Djvu.\n\nEconomized memory usage\nThe reader doesn\u2019t copy books and documents into its store; detects duplicate files, saves bookmarks and the current reading page, even when files are moved or deleted. For example, even if you delete files and download books again, you\u2019ll be able to continue reading books from the last read page. EBook ReadEra allows storing data on the SD card.\n\nMulti-document mode\nThe book reader Readera allows reading several books and documents at the same time. For example, you can simultaneously read Epub books and PDF journals by placing them on the device screen in split-screen mode (two windows). Or read Microsoft Word, ODT, PDF documents, Epub/Mobi and Kindle books, switching between them by the \"Active apps\" system button.\n\nEBook reader ReadEra \u2013 best app for reading PDF, Epub, Kindle (Mobi, Azw3), TXT, Fb2 books; Microsoft Word (DOC, DOCX, RTF), ODT documents and PDF viewer for Android.\n\nRead books easily and for free with ReadEra!",
+      "summary": "Read books PDF, EPUB, WORD, KINDLE, MOBI! Your ebook reader among reading apps.",
+      "news": "\u2022 Improved full-screen reading mode for Android 15 and above.\n\n\u2022 Optimized cover extraction, display of quotes, footnotes, and table of contents in some rare books for an even more comfortable reading experience.\n\n\u2022 Enhanced Japanese text support: line breaks when displaying ruby (furigana), alignment of inline images; display of enlarged characters and some dialogues.\n\n\u2022 Improved display of Chinese text in TXT files.\n\n\u2022 Improved TTS (text-to-speech) performance.",
+      "videos": [],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/2c0c6675caa83816c5da18b61f7ddbeb_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/814f70f42572c01ac5bef8538cccb35e_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/a278ea79055093d5724fe3907c9e5755_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/abf255bb05307a72c44616c379a02a3e_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/8587246809279608ef849a4c1dad1e37_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/87071e0fb6ddf94c7154aa85f1a2d77e_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/5fc439f8612e43ff3eefe0a8331f14e0_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/445b6898cce0ab6b327aa4b335ba93b7_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/ed0eb918eb256718d5e63af1dc5c47ff_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/01ec823104b3d8fe55ef67a23ca57905_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/34d2533e0d09a8f868ec2704c43fb185_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/b95f3adb7c2a4cb74f945b0764100bee_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/c321f7fd8d1be49da03a390b5e8975cf_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/dc75b5c6897926f2cddf95e32d815c62_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/39ca540e0c0f16ea91426fc30f1d4fd0_screen.png",
+          "height": 768,
+          "width": 480
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/81e3050ffe8f6623f544ba320600d5c5_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/882893de6d6b3490a539b61baec558ba_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/05f99180fa4b013eeb799ddcdceafa5c_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/96b38368d38b5b37a538e25823c0009c_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/5f3c4fc3137c026a18b0c41a2329b4a9_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/2153cdd135e96c502598d5365f5e3da2_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/fcef11872e4438e8576d11ee5413f472_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/8b6e352081e8e5f3012c683c3b039bfe_screen.png",
+          "height": 800,
+          "width": 1280
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://readera.en.aptoide.com/?store_name=appupdater&app_id=74874821",
+      "m": "https://readera.en.aptoide.com/?store_name=appupdater&app_id=74874821"
+    },
+    "stats": {
+      "rating": {
+        "avg": 4.6,
+        "total": 10,
+        "votes": [
+          {
+            "value": 5,
+            "count": 9
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 1
+          }
+        ]
+      },
+      "prating": {
+        "avg": 4.86,
+        "total": 69,
+        "votes": [
+          {
+            "value": 5,
+            "count": 65
+          },
+          {
+            "value": 4,
+            "count": 2
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 2
+          }
+        ]
+      },
+      "downloads": 50000000,
+      "pdownloads": 50000000
+    },
+    "aab": {
+      "required_split_types": [
+        "ABI",
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.x86_64",
+          "type": "ABI",
+          "md5sum": "d9a2735cac41915bb8392ba932838a45",
+          "path": "https://pool.apk.aptoide.com/appupdater/org-readera-2300-74874821-d9a2735cac41915bb8392ba932838a45-config-x86-64.apk",
+          "filesize": 6374219
+        },
+        {
+          "name": "config.mdpi",
+          "type": "DENSITY",
+          "md5sum": "a2eac2485a79804b1aca2716804d434e",
+          "path": "https://pool.apk.aptoide.com/appupdater/org-readera-2300-74874821-a2eac2485a79804b1aca2716804d434e-config-mdpi.apk",
+          "filesize": 165393
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 76201284,
+    "name": "Obsidian",
+    "package": "md.obsidian",
+    "uname": "obsidian-dynalist-inc",
+    "size": 19280065,
+    "icon": "https://pool.img.aptoide.com/appupdater/6014e6ecb090b36cd9be1da8d6015e96_icon.png",
+    "graphic": "https://pool.img.aptoide.com/appupdater/01dfcb20597d6f0e6269a13d74301d53_fgraphic.png",
+    "added": "2021-07-18 09:08:46",
+    "modified": "2026-08-21 17:35:36",
+    "updated": "2026-08-21 17:35:36",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 170790,
+      "name": "Dynalist Inc.",
+      "website": "https://obsidian.md/",
+      "email": "support@obsidian.md",
+      "privacy": "https://obsidian.md/privacy"
+    },
+    "store": {
+      "id": 2899481,
+      "name": "appupdater",
+      "avatar": "https://pool.img.aptoide.com/appupdater/64332bc9651ad8662141e9f5f5a2c034_ravatar.png",
+      "appearance": {
+        "theme": "default",
+        "description": "Update Apps"
+      },
+      "stats": {
+        "apps": 315758,
+        "subscribers": 116886,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "1.13.8",
+      "vercode": 367,
+      "md5sum": "687cc9c8bd58fc93765986794278dfa5",
+      "filesize": 18692928,
+      "signature": {
+        "sha1": "02:82:15:5E:10:28:1D:10:66:D4:7F:06:99:2C:31:C3:5B:EE:5B:55",
+        "owner": "CN=Android, OU=Android, O=Google Inc., L=Mountain View, ST=California, C=US"
+      },
+      "added": "2026-08-21 17:35:36",
+      "path": "https://pool.apk.aptoide.com/appupdater/md-obsidian-367-76201284-687cc9c8bd58fc93765986794278dfa5.apk",
+      "path_alt": "https://pool.apk.aptoide.com/appupdater/md-obsidian-367-76201284-687cc9c8bd58fc93765986794278dfa5.apk",
+      "hardware": {
+        "sdk": 22,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "thirdparty_validated": {
+            "date": "2026-08-21",
+            "store": "Google Play"
+          },
+          "signature_validated": {
+            "date": "2026-08-21",
+            "status": "review"
+          }
+        },
+        "added": "2026-08-21 17:35:36",
+        "modified": "2026-08-21 17:35:37"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 0
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [
+        "android.hardware.faketouch",
+        "android.hardware.location",
+        "android.hardware.microphone"
+      ],
+      "used_permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.INTERNET",
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "md.obsidian.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "obsidian",
+        "productivity"
+      ],
+      "description": "Obsidian is a powerful knowledge base that works on top of\na local folder of plain text Markdown files.\n\nIt is a second brain, for you, forever. Now available on the go for Android!\n\nFeatures include:\n- Customizable toolbar\n- Pull down quick actions\n- Graph view\n- Share to and from Obsidian\n- Community plugins\n- Themes\n- Sidebar pinning for tablet",
+      "summary": "Plain-text personal knowledge base on the go",
+      "news": "Fixed bug causing editor to accidentally switch from reading mode to edit mode while scrolling.",
+      "videos": [],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/3ab3c25b70ee97af3193525b6aa39fcb_screen.png",
+          "height": 800,
+          "width": 373
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/8c01f8ce5603a0593f5e9d8273d6bb10_screen.png",
+          "height": 800,
+          "width": 373
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/34f3e4eb013db970cf12cc46f956b357_screen.png",
+          "height": 800,
+          "width": 373
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/01f5e86d1004fc6c8fd76181a57c5f62_screen.png",
+          "height": 800,
+          "width": 373
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/65bc28024184c5ade9c600cf82a16e36_screen.png",
+          "height": 800,
+          "width": 373
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/403eb87db8be43549513b8129bae71b8_screen.png",
+          "height": 800,
+          "width": 373
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/ff8418c7250668ddf577143333dfb95d_screen.png",
+          "height": 800,
+          "width": 373
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/9caaecf64dd234ff0482addefdfc20a4_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/1104583e43c60c0dd9b7aa663e947e66_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/fc2a6a3281d4309d472f0b6b14812129_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/8bcefb624291a18b4bc7ba1e00e0972b_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/31d9ef683c534755317eebf1f0dd4ab8_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/ab8133820ae6f463f4067447185235df_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/d9706ca1730ffc6a5a01fea24af0a17f_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/0eee0379236e30cf4304e11e37667a43_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/735e43b0a6a738f4633795759e4e432f_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/2d1df246c25896b15de7d6d2eeaa4024_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/ab20bd9170b21060ec06456ba2e64a5a_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/d7cf1a0b3b370221e0a6c2e01ec6f8f8_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/253a821fc3badb2ae19b48c404f21330_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/061e72d83e6d24e8b1c76654b15d1256_screen.png",
+          "height": 800,
+          "width": 1280
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://obsidian-dynalist-inc.en.aptoide.com/?store_name=appupdater&app_id=76201284",
+      "m": "https://obsidian-dynalist-inc.en.aptoide.com/?store_name=appupdater&app_id=76201284"
+    },
+    "stats": {
+      "rating": {
+        "avg": 5,
+        "total": 1,
+        "votes": [
+          {
+            "value": 5,
+            "count": 1
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "prating": {
+        "avg": 5,
+        "total": 1,
+        "votes": [
+          {
+            "value": 5,
+            "count": 1
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "downloads": 5000000,
+      "pdownloads": 5000000
+    },
+    "aab": {
+      "required_split_types": [
+        "ABI",
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.x86_64",
+          "type": "ABI",
+          "md5sum": "9995c92437b88fb56af1d88814f3f86d",
+          "path": "https://pool.apk.aptoide.com/appupdater/md-obsidian-367-76201284-9995c92437b88fb56af1d88814f3f86d-config-x86-64.apk",
+          "filesize": 442954
+        },
+        {
+          "name": "config.mdpi",
+          "type": "DENSITY",
+          "md5sum": "e5f64ca23917ab57d1f32dfa5a905a55",
+          "path": "https://pool.apk.aptoide.com/appupdater/md-obsidian-367-76201284-e5f64ca23917ab57d1f32dfa5a905a55-config-mdpi.apk",
+          "filesize": 53662
+        },
+        {
+          "name": "config.en",
+          "type": "LOCALE",
+          "md5sum": "fd22c826bbc9ab95332348b6356be496",
+          "path": "https://pool.apk.aptoide.com/appupdater/md-obsidian-367-76201284-fd22c826bbc9ab95332348b6356be496-config-en.apk",
+          "filesize": 90521
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 76283074,
+    "name": "GitHub",
+    "package": "com.github.android",
+    "uname": "github-github",
+    "size": 40702408,
+    "icon": "https://pool.img.aptoide.com/appupdater/404a5db8eec868e5f29b9d20b0395094_icon.png",
+    "graphic": "https://pool.img.aptoide.com/appupdater/d24ec4f6da2f90e4f24f16f1450366e9_fgraphic.png",
+    "added": "2021-05-13 12:00:11",
+    "modified": "2026-08-27 09:51:46",
+    "updated": "2026-09-17 15:41:27",
+    "main_package": null,
+    "age": {
+      "name": "pre-teen",
+      "title": "Low Maturity",
+      "pegi": "PEGI-12",
+      "rating": 12
+    },
+    "developer": {
+      "id": 373256,
+      "name": "GitHub",
+      "website": null,
+      "email": "mobilefeedback+android@github.com",
+      "privacy": "https://help.github.com/en/articles/github-privacy-statement"
+    },
+    "store": {
+      "id": 2899481,
+      "name": "appupdater",
+      "avatar": "https://pool.img.aptoide.com/appupdater/64332bc9651ad8662141e9f5f5a2c034_ravatar.png",
+      "appearance": {
+        "theme": "default",
+        "description": "Update Apps"
+      },
+      "stats": {
+        "apps": 315758,
+        "subscribers": 116886,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "1.272.0",
+      "vercode": 10340,
+      "md5sum": "e4d6f9c2a3b4b00f4a70538517806c64",
+      "filesize": 40512187,
+      "signature": {
+        "sha1": "75:AC:71:3F:EE:04:AA:0A:6D:83:25:AF:61:10:E3:7C:47:DE:76:98",
+        "owner": "CN=Android, OU=Android, O=Google Inc., L=Mountain View, ST=California, C=US"
+      },
+      "added": "2026-08-27 09:51:46",
+      "path": "https://pool.apk.aptoide.com/appupdater/com-github-android-10340-76283074-e4d6f9c2a3b4b00f4a70538517806c64.apk",
+      "path_alt": "https://pool.apk.aptoide.com/appupdater/com-github-android-10340-76283074-e4d6f9c2a3b4b00f4a70538517806c64.apk",
+      "hardware": {
+        "sdk": 29,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "thirdparty_validated": {
+            "date": "2026-08-27",
+            "store": "Google Play"
+          },
+          "signature_validated": {
+            "date": "2026-08-27",
+            "status": "passed",
+            "signature_from": "market"
+          }
+        },
+        "added": "2026-08-27 09:51:46",
+        "modified": "2026-08-27 09:51:46"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 0
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [
+        "android.hardware.faketouch"
+      ],
+      "used_permissions": [
+        "android.permission.ACCESS_ADSERVICES_AD_ID",
+        "android.permission.ACCESS_ADSERVICES_ATTRIBUTION",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.INTERNET",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.POST_PROMOTED_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.WAKE_LOCK",
+        "com.android.vending.BILLING",
+        "com.github.android.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE",
+        "com.google.android.gms.permission.AD_ID"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "github",
+        "android",
+        "productivity"
+      ],
+      "description": "There\u2019s a lot you can do on GitHub that doesn\u2019t require a complex development environment \u2013 like sharing feedback on a design discussion, or reviewing a few lines of code. GitHub for Android lets you move work forward wherever you are. Stay in touch with your team, triage issues, and even merge, right from the app. We\u2019re making these tasks easy for you to perform, no matter where you work, with a beautifully native experience.\n\nYou can use GitHub for Android to:\n\n\u2022 Browse your latest notifications\n\u2022 Read, react, and reply to Issues and Pull Requests\n\u2022 Review and merge Pull Requests\n\u2022 Organize Issues with labels, assignees, projects, and more\n\u2022 Browse your files and code",
+      "summary": "Triage notifications, review, comment, and merge, right from your mobile device",
+      "news": "- You can now see when a pull request is part of a stack, check its current status, and merge stacked pull requests from wherever you are.\n\n- You can now archive your Copilot agent sessions.",
+      "videos": [
+        {
+          "type": "YOUTUBE",
+          "url": "https://www.youtube.com/embed/ObPdcm6jWoQ",
+          "thumbnail": "https://i3.ytimg.com/vi/ObPdcm6jWoQ/hqdefault.jpg"
+        }
+      ],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/cd8c7cf20b4c933ea8ff7285ed9cf175_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/dd49a7d0a867d1fd40ecedea9ff532f9_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/6e5f6c0625edd824ecb436e33610e6ad_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/7169cedf29854662f0c8a7342e014288_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/d5190c4c0b0e40a20d2407bb41d37155_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/ec8f500ee44f8f6078bf4decfa0cd160_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/92f98664b9ee193015f1346287585247_screen.png",
+          "height": 800,
+          "width": 360
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/243575d29ed32463066e8935333f7745_screen.png",
+          "height": 800,
+          "width": 360
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://github-github.en.aptoide.com/?store_name=appupdater&app_id=76283074",
+      "m": "https://github-github.en.aptoide.com/?store_name=appupdater&app_id=76283074"
+    },
+    "stats": {
+      "rating": {
+        "avg": 0,
+        "total": 0,
+        "votes": [
+          {
+            "value": 5,
+            "count": 0
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "prating": {
+        "avg": 4.74,
+        "total": 19,
+        "votes": [
+          {
+            "value": 5,
+            "count": 17
+          },
+          {
+            "value": 4,
+            "count": 1
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 1
+          }
+        ]
+      },
+      "downloads": 10000000,
+      "pdownloads": 10000000
+    },
+    "aab": {
+      "required_split_types": [
+        "ABI",
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.armeabi_v7a",
+          "type": "ABI",
+          "md5sum": "07b905cf1e854df132aedf386cfb8e53",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-github-android-10340-76283074-07b905cf1e854df132aedf386cfb8e53-config-armeabi-v7a.apk",
+          "filesize": 98636
+        },
+        {
+          "name": "config.xxhdpi",
+          "type": "DENSITY",
+          "md5sum": "95a66ca77bbac5a7231678a7628e495a",
+          "path": "https://pool.apk.aptoide.com/appupdater/com-github-android-10340-76283074-95a66ca77bbac5a7231678a7628e495a-config-xxhdpi.apk",
+          "filesize": 91585
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
+  },
+  {
+    "id": 76770581,
+    "name": "My Expenses",
+    "package": "org.totschnig.myexpenses",
+    "uname": "my-expenses",
+    "size": 25481296,
+    "icon": "https://pool.img.aptoide.com/appupdater/f7a7ce286b42b24e6407cb3d154df6ae_icon.png",
+    "graphic": "https://pool.img.aptoide.com/appupdater/7627800b65513427f3d106ebe170dd18_fgraphic.png",
+    "added": "2021-03-17 01:29:48",
+    "modified": "2026-09-24 02:29:36",
+    "updated": "2026-09-24 02:29:36",
+    "main_package": null,
+    "age": {
+      "name": "all",
+      "title": "Everyone",
+      "pegi": "PEGI-3",
+      "rating": 0
+    },
+    "developer": {
+      "id": 3643,
+      "name": "Michael Totschnig",
+      "website": "http://www.myexpenses.mobi",
+      "email": "support@myexpenses.mobi",
+      "privacy": "http://www.myexpenses.mobi/#privacy"
+    },
+    "store": {
+      "id": 2899481,
+      "name": "appupdater",
+      "avatar": "https://pool.img.aptoide.com/appupdater/64332bc9651ad8662141e9f5f5a2c034_ravatar.png",
+      "appearance": {
+        "theme": "default",
+        "description": "Update Apps"
+      },
+      "stats": {
+        "apps": 315758,
+        "subscribers": 116886,
+        "downloads": 0
+      }
+    },
+    "file": {
+      "vername": "4.1.2",
+      "vercode": 883,
+      "md5sum": "11a68cf0d40d176c835829be838970a8",
+      "filesize": 25285569,
+      "signature": {
+        "sha1": "8A:5A:AB:47:86:29:AB:D9:0B:EB:AC:A5:6B:B5:95:20:56:4E:ED:A6",
+        "owner": "CN=Michael Totschnig, L=Vienna, C=AT"
+      },
+      "added": "2026-09-24 02:29:36",
+      "path": "https://pool.apk.aptoide.com/appupdater/org-totschnig-myexpenses-883-76770581-11a68cf0d40d176c835829be838970a8.apk",
+      "path_alt": "https://pool.apk.aptoide.com/appupdater/org-totschnig-myexpenses-883-76770581-11a68cf0d40d176c835829be838970a8.apk",
+      "hardware": {
+        "sdk": 32,
+        "screen": "SMALL",
+        "gles": 0,
+        "cpus": [],
+        "densities": [],
+        "dependencies": []
+      },
+      "malware": {
+        "rank": "TRUSTED",
+        "reason": {
+          "thirdparty_validated": {
+            "date": "2026-09-24",
+            "store": "Google Play"
+          },
+          "signature_validated": {
+            "date": "2026-09-24",
+            "status": "unknown",
+            "signature_from": "market"
+          }
+        },
+        "added": "2026-09-24 02:29:36",
+        "modified": "2026-09-24 02:29:36"
+      },
+      "flags": {
+        "votes": [
+          {
+            "type": "FAKE",
+            "count": 0
+          },
+          {
+            "type": "FREEZE",
+            "count": 0
+          },
+          {
+            "type": "GOOD",
+            "count": 0
+          },
+          {
+            "type": "LICENSE",
+            "count": 0
+          },
+          {
+            "type": "VIRUS",
+            "count": 0
+          }
+        ]
+      },
+      "used_features": [
+        "android.hardware.faketouch"
+      ],
+      "used_permissions": [
+        "android.permission.ACCESS_ADSERVICES_AD_ID",
+        "android.permission.ACCESS_ADSERVICES_ATTRIBUTION",
+        "android.permission.ACCESS_ADSERVICES_TOPICS",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
+        "android.permission.INTERNET",
+        "android.permission.NFC",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_CALENDAR",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_SYNC_SETTINGS",
+        "android.permission.READ_SYNC_STATS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.WRITE_SYNC_SETTINGS",
+        "com.android.launcher.permission.INSTALL_SHORTCUT",
+        "com.android.vending.BILLING",
+        "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE",
+        "com.google.android.gms.permission.AD_ID",
+        "org.totschnig.myexpenses.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        "org.totschnig.myexpenses.UNLOCK_PREMIUM"
+      ],
+      "tags": []
+    },
+    "media": {
+      "keywords": [
+        "totschnig",
+        "myexpenses",
+        "finance",
+        "expenses"
+      ],
+      "description": "My Expenses\n is your ultimate tool for effortless expense tracking and financial management, right at your fingertips!\n\nKey Features:\n\n    \u2022 Effortless Expense Tracking: Keep tabs on your expenses and income seamlessly, whether you're on your smartphone or tablet.\n    \u2022 Flexible Account Management: Effortlessly manage multiple accounts, including transfers between different currencies.\n    \u2022 Streamlined Financial Planning: Easily set up plans for recurring transactions.\n    \u2022 Seamless Data Management: Export and import data with ease using QIF and CSV formats.\n    \u2022 Enhanced Security: Protect your data with password or device lock screen security.\n    \u2022 Customizable Experience: Tailor the app to your preferences with customizable themes and font sizes.\n    \u2022 Bank Statement Reconciliation: Easily compare transaction status with your bank statements for accurate financial tracking.\n    \u2022 Quick Data Entry: Enjoy convenient access with homescreen widgets and shortcuts.\n    \u2022 Powerful Data Analysis: Filter your data based on various criteria and visualize distribution and historical trends with dynamic graphs.\n\nUnlock Premium Features:\n\n    \u2022 \nContrib Key\n: Say goodbye to ads and unlock unlimited accounts, recurring transaction plans, and more.\n    \u2022 \nExtended Key\n: Enjoy cloud synchronization, automated backups, and sophisticated CSV imports.\n    \u2022 \nProfessional Key\n: Take your financial management to the next level with budgeting tools, receipt scanning, and email support.\n\nMy Expenses\n requires the following \npermissions\n:\n\n    \u2022 \nCalendar\n: Plans for future and recurrent transactions are stored either in a special local calendar or in any other calendar you assign.\n    \u2022 \nInternet\n: Anonymous usage tracking, Crash reports, Cloud synchronization.\n    \u2022 \nAccounts\n: Synchronization across devices via cloud services.\n\nTake control of your finances like never before using \nMy Expenses\n!",
+      "summary": "Easy to use personal finance manager: rich functionality and Open Source.",
+      "news": "\u2022 Portfolio tracking : Search (Asset, Amount, Notes, Date)\n\n\u2022 FinTS: Credit card transactions",
+      "videos": [
+        {
+          "type": "YOUTUBE",
+          "url": "https://www.youtube.com/embed/bLjGy4g23CU",
+          "thumbnail": "https://i3.ytimg.com/vi/bLjGy4g23CU/hqdefault.jpg"
+        }
+      ],
+      "screenshots": [
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/0a9dfff68236959a477b52accf780b10_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/4dba156d2615870e6d02e833b12f016b_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/85febadadc429c3f50269ad522112663_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/c362c9c28f8c3d44f354e5caff8a3002_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/b1ba5eb6beedd9e39c5364e6c7f0fb28_screen.png",
+          "height": 720,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/98dd529e1cfd9b7704b4c3fe79129fbc_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/4ca7cb3a966c66aa97157b02d73ee6f9_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/7d573e5de4fc8f40f82167e99cb8df37_screen.png",
+          "height": 800,
+          "width": 450
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/a2990e01b86173a06e1ddd3b61ad4726_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/45bb2d5772535ef629504703382825ba_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/fb8c4f33f7da867104e7fe9f204aaa33_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/caee29718e55911f34001bab6e7672b7_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/e061069ebf9ffb5ac801929cee3b7ede_screen.png",
+          "height": 800,
+          "width": 1280
+        },
+        {
+          "url": "https://pool.img.aptoide.com/appupdater/7cce2e5ca5b2ca2d2f323ee7599772d1_screen.png",
+          "height": 800,
+          "width": 1280
+        }
+      ]
+    },
+    "urls": {
+      "w": "https://my-expenses.en.aptoide.com/?store_name=appupdater&app_id=76770581",
+      "m": "https://my-expenses.en.aptoide.com/?store_name=appupdater&app_id=76770581"
+    },
+    "stats": {
+      "rating": {
+        "avg": 5,
+        "total": 1,
+        "votes": [
+          {
+            "value": 5,
+            "count": 1
+          },
+          {
+            "value": 4,
+            "count": 0
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "prating": {
+        "avg": 4.75,
+        "total": 4,
+        "votes": [
+          {
+            "value": 5,
+            "count": 3
+          },
+          {
+            "value": 4,
+            "count": 1
+          },
+          {
+            "value": 3,
+            "count": 0
+          },
+          {
+            "value": 2,
+            "count": 0
+          },
+          {
+            "value": 1,
+            "count": 0
+          }
+        ]
+      },
+      "downloads": 1000000,
+      "pdownloads": 1000000
+    },
+    "aab": {
+      "required_split_types": [
+        "ABI",
+        "DENSITY"
+      ],
+      "splits": [
+        {
+          "name": "config.x86_64",
+          "type": "ABI",
+          "md5sum": "919f61ce6b04558378add64fbb6b7751",
+          "path": "https://pool.apk.aptoide.com/appupdater/org-totschnig-myexpenses-883-76770581-919f61ce6b04558378add64fbb6b7751-config-x86-64.apk",
+          "filesize": 53570
+        },
+        {
+          "name": "config.mdpi",
+          "type": "DENSITY",
+          "md5sum": "5284887ff6a09b3223383cc9e4b977b8",
+          "path": "https://pool.apk.aptoide.com/appupdater/org-totschnig-myexpenses-883-76770581-5284887ff6a09b3223383cc9e4b977b8-config-mdpi.apk",
+          "filesize": 88699
+        },
+        {
+          "name": "config.en",
+          "type": "LOCALE",
+          "md5sum": "c44b1e18ede3140ff6fae85587b344bf",
+          "path": "https://pool.apk.aptoide.com/appupdater/org-totschnig-myexpenses-883-76770581-c44b1e18ede3140ff6fae85587b344bf-config-en.apk",
+          "filesize": 53458
+        }
+      ]
+    },
+    "obb": null,
+    "pay": null,
+    "appcoins": {
+      "advertising": false,
+      "billing": false,
+      "flags": []
+    },
+    "soft_locks": [],
+    "geo": null
   }
 ]

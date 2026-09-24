@@ -107,6 +107,47 @@ function sdkToAndroidVersion(sdk: number | undefined): string {
 }
 
 /**
+ * Package name → D-Store category mapping — leaf `5.h.ii.zo` (cont.),
+ * operator priority override. Aptoide's raw response carries no
+ * category field at all (confirmed against every `app/get` response in
+ * `aptoide-batch.txt`, not assumed), so this can't be derived from the
+ * API the way `mapContentRating`/`sdkToAndroidVersion` derive from real
+ * fields above. Instead it's transcribed directly from the operator's
+ * own curl batch: each fetch in `aptoide-batch.txt` is labelled
+ * `=== <category> :: app/get/package_name=<pkg>/aab=1`, one real,
+ * hand-picked package per D-Store category (`lib/mock-data.ts`'s
+ * `categories`). This is a real editorial mapping, not guessed or
+ * evenly spread for variety — same honesty posture as
+ * `available_regions`/`content_rating` elsewhere in this file.
+ *
+ * `com.mojang.minecraftpe` (intended for "games") returned a genuine
+ * Aptoide 404 (`APP-1: Application 'package:com.mojang.minecraftpe'
+ * not found`) — not ingested. "games" has no third-party entry until a
+ * real, resolvable package is chosen; left empty rather than backfilled
+ * with an invented one, matching this codebase's existing
+ * zero-apps-is-honest precedent (see `apps`'s header comment in
+ * `mock-data.ts`).
+ */
+const CATEGORY_BY_PACKAGE: Record<string, string> = {
+  "com.termux": "system",
+  "org.videolan.vlc": "multimedia",
+  "org.mozilla.firefox": "internet",
+  "com.whatsapp": "internet", // 5.h.ii.zi's original probe seed — Firefox already anchors "internet"; a messaging app fits the same shelf, not a forced fit
+  "com.waze": "navigation",
+  "org.khanacademy.android": "science-education",
+  "com.gau.go.launcherex": "theming",
+  "com.better.alarm": "time",
+  "org.readera": "reading",
+  "md.obsidian": "writing",
+  "com.github.android": "development",
+  "org.totschnig.myexpenses": "finance",
+};
+
+function categoryForPackage(packageName: string): string {
+  return CATEGORY_BY_PACKAGE[packageName] ?? "internet"; // unmapped package (not yet in the operator's curated batch) — same fallback the old hardcoded placeholder used
+}
+
+/**
  * Aptoide's `age.title` is already an English label ("Everyone", "Teen",
  * etc.) for most entries, so this maps by PEGI rating number where
  * `title` is missing or doesn't match our closed union, rather than
@@ -183,7 +224,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     version: raw.file.vername,
     license: "Not provided",
     is_published: true,
-    category: "internet", // placeholder — real category mapping is 5.h.ii.zo's ingestion-job scope (Aptoide's category taxonomy needs its own mapping table)
+    category: categoryForPackage(raw.package), // real mapping — see CATEGORY_BY_PACKAGE above
     created_at: raw.added || nowIso,
     updated_at: raw.modified || nowIso,
 
