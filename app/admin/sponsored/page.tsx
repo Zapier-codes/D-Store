@@ -1,5 +1,6 @@
 import { getSponsoredSlots } from "@/lib/catalog";
 import SponsoredSlotsPanel from "./SponsoredSlotsPanel";
+import { requireAdminPage } from "@/lib/admin-auth";
 import styles from "./page.module.css";
 
 /**
@@ -16,6 +17,7 @@ import styles from "./page.module.css";
  * reads whichever slot `getActiveSponsoredSlot` says is active today.
  */
 export default async function AdminSponsoredPage() {
+  await requireAdminPage(); // 3.c.iv.zi — defence in depth behind middleware.ts
   const slots = await getSponsoredSlots();
 
   return (

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSponsoredSlots, createSponsoredSlot } from "@/lib/catalog";
+import { guardAdminRequest } from "@/lib/admin-auth";
 
 /**
  * Sponsored-slot scheduling endpoint — leaf `3.c.i.zo`. Backs
@@ -25,12 +26,18 @@ import { getSponsoredSlots, createSponsoredSlot } from "@/lib/catalog";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export async function GET() {
+export async function GET(request: Request) {
+  const denied = await guardAdminRequest(request);
+  if (denied) return denied;
+
   const slots = await getSponsoredSlots();
   return NextResponse.json({ slots });
 }
 
 export async function POST(request: Request) {
+  const denied = await guardAdminRequest(request);
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();

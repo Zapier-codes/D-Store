@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { setAppFeaturing } from "@/lib/catalog";
+import { guardAdminRequest } from "@/lib/admin-auth";
 
 /**
  * Admin featuring-toggle endpoint — leaf `3.c.i.zi` (Admin/Editorial
@@ -30,6 +31,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const denied = await guardAdminRequest(request);
+  if (denied) return denied;
+
   const { slug } = await params;
 
   let body: unknown;

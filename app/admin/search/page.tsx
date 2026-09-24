@@ -1,4 +1,5 @@
 import { getTopSearches } from "@/lib/catalog";
+import { requireAdminPage } from "@/lib/admin-auth";
 import styles from "./page.module.css";
 
 /**
@@ -21,6 +22,7 @@ import styles from "./page.module.css";
  * ranked by search count instead of view count.
  */
 export default async function AdminSearchPage() {
+  await requireAdminPage(); // 3.c.iv.zi — defence in depth behind middleware.ts
   const { totalSearches, distinctQueryCount, topQueries } = await getTopSearches();
   const maxCount = Math.max(1, ...topQueries.map((row) => row.count));
   const numberFormat = new Intl.NumberFormat("en-US");

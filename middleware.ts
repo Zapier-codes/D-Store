@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { lookupRegion } from "@/lib/ipapi";
 import { REGION_COOKIE_NAME, encodeRegion } from "@/lib/region";
+import { checkAdminAuth, adminDeniedResponse, isAdminPath } from "@/lib/admin-auth";
 
 /**
  * Region-context provider — leaf 0.h.i.zo, the "calls the client once
@@ -29,6 +30,19 @@ import { REGION_COOKIE_NAME, encodeRegion } from "@/lib/region";
  * request that's ~2.5s slower on a cold cache, not a hung request.
  */
 export async function middleware(request: NextRequest) {
+  // 3.c.iv.zi — admin routes are authenticated before anything else runs
+  // and skip the region lookup entirely (nothing there is region-aware,
+  // and an unauthenticated request must not cost an ipapi call). See
+  // lib/admin-auth.ts for the scheme and why handlers/pages re-check.
+  if (isAdminPath(request.nextUrl.pathname)) {
+    const check = await checkAdminAuth(request.headers, request.method);
+    if (!check.ok) return adminDeniedResponse(check);
+    const response = NextResponse.next();
+    response.headers.set("Cache-Control", "no-store");
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  }
+
   if (request.cookies.has(REGION_COOKIE_NAME)) {
     return NextResponse.next();
   }

@@ -1,5 +1,6 @@
 import { getApps } from "@/lib/catalog";
 import FeaturingTable from "./FeaturingTable";
+import { requireAdminPage } from "@/lib/admin-auth";
 import styles from "./page.module.css";
 
 /**
@@ -18,6 +19,7 @@ import styles from "./page.module.css";
  * client-side.
  */
 export default async function AdminFeaturingPage() {
+  await requireAdminPage(); // 3.c.iv.zi — defence in depth behind middleware.ts
   const apps = await getApps();
 
   return (

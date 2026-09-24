@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateSponsoredSlot, deleteSponsoredSlot } from "@/lib/catalog";
+import { guardAdminRequest } from "@/lib/admin-auth";
 
 /**
  * Single-slot edit/remove endpoint — leaf `3.c.i.zo`, the `[id]`
@@ -19,6 +20,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await guardAdminRequest(request);
+  if (denied) return denied;
+
   const { id } = await params;
 
   let body: unknown;
@@ -81,9 +85,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await guardAdminRequest(request);
+  if (denied) return denied;
+
   const { id } = await params;
   const deleted = await deleteSponsoredSlot(id);
   if (!deleted) {

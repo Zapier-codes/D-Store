@@ -1,4 +1,5 @@
 import { getTrafficSummary } from "@/lib/catalog";
+import { requireAdminPage } from "@/lib/admin-auth";
 import styles from "./page.module.css";
 
 /**
@@ -24,6 +25,7 @@ import styles from "./page.module.css";
  * axes/scales library required for a single-series bar chart.
  */
 export default async function AdminTrafficPage() {
+  await requireAdminPage(); // 3.c.iv.zi — defence in depth behind middleware.ts
   const { totalInstalls, totalViews, appCount, perApp } = await getTrafficSummary();
   const maxViewCount = Math.max(1, ...perApp.map((row) => row.view_count));
   const numberFormat = new Intl.NumberFormat("en-US");
