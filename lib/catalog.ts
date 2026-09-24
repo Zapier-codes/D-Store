@@ -16,9 +16,9 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, developers, reviews, sponsoredSlots, searchQueries, appCountByCategory, type App, type Category, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
+import { apps, categories, developers, reviews, sponsoredSlots, searchQueries, appCountByCategory, type App, type AppOrigin, type Category, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
 
-export type { App, Category, Developer, SponsoredSlot, SearchQueryLog };
+export type { App, AppOrigin, Category, Developer, SponsoredSlot, SearchQueryLog };
 
 const SIMULATED_LATENCY_MS = 200;
 
@@ -51,6 +51,12 @@ export interface GetAppsOptions {
   maxSizeMb?: number;
   /** ISO 3166-1 alpha-2 code, e.g. from `lib/region.ts`'s `getRegion().country_code`. See `filterAppsByRegion` below. */
   region?: string;
+  /**
+   * Restrict to one catalog source — leaf `5.h.i.zi`. The seam
+   * `5.h.i.zo` (home page: first-party first) and `5.h.iii` (third-party
+   * labelling) build on; nothing calls it yet.
+   */
+  origin?: AppOrigin;
 }
 
 /**
@@ -93,6 +99,9 @@ export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
   }
   if (options.region) {
     result = filterAppsByRegion(result, options.region);
+  }
+  if (options.origin) {
+    result = result.filter((app) => app.origin === options.origin);
   }
   if (options.limit) {
     result = result.slice(0, options.limit);

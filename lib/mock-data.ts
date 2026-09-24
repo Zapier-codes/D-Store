@@ -223,7 +223,30 @@ export interface App {
    */
   contains_ads: boolean;
   has_in_app_purchases: boolean;
+
+  /**
+   * Catalog source — leaf `5.h.i.zi`. Required, like every field added
+   * since `content_rating`: TypeScript's required-field check is the
+   * integrity check that every literal below was updated.
+   */
+  origin: AppOrigin;
 }
+
+/**
+ * Which catalog source an app came from — leaf `5.h.i.zi` (Catalog Sources,
+ * first-party-first; see HANDOVER.md "Resolved — catalog sources").
+ *
+ * - `"zealot"`: first-party. From the Console's signed catalog index
+ *   (Zealot Tasks 27/29): verified, org-signed, downloaded from Zealot's
+ *   stable route. Always shown first on the home page (`5.h.i.zo`).
+ * - `"aptoide"`: third-party. Breadth of catalog via the Aptoide MCP
+ *   (`5.h.ii`): labelled as third-party, downloaded from Aptoide, never
+ *   carrying Zealot-derived claims (`5.h.iii`).
+ *
+ * A closed union on purpose: adding a third source is a deliberate
+ * change every ordering/labelling call site has to see, not a free string.
+ */
+export type AppOrigin = "zealot" | "aptoide";
 
 /** Play Store's actual content/age rating tiers. Every app in this dummy catalog is `"Everyone"` — see the `content_rating` field comment on `App` for why. */
 export type ContentRating = "Everyone" | "Everyone 10+" | "Teen" | "Mature 17+" | "Adults only 18+";
@@ -304,6 +327,14 @@ export const categories: Category[] = [
  * screenshot are left with zero entries here rather than padded with
  * invented apps — `appCount` below reflects that honestly.
  */
+// Dummy-data `origin` values (leaf 5.h.i.zi). Assigned by what each entry
+// would honestly be, not spread evenly for variety: the thirteen seed apps
+// are real third-party FOSS apps (the Fossdroid catalog), so they are
+// `"aptoide"` — third-party, arriving through the Aptoide MCP once
+// `5.h.ii` exists. `ledger-vault` and `quiet-verse` are the two invented
+// entries `0.i.i.zo` added; they stand in for Zealot's own first-party
+// apps, so they are `"zealot"`. That gives the home page (`5.h.i.zo`) two
+// first-party apps to put first and thirteen to rank after them.
 export const apps: App[] = [
   {
     id: "1",
@@ -362,6 +393,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "aptoide",
   },
   {
     id: "2",
@@ -412,6 +444,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "aptoide",
   },
   {
     id: "3",
@@ -462,6 +495,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: ["US", "GB", "IN"],
+    origin: "aptoide",
   },
   {
     id: "4",
@@ -512,6 +546,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "aptoide",
   },
   {
     id: "5",
@@ -562,6 +597,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: ["US", "GB", "CA", "AU"],
+    origin: "aptoide",
   },
   {
     id: "6",
@@ -612,6 +648,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "aptoide",
   },
   {
     id: "7",
@@ -662,6 +699,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: ["US", "DE", "FR", "JP"],
+    origin: "aptoide",
   },
   {
     id: "8",
@@ -712,6 +750,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "aptoide",
   },
   {
     id: "9",
@@ -762,6 +801,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "aptoide",
   },
   {
     id: "10",
@@ -812,6 +852,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: ["US", "GB", "DE"],
+    origin: "aptoide",
   },
   {
     id: "11",
@@ -862,6 +903,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "aptoide",
   },
   {
     id: "12",
@@ -912,6 +954,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "aptoide",
   },
   {
     id: "13",
@@ -962,6 +1005,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: ["US", "CA"],
+    origin: "aptoide",
   },
   // The two entries below are new — leaf 0.i.i.zo. Unlike everything
   // above (seeded from the legacy Doctrine entity / screenshots per the
@@ -1020,6 +1064,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "zealot",
   },
   {
     id: "15",
@@ -1071,6 +1116,7 @@ export const apps: App[] = [
     contains_ads: false,
     has_in_app_purchases: false,
     available_regions: [...ALL_REGIONS],
+    origin: "zealot",
   },
 ];
 
