@@ -16,13 +16,18 @@ import styles from "./PermissionsDisclosure.module.css";
  */
 export default function PermissionsDisclosure({
   permissions,
+  notProvided = false,
 }: {
   permissions: string[];
+  /** 5.h.iii.zo — the source didn't say; an empty list here would falsely read as "requests none". */
+  notProvided?: boolean;
 }) {
   return (
     <div className={styles.wrapper}>
       <span className={styles.label}>Permissions this app requests</span>
-      {permissions.length > 0 ? (
+      {notProvided ? (
+        <p className={styles.empty}>Not provided</p>
+      ) : permissions.length > 0 ? (
         <ul className={styles.list}>
           {permissions.map((permission) => (
             <li key={permission} className={styles.item}>

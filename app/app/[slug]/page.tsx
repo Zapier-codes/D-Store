@@ -23,7 +23,7 @@ import AppStructuredData from "@/components/AppStructuredData";
 import ViewPing from "@/components/ViewPing";
 import ThirdPartyDownloadButton from "@/components/ThirdPartyDownloadButton";
 import ThirdPartyNotice, { ThirdPartyBadge } from "@/components/ThirdPartyNotice";
-import { isThirdParty, thirdPartyLabel, sourceName } from "@/lib/trust";
+import { isThirdParty, thirdPartyLabel, sourceName, isNotProvided } from "@/lib/trust";
 import styles from "./page.module.css";
 
 /**
@@ -148,7 +148,9 @@ export default async function AppDetailPage({
                 <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
                 <span className={styles.statMuted}> ({app.rating_count.toLocaleString()})</span>
               </span>
-              <span className={styles.statMuted}>{app.content_rating}</span>
+              <span className={styles.statMuted}>
+                {isNotProvided(app, "content_rating") ? "Rating not provided" : app.content_rating}
+              </span>
               <span className={styles.statMuted}>{app.install_count.toLocaleString()}+ installs</span>
               {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
               {originLabel && <ThirdPartyBadge label={originLabel} />}
@@ -170,12 +172,14 @@ export default async function AppDetailPage({
                 />
               )}
               <span className={styles.installMeta}>
-                {app.size_mb.toFixed(1)} MB &middot; v{app.version} &middot; Android {app.min_android_version}+
+                {app.size_mb.toFixed(1)} MB &middot; v{app.version}
+                {!isNotProvided(app, "min_android_version") && <> &middot; Android {app.min_android_version}+</>}
               </span>
             </div>
             <MonetizationDisclosure
               containsAds={app.contains_ads}
               hasInAppPurchases={app.has_in_app_purchases}
+              notProvided={isNotProvided(app, "monetization")}
             />
             {thirdParty && <ThirdPartyNotice sourceName={sourceName(app)} />}
           </div>
@@ -231,7 +235,7 @@ export default async function AppDetailPage({
           <h2 id="permissions-heading" className={styles.sectionTitle}>
             Permissions
           </h2>
-          <PermissionsDisclosure permissions={app.permissions} />
+          <PermissionsDisclosure permissions={app.permissions} notProvided={isNotProvided(app, "permissions")} />
         </section>
 
         <section aria-labelledby="data-safety-heading">

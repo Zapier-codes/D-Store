@@ -27,10 +27,17 @@ import styles from "./MonetizationDisclosure.module.css";
 export default function MonetizationDisclosure({
   containsAds,
   hasInAppPurchases,
+  notProvided = false,
 }: {
   containsAds: boolean;
   hasInAppPurchases: boolean;
+  /** 5.h.iii.zo — the source gave no ads/IAP data, so "renders nothing" (which reads as "none") would be a false claim. */
+  notProvided?: boolean;
 }) {
+  if (notProvided) {
+    return <p className={styles.line}>Ads &amp; in-app purchases: Not provided</p>;
+  }
+
   if (!containsAds && !hasInAppPurchases) {
     return null;
   }

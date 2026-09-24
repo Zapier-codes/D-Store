@@ -28,7 +28,7 @@
  * thing that would need to change if the answer is "MCP, not raw API."
  */
 
-import type { App, AppOrigin, ContentRating, DataSafetyInfo } from "../mock-data";
+import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
 
@@ -50,6 +50,8 @@ interface AptoideFile {
   /** Aptoide's own APK delivery URL (`pool.apk.aptoide.com/...`). `path_alt` is the same in every ingested response. */
   path?: string;
   path_alt?: string;
+  /** Full Android permission names, e.g. "android.permission.INTERNET". Present in all 12 ingested responses. */
+  used_permissions?: string[];
   signature?: AptoideSignature;
   hardware?: { sdk?: number };
 }
@@ -158,8 +160,18 @@ function categoryForPackage(packageName: string): string {
  * ("Adults only 18+") only when nothing usable is present, so an
  * unrated app is never accidentally shown as safe for everyone.
  */
+const KNOWN_RATING_TITLES: ContentRating[] = ["Everyone", "Everyone 10+", "Teen", "Mature 17+", "Adults only 18+"];
+
+/** `5.h.iii.zo` — true when `mapContentRating` would have to fall back to its conservative default instead of deriving a value from the response. */
+function hasUsableAge(age: AptoideAge | undefined): boolean {
+  return (
+    (age?.title !== undefined && (KNOWN_RATING_TITLES as string[]).includes(age.title)) ||
+    age?.rating !== undefined
+  );
+}
+
 function mapContentRating(age: AptoideAge | undefined): ContentRating {
-  const knownTitles: ContentRating[] = ["Everyone", "Everyone 10+", "Teen", "Mature 17+", "Adults only 18+"];
+  const knownTitles = KNOWN_RATING_TITLES;
   if (age?.title && (knownTitles as string[]).includes(age.title)) {
     return age.title as ContentRating;
   }
@@ -204,6 +216,20 @@ function aptoideDownloadUrl(raw: AptoideRawApp): string {
   return candidate.startsWith("https://") ? candidate : "";
 }
 
+/**
+ * `5.h.iii.zo` — Aptoide's `file.used_permissions` is real permission
+ * data, so it's mapped rather than shown as "Not provided". Stripped of
+ * the `android.permission.` prefix to match the short form the rest of
+ * the catalog uses (`WRITE_EXTERNAL_STORAGE`); vendor/other-namespace
+ * permissions keep their full name. `undefined` (key absent from the
+ * response) is different from `[]` (the app genuinely requests none),
+ * which is exactly the distinction "Not provided" exists for.
+ */
+function mapPermissions(used: string[] | undefined): string[] | null {
+  if (!used) return null;
+  return [...new Set(used.map((p) => p.replace(/^android\.permission\./, "")))];
+}
+
 export function normalizeAptoideApp(raw: AptoideRawApp): App {
   const slug = raw.uname || slugify(raw.name);
   const sizeMb = Math.round((raw.file.filesize / (1024 * 1024)) * 10) / 10;
@@ -220,6 +246,18 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
   };
 
   const nowIso = new Date().toISOString();
+
+  // 5.h.iii.zo — fields this source did not provide. Each one still gets
+  // a typed placeholder below (the `App` fields are required) but the UI
+  // renders "Not provided" for it via `isNotProvided`.
+  const notProvided: NotProvidedField[] = [
+    "play_store_status", // Aptoide says nothing about Play Store listing status (many of these apps ARE on Play)
+    "monetization", // no ads / in-app-purchase flags — `appcoins.*` is Aptoide's own AppCoins billing, not "contains ads"/"IAP"
+  ];
+  const permissions = mapPermissions(raw.file.used_permissions);
+  if (permissions === null) notProvided.push("permissions");
+  if (!raw.file.hardware?.sdk) notProvided.push("min_android_version");
+  if (!hasUsableAge(raw.age)) notProvided.push("content_rating"); // the conservative "Adults only 18+" fallback stays as the stored value but is never displayed as if Aptoide had rated it
 
   const app: App = {
     id: `aptoide-${raw.id}`,
@@ -254,7 +292,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     sha256_checksum: "Not provided",
     signing_certificate_fingerprint: "Not provided",
     play_store_rejection_reason: null,
-    permissions: [],
+    permissions: permissions ?? [],
     screenshots: (raw.media.screenshots ?? []).map((s) => s.url),
     changelog: raw.media.news?.trim() || "No changelog provided.",
 
@@ -265,11 +303,12 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
 
     content_rating: mapContentRating(raw.age),
     data_safety: dataSafety,
-    contains_ads: raw.appcoins?.advertising ?? false,
-    has_in_app_purchases: raw.appcoins?.billing ?? false,
+    contains_ads: false, // placeholder only — "monetization" is in not_provided; the old `appcoins.advertising ?? false` mapping claimed "no ads" for apps like Waze
+    has_in_app_purchases: false, // same: placeholder, shown as "Not provided"
 
     origin: APTOIDE_ORIGIN,
     package_name: raw.package,
+    not_provided: notProvided,
   };
 
   return app;

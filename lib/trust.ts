@@ -1,4 +1,4 @@
-import type { App } from "./mock-data";
+import type { App, NotProvidedField } from "./mock-data";
 
 /**
  * Trust labelling for third-party catalog entries — leaf `5.h.iii.zi`
@@ -25,4 +25,13 @@ export function thirdPartyLabel(app: Pick<App, "origin">): string | null {
 /** Display name of the source that delivers the file, for button/notice copy. */
 export function sourceName(app: Pick<App, "origin">): string {
   return app.origin === "aptoide" ? "Aptoide" : "Zealot";
+}
+
+/**
+ * `5.h.iii.zo` — true when the app's source did not provide `field`, so
+ * the UI shows "Not provided" instead of the placeholder value the
+ * required `App` field carries (see `App.not_provided`).
+ */
+export function isNotProvided(app: Pick<App, "not_provided">, field: NotProvidedField): boolean {
+  return app.not_provided?.includes(field) ?? false;
 }

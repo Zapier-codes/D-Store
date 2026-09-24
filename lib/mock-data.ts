@@ -250,7 +250,31 @@ export interface App {
    * resolving their name through `Developer`.
    */
   developer_name?: string;
+  /**
+   * Fields the source genuinely did not provide — leaf `5.h.iii.zo`.
+   * Absent (the default) means everything is provided, so no first-party
+   * entry needed editing. A listed field still carries a typed
+   * placeholder value (the `App` fields below are required), but the
+   * UI must render "Not provided" for it instead of that value — the
+   * placeholder exists so filters/sorts keep working, never to be shown
+   * as a claim. Read through `isNotProvided` (`lib/trust.ts`).
+   */
+  not_provided?: NotProvidedField[];
 }
+
+/**
+ * The `App` fields a third-party source can leave unknown, each with a
+ * dedicated "Not provided" render path (`5.h.iii.zo`). Closed union so a
+ * new field is a deliberate change every render site has to see.
+ * `data_safety` is not listed: it already has its own `provided` flag
+ * (`5.h.ii.zi`).
+ */
+export type NotProvidedField =
+  | "permissions"
+  | "play_store_status"
+  | "monetization"
+  | "min_android_version"
+  | "content_rating";
 
 /**
  * Which catalog source an app came from — leaf `5.h.i.zi` (Catalog Sources,

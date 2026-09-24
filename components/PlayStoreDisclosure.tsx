@@ -1,4 +1,5 @@
 import type { App } from "@/lib/catalog";
+import { isNotProvided, sourceName } from "@/lib/trust";
 import styles from "./PlayStoreDisclosure.module.css";
 
 /**
@@ -32,7 +33,10 @@ export default function PlayStoreDisclosure({ app }: { app: App }) {
   return (
     <div className={styles.wrapper}>
       <span className={styles.label}>Why isn&rsquo;t this on Play Store?</span>
-      {reason ? (
+      {isNotProvided(app, "play_store_status") ? (
+        // 5.h.iii.zo — third-party source; the "no conflict on record" copy below is a first-party editorial claim.
+        <p className={styles.reason}>Not provided — {sourceName(app)} doesn&rsquo;t report Play Store status.</p>
+      ) : reason ? (
         <p className={styles.reason}>{reason}</p>
       ) : (
         <p className={styles.reason}>

@@ -42,7 +42,6 @@ export default function AppStructuredData({
     operatingSystem: "Android",
     softwareVersion: app.version,
     fileSize: `${app.size_mb}MB`,
-    license: app.license,
     datePublished: app.created_at,
     dateModified: app.updated_at,
     installUrl: app.apk,
@@ -53,6 +52,11 @@ export default function AppStructuredData({
       priceCurrency: "USD",
     },
   };
+
+  // 5.h.iii.zo — "Not provided" is a placeholder, not a schema.org license value.
+  if (app.license !== "Not provided") {
+    jsonLd.license = app.license;
+  }
 
   if (categoryName) {
     jsonLd.applicationCategory = categoryName;
