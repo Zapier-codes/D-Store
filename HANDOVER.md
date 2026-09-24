@@ -23,6 +23,7 @@ Every leaf carries one of:
 - `[ ]` open — not started
 - `[~]` in progress — a session started but did not finish (should be rare; a leaf is sized to finish in one session)
 - `[x]` done — completed and handed off via patch (see Section 3)
+- `[-]` superseded — no longer this repo's work because another system owns it; kept (not deleted) so the leaf ID stays addressable. Never pick one up as the next leaf.
 
 ### Architecture pivot (resequencing note)
 
@@ -50,7 +51,17 @@ Sequencing is overridden below: the next leaves pull forward from Phase 5 (`5.f`
 
 **Resolved — `3.b` counter sourcing (was flagged unresolved by `0.i.iii.zo`, decided this session):** product owner chose **app-native counters** — Supabase-backed increment endpoints hit directly by the storefront on click/view — over waiting for Telegram/Cloudflare Worker request logs (`5.b.iii.zi`) or skipping `3.b` for now. This avoids the dependency on Phase 5's distribution pipeline entirely: install/view counts are the storefront's own click/view events, not derived from where the binary happens to be served from, so they're decoupled from the Telegram-vs-GitHub storage question altogether.
 
-This still leaves the sequencing question the original note didn't reach: `5.f.i.zi` (provision Supabase) is gated behind Phases 1–4, so `3.b.i.zi` can't call a real Supabase project yet. Resolved the same way `1.a`'s real-backend schema work stayed ahead of its own infra (no live Postgres/PHP interpreter in-sandbox either): build against `lib/catalog.ts`'s existing data-fetch seam (its own header comment already commits to "when the real backend exists, this file's internals get swapped for Supabase queries and every caller keeps working unchanged") rather than importing a Supabase client directly from the new route handler. The route handler is real, callable, and exercised today against the in-memory dummy `apps` array; swapping `lib/catalog.ts`'s internals for real Supabase queries once `5.f.i` lands changes nothing at the route-handler or `InstallButton` call sites.\n\n**Storage roles (update):** the Telegram S3-compatible drive is **primary** storage for APKs/splits — it's existing infrastructure that has been continuously active, not something to newly deploy. Telegram's job is storage only: it holds the finished assets and nothing else. The entire build/sign/split/checksum/changelog/catalog-sync pipeline runs end to end inside one GitHub Actions workflow, with the assets attached to that workflow run throughout — the workflow's final step is the one that releases the finished artifacts to the Telegram drive. GitHub Releases is **not** used to store or serve app binaries. The Cloudflare edge worker fronts the Telegram drive as the sole storage backend, with no GitHub fallback. This is reflected in the revised `5.a`–`5.c`, `5.f`, and `5.g` leaves below.
+This still leaves the sequencing question the original note didn't reach: `5.f.i.zi` (provision Supabase) is gated behind Phases 1–4, so `3.b.i.zi` can't call a real Supabase project yet. Resolved the same way `1.a`'s real-backend schema work stayed ahead of its own infra (no live Postgres/PHP interpreter in-sandbox either): build against `lib/catalog.ts`'s existing data-fetch seam (its own header comment already commits to "when the real backend exists, this file's internals get swapped for Supabase queries and every caller keeps working unchanged") rather than importing a Supabase client directly from the new route handler. The route handler is real, callable, and exercised today against the in-memory dummy `apps` array; swapping `lib/catalog.ts`'s internals for real Supabase queries once `5.f.i` lands changes nothing at the route-handler or `InstallButton` call sites.\n\n**Storage roles (update) — SUPERSEDED by "Resolved — binary ownership" directly below, kept for history:** the Telegram S3-compatible drive is **primary** storage for APKs/splits — it's existing infrastructure that has been continuously active, not something to newly deploy. Telegram's job is storage only: it holds the finished assets and nothing else. The entire build/sign/split/checksum/changelog/catalog-sync pipeline runs end to end inside one GitHub Actions workflow, with the assets attached to that workflow run throughout — the workflow's final step is the one that releases the finished artifacts to the Telegram drive. GitHub Releases is **not** used to store or serve app binaries. The Cloudflare edge worker fronts the Telegram drive as the sole storage backend, with no GitHub fallback. This is reflected in the revised `5.a`–`5.c`, `5.f`, and `5.g` leaves below.
+
+**Resolved — binary ownership (product owner, this session; supersedes the `Storage roles (update)` paragraph above and `5.a` / `5.b` / `5.e` / `5.g.ii` as originally written):** the Developer Console — the separate Zealot repo (`github.com/Zapier-codes/zealot`) — **compiles, signs and stores** the organisation-signed APK. It runs the AAB → signed APK/split step in its own pipeline with its own org signing key and keeps the result in its own release storage. **D-Store is only the front-facing storefront**: it shows every app — icon, screenshots, reviews, download button and the rest of the Play-Store-parity feature set — and does not build, sign, split or store binaries.
+
+What follows from that:
+- No GitHub Actions compile/publish pipeline in this repo, and no Telegram drive or Cloudflare Worker as binary storage. The leaves that assumed them are marked `[-]` (superseded) or held; none were deleted, and none had been started.
+- The Console writes listing metadata to Supabase and hands this repo a pointer to the Zealot-held APK. The shared contract (`5.g.i.zo`) has to carry that pointer.
+- The download button links to Zealot's stable download route, never a stored signed storage URL (those expire). **This is an assumption the product owner has not confirmed** — confirm before `5.g.ii.zi`.
+- Sections 7 and 8 of `docs/D-STORE.md` were updated to match.
+
+Still open across the two repos (neither decided here): the field contract (`5.g.i.zo`, this repo's leaf), and how the Console writes to Supabase — directly, or through a small API such as a Supabase Edge Function (see the `5.f` requirement note) — including whether it can before `5.f.i.zi` provisions Supabase.
 
 **Priority override — UI revamp first:** before any further backend/infra work, the storefront UI gets rebuilt end to end on dummy data and deployed to Vercel for real-time preview. See the new **Phase 0** at the top of Section 2. It pulls forward the UI-facing leaves from Phase 1 (`1.b`–`1.d`) and Phase 2 (`2.a`–`2.c`), so those original leaves are marked superseded rather than duplicated — check them off once their Phase 0 counterpart ships. Backend/infra sequencing (starting at `5.f.i.zi`, provision Supabase) resumes once Phase 0 is complete.
 
@@ -417,27 +428,27 @@ Two distinct problems bundled in one report, both real:
 
 ### Phase 5 — Infrastructure & Distribution
 
-**5.a — CI/CD Pipeline (GitHub Actions — build/workflow only, no storage role)**
+**5.a — CI/CD Pipeline** *(Superseded by the Console/Zealot owning build, sign and storage — see "Resolved — binary ownership" in Section 0; leaves kept so IDs stay addressable.)*
 - 5.a.i — Build & tag
-  - [ ] 5.a.i.zi — APK ingest workflow, triggered on new release commit
-  - [ ] 5.a.i.zo — Semantic version tagging automation
+  - [-] 5.a.i.zi — APK ingest workflow, triggered on new release commit *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
+  - [-] 5.a.i.zo — Semantic version tagging automation *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
 - 5.a.ii — Build artifacts
-  - [ ] 5.a.ii.zi — Generate changelog per version; artifacts stay attached to the workflow run (build → sign → split → checksum → Telegram upload all happen as steps in one CI job) — no GitHub Release object is created
-  - [ ] 5.a.ii.zo — Auto-generate SHA256 checksum, handed off within the same workflow run to the Telegram upload step (5.b.ii.zi)
+  - [-] 5.a.ii.zi — Generate changelog per version; artifacts stay attached to the workflow run (build → sign → split → checksum → Telegram upload all happen as steps in one CI job) — no GitHub Release object is created *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
+  - [-] 5.a.ii.zo — Auto-generate SHA256 checksum, handed off within the same workflow run to the Telegram upload step (5.b.ii.zi) *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
 - 5.a.iii — Catalog sync
-  - [ ] 5.a.iii.zi — Final CI workflow step: once the Telegram upload step confirms success, call the D-Store catalog/DB update directly from the workflow (not a separate webhook listening on Telegram — Telegram's only job is storage, everything else runs in GitHub Actions)
-  - [ ] 5.a.iii.zo — Nightly reconciliation job (catalog vs. Telegram drive drift check)
+  - [-] 5.a.iii.zi — Final CI workflow step: once the Telegram upload step confirms success, call the D-Store catalog/DB update directly from the workflow (not a separate webhook listening on Telegram — Telegram's only job is storage, everything else runs in GitHub Actions) *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
+  - [ ] 5.a.iii.zo — Nightly reconciliation job (catalog vs. Telegram drive drift check) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
 
-**5.b — Storage & Delivery Backend**
+**5.b — Storage & Delivery Backend** *(Storage leaves superseded — Zealot stores the binaries. Edge-delivery leaves held: whether any CDN/edge fronts Zealot's download route is undecided.)*
 - 5.b.i — Primary storage (Telegram S3-compatible drive)
-  - [ ] 5.b.i.zi — Document/confirm the CI integration point for the existing Telegram S3-compatible drive — it's already deployed and has been continuously active, so this is verification and wiring, not a fresh deploy
-  - [ ] 5.b.i.zo — Retention/cleanup policy on the Telegram drive
+  - [-] 5.b.i.zi — Document/confirm the CI integration point for the existing Telegram S3-compatible drive — it's already deployed and has been continuously active, so this is verification and wiring, not a fresh deploy *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
+  - [-] 5.b.i.zo — Retention/cleanup policy on the Telegram drive *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
 - 5.b.ii — Storage handoff step (within the GitHub Actions workflow)
-  - [ ] 5.b.ii.zi — CI step: after build/sign/split in the same workflow run, push artifacts to the Telegram S3 drive — Telegram receives and stores the finished assets, it doesn't run any pipeline logic itself
-  - [ ] 5.b.ii.zo — CI step: verify the Telegram drive copy's checksum matches before the workflow reports success (retry within the same run on mismatch)
+  - [-] 5.b.ii.zi — CI step: after build/sign/split in the same workflow run, push artifacts to the Telegram S3 drive — Telegram receives and stores the finished assets, it doesn't run any pipeline logic itself *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
+  - [-] 5.b.ii.zo — CI step: verify the Telegram drive copy's checksum matches before the workflow reports success (retry within the same run on mismatch) *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
 - 5.b.iii — Edge delivery
-  - [ ] 5.b.iii.zi — Cloudflare Worker download endpoint fronting the Telegram S3 drive as sole backend
-  - [ ] 5.b.iii.zo — Retry/backoff handling against the Telegram drive (no second storage backend to fail over to, since GitHub no longer holds binaries)
+  - [ ] 5.b.iii.zi — Cloudflare Worker download endpoint fronting the Telegram S3 drive as sole backend *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
+  - [ ] 5.b.iii.zo — Retry/backoff handling against the Telegram drive (no second storage backend to fail over to, since GitHub no longer holds binaries) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
 
 **5.c — Update & Version History**
 - 5.c.i — Update mechanism
@@ -445,14 +456,14 @@ Two distinct problems bundled in one report, both real:
   - [ ] 5.c.i.zo — Web Push subscription for saved-app updates (ties to 4.d local favorites)
 - 5.c.ii — Version history
   - [ ] 5.c.ii.zi — "Version history" tab on detail page
-  - [ ] 5.c.ii.zo — Direct download links for older versions (from Telegram drive version history)
+  - [ ] 5.c.ii.zo — Direct download links for older versions (from the Zealot-held release history the contract carries, `5.g.i.zo`)
 - 5.c.iii — Rollback & advisories
   - [ ] 5.c.iii.zi — Rollback: install-older-version flow
   - [ ] 5.c.iii.zo — Deprecation/security-advisory banner for pulled/flagged versions
 
 **5.d — Security, Abuse Prevention & Governance**
 - 5.d.i — Automated scanning
-  - [ ] 5.d.i.zi — Static malware-signature scan step in CI before publish
+  - [-] 5.d.i.zi — Static malware-signature scan step in CI before publish *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
   - [ ] 5.d.i.zo — Permission-diff alert between app versions
 - 5.d.ii — Anti-abuse throttling
   - [ ] 5.d.ii.zi — Rate-limit/fingerprint-throttle install & view counters
@@ -461,16 +472,16 @@ Two distinct problems bundled in one report, both real:
   - [ ] 5.d.iii.zi — Baseline test suite (unit + e2e smoke test for browse/download/rate)
   - [ ] 5.d.iii.zo — Catalog acceptance/moderation policy + patch ledger (`CHANGELOG.md`)
 
-**5.e — Split & Compressed Delivery (OTA chunking)**
+**5.e — Split & Compressed Delivery (OTA chunking)** *(Build-time splitting is Zealot's now. Chunked transfer and the Updater's reassembly stay held until the contract says what Zealot publishes — whole APK, splits, or chunks.)*
 - 5.e.i — Build-time splitting
-  - [ ] 5.e.i.zi — Generate split APKs in CI (base + ABI/density/language config splits) so users only download what their device needs
-  - [ ] 5.e.i.zo — Compress each split beyond the APK's own compression before upload
+  - [-] 5.e.i.zi — Generate split APKs in CI (base + ABI/density/language config splits) so users only download what their device needs *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
+  - [-] 5.e.i.zo — Compress each split beyond the APK's own compression before upload *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
 - 5.e.ii — Chunked transfer
-  - [ ] 5.e.ii.zi — Chunk each split into ≤200MB segments for over-the-air delivery
-  - [ ] 5.e.ii.zo — Resumable chunk download (retry the failed chunk only, not the whole file, on a dropped connection)
+  - [ ] 5.e.ii.zi — Chunk each split into ≤200MB segments for over-the-air delivery *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
+  - [ ] 5.e.ii.zo — Resumable chunk download (retry the failed chunk only, not the whole file, on a dropped connection) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
 - 5.e.iii — Client-side reassembly & install
-  - [ ] 5.e.iii.zi — D-Store Updater: reassemble chunks and install the split-APK set (builds on 5.c.i)
-  - [ ] 5.e.iii.zo — Per-chunk and per-split checksum verification before install
+  - [ ] 5.e.iii.zi — D-Store Updater: reassemble chunks and install the split-APK set (builds on 5.c.i) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
+  - [ ] 5.e.iii.zo — Per-chunk and per-split checksum verification before install *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
 
 **5.f — Catalog Database & Platform Risk**
 
@@ -483,20 +494,20 @@ Two distinct problems bundled in one report, both real:
   - [ ] 5.f.i.zi — Provision Supabase (Postgres) as the metadata store — app info, ratings, counters, developer/agreement status — via a committed `supabase/migrations/` file per the requirement above, not dashboard-authored SQL
   - [ ] 5.f.i.zo — Migrate schema from existing Symfony/Doctrine `Application`/`Category` entities into Supabase — as additional committed migration files, same requirement
 - 5.f.ii — Platform risk documentation
-  - [ ] 5.f.ii.zi — Document GitHub Actions/API quota risk (CI/workflow usage only — GitHub no longer serves download/distribution traffic)
-  - [ ] 5.f.ii.zo — Document Telegram Bot API ToS/rate-limit risk at CDN-level traffic (now the primary distribution channel, not a mirror)
+  - [ ] 5.f.ii.zi — Document GitHub Actions/API quota risk (CI/workflow usage only — GitHub no longer serves download/distribution traffic) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
+  - [ ] 5.f.ii.zo — Document Telegram Bot API ToS/rate-limit risk at CDN-level traffic (now the primary distribution channel, not a mirror) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
 - 5.f.iii — Quota monitoring
-  - [ ] 5.f.iii.zi — GitHub API/Actions rate-limit monitoring/alerting (CI/workflow usage only)
-  - [ ] 5.f.iii.zo — Telegram & Workers request-quota monitoring/alerting (primary traffic path)
+  - [ ] 5.f.iii.zi — GitHub API/Actions rate-limit monitoring/alerting (CI/workflow usage only) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
+  - [ ] 5.f.iii.zo — Telegram & Workers request-quota monitoring/alerting (primary traffic path) *(Held — depends on "Resolved — binary ownership" in Section 0; do not start until revisited.)*
 
 **5.g — Developer Console Integration (cross-repo contract)**
-*This repo never submits, uploads, or authenticates developers — it only reads what the separate Console writes to Supabase. These leaves are about the read-side contract, not building the Console itself.*
+*This repo never submits, uploads, authenticates developers, compiles, signs or stores binaries — it only reads what the separate Console (Zealot) writes to Supabase and links to the APK the Console holds. These leaves are about the read-side contract, not building the Console itself.*
 - 5.g.i — Metadata read contract
   - [ ] 5.g.i.zi — Read-only Supabase client in this repo (no write access, no login, matches the no-account scope decision)
-  - [ ] 5.g.i.zo — Define the shared schema contract (field names/types) this repo expects from Console-written rows
-- 5.g.ii — AAB → APK compile pipeline (GitHub Actions side)
-  - [ ] 5.g.ii.zi — `bundletool`-based AAB→signed-APK/split compilation step, triggered by a Console submission event
-  - [ ] 5.g.ii.zo — Publish the compiled APK to the Telegram S3-compatible drive as the distributed copy; GitHub Releases is not used for binary distribution, and the raw AAB never leaves the Console/build environment
+  - [ ] 5.g.i.zo — Define the shared schema contract (field names/types) this repo expects from Console-written rows. It must also carry the pointer to the Zealot-held APK: a stable download URL (never a short-lived signed storage URL), SHA-256, size, version, and the org signing fingerprint (these feed `0.f.i` "Verify this APK")
+- 5.g.ii — Binary hand-off (Zealot compiles, signs and stores; this repo only links)
+  - [ ] 5.g.ii.zi — Download button/link resolves to the stable download URL carried by the contract (Zealot's download route) — never a stored signed URL, never a copy hosted here. *(Replaces the original `bundletool` compile leaf, which is now Zealot's. **Assumed, not yet confirmed by the product owner** — confirm before starting.)*
+  - [-] 5.g.ii.zo — Publish the compiled APK to the Telegram S3-compatible drive as the distributed copy; GitHub Releases is not used for binary distribution, and the raw AAB never leaves the Console/build environment *(Superseded — Zealot does this; see "Resolved — binary ownership" in Section 0.)*
 - 5.g.iii — Developer trust signals
   - [ ] 5.g.iii.zi — "Verified developer" badge on the app detail page, sourced from the Console's agreement-signing status in Supabase
   - [ ] 5.g.iii.zo — Footer link to the Console site as the submission entry point (no submission UI lives in this repo)
@@ -507,7 +518,7 @@ Two distinct problems bundled in one report, both real:
 
 This is the same process used to hand off the D-Store documentation itself — it is now the fixed rule for every session, no exceptions.
 
-**Key location — cache files:** the storefront reads catalog/asset data from local cache files only, never live per-request calls to Telegram or Supabase — this keeps the app populated and responsive even if either upstream is briefly unreachable. Cached/downloaded files live at **`storage/downloads`**. Any leaf that touches caching, downloads, or catalog population must read from and write to this location; note it explicitly in the commit body when a leaf adds or changes what's cached there.
+**Key location — cache files:** the storefront reads catalog/asset data from local cache files only, never live per-request calls to Supabase or the Console (Zealot) — this keeps the app populated and responsive even if either upstream is briefly unreachable. Cached/downloaded files live at **`storage/downloads`**. Any leaf that touches caching, downloads, or catalog population must read from and write to this location; note it explicitly in the commit body when a leaf adds or changes what's cached there.
 
 0. **Check upstream first, before doing anything else:** `git fetch origin` and compare against `origin/master`. If origin has moved since the local clone/session was last synced (earlier patches already applied and pushed, for instance), rebase local work onto the current `origin/master` (`git rebase origin/master`) before starting the leaf and before generating any patch. A patch built against a stale base will fail to apply with `git am` even when the content it wants is logically identical to what's already there — this step is what prevents that.
 1. **Do the one assigned leaf task** (Section 1 — nothing more).

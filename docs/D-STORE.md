@@ -170,13 +170,13 @@ New entities: `Review` (anonymous, rate-limited), `ReportFlag` (anonymous app re
 
 | Component | Choice |
 |---|---|
-| CI/CD | GitHub Actions — build, sign, split, and checksum pipeline only. Does not store or serve APK binaries; GitHub Releases is not used as a distribution artifact host |
-| Primary APK storage | S3-compatible Telegram Drive backend (2–4GB per-file ceiling depending on account tier) — existing infrastructure, continuously active |
-| Edge/CDN | Cloudflare Workers — download endpoint fronting the Telegram drive as the sole storage backend |
-| Metadata database | **Supabase (Postgres)** — app metadata, ratings, install/view counters, developer/agreement status. Holds metadata only; APK binaries stay in the Telegram drive, never in Supabase |
-| Delivery model | Split APKs (base + ABI/density/language config splits), further compressed, chunked into ≤200MB segments for OTA transfer — no single user-facing download exceeds ~200MB even for larger apps |
+| Build & signing | **Not this repo.** The Developer Console (Zealot) compiles the AAB, signs with the organisation key, and splits/checksums. This repo has no compile pipeline |
+| APK storage | **Held by the Console (Zealot)** in its own release storage. This repo stores no binaries |
+| Edge/CDN | Open — whether a CDN/edge fronts the Console's download route is undecided |
+| Metadata database | **Supabase (Postgres)** — app metadata, ratings, install/view counters, developer/agreement status. Holds metadata only, including the pointer to the Console-held APK; binaries are never in Supabase |
+| Delivery model | Produced by the Console: split APKs (base + ABI/density/language config splits), further compressed, chunked into ≤200MB segments for OTA transfer — no single user-facing download exceeds ~200MB even for larger apps |
 
-No AWS or equivalent blob storage is needed for APK hosting under this model: no app in the catalog exceeds the Telegram drive's per-file ceiling, and splitting keeps individual downloads small regardless. The genuine gap the Telegram service leaves is the catalog metadata itself — solved by Supabase above — plus the fact that the Telegram Bot API is not designed to be used as a high-traffic CDN; that's a policy risk to monitor (5.f.ii), not a technical blocker at this scale.
+This repo needs no blob storage of its own: binaries live with the Console (Zealot), and this repo only holds catalog metadata (Supabase, above) plus the link to the download. The earlier Telegram-drive and Cloudflare-Worker storage design is superseded; see "Resolved — binary ownership" in `HANDOVER.md`.
 
 *One item mentioned alongside this setup is not yet included pending clarification: "C2" — unclear meaning, and commonly refers to command-and-control infrastructure for remotely controlling other devices, which would not be something this documentation can include. Will be added once clarified.*
 
@@ -188,18 +188,18 @@ D-Store is two systems, not one:
 
 | System | What it does | Repo |
 |---|---|---|
-| **Developer Console** | Where developers submit their `.aab` (Android App Bundle), sign a copyright/distribution agreement (same function as Play Store's developer agreement), and manage listings | **Separate site — not this repo** |
-| **D-Store (this repo)** | The public, no-login storefront — browse, search, view app details, download compiled APKs | **This repo** |
+| **Developer Console** | Where developers submit their `.aab` (Android App Bundle), sign a copyright/distribution agreement (same function as Play Store's developer agreement), and manage listings. It also compiles, signs and stores the resulting APK | **Separate site — not this repo** |
+| **D-Store (this repo)** | The public, no-login, front-facing storefront (Play Store features, web-based) — browse, search, view app details, and a download button that links to the Console-held APK | **This repo** |
 
 **This repo has no submission UI, no AAB upload, no developer authentication, and no agreement-signing flow.** Its only relationship to the Console is reading the metadata the Console's pipeline writes to Supabase, and linking out to the Console site for anyone who wants to submit an app.
 
 ### The compile pipeline (bridges the two systems)
 
 1. Developer uploads a signed `.aab` to the Console and accepts the distribution agreement.
-2. GitHub Actions (triggered by the Console) runs **bundletool** to generate a signed, distributable APK (or split-APK set) from the AAB — the same approach Play Store's own Play App Signing uses.
-3. The **compiled APK is published to the Telegram S3-compatible drive** — a derived copy, not the original AAB. GitHub Actions runs the build/sign/split pipeline but is not used to store or serve the artifact. The raw AAB never leaves the Console/build environment and is never publicly exposed.
-4. Metadata (app info, version, developer/agreement status) is written to Supabase.
-5. This repo reads that Supabase metadata and links downloads to the compiled APK on the Telegram drive — it never sees or handles the AAB at any point.
+2. The Console runs **bundletool** in its own pipeline to generate a signed, distributable APK (or split-APK set) from the AAB, signed with the organisation key — the same approach Play Store's own Play App Signing uses.
+3. The **compiled APK is stored by the Console** — a derived copy, not the original AAB. The raw AAB never leaves the Console/build environment and is never publicly exposed.
+4. Metadata (app info, version, developer/agreement status, and the pointer to the compiled APK) is written to Supabase.
+5. This repo reads that Supabase metadata and links downloads to the Console-held APK — it never sees or handles the AAB, and never stores the APK.
 
 This is the same posture Play Store takes with app bundles: what end users receive is a platform-generated artifact derived from the developer's upload, not the raw upload itself.
 
