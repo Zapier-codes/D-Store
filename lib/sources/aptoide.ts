@@ -298,6 +298,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
 
     developer_slug: slugify(raw.developer.name),
     developer_name: raw.developer.name, // 5.h.iii.zi — no static Developer row exists for third-party publishers
+    developer_website: raw.developer.website ?? null, // 5.h.iv.zi — feeds the derived Developer.profile_url (lib/catalog.ts getDeveloperBySlug)
 
     available_regions: [...ALL_REGIONS], // Aptoide's response carries no per-country availability; conservative default, same as most first-party dummy entries
 

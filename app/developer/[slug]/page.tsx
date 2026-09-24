@@ -47,7 +47,10 @@ export default async function DeveloperPage({
 
   const apps = await getAppsByDeveloper(slug);
   const initial = developer.name.trim().charAt(0).toUpperCase();
-  const joinedYear = new Date(developer.joined_at).getFullYear();
+  // 5.h.iv.zi — `joined_at`, `bio` and `profile_url` are null when the source
+  // (Aptoide) doesn't supply them; each line below is simply omitted then,
+  // rather than showing an invented date/bio or a dead link.
+  const joinedYear = developer.joined_at ? new Date(developer.joined_at).getFullYear() : null;
 
   return (
     <main className={styles.main}>
@@ -58,16 +61,19 @@ export default async function DeveloperPage({
         <div>
           <h1 className={styles.name}>{developer.name}</h1>
           <p className={styles.meta}>
-            {apps.length} {apps.length === 1 ? "app" : "apps"} · Joined {joinedYear}
+            {apps.length} {apps.length === 1 ? "app" : "apps"}
+            {joinedYear !== null && <> · Joined {joinedYear}</>}
           </p>
         </div>
       </header>
 
-      <p className={styles.bio}>{developer.bio}</p>
+      {developer.bio && <p className={styles.bio}>{developer.bio}</p>}
 
-      <a href={developer.profile_url} className={styles.profileLink} target="_blank" rel="noopener noreferrer">
-        View profile ↗
-      </a>
+      {developer.profile_url && (
+        <a href={developer.profile_url} className={styles.profileLink} target="_blank" rel="noopener noreferrer">
+          View profile ↗
+        </a>
+      )}
 
       <Shelf title={`Apps by ${developer.name}`} apps={apps} />
     </main>

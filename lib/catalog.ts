@@ -16,7 +16,7 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, developers, reviews, sponsoredSlots, searchQueries, appCountByCategory, type App, type AppOrigin, type Category, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
+import { apps, categories, developers, reviews, sponsoredSlots, searchQueries, type App, type AppOrigin, type Category, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
 
@@ -77,7 +77,8 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 
 /** App count per category — same value `Category.count` held in the legacy entity, derived here instead of stored. */
 export async function getCategoryAppCount(slug: string): Promise<number> {
-  return resolveAfterDelay(appCountByCategory(slug));
+  const merged = await getMergedApps();
+  return resolveAfterDelay(merged.filter((app) => app.category === slug).length);
 }
 
 // --- Apps: listing & lookup -------------------------------------------
@@ -313,7 +314,8 @@ export async function setAppFeaturing(
 // --- Home page shelves (0.d) -------------------------------------------
 
 export async function getFeaturedApps(limit = 6): Promise<App[]> {
-  const result = apps.filter((app) => app.is_featured).slice(0, limit);
+  const merged = await getMergedApps();
+  const result = merged.filter((app) => app.is_featured).slice(0, limit);
   return resolveAfterDelay(result);
 }
 
@@ -442,7 +444,8 @@ export async function getTrendingApps(limit = 12): Promise<App[]> {
 }
 
 export async function getEditorsPicks(limit = 12): Promise<App[]> {
-  const result = apps.filter((app) => app.is_editors_pick).slice(0, limit);
+  const merged = await getMergedApps();
+  const result = merged.filter((app) => app.is_editors_pick).slice(0, limit);
   return resolveAfterDelay(result);
 }
 
@@ -473,13 +476,15 @@ export async function getEditorsPicks(limit = 12): Promise<App[]> {
  * is showing the full ranked list, not a preview of it.
  */
 export async function getTopFreeApps(): Promise<App[]> {
-  const result = [...apps].sort((a, b) => b.install_count - a.install_count);
+  const merged = await getMergedApps();
+  const result = [...merged].sort((a, b) => b.install_count - a.install_count);
   return resolveAfterDelay(result);
 }
 
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
 export async function getNewAndUpdated(limit = 12): Promise<App[]> {
-  const result = [...apps]
+  const merged = await getMergedApps();
+  const result = [...merged]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, limit);
   return resolveAfterDelay(result);
@@ -491,7 +496,8 @@ export async function getNewAndUpdated(limit = 12): Promise<App[]> {
 export async function searchApps(query: string): Promise<App[]> {
   const needle = query.trim().toLowerCase();
   if (!needle) return resolveAfterDelay([]);
-  const result = apps.filter(
+  const merged = await getMergedApps();
+  const result = merged.filter(
     (app) => app.name.toLowerCase().includes(needle) || app.summary.toLowerCase().includes(needle)
   );
   return resolveAfterDelay(result);
@@ -523,21 +529,40 @@ export async function logSearchQuery(query: string): Promise<void> {
 
 /** Other apps in the same category, excluding the app itself — backs the "Similar apps" rail on the detail page. */
 export async function getSimilarApps(appSlug: string, limit = 6): Promise<App[]> {
-  const source = apps.find((a) => a.slug === appSlug);
+  const merged = await getMergedApps();
+  const source = merged.find((a) => a.slug === appSlug);
   if (!source) return resolveAfterDelay([]);
-  const result = apps.filter((app) => app.category === source.category && app.slug !== appSlug).slice(0, limit);
+  const result = merged.filter((app) => app.category === source.category && app.slug !== appSlug).slice(0, limit);
   return resolveAfterDelay(result);
 }
 
 /** Backs the developer profile page (0.g.iii.zo), `/developer/[slug]`. */
 export async function getDeveloperBySlug(slug: string): Promise<Developer | null> {
-  const developer = developers.find((d) => d.slug === slug) ?? null;
-  return resolveAfterDelay(developer);
+  const declared = developers.find((d) => d.slug === slug);
+  if (declared) return resolveAfterDelay(declared);
+
+  // 5.h.iv.zi — no static row: derive one from the merged catalog's own
+  // per-app data. Only what a source actually supplied is filled in
+  // (Aptoide: publisher name + website); bio and joined date stay null
+  // rather than being invented. Website is only carried through when it
+  // is an http(s) URL, since it is rendered as a link.
+  const merged = await getMergedApps();
+  const match = merged.find((app) => app.developer_slug === slug);
+  if (!match) return resolveAfterDelay(null);
+  const website = match.developer_website && /^https?:\/\//i.test(match.developer_website) ? match.developer_website : null;
+  return resolveAfterDelay({
+    slug,
+    name: match.developer_name ?? slug,
+    bio: null,
+    profile_url: website,
+    joined_at: null,
+  });
 }
 
 /** Every published app by a given developer, most recently updated first — the profile page's app list. */
 export async function getAppsByDeveloper(developerSlug: string): Promise<App[]> {
-  const result = [...apps]
+  const merged = await getMergedApps();
+  const result = [...merged]
     .filter((app) => app.developer_slug === developerSlug)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   return resolveAfterDelay(result);
@@ -688,9 +713,10 @@ export interface TrafficSummary {
  * `getTopFreeApps` already established for chart pages.
  */
 export async function getTrafficSummary(): Promise<TrafficSummary> {
-  const totalInstalls = apps.reduce((sum, app) => sum + app.install_count, 0);
-  const totalViews = apps.reduce((sum, app) => sum + app.view_count, 0);
-  const perApp = [...apps]
+  const merged = await getMergedApps();
+  const totalInstalls = merged.reduce((sum, app) => sum + app.install_count, 0);
+  const totalViews = merged.reduce((sum, app) => sum + app.view_count, 0);
+  const perApp = [...merged]
     .map((app) => ({
       slug: app.slug,
       name: app.name,
@@ -702,7 +728,7 @@ export async function getTrafficSummary(): Promise<TrafficSummary> {
   return resolveAfterDelay({
     totalInstalls,
     totalViews,
-    appCount: apps.length,
+    appCount: merged.length,
     perApp,
   });
 }

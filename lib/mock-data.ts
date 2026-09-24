@@ -251,6 +251,12 @@ export interface App {
    */
   developer_name?: string;
   /**
+   * The publisher's own website when the source supplies one (Aptoide:
+   * `developer.website`) — leaf `5.h.iv.zi`. Feeds the derived
+   * `Developer.profile_url`; `null`/absent means not provided.
+   */
+  developer_website?: string | null;
+  /**
    * Fields the source genuinely did not provide — leaf `5.h.iii.zo`.
    * Absent (the default) means everything is provided, so no first-party
    * entry needed editing. A listed field still carries a typed
@@ -344,12 +350,12 @@ export const ALL_REGIONS = ["US", "GB", "DE", "FR", "CA", "AU", "IN", "BR", "JP"
 export interface Developer {
   slug: string;
   name: string;
-  /** Dummy — no real bio exists for these accounts, this is placeholder copy. */
-  bio: string;
-  /** The real profile/org URL the app's `source` field already links into. */
-  profile_url: string;
-  /** Dummy — a plausible account-creation date, not a real one. */
-  joined_at: string; // ISO date
+  /** `null` = not provided by the source. Aptoide carries no developer bio; nothing is invented. */
+  bio: string | null;
+  /** The developer's own site/profile URL when the source supplies one (Aptoide: `developer.website`), else `null`. */
+  profile_url: string | null;
+  /** ISO date; `null` = not provided. Aptoide carries no developer sign-up date. */
+  joined_at: string | null;
 }
 
 /**
@@ -389,123 +395,19 @@ export const categories: Category[] = [
  * `createAptoideSource()` (`lib/sources/aptoide.ts`), reading
  * `storage/downloads/aptoide-snapshot.json`, and are merged in at
  * request time by `lib/catalog.ts`'s `getMergedApps()` — nothing
- * "aptoide"-origin is hardcoded here anymore. `ledger-vault` and
- * `quiet-verse` below are the only entries left in this array; both are
- * genuinely `"zealot"` (first-party), per leaf `0.i.i.zo`.
+ * "aptoide"-origin is hardcoded here anymore.
+ *
+ * Leaf `5.h.iv.zi`, operator request ("remove all dummy data"): the last
+ * two entries, `ledger-vault` and `quiet-verse` (the invented first-party
+ * stand-ins `0.i.i.zo` added so the Vault/Sanctuary category themes had
+ * something to preview), were removed too. This array is now empty on
+ * purpose: first-party apps arrive from Zealot's signed catalog index
+ * (`5.g.i.zi`), not from literals here, and `createZealotSource()`
+ * (`lib/catalog.ts`) reads this array only as that source's placeholder
+ * until the index reader exists. Nothing in this file is dummy app data
+ * anymore.
  */
-export const apps: App[] = [
-  // The two entries below are new — leaf 0.i.i.zo. Unlike the removed
-  // dummy entries (seeded from the legacy Doctrine entity / screenshots
-  // per the header comment on this file), neither app nor its category
-  // existed in the catalog before this leaf. They exist specifically to
-  // give the "Vault" and "Sanctuary" CategoryTheme registers
-  // (lib/category-theme.ts) a real app/category to attach to and
-  // preview against, per the "Priority override" note in HANDOVER.md.
-  {
-    id: "14",
-    slug: "ledger-vault",
-    name: "Ledger Vault",
-    summary: "Offline personal finance & budget ledger",
-    description:
-      "A local-first budgeting and net-worth ledger — accounts, envelopes, and recurring transactions tracked entirely on-device, no bank linking, no cloud sync.\n\n" +
-      "Built for people who want the discipline of double-entry bookkeeping without a subscription, a server, or a data-sharing agreement attached to it.",
-    site: null,
-    source: "https://github.com/ledger-vault-app/ledger-vault",
-    tracker: "https://github.com/ledger-vault-app/ledger-vault/issues",
-    donate: null,
-    icon: "ledger-vault.png",
-    primary_color: "#0F6D4C",
-    secondary_color: "#B8942E",
-    tertiary_color: "#0A2E22",
-    apk: "app.ledgervault.android_21.apk",
-    version: "2.1",
-    license: "GPL-3.0",
-    is_published: true,
-    category: "finance",
-    created_at: "2017-01-12T00:00:00Z",
-    updated_at: "2017-05-30T00:00:00Z",
-
-    install_count: 9640,
-    view_count: 14800,
-    avg_rating: 4.5,
-    rating_count: 312,
-    is_featured: false,
-    is_editors_pick: true,
-    min_android_version: "5.0",
-    size_mb: 9.2,
-    sha256_checksum: "7c3f9a1d4e8b62057fca9b3d1e6f8a2c04b7d9e5f1a3c6082b4d7e9f0a1c2d3e",
-    signing_certificate_fingerprint: "4A:1F:0C:8E:D5:3B:7A:29:F6:C1:D8:04:E2:9B:56:A7:3C:F0:1D:8E:64:2A:B9:07:D5:3E:1C:A8:F4:60:9D:2B",
-    play_store_rejection_reason: null,
-    permissions: ["WRITE_EXTERNAL_STORAGE"],
-    screenshots: ["/mock/screenshots/ledger-vault-1.png", "/mock/screenshots/ledger-vault-2.png"],
-    changelog: "Added recurring-transaction rules and a net-worth trendline.",
-    developer_slug: "ledger-vault-app",
-    content_rating: "Everyone",
-    data_safety: {
-      collects_data: true,
-      data_types: ["Financial info", "App activity"],
-      shared_with_third_parties: false,
-      data_encrypted_in_transit: true,
-      can_request_data_deletion: true,
-    },
-    contains_ads: false,
-    has_in_app_purchases: false,
-    available_regions: [...ALL_REGIONS],
-    origin: "zealot",
-  },
-  {
-    id: "15",
-    slug: "quiet-verse",
-    name: "Quiet Verse",
-    summary: "Offline scripture reading & daily reflection",
-    description:
-      "A distraction-free scripture reader — full offline text, adjustable type size, and a daily reading plan with space for short written reflections alongside each passage.\n\n" +
-      "No accounts, no social layer, no notifications beyond an optional daily reading reminder.",
-    site: null,
-    source: "https://github.com/quiet-verse/quiet-verse-android",
-    tracker: "https://github.com/quiet-verse/quiet-verse-android/issues",
-    donate: null,
-    icon: "quiet-verse.png",
-    primary_color: "#5B7FBD",
-    secondary_color: "#C7D6F0",
-    tertiary_color: "#2E4876",
-    apk: "org.quietverse.reader_14.apk",
-    version: "1.4",
-    license: "MIT",
-    is_published: true,
-    category: "reading",
-    created_at: "2016-09-02T00:00:00Z",
-    updated_at: "2017-02-18T00:00:00Z",
-
-    install_count: 5310,
-    view_count: 8100,
-    avg_rating: 4.8,
-    rating_count: 198,
-    is_featured: false,
-    is_editors_pick: true,
-    min_android_version: "4.4",
-    size_mb: 12.4,
-    sha256_checksum: "1e9d4b6a2f7c30581bde6a4f9c2b7d0158e3a6f9c1b4d7e0a2c5f8b1d4e7a0c3",
-    signing_certificate_fingerprint: "8D:2A:F6:1C:09:B4:E7:53:A0:D8:6F:12:C4:97:3E:B0:5D:A9:2F:1C:68:03:E4:B7:9A:0D:5C:F2:81:4E:06:39",
-    play_store_rejection_reason: null,
-    permissions: [],
-    screenshots: ["/mock/screenshots/quiet-verse-1.png", "/mock/screenshots/quiet-verse-2.png"],
-    changelog: "Added adjustable type size and a daily reading reminder toggle.",
-    developer_slug: "quiet-verse",
-    content_rating: "Everyone",
-    data_safety: {
-      collects_data: true,
-      data_types: ["App activity"],
-      shared_with_third_parties: false,
-      data_encrypted_in_transit: true,
-      can_request_data_deletion: true,
-    },
-    contains_ads: false,
-    has_in_app_purchases: false,
-    available_regions: [...ALL_REGIONS],
-    origin: "zealot",
-  },
-];
+export const apps: App[] = [];
 
 /**
  * Individual `Review` rows — leaf `3.b.ii.zi`. Starts empty
@@ -540,52 +442,14 @@ export interface SearchQueryLog {
 export const searchQueries: SearchQueryLog[] = [];
 
 /**
- * Developer profiles — leaf 0.g.iii.zo. One per `App.developer_slug`
- * above, `slug`/`name`/`profile_url` read off each app's real `source`
- * URL (see the field comment on `Developer` for why), `bio`/`joined_at`
- * are dummy placeholders. `joined_at` is pinned a little before that
- * developer's earliest `created_at` in `apps` — plausible account age,
- * not a real signup date.
+ * Static developer profiles — leaf 0.g.iii.zo, emptied by `5.h.iv.zi`.
+ *
+ * The dummy rows that used to live here (13 for the removed third-party
+ * apps, then 2 for the removed first-party stand-ins) are gone.
+ * `getDeveloperBySlug` (`lib/catalog.ts`) now derives a `Developer` from
+ * the merged catalog's own per-app data (`developer_slug`,
+ * `developer_name`, plus the website the source supplied), and this
+ * array is only consulted first so a future first-party developer
+ * profile from Zealot's index can override the derived one.
  */
-export const developers: Developer[] = [
-  // The 13 developer entries that used to sit here (fdroid,
-  // afzalmakkelamba, nagracks, blackjackdavy, jamiesanson,
-  // tommy-geenexus, dreamingincodezh, klaernie, amexia-theme,
-  // enhancement-theme, mozilla, icecons, greyscale-theme) belonged to
-  // the 13 dummy "aptoide"-origin apps removed from `apps` above (leaf
-  // `5.h.ii.zo`, cont.) and are removed with them — they'd otherwise be
-  // orphaned rows with no app pointing at them. Real third-party apps'
-  // developer info comes from Aptoide's own response
-  // (`normalizeAptoideApp` in `lib/sources/aptoide.ts` sets
-  // `developer_slug` from it directly); it isn't backed by a static
-  // entry in this array, so `/developer/[slug]` for a third-party app's
-  // developer_slug currently resolves to nothing via
-  // `getDeveloperBySlug` (`lib/catalog.ts`) — a real gap, not silently
-  // patched over here, and the same gap the WhatsApp seed (`5.h.ii.zi`)
-  // already had. Flagged forward for `5.h.iii.zi` (third-party trust
-  // labelling), which is already the leaf suppressing other
-  // first-party-only UI (Verified badge, "Verify this APK") for
-  // third-party apps.
-  //
-  // The two entries below are new — leaf 0.i.i.zo, alongside their apps
-  // in the `apps` array above.
-  {
-    slug: "ledger-vault-app",
-    name: "Ledger Vault",
-    bio: "Local-first personal finance tools — no bank linking, no cloud sync.",
-    profile_url: "https://github.com/ledger-vault-app",
-    joined_at: "2016-11-20T00:00:00Z",
-  },
-  {
-    slug: "quiet-verse",
-    name: "Quiet Verse",
-    bio: "A small, distraction-free scripture reader with no accounts and no social layer.",
-    profile_url: "https://github.com/quiet-verse",
-    joined_at: "2016-06-15T00:00:00Z",
-  },
-];
-
-/** Number of catalog apps per category, derived from `apps` — not hand-maintained. */
-export function appCountByCategory(categorySlug: string): number {
-  return apps.filter((app) => app.category === categorySlug).length;
-}
+export const developers: Developer[] = [];
