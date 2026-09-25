@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { App } from "@/lib/catalog";
+import { isRealImageUrl } from "@/lib/image";
 import Lightbox from "./Lightbox";
 import styles from "./ScreenshotCarousel.module.css";
 
@@ -29,6 +31,21 @@ import styles from "./ScreenshotCarousel.module.css";
  * as AppCard's and Hero's icon tiles), cycling across the three; the
  * lightbox reuses the same color-cycle logic so the enlarged view
  * matches what was clicked.
+ *
+ * `3.d.ii.zi` (Image CDN + responsive `srcset`) adds the real-image
+ * branch: third-party (Aptoide) apps carry real `https://pool.img.
+ * aptoide.com/...` screenshot URLs (`App.screenshots[]`, since
+ * `5.h.ii.zi`) alongside first-party dummy `/mock/screenshots/...`
+ * strings in the same field. `isRealImageUrl` (same guard `AppIcon`
+ * uses) decides per-slide, not per-app, since nothing stops a future
+ * source from mixing real and placeholder-shaped entries in one app's
+ * array. A real slide renders `next/image` `fill` inside `.frame`
+ * (same box as `.placeholder`, plus `position: relative; overflow:
+ * hidden` to anchor/clip the image layer) instead of the colored tile;
+ * a dummy/malformed slide falls through to the exact same placeholder
+ * as before. The real screenshot URLs are also threaded into
+ * `Lightbox` (as `screenshots`, alongside the existing `colors`) so the
+ * enlarged view can make the same real/placeholder choice per slide.
  */
 export default function ScreenshotCarousel({ app }: { app: App }) {
   const { screenshots } = app;
@@ -54,19 +71,31 @@ export default function ScreenshotCarousel({ app }: { app: App }) {
                 onClick={() => setLightboxIndex(index)}
                 aria-label={`View screenshot ${index + 1} of ${screenshots.length} full size`}
               >
-                <div
-                  className={styles.placeholder}
-                  style={{
-                    backgroundColor: colors[index % colors.length],
-                    color: app.primary_color === colors[index % colors.length]
-                      ? app.secondary_color
-                      : app.primary_color,
-                  }}
-                >
-                  <span className={styles.placeholderLabel}>
-                    {app.name} — Screenshot {index + 1}
-                  </span>
-                </div>
+                {isRealImageUrl(src) ? (
+                  <div className={styles.frame}>
+                    <Image
+                      src={src}
+                      alt={`${app.name} — Screenshot ${index + 1}`}
+                      fill
+                      sizes="(min-width: 768px) 260px, 62vw"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className={styles.placeholder}
+                    style={{
+                      backgroundColor: colors[index % colors.length],
+                      color: app.primary_color === colors[index % colors.length]
+                        ? app.secondary_color
+                        : app.primary_color,
+                    }}
+                  >
+                    <span className={styles.placeholderLabel}>
+                      {app.name} — Screenshot {index + 1}
+                    </span>
+                  </div>
+                )}
               </button>
               <span className={styles.srOnly}>
                 Screenshot {index + 1} of {screenshots.length}
@@ -83,6 +112,7 @@ export default function ScreenshotCarousel({ app }: { app: App }) {
           secondaryColor={app.secondary_color}
           screenshotCount={screenshots.length}
           colors={colors}
+          screenshots={screenshots}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
         />

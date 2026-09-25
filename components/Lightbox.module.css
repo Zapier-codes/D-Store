@@ -148,6 +148,22 @@
   box-sizing: border-box;
 }
 
+/*
+ * Real-screenshot frame — leaf 3.d.ii.zi. Same box (size/aspect-ratio/
+ * border-radius/border) as `.placeholder` above, plus `position:
+ * relative` + `overflow: hidden` to anchor and clip `next/image`'s
+ * `fill` layer — mirrors ScreenshotCarousel.module.css's own
+ * `.frame`/`.placeholder` pairing.
+ */
+.frame {
+  width: min(80vw, 360px);
+  aspect-ratio: 9 / 16;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
 .placeholderLabel {
   font-size: 1rem;
   font-weight: 600;

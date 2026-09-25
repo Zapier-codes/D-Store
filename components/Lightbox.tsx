@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import Image from "next/image";
+import { isRealImageUrl } from "@/lib/image";
 import styles from "./Lightbox.module.css";
 
 /**
@@ -20,9 +22,17 @@ import styles from "./Lightbox.module.css";
  * since there's no native affordance for that.
  *
  * Same placeholder-tile convention as ScreenshotCarousel (no real
- * screenshot image assets exist yet) — just rendered larger, using the
- * same primary/secondary/tertiary color cycle so the enlarged view
- * matches the thumbnail that was clicked.
+ * screenshot image assets exist for first-party/dummy entries) — just
+ * rendered larger, using the same primary/secondary/tertiary color
+ * cycle so the enlarged view matches the thumbnail that was clicked.
+ *
+ * `3.d.ii.zi` adds the same real-image branch ScreenshotCarousel got:
+ * an optional `screenshots` array (parallel to `colors`, one entry per
+ * slide) — a real `https://pool.img.aptoide.com/...` URL at the
+ * current `index` renders via `next/image` `fill` in `.frame` instead
+ * of the colored placeholder. Omitted or a non-real entry falls
+ * through to the placeholder exactly as before, so this stays
+ * source-compatible with any caller that doesn't pass `screenshots`.
  */
 
 export interface LightboxProps {
@@ -31,6 +41,8 @@ export interface LightboxProps {
   secondaryColor: string;
   screenshotCount: number;
   colors: string[];
+  /** Parallel array to `colors`/screenshot index; a real `https://` URL renders the actual image instead of the placeholder. */
+  screenshots?: string[];
   initialIndex: number;
   onClose: () => void;
 }
@@ -41,6 +53,7 @@ export default function Lightbox({
   secondaryColor,
   screenshotCount,
   colors,
+  screenshots,
   initialIndex,
   onClose,
 }: LightboxProps) {
@@ -97,6 +110,7 @@ export default function Lightbox({
   const color = colors[index % colors.length];
   const textColor = color === primaryColor ? secondaryColor : primaryColor;
   const hasMultiple = screenshotCount > 1;
+  const realSrc = screenshots?.[index];
 
   return (
     <dialog
@@ -127,14 +141,26 @@ export default function Lightbox({
           </button>
         )}
 
-        <div
-          className={styles.placeholder}
-          style={{ backgroundColor: color, color: textColor }}
-        >
-          <span className={styles.placeholderLabel}>
-            {appName} — Screenshot {index + 1}
-          </span>
-        </div>
+        {isRealImageUrl(realSrc) ? (
+          <div className={styles.frame}>
+            <Image
+              src={realSrc}
+              alt={`${appName} — Screenshot ${index + 1}`}
+              fill
+              sizes="min(80vw, 360px)"
+              style={{ objectFit: "cover" }}
+            />
+          </div>
+        ) : (
+          <div
+            className={styles.placeholder}
+            style={{ backgroundColor: color, color: textColor }}
+          >
+            <span className={styles.placeholderLabel}>
+              {appName} — Screenshot {index + 1}
+            </span>
+          </div>
+        )}
 
         {hasMultiple && (
           <button

@@ -112,7 +112,8 @@
 }
 
 @media (min-width: 768px) {
-  .placeholder {
+  .placeholder,
+  .frame {
     max-width: 260px;
   }
 }
