@@ -113,7 +113,12 @@
   height: 18px;
   border-radius: 50%;
   background: var(--color-text);
-  transition: transform 0.15s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toggleKnob {
+    transition: transform 0.15s ease;
+  }
 }
 
 .toggleOn .toggleKnob {
