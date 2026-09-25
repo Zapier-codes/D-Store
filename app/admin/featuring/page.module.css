@@ -95,6 +95,11 @@
   cursor: default;
 }
 
+.toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .toggleOn {
   background: var(--color-accent);
   border-color: var(--color-accent-strong);

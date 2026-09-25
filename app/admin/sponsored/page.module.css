@@ -68,6 +68,11 @@
   color: var(--color-text);
 }
 
+.input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .formActions {
   display: flex;
   gap: 0.5rem;
@@ -87,6 +92,12 @@
 .primaryButton:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .secondaryButton {

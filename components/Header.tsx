@@ -30,6 +30,19 @@ import styles from "./Header.module.css";
  * (unlike `/search`/`/categories` above, not a forward reference —
  * chart pages arrive one at a time). `/charts/new` added the same way
  * by leaf `3.b.iii.zo`, closing out all of Phase 3's chart pages.
+ *
+ * `#nav-toggle` fixed by leaf `3.d.i.zo`: it previously carried both
+ * `aria-hidden="true"` and a real keyboard/AT-reachable focus stop
+ * (per Header.module.css's own comment, it's visually hidden, not
+ * `display:none`, specifically so it stays tabbable) — aria-hidden on
+ * a still-focusable, still-operable control is a real 4.1.2 failure,
+ * not a stylistic choice: a keyboard user tabbing to it got no
+ * accessible name at all, since aria-hidden removes it from the tree
+ * before any name is computed. The aria-label moved from the visual
+ * `<label>` (which carried it before, but a `<label>`'s own aria-label
+ * isn't reliably surfaced as the associated control's accessible name)
+ * onto the checkbox itself, which is the element that actually
+ * receives focus.
  */
 export default function Header({ theme }: { theme: Theme }) {
   return (
@@ -45,13 +58,9 @@ export default function Header({ theme }: { theme: Theme }) {
           type="checkbox"
           id="nav-toggle"
           className={styles.navCheckbox}
-          aria-hidden="true"
-        />
-        <label
-          htmlFor="nav-toggle"
-          className={styles.navToggleLabel}
           aria-label="Toggle navigation menu"
-        >
+        />
+        <label htmlFor="nav-toggle" className={styles.navToggleLabel}>
           <span />
           <span />
           <span />
