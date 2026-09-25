@@ -25,15 +25,27 @@ import styles from "./Shelf.module.css";
  * inserted ahead of the curated order a caller fetched `apps` in.
  * Generic on purpose (not `sponsored?: boolean`) so this stays a plain
  * layout component with no knowledge of what a sponsored card is.
+ *
+ * Optional `priorityCount` — leaf `3.d.ii.zo` (LCP budget pass). Marks
+ * the first `priorityCount` cards' icons `priority` (eager, no
+ * lazy-load delay) instead of every card in every shelf, which would
+ * just add network contention for images nobody's scrolled to yet.
+ * `ShelfGrid`'s narrowest breakpoint is 2 columns, so `2` covers the
+ * first visible row on any viewport; callers only pass this for
+ * whichever shelf actually renders first below the hero (see
+ * `app/page.tsx`), since that's the one shelf whose leading cards are
+ * above the fold on first paint.
  */
 export default function Shelf({
   title,
   apps,
   extraSlot,
+  priorityCount = 0,
 }: {
   title: string;
   apps: App[];
   extraSlot?: React.ReactNode;
+  priorityCount?: number;
 }) {
   if (apps.length === 0) return null;
 
@@ -43,8 +55,8 @@ export default function Shelf({
         {title}
       </h2>
       <ShelfGrid>
-        {apps.map((app) => (
-          <AppCard key={app.slug} app={app} />
+        {apps.map((app, index) => (
+          <AppCard key={app.slug} app={app} priority={index < priorityCount} />
         ))}
         {extraSlot}
       </ShelfGrid>

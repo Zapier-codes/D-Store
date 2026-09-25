@@ -34,6 +34,21 @@ import { isRealImageUrl } from "@/lib/image";
  * applies (AppCard/Hero/the app-detail header/AppIconLive all set
  * their own `border-radius` on that container) rather than needing a
  * second copy of that value here.
+ *
+ * `3.d.ii.zo` (Lighthouse LCP budget pass) adds the optional
+ * `priority` prop, threaded straight to `next/image`. Every real image
+ * on this app is icon-sized and rendered with Next's default
+ * `loading="lazy"`, which turned out to matter: Lighthouse identified
+ * an above-the-fold `AppCard` icon on the home page as the LCP
+ * element, and lazy-loading it added ~1.9s of pure "element render
+ * delay" (Chrome defers starting the fetch for a lazy image until it's
+ * confirmed near-viewport), pushing LCP to 2.7s against the 2.5s
+ * budget. `priority` (default `false`, so every other icon on the page
+ * keeps lazy-loading, which is still correct for anything off-screen)
+ * makes Next skip lazy-loading and mark the request `fetchpriority=
+ * high`/preloaded for the handful of call sites that are actually
+ * above the fold — see `Hero.tsx` and `Shelf.tsx`'s own doc comments
+ * for which those are.
  */
 export default function AppIcon({
   name,
@@ -43,6 +58,7 @@ export default function AppIcon({
   className,
   src,
   sizes,
+  priority,
 }: {
   name: string;
   primaryColor: string;
@@ -53,6 +69,8 @@ export default function AppIcon({
   src?: string;
   /** `next/image`'s `sizes` attribute — must match the container's actual rendered width for a correct `srcset` pick. Defaults to a small fixed-icon size. */
   sizes?: string;
+  /** `next/image`'s `priority` — set for above-the-fold call sites only (Hero, the first shelf's leading cards). Defaults to `false` (lazy), the right choice for every off-screen icon. */
+  priority?: boolean;
 }) {
   if (isRealImageUrl(src)) {
     return (
@@ -71,6 +89,7 @@ export default function AppIcon({
           alt={`${name} icon`}
           fill
           sizes={sizes ?? "64px"}
+          priority={priority}
           style={{ objectFit: "cover" }}
         />
       </span>

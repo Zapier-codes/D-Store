@@ -90,6 +90,20 @@ import ScrollReveal from "@/components/ScrollReveal";
  *    fallback chain above is in play), the same "hero takes one, the
  *    shelf renders the rest" pattern `0.d.ii.zi` established for
  *    Featured alone.
+ *
+ * `3.d.ii.zo` (Lighthouse LCP budget pass): Lighthouse flagged the home
+ * page's LCP at 2.7s against the 2.5s budget, with the actual LCP
+ * element being an `AppCard` icon in whichever shelf rendered first
+ * below the hero (currently Trending, since First-party/Featured are
+ * both empty pending real data) — lazy-loading that icon added ~1.9s of
+ * pure render delay. `firstNonEmptyShelf` below picks out that one
+ * shelf (mirroring the exact same empty-shelf-skipping logic `Shelf`
+ * itself already uses) and gives only its first two cards' icons
+ * `priority` via the new `Shelf`/`AppCard`/`AppIcon` prop — see those
+ * components' own doc comments. This is computed per-render rather
+ * than hardcoded to any one shelf name, since which shelf is first is
+ * itself data-dependent (today: Trending; once real first-party apps
+ * exist: First-party).
  */
 export default async function Home() {
   const [firstParty, featured, trending, editorsPicks] = await Promise.all([
@@ -108,6 +122,23 @@ export default async function Home() {
   const restFirstParty = firstParty.filter((app) => app.slug !== heroApp?.slug);
   const restFeatured = featured.filter((app) => app.slug !== heroApp?.slug);
 
+  // `3.d.ii.zo` (LCP budget pass): whichever shelf below actually
+  // renders first (Shelf itself renders nothing for an empty `apps`
+  // array, so this isn't always "First-party") is the one shelf whose
+  // leading cards sit above the fold on first paint — see Shelf.tsx's
+  // own doc comment for why only that one shelf's first two cards get
+  // `priority`, not every shelf's.
+  const firstNonEmptyShelf =
+    restFirstParty.length > 0
+      ? "firstParty"
+      : restFeatured.length > 0
+        ? "featured"
+        : trending.length > 0
+          ? "trending"
+          : editorsPicks.length > 0
+            ? "editorsPicks"
+            : null;
+
   return (
     <main>
       {heroApp && (
@@ -116,19 +147,32 @@ export default async function Home() {
         </ScrollReveal>
       )}
       <ScrollReveal>
-        <Shelf title="First-party" apps={restFirstParty} />
+        <Shelf
+          title="First-party"
+          apps={restFirstParty}
+          priorityCount={firstNonEmptyShelf === "firstParty" ? 2 : 0}
+        />
       </ScrollReveal>
       <ScrollReveal>
-        <Shelf title="Featured" apps={restFeatured} />
+        <Shelf
+          title="Featured"
+          apps={restFeatured}
+          priorityCount={firstNonEmptyShelf === "featured" ? 2 : 0}
+        />
       </ScrollReveal>
       <ScrollReveal>
-        <Shelf title="Trending" apps={trending} />
+        <Shelf
+          title="Trending"
+          apps={trending}
+          priorityCount={firstNonEmptyShelf === "trending" ? 2 : 0}
+        />
       </ScrollReveal>
       <ScrollReveal>
         <Shelf
           title="Editor's Picks"
           apps={editorsPicks}
           extraSlot={<SponsoredCard />}
+          priorityCount={firstNonEmptyShelf === "editorsPicks" ? 2 : 0}
         />
       </ScrollReveal>
     </main>

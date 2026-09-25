@@ -45,6 +45,12 @@ import styles from "./Hero.module.css";
  * needed: the hero sits above the fold on first paint, so a plain CSS
  * `animation` that plays once on mount gives the "reveal" moment
  * without an IntersectionObserver — this stays a server component.
+ *
+ * `priority` on the icon — leaf `3.d.ii.zo` (LCP budget pass). The hero
+ * is always the first thing painted, so its icon (when real) is marked
+ * `priority` unconditionally rather than threading a prop in from the
+ * caller — unlike AppCard, which only wants this for a few above-the-
+ * fold call sites, every Hero render is above the fold by definition.
  */
 export default function Hero({ app }: { app: App }) {
   // A soft, low-opacity glow hinting at the app's own palette — not a
@@ -70,6 +76,7 @@ export default function Hero({ app }: { app: App }) {
             tertiaryColor={app.tertiary_color}
             src={app.icon}
             sizes="64px"
+            priority
           />
         </div>
 

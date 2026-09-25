@@ -62,15 +62,23 @@ import styles from "./AppCard.module.css";
  * per app instead of a numbered badge, same "small optional addition to
  * the one existing card" shape `rank` already established rather than a
  * second bespoke chart-card component.
+ *
+ * Optional `priority` — leaf `3.d.ii.zo` (LCP budget pass). Threaded
+ * straight to `AppIcon`/`next/image`. Defaults to `false` (lazy) —
+ * only `Shelf`'s leading-card call sites set this, for the shelf that
+ * actually renders first below the hero; every other card on every
+ * grid in the app keeps lazy-loading, which is correct off-screen.
  */
 export default function AppCard({
   app,
   rank,
   caption,
+  priority,
 }: {
   app: App;
   rank?: number;
   caption?: string;
+  priority?: boolean;
 }) {
   return (
     <Link href={`/app/${app.slug}`} className={styles.card}>
@@ -83,6 +91,7 @@ export default function AppCard({
           tertiaryColor={app.tertiary_color}
           src={app.icon}
           sizes="(min-width: 1024px) 160px, (min-width: 768px) 20vw, (min-width: 480px) 30vw, 45vw"
+          priority={priority}
         />
       </div>
 
