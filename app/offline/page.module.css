@@ -1,0 +1,27 @@
+/*
+ * Offline page layout — leaf 4.b.i.zo. Same max-width/padding prose
+ * shell as the privacy/terms pages (app/privacy/page.module.css),
+ * copied rather than imported since each of those files' own comment
+ * already establishes this repo's convention of a per-page CSS module
+ * (no shared prose-shell module exists to import from instead).
+ */
+
+.main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.6;
+}
+
+.heading {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.body {
+  margin: 0 0 0.75rem;
+}

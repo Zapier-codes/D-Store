@@ -7,6 +7,7 @@ import RegionProvider from "@/components/RegionProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConsentBanner from "@/components/ConsentBanner";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "D-Store",
@@ -60,6 +61,7 @@ export default async function RootLayout({
           {children}
           <Footer />
           {!consented && <ConsentBanner />}
+          <ServiceWorkerRegister />
         </RegionProvider>
       </body>
     </html>
