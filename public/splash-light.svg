@@ -1,0 +1,43 @@
+<!--
+  D-Store splash screen — light theme, leaf 4.b.ii.zo (Progressive Web
+  App → Installability → Icons/splash → "Splash screens per theme").
+
+  See splash.svg's header comment for why this is one scalable vector
+  asset per theme (reused across the representative device breakpoints
+  in app/layout.tsx's generateMetadata()) rather than a per-device
+  raster set. This is that file's light-theme counterpart, built from
+  light theme's own tokens (app/globals.css `[data-theme="light"]`:
+  --color-bg #f7f8fa, --color-accent #2454c9/--color-accent-strong
+  #1a3d99) — genuinely diverging from the dark splash's warm-gold-glow
+  treatment rather than a brightness-inverted copy, the same "must
+  diverge" rule icon-light.svg already applies to the manifest icon,
+  now carried through to this asset too. Background/glow shape and the
+  low-opacity-accent-tint reasoning both mirror icon-light.svg's own
+  header comment.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1170 2532" width="1170" height="2532" role="img" aria-label="D-Store">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#dce6fb" />
+      <stop offset="55%" stop-color="#eef1f5" />
+      <stop offset="100%" stop-color="#f7f8fa" />
+    </radialGradient>
+    <linearGradient id="glyph" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a7fe0" />
+      <stop offset="55%" stop-color="#2454c9" />
+      <stop offset="100%" stop-color="#1a3d99" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1170" height="2532" fill="url(#bg)" />
+
+  <!-- Same "D" glyph path as icon-light.svg, scaled up and centered —
+       see splash.svg's matching comment. -->
+  <g transform="translate(405, 1146) scale(1.75)">
+    <path
+      d="M168 100h96c86 0 150 66 150 156s-64 156-150 156h-96V100z
+         M232 164v184h32c52 0 86-38 86-92s-34-92-86-92h-32z"
+      fill="url(#glyph)"
+    />
+  </g>
+</svg>

@@ -1,0 +1,62 @@
+<!--
+  D-Store splash screen — dark theme, leaf 4.b.ii.zo (Progressive Web
+  App → Installability → Icons/splash → "Splash screens per theme").
+
+  iOS only shows a launch splash screen for a site added to the home
+  screen as a standalone app (`apple-mobile-web-app-capable`), and only
+  reads it from `<link rel="apple-touch-startup-image">` tags — it does
+  not derive one from the web manifest the way Android/Chrome does
+  (that side was already covered for free by 4.b.ii.zi's theme-aware
+  `background_color`/`theme_color`/icon manifest fields). This asset,
+  and its light-theme counterpart `splash-light.svg`, are what
+  `app/layout.tsx`'s `generateMetadata()` now points a representative
+  set of `apple-touch-startup-image` entries at.
+
+  Deliberately vector, reusing icon.svg's gradient-background +
+  centered-glyph construction rather than a per-device-resolution
+  raster pipeline: a splash screen here is a plain background wash
+  plus a centered wordmark, with no fine photographic detail that
+  would need exact pixel-for-pixel matching per device, so one scalable
+  asset per theme — sized to a representative portrait phone aspect
+  ratio (1170×2532, matching the mid-size iPhone class in the media
+  list below) rather than one raster file per exact device resolution
+  Apple's own list enumerates — covers every breakpoint honestly. Same
+  "no hand-rolled raster asset pipeline, prefer the platform-native
+  scalable option" posture `icon.svg`/`icon-light.svg` already
+  established for the manifest icon.
+
+  Dark theme's own token values (app/globals.css `[data-theme="dark"]`:
+  --color-bg #0a0908, --color-accent #d4af37/--color-accent-strong
+  #b8942e), same radial-glow-into-near-black shape icon.svg's
+  background uses — kept visually consistent with the app icon so the
+  launch screen and the icon the user tapped read as the same brand
+  moment, not two different treatments.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1170 2532" width="1170" height="2532" role="img" aria-label="D-Store">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#3a2e12" />
+      <stop offset="55%" stop-color="#171207" />
+      <stop offset="100%" stop-color="#0a0908" />
+    </radialGradient>
+    <linearGradient id="glyph" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e9c65c" />
+      <stop offset="55%" stop-color="#d4af37" />
+      <stop offset="100%" stop-color="#b8942e" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1170" height="2532" fill="url(#bg)" />
+
+  <!-- Same "D" glyph path as icon.svg, scaled up and centered in the
+       portrait canvas rather than filling it edge-to-edge — a splash
+       screen reads as a centered wordmark moment, not a full-bleed
+       icon tile. -->
+  <g transform="translate(405, 1146) scale(1.75)">
+    <path
+      d="M168 100h96c86 0 150 66 150 156s-64 156-150 156h-96V100z
+         M232 164v184h32c52 0 86-38 86-92s-34-92-86-92h-32z"
+      fill="url(#glyph)"
+    />
+  </g>
+</svg>
