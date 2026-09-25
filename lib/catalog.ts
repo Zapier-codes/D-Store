@@ -64,7 +64,51 @@ async function getMergedApps(): Promise<App[]> {
   return cachedMergedApps;
 }
 
-// --- Categories -------------------------------------------------------
+// --- Public stats (4.c.i.zo) --------------------------------------------
+
+export interface PublicStats {
+  totalApps: number;
+  totalDownloads: number;
+}
+
+/**
+ * Public stats footer widget — leaf `4.c.i.zo`, per docs/D-STORE.md
+ * §4E ("Public stats footer widget (total apps, downloads)"). Two
+ * numbers only, not `getTrafficSummary`'s (`3.c.ii.zi`) per-app
+ * breakdown or view-count total — that dashboard sits behind
+ * `/admin/traffic`'s password gate (`3.c.iv.zi`) precisely because
+ * per-app numbers are more than a public footer should expose; this
+ * is the coarse, catalog-wide subset that's fine to show anyone.
+ *
+ * `totalDownloads` sums `install_count` across the merged catalog —
+ * this store's own counter, same honesty posture `lib/sources/
+ * aptoide.ts` already documents: third-party (Aptoide-origin) apps
+ * start at 0 and stay there until the flagged-not-fixed gap under
+ * `5.h.ii.zi` (counters look up the Zealot-only `apps` array, so they
+ * 404 for Aptoide-origin apps) is closed, so today's total undercounts
+ * real installs for those apps rather than borrowing/fabricating an
+ * Aptoide-sourced download count. `getTrafficSummary` already lives
+ * with the same limitation; not re-solved here.
+ *
+ * Deliberately no `resolveAfterDelay`, unlike every other function in
+ * this file. `Footer` renders in the root layout (`app/layout.tsx`) on
+ * every single page with no Suspense boundary of its own, so the
+ * simulated latency this module's header comment justifies for
+ * page-level shelves (building real loading states against) would
+ * instead add a flat 200ms to every single navigation sitewide, with
+ * no loading state ever built here to justify paying it —
+ * `getMergedApps()` is already cached in-memory per server lifetime,
+ * so this call is effectively free after the first page render anyway.
+ */
+export async function getPublicStats(): Promise<PublicStats> {
+  const merged = await getMergedApps();
+  return {
+    totalApps: merged.length,
+    totalDownloads: merged.reduce((sum, app) => sum + app.install_count, 0),
+  };
+}
+
+
 
 export async function getCategories(): Promise<Category[]> {
   return resolveAfterDelay(categories);

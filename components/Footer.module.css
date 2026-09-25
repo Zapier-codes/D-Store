@@ -29,6 +29,11 @@
   white-space: nowrap;
 }
 
+.stats {
+  white-space: nowrap;
+  color: var(--color-border);
+}
+
 .legal {
   display: flex;
   gap: 1.25rem;
