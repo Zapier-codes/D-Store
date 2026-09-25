@@ -1,0 +1,62 @@
+<!--
+  D-Store brand icon — light-theme variant, leaf 4.b.ii.zi (Progressive
+  Web App → Installability → Icons/splash → "Theme-aware app icons").
+
+  public/icon.svg (4.b.i.zi) was authored from dark theme's own token
+  *values* only, with that leaf's own header comment explicitly
+  deferring a light-theme variant to this milestone. This file is that
+  variant — built from light theme's own tokens (app/globals.css,
+  [data-theme="light"]: --color-bg #f7f8fa, --color-surface #ffffff,
+  --color-accent #2454c9, --color-accent-strong #1a3d99), not a
+  brightness-inverted copy of the dark icon's warm-gold-on-near-black
+  look. Same "must genuinely diverge, not brightness-invert" rule this
+  repo already applies to every other theme-adjacent pair (0.i's
+  CategoryTheme schema, 0.b.iv's --color-text/--gradient-vignette).
+
+  The background gradient leans on the same cool cobalt tint
+  0.b.iv.zo's light --gradient-vignette introduced (a glow near the
+  top, fading to the theme's own near-white base) rather than dark
+  theme's warm-gold-glow-into-near-black shape. The glyph gradient uses
+  --color-accent/--color-accent-strong directly. The gloss treatment
+  also diverges on purpose: dark theme's white highlight at 16% opacity
+  reads clearly against near-black; the same white highlight would be
+  invisible against this near-white base, so here the "sheen" is a
+  low-opacity accent-tinted highlight instead (mirroring 0.b.iv.zo's
+  own reasoning for why light theme's vignette needed a different
+  *shape*, not just different colors, from dark theme's).
+
+  Same square, full-bleed, no-transparent-padding construction as
+  icon.svg, so it can serve both "any" and "maskable" manifest purposes
+  without a second asset, and the same "D" glyph path — the mark itself
+  doesn't change between themes, only its palette.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="D-Store">
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="22%" r="85%">
+      <stop offset="0%" stop-color="#dce6fb" />
+      <stop offset="55%" stop-color="#eef1f5" />
+      <stop offset="100%" stop-color="#f7f8fa" />
+    </radialGradient>
+    <linearGradient id="glyph" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a7fe0" />
+      <stop offset="55%" stop-color="#2454c9" />
+      <stop offset="100%" stop-color="#1a3d99" />
+    </linearGradient>
+    <linearGradient id="gloss" x1="0%" y1="0%" x2="100%" y2="65%">
+      <stop offset="0%" stop-color="#2454c9" stop-opacity="0.14" />
+      <stop offset="35%" stop-color="#2454c9" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)" />
+
+  <!-- "D" glyph, same path as icon.svg's dark variant — only the
+       palette diverges between themes, not the mark. -->
+  <path
+    d="M168 100h96c86 0 150 66 150 156s-64 156-150 156h-96V100z
+       M232 164v184h32c52 0 86-38 86-92s-34-92-86-92h-32z"
+    fill="url(#glyph)"
+  />
+
+  <rect width="512" height="512" fill="url(#gloss)" />
+</svg>

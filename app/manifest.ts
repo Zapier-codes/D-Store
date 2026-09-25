@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getTheme } from "@/lib/theme";
 
 /**
  * Web app manifest — leaf 4.b.i.zi (Phase 4 → Progressive Web App →
@@ -15,29 +16,41 @@ import type { MetadataRoute } from "next";
  * IntersectionObserver for scroll reveal, etc.) rather than a
  * hand-rolled `public/manifest.json` plus manual `<link>` tag.
  *
- * `icons` points at `public/icon.svg` (new, this leaf) — a static,
- * hand-authored brand mark using dark theme's own token *values*
- * (`app/globals.css`'s `--color-bg`/`--color-accent`/
- * `--color-accent-strong`), since a manifest icon has no CSS-variable
- * runtime to read from, unlike `AppIcon.tsx`'s per-app generated tiles.
- * One SVG covers both `"any"` and `"maskable"` purposes (see that
- * file's own header comment on why its safe-area math allows this)
- * rather than shipping two assets. A per-theme icon set is explicitly
- * out of scope here — that's `4.b.ii`'s "Theme-aware app icons", the
- * next milestone in this same track, not this leaf.
+ * `icons`/`background_color`/`theme_color` — leaf 4.b.ii.zi
+ * ("Theme-aware app icons"). This file's icon/color fields were
+ * originally dark-theme-only by construction, with 4.b.i.zi's own
+ * header comment explicitly deferring a per-theme variant to this
+ * milestone. Metadata route handlers (manifest/sitemap/robots) are
+ * server functions like any other and can call the same dynamic APIs
+ * a page can, so — same pattern `app/layout.tsx` already uses for
+ * `data-theme` — this now calls `getTheme()` (`lib/theme.ts`,
+ * 0.b.iii.zi) and resolves icon/color fields off the visitor's own
+ * theme cookie rather than a hardcoded dark value. This makes the
+ * route dynamic (opts out of static generation, same as any other
+ * cookie-dependent response) — expected and correct for a manifest
+ * that now varies per visitor.
  *
- * `background_color`/`theme_color` reuse dark theme's own
- * `--color-bg`/`--color-accent` hex values for the same reason: no
- * light/dark manifest variant exists yet (a single manifest can't
- * switch with the visitor's theme cookie the way `app/layout.tsx`
- * does for `data-theme`), so this deliberately matches the site's
- * `DEFAULT_THEME` (`lib/theme.ts`, "dark") rather than either theme
- * arbitrarily. `theme_color` is also set as a `viewport` export below
- * per Next 15's split of that concern out of `metadata` (the
- * `themeColor` key inside a page/layout's `metadata` export was
- * deprecated in favor of a dedicated `viewport` export) — this file is
- * the single source for both, rather than duplicating the hex value in
- * `app/layout.tsx`.
+ * `public/icon.svg` (dark, 4.b.i.zi) and `public/icon-light.svg`
+ * (light, new this leaf) are two separate hand-authored assets built
+ * from each theme's own token *values* (a manifest icon has no
+ * CSS-variable runtime to read from, unlike `AppIcon.tsx`'s per-app
+ * generated tiles) — `icon-light.svg` genuinely diverges from the dark
+ * icon's palette rather than being a brightness-inverted copy, per
+ * this repo's standing "must diverge" rule for theme-adjacent assets
+ * (see that file's own header comment). Each SVG still covers both
+ * `"any"` and `"maskable"` purposes on its own (see icon.svg's header
+ * comment on the safe-area math that allows this), so this leaf adds
+ * one new asset, not four.
+ *
+ * `background_color`/`theme_color` now read the resolved theme's own
+ * `--color-bg`/`--color-accent` hex values (mirrored here since a
+ * manifest route can't read `app/globals.css`'s CSS custom properties
+ * at request time) instead of always matching `DEFAULT_THEME`.
+ * `theme_color` is also set as a `viewport` export in
+ * `app/layout.tsx`, which already resolves the same theme cookie for
+ * `data-theme` — see that file for why the two mechanisms (manifest
+ * field vs. `<meta name="theme-color">` tag) are kept in sync
+ * separately rather than one deriving from the other.
  *
  * `display: "standalone"` and `start_url: "/"` are the two fields that
  * actually make the browser's install prompt available at all; the
@@ -49,7 +62,16 @@ import type { MetadataRoute } from "next";
  * accidentally change the installed app's identity and orphan
  * existing installs.
  */
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const theme = await getTheme();
+
+  const iconSrc = theme === "light" ? "/icon-light.svg" : "/icon.svg";
+  // Mirrors app/globals.css's [data-theme="dark"|"light"] --color-bg /
+  // --color-accent values — kept in sync by hand since this route has
+  // no CSS-variable runtime to read from (see header comment above).
+  const backgroundColor = theme === "light" ? "#f7f8fa" : "#0a0908";
+  const themeColor = theme === "light" ? "#2454c9" : "#0a0908";
+
   return {
     id: "/",
     name: "D-Store",
@@ -57,19 +79,19 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "F-Droid-style Android app store — no accounts required.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0a0908",
-    theme_color: "#0a0908",
+    background_color: backgroundColor,
+    theme_color: themeColor,
     orientation: "portrait-primary",
     categories: ["shopping", "utilities"],
     icons: [
       {
-        src: "/icon.svg",
+        src: iconSrc,
         sizes: "any",
         type: "image/svg+xml",
         purpose: "any",
       },
       {
-        src: "/icon.svg",
+        src: iconSrc,
         sizes: "any",
         type: "image/svg+xml",
         purpose: "maskable",
