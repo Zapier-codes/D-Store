@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getTheme } from "@/lib/theme";
 import { getRegion } from "@/lib/region";
@@ -11,6 +11,21 @@ import ConsentBanner from "@/components/ConsentBanner";
 export const metadata: Metadata = {
   title: "D-Store",
   description: "F-Droid-style Android app store — Phase 0 UI revamp (dummy data)",
+};
+
+// `themeColor` moved out of `metadata` into its own `viewport` export —
+// leaf 4.b.i.zi (Web app manifest). Next 15 deprecated `themeColor`
+// inside `metadata` in favor of this dedicated export; the hex value
+// here is app/manifest.ts's own `theme_color`/`background_color`
+// (dark theme's `--color-bg`), kept in sync manually since a
+// manifest's `theme_color` and this `<meta name="theme-color">` tag
+// are two separate mechanisms browsers read for the same purpose (the
+// manifest field applies once installed as a standalone app; this tag
+// applies to the browser chrome — e.g. Android's status bar — even
+// before install) — see app/manifest.ts's own header comment for why
+// dark theme's value was chosen over a per-theme swap.
+export const viewport: Viewport = {
+  themeColor: "#0a0908",
 };
 
 export default async function RootLayout({

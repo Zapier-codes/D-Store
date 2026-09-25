@@ -1,0 +1,54 @@
+<!--
+  D-Store brand icon — leaf 4.b.i.zi (Progressive Web App → Installability
+  → Web app manifest).
+
+  A manifest icon is a static asset with no runtime, so this can't reuse
+  components/AppIcon.tsx's CSS-custom-property approach directly — the
+  hex values below are copied from app/globals.css's dark theme block
+  (0.b.i.zi: --color-bg #0a0908, --color-accent #d4af37,
+  --color-accent-strong #b8942e) rather than referencing the tokens,
+  matching AppIcon's own gradient + glyph + gloss-highlight convention
+  (multi-stop gradient, an initial as glyph, a soft diagonal gloss band)
+  so the install icon reads as the same visual language as every in-app
+  icon tile rather than a one-off mark. Dark-theme colors only, since a
+  single static manifest icon can't swap with the visitor's theme — a
+  light-theme-aware variant is explicitly 4.b.ii's job ("Theme-aware app
+  icons"), not this leaf's.
+
+  Square, full-bleed, no transparent padding baked in beyond the "any"
+  purpose needs: kept simple enough that the existing safe-area math
+  most maskable-icon guidance uses (content within the inner ~80%)
+  still holds, so this file can also serve a "maskable" purpose entry
+  without a second asset.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="D-Store">
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="22%" r="85%">
+      <stop offset="0%" stop-color="#3a2e12" />
+      <stop offset="55%" stop-color="#171207" />
+      <stop offset="100%" stop-color="#0a0908" />
+    </radialGradient>
+    <linearGradient id="glyph" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e9c65c" />
+      <stop offset="55%" stop-color="#d4af37" />
+      <stop offset="100%" stop-color="#b8942e" />
+    </linearGradient>
+    <linearGradient id="gloss" x1="0%" y1="0%" x2="100%" y2="65%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16" />
+      <stop offset="35%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)" />
+
+  <!-- "D" glyph, drawn as a path rather than <text> so it renders
+       identically everywhere a manifest icon might be rasterized,
+       with no font-availability dependency. -->
+  <path
+    d="M168 100h96c86 0 150 66 150 156s-64 156-150 156h-96V100z
+       M232 164v184h32c52 0 86-38 86-92s-34-92-86-92h-32z"
+    fill="url(#glyph)"
+  />
+
+  <rect width="512" height="512" fill="url(#gloss)" />
+</svg>
