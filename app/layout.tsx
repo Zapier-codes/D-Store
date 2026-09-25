@@ -141,9 +141,36 @@ export default async function RootLayout({
   return (
     <html lang="en" data-theme={theme}>
       <body>
+        {/*
+          Skip link — follow-up to leaf 3.d.i.zo (HANDOVER.md; WCAG
+          2.4.1 Bypass Blocks). That leaf's sitewide keyboard-nav audit
+          didn't add one — no skip link existed anywhere in the repo
+          before this. Must be the first focusable element in the
+          document so it's the very first Tab stop on every page,
+          ahead of Header's nav/search/theme-toggle controls — without
+          it, a keyboard or screen-reader user has no way to jump past
+          that repeated block and has to tab through all of it on
+          every single page load. Visually hidden until focused
+          (app/globals.css's .skipLink), then a real callout since
+          that's exactly the moment it needs to be seen.
+        */}
+        <a href="#main-content" className="skipLink">
+          Skip to main content
+        </a>
         <RegionProvider region={region}>
           <Header theme={theme} />
-          {children}
+          {/*
+            Every page under app/ already renders its own <main> (see
+            e.g. app/page.tsx) — this div is only a focusable landing
+            target for the skip link above, not a second landmark.
+            tabIndex={-1} makes it programmatically focusable (divs
+            aren't, by default) without adding it to the normal Tab
+            order, the standard pattern for a skip-link destination
+            that doesn't happen to be a naturally-focusable element.
+          */}
+          <div id="main-content" tabIndex={-1}>
+            {children}
+          </div>
           <Footer />
           {!consented && <ConsentBanner />}
           <ServiceWorkerRegister />

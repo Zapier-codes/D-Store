@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import styles from "./RateThisApp.module.css";
 
 /**
@@ -42,6 +42,41 @@ export default function RateThisApp({ appSlug }: { appSlug: string }) {
 
   const display = hovered || selected;
 
+  // `role="radiogroup"` below declares this as a set of radio buttons,
+  // and the ARIA APG's keyboard model for that role is roving
+  // tabindex: exactly one member is a Tab stop at a time (the
+  // selected one, or the first when nothing's selected yet), and
+  // Left/Up and Right/Down move the selection *within* the group —
+  // Tab moves out of it entirely, same as a native <input
+  // type="radio"> group already behaves for free. Leaf `3.d.i.zo`
+  // (HANDOVER.md) audited keyboard nav sitewide and explicitly
+  // flagged exactly this gap as "not fixed — bigger than this leaf,"
+  // rather than guessing at a fix inline; this closes that specific,
+  // named gap as its own follow-up. Before this, all five stars were
+  // independent Tab stops with no arrow-key handling at all —
+  // keyboard-operable by accident (Enter on each one still worked)
+  // but not matching the role it declared, which is exactly the kind
+  // of mismatch a screen reader user navigating by role, not just by
+  // Tab, would hit.
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, value: number) {
+    let next: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      next = value === 5 ? 1 : value + 1;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      next = value === 1 ? 5 : value - 1;
+    } else if (event.key === "Home") {
+      next = 1;
+    } else if (event.key === "End") {
+      next = 5;
+    }
+    if (next === null) return;
+    event.preventDefault(); // otherwise Up/Down would also scroll the page
+    setSelected(next);
+    event.currentTarget.parentElement
+      ?.querySelector<HTMLButtonElement>(`[data-star-value="${next}"]`)
+      ?.focus();
+  }
+
   function handleSubmit() {
     setSubmitted(selected);
     fetch(`/api/apps/${appSlug}/reviews`, {
@@ -74,12 +109,15 @@ export default function RateThisApp({ appSlug }: { appSlug: string }) {
             role="radio"
             aria-checked={selected === value}
             aria-label={`${value} ${value === 1 ? "star" : "stars"}`}
+            data-star-value={value}
+            tabIndex={value === (selected || 1) ? 0 : -1}
             className={styles.starButton}
             onMouseEnter={() => setHovered(value)}
             onMouseLeave={() => setHovered(0)}
             onFocus={() => setHovered(value)}
             onBlur={() => setHovered(0)}
             onClick={() => setSelected(value)}
+            onKeyDown={(event) => handleKeyDown(event, value)}
           >
             <span className={value <= display ? styles.starFull : styles.starEmpty} aria-hidden="true">
               ★

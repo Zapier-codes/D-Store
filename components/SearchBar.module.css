@@ -76,6 +76,20 @@
   background: var(--color-bg);
 }
 
+/*
+ * Keyboard-arrow highlight — follow-up to leaf 3.d.i.zo (see
+ * SearchBar.tsx's header comment). Real DOM focus never
+ * leaves the `<input>` in this pattern (aria-activedescendant tells
+ * assistive tech which option is "active" instead), so this can't be
+ * a `:focus`/`:focus-visible` style — `[data-active]` is set by
+ * SearchBar.tsx's `activeIndex` state on whichever `<li>` matches.
+ * Same visual treatment as hover/focus-visible above so keyboard and
+ * pointer users see the same feedback.
+ */
+li[data-active] .suggestion {
+  background: var(--color-bg);
+}
+
 .icon {
   flex: none;
   width: 1.75rem;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { searchAppsAction } from "@/lib/search-actions";
 import type { App } from "@/lib/catalog";
@@ -11,7 +12,20 @@ const DEBOUNCE_MS = 200;
 /**
  * Instant search suggestions — leaf 0.g.i.zi (Search & Category
  * Browse → Search), replacing the plain `<input>` that used to live
- * directly in Header.tsx (0.c.i.zi).
+ * directly in Header.tsx (0.c.i.zi). Keyboard pattern (aria-expanded/
+ * aria-controls/aria-activedescendant, arrow-key highlight, Enter to
+ * go, Escape to close) added as a follow-up to leaf `3.d.i.zo`
+ * (HANDOVER.md) — that leaf's sitewide keyboard-nav audit didn't
+ * reach this component at all (its Done note lists the gaps it found
+ * elsewhere; this one wasn't among them). Before this, the dropdown
+ * declared `role="listbox"`/`role="option"` (screen readers would
+ * announce it as a listbox) but had no keyboard behavior backing that
+ * role at all: no way to reach an option except Tab-ing through each
+ * suggestion link individually, and nothing told a screen reader the
+ * input and the listbox were related. Focus deliberately stays on the
+ * `<input>` throughout, per the ARIA APG's combobox pattern —
+ * `aria-activedescendant` is what tells assistive tech which option is
+ * "focused" without literally moving DOM focus off the text field.
  *
  * Still a real `<form action="/search" method="GET">` underneath —
  * pressing Enter or clicking Search with JS disabled still works
@@ -30,9 +44,11 @@ const DEBOUNCE_MS = 200;
  * → theme-actions.ts).
  */
 export default function SearchBar() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<App[]>([]);
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const requestId = useRef(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +57,7 @@ export default function SearchBar() {
     if (!trimmed) {
       setResults([]);
       setOpen(false);
+      setActiveIndex(-1);
       return;
     }
 
@@ -51,6 +68,7 @@ export default function SearchBar() {
       if (id === requestId.current) {
         setResults(matches.slice(0, 6));
         setOpen(true);
+        setActiveIndex(-1);
       }
     }, DEBOUNCE_MS);
 
@@ -67,6 +85,26 @@ export default function SearchBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (!open || results.length === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((current) => (current + 1) % results.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((current) => (current - 1 + results.length) % results.length);
+    } else if (event.key === "Escape") {
+      setOpen(false);
+      setActiveIndex(-1);
+    } else if (event.key === "Enter" && activeIndex >= 0) {
+      // A real suggestion is highlighted — go there instead of
+      // submitting the underlying <form> to /search.
+      event.preventDefault();
+      setOpen(false);
+      router.push(`/app/${results[activeIndex].slug}`);
+    }
+  }
+
   return (
     <div className={styles.wrapper} ref={wrapperRef}>
       <form action="/search" method="GET" role="search" className={styles.form}>
@@ -75,21 +113,34 @@ export default function SearchBar() {
           name="q"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          onFocus={() => query.trim() && setOpen(true)}
+          onFocus={() => query.trim() && results.length > 0 && setOpen(true)}
+          onKeyDown={handleKeyDown}
           placeholder="Search apps"
           aria-label="Search apps"
           autoComplete="off"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls="search-suggestions"
+          aria-autocomplete="list"
+          aria-activedescendant={activeIndex >= 0 ? `search-suggestion-${activeIndex}` : undefined}
           className={styles.searchInput}
         />
       </form>
 
       {open && results.length > 0 && (
-        <ul className={styles.suggestions} role="listbox">
-          {results.map((app) => (
-            <li key={app.slug} role="option" aria-selected="false">
+        <ul id="search-suggestions" className={styles.suggestions} role="listbox">
+          {results.map((app, index) => (
+            <li
+              key={app.slug}
+              id={`search-suggestion-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+              data-active={index === activeIndex || undefined}
+            >
               <Link
                 href={`/app/${app.slug}`}
                 className={styles.suggestion}
+                tabIndex={-1}
                 onClick={() => setOpen(false)}
               >
                 <span
