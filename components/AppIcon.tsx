@@ -1,22 +1,39 @@
+import Image from "next/image";
+import { isRealImageUrl } from "@/lib/image";
+
 /**
- * AppIcon — shared dummy icon renderer.
+ * AppIcon — shared icon renderer, generated placeholder by default,
+ * real image when one exists.
  *
- * No real icon/screenshot assets exist anywhere in this repo (every
- * component that needed one — AppCard, Hero, CategoryCard,
- * SponsoredCard, the app-detail header — independently built its own
- * flat colored-initial-tile as a stand-in, all clearly documented as
- * placeholders in their own comments). This component replaces that
- * flat tile with a nicer-looking but still 100% local/generated
- * placeholder: a rounded-squircle tile with a multi-stop gradient
- * (from the app's own primary/secondary/tertiary dummy colors), a
- * subtle top-left gloss highlight, and the app's initial as the glyph
- * — same underlying data, deterministic per app (no randomness, so it
- * doesn't flicker between renders/re-hydration), just livelier than a
- * flat single-color fill. Still not a real icon asset — swapping in
- * real <img> icons later only touches this one file.
+ * Originally (0.c.ii.zo) a 100% local/generated placeholder for every
+ * app, since no real icon assets existed anywhere in this repo — every
+ * component that needed one independently built its own flat
+ * colored-initial-tile as a stand-in. This component replaced those
+ * with a nicer-looking but still generated placeholder: a
+ * rounded-squircle tile with a multi-stop gradient (from the app's own
+ * primary/secondary/tertiary dummy colors), a subtle top-left gloss
+ * highlight, and the app's initial as the glyph — deterministic per
+ * app (no randomness, so it doesn't flicker between renders/
+ * re-hydration).
  *
- * Pure presentational SVG, no network request, so it renders instantly
- * and never 404s, unlike pointing <img> at a mock `/mock/...` path.
+ * `5.h.ii.zi` gave third-party (Aptoide) catalog entries a real
+ * `App.icon` URL (`https://pool.img.aptoide.com/...`); first-party
+ * (Zealot) entries still carry a dummy filename-shaped string in the
+ * same field. `3.d.ii.zi` (Image CDN + responsive `srcset`) is what
+ * actually renders that real URL: an optional `src` prop — checked via
+ * `isRealImageUrl` (only a real, fetchable `https://` URL counts) —
+ * swaps the generated SVG for a `next/image` `fill` image, giving CDN
+ * optimization and a responsive `srcset` for free from Next's image
+ * pipeline. No `src`, or a dummy/placeholder-shaped one, falls through
+ * to the exact same generated tile as before — this never regresses
+ * to a broken `<img>` pointed at a `/mock/...` path.
+ *
+ * The image branch is a `position: absolute; inset: 0;` layer over the
+ * same box the SVG branch fills, with `border-radius: inherit` so it
+ * picks up whichever rounding the parent `.icon` container already
+ * applies (AppCard/Hero/the app-detail header/AppIconLive all set
+ * their own `border-radius` on that container) rather than needing a
+ * second copy of that value here.
  */
 export default function AppIcon({
   name,
@@ -24,13 +41,42 @@ export default function AppIcon({
   secondaryColor,
   tertiaryColor,
   className,
+  src,
+  sizes,
 }: {
   name: string;
   primaryColor: string;
   secondaryColor: string;
   tertiaryColor?: string;
   className?: string;
+  /** Real icon URL, e.g. `App.icon` for a third-party catalog entry. Dummy/placeholder strings are ignored. */
+  src?: string;
+  /** `next/image`'s `sizes` attribute — must match the container's actual rendered width for a correct `srcset` pick. Defaults to a small fixed-icon size. */
+  sizes?: string;
 }) {
+  if (isRealImageUrl(src)) {
+    return (
+      <span
+        className={className}
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "block",
+          overflow: "hidden",
+          borderRadius: "inherit",
+        }}
+      >
+        <Image
+          src={src}
+          alt={`${name} icon`}
+          fill
+          sizes={sizes ?? "64px"}
+          style={{ objectFit: "cover" }}
+        />
+      </span>
+    );
+  }
+
   const initial = name.trim().charAt(0).toUpperCase() || "?";
   // Deterministic id suffix from the name so multiple icons on one page
   // don't collide on the same gradient/clip <id>.

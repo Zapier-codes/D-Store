@@ -22,6 +22,19 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/**": ["./storage/downloads/**"],
   },
+  // 3.d.ii.zi — the only real (non-placeholder) icon/screenshot images
+  // in the catalog are third-party (Aptoide) entries, all served from
+  // this one CDN host (confirmed against the ingested snapshot,
+  // storage/downloads/aptoide-snapshot.json). next/image refuses to
+  // optimize a remote host that isn't explicitly allow-listed here.
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "pool.img.aptoide.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

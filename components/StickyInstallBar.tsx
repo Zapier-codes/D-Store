@@ -44,6 +44,7 @@ export default function StickyInstallBar({
   primaryColor,
   secondaryColor,
   tertiaryColor,
+  iconUrl,
   watchTargetId,
   thirdParty,
 }: {
@@ -53,6 +54,8 @@ export default function StickyInstallBar({
   primaryColor: string;
   secondaryColor: string;
   tertiaryColor: string;
+  /** 3.d.ii.zi — real icon URL, threaded through to AppIconLive/AppIcon; falls back to the generated tile when absent/not a real image. */
+  iconUrl?: string;
   watchTargetId: string;
   /** 5.h.iii.zi — when set, render the real download link instead of the simulated install button. */
   thirdParty?: { downloadUrl: string; sourceName: string };
@@ -90,6 +93,8 @@ export default function StickyInstallBar({
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
             tertiaryColor={tertiaryColor}
+            iconUrl={iconUrl}
+            sizes="32px"
           />
         </div>
         <span className={styles.name}>{appName}</span>

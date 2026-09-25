@@ -68,6 +68,8 @@ export default function Hero({ app }: { app: App }) {
             primaryColor={app.primary_color}
             secondaryColor={app.secondary_color}
             tertiaryColor={app.tertiary_color}
+            src={app.icon}
+            sizes="64px"
           />
         </div>
 

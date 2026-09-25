@@ -116,6 +116,9 @@
   line-height: 1;
   user-select: none;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  /* 3.d.ii.zi — anchors AppIcon's real-image branch (`position:
+     absolute; inset: 0`) when this app has a real icon URL. */
+  position: relative;
 }
 
 .content {

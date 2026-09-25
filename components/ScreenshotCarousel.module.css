@@ -87,6 +87,23 @@
   box-sizing: border-box;
 }
 
+/*
+ * Real-screenshot frame — leaf 3.d.ii.zi. Same box (size/aspect-ratio/
+ * border-radius/border) as `.placeholder` above so a real image slots
+ * into an identically-shaped slide, plus `position: relative` +
+ * `overflow: hidden` to anchor and clip `next/image`'s `fill` layer —
+ * the one thing a flex-centered placeholder box never needed.
+ */
+.frame {
+  width: 62vw;
+  max-width: 220px;
+  aspect-ratio: 9 / 16;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+
 .placeholderLabel {
   font-size: 0.75rem;
   font-weight: 600;

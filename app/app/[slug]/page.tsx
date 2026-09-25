@@ -128,6 +128,8 @@ export default async function AppDetailPage({
               primaryColor={app.primary_color}
               secondaryColor={app.secondary_color}
               tertiaryColor={app.tertiary_color}
+              iconUrl={app.icon}
+              sizes="72px"
             />
           </div>
           <div>
@@ -269,6 +271,7 @@ export default async function AppDetailPage({
           primaryColor={app.primary_color}
           secondaryColor={app.secondary_color}
           tertiaryColor={app.tertiary_color}
+          iconUrl={app.icon}
           watchTargetId="primary-install-row"
           thirdParty={thirdParty ? { downloadUrl: app.apk, sourceName: sourceName(app) } : undefined}
         />

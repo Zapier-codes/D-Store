@@ -12,6 +12,12 @@ import styles from "./AppIconLive.module.css";
  * the app-detail header and `StickyInstallBar`. `AppCard`/`Hero`'s
  * grid/featured icons stay on plain `AppIcon` — nothing there ever
  * triggers an install, so there's nothing to show progress for.
+ *
+ * `iconUrl` — leaf `3.d.ii.zi` — passed straight through to `AppIcon`,
+ * which renders it as a real optimized image when it's a real
+ * `https://` URL (third-party/Aptoide apps) and falls back to the
+ * generated tile otherwise (first-party dummy apps), same as every
+ * other `AppIcon` call site.
  */
 export default function AppIconLive({
   appSlug,
@@ -19,12 +25,17 @@ export default function AppIconLive({
   primaryColor,
   secondaryColor,
   tertiaryColor,
+  iconUrl,
+  sizes,
 }: {
   appSlug: string;
   name: string;
   primaryColor: string;
   secondaryColor: string;
   tertiaryColor: string;
+  iconUrl?: string;
+  /** `next/image`'s `sizes` attribute for the two differently-sized call sites (72px header icon, 32px StickyInstallBar icon). */
+  sizes?: string;
 }) {
   const active = useInstallProgress(appSlug);
 
@@ -35,6 +46,8 @@ export default function AppIconLive({
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
         tertiaryColor={tertiaryColor}
+        src={iconUrl}
+        sizes={sizes ?? "72px"}
       />
       <WavyProgressRing active={active} durationMs={SIMULATED_INSTALL_MS} />
     </div>

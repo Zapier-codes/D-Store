@@ -14,14 +14,17 @@ import styles from "./AppCard.module.css";
  * (description, screenshots, permissions, changelog) is the app-detail
  * page's job (0.e), not the card's.
  *
- * Icon rendering: `App.icon` in the dummy dataset (lib/mock-data.ts) is a
- * filename like "f-droid.png", but no actual icon assets exist in this
- * repo yet (no /public/icons — real icons are a real-backend concern,
- * Phase 5). Rather than point <img> at a path that 404s for every card,
- * this renders a colored initial tile using the app's own
- * `primary_color`/`secondary_color` dummy fields — every card gets a
- * correctly-colored, non-broken icon today, and swapping in real <img>
- * icons later only touches this one spot.
+ * Icon rendering: `App.icon` in the dummy first-party dataset
+ * (lib/mock-data.ts) is a filename like "f-droid.png" with no backing
+ * asset, so `AppIcon` renders a colored initial tile from the app's
+ * own `primary_color`/`secondary_color` dummy fields for those. Since
+ * `5.h.ii.zi`, third-party (Aptoide) entries carry a real `App.icon`
+ * URL — `src={app.icon}` is passed straight through to `AppIcon`,
+ * which (as of `3.d.ii.zi`) renders it as an optimized, responsive
+ * `next/image` when it's a real `https://` URL and falls back to the
+ * same generated tile otherwise. Every card still gets a
+ * correctly-colored, non-broken icon either way — this file doesn't
+ * need to know which case it's in.
  *
  * Pure server component — no interaction of its own yet. The whole card
  * is a single link out to the (not-yet-built, 0.e) app detail page at
@@ -78,6 +81,8 @@ export default function AppCard({
           primaryColor={app.primary_color}
           secondaryColor={app.secondary_color}
           tertiaryColor={app.tertiary_color}
+          src={app.icon}
+          sizes="(min-width: 1024px) 160px, (min-width: 768px) 20vw, (min-width: 480px) 30vw, 45vw"
         />
       </div>
 
