@@ -622,58 +622,89 @@ export async function getSimilarApps(appSlug: string, limit = 6): Promise<App[]>
  * Category-affinity recommendations — leaf `4.d.ii.zi`, first of the two
  * `4.d.ii` (Recommendations) leaves. Backs the home page's "For You" row.
  *
- * There are no accounts (per docs/D-STORE.md §3) and no view-history
- * store yet — `4.d.i`'s favorites (`lib/favorites.ts`, IndexedDB) is the
- * only per-device signal that exists today that both (a) reflects a
- * deliberate choice, not incidental browsing, and (b) is resolvable back
- * to a category. So this leaf's affinity signal is "which categories has
- * this visitor favorited apps in," not a full browsing-history model —
- * `4.d.ii.zo` ("personalization tuning from local history") is where a
- * richer signal (e.g. view history) gets folded in, once one exists.
+ * There are no accounts (per docs/D-STORE.md §3), so this leaf's
+ * affinity signal originally started as "which categories has this
+ * visitor favorited apps in" (`4.d.i`'s favorites, `lib/favorites.ts`) —
+ * the only per-device signal that existed at the time that reflected a
+ * deliberate choice and was resolvable back to a category. `4.d.ii.zo`
+ * (below) folds in the richer signal this leaf's own comment flagged as
+ * missing: local view history (`lib/view-history.ts`).
  *
  * `favoritedSlugs` is passed in by the caller (`getForYouAppsAction`,
  * `lib/favorites-actions.ts`) rather than read here directly: this file
- * has no access to IndexedDB (server-only), same reason
+ * has no access to browser storage (server-only), same reason
  * `getFavoritedAppsAction` takes `slugs` as a parameter instead of
  * calling `listFavorites()` itself. Pass them in `listFavorites()`'s own
  * order (most-recently-favorited first) so a tie between two categories'
- * favorite counts below resolves toward the visitor's more recent taste.
+ * scores below resolves toward the visitor's more recent taste.
  *
- * Ranking: categories are ordered by how many of the visitor's favorites
- * fall into them (ties broken by recency, per the paragraph above); apps
- * are then pulled from those categories in that category order, each
+ * Ranking (tuned by `4.d.ii.zo`): each favorited app's category scores
+ * `FAVORITE_WEIGHT` points, each viewed-category entry (`viewedCategories`,
+ * newest first, already resolved to categories by the caller — see
+ * `getForYouAppsAction`) scores `VIEW_WEIGHT`. Favoriting is a deliberate,
+ * durable signal ("I want this"); viewing is a much weaker, noisier one
+ * (a visitor opens plenty of app pages they don't end up caring about),
+ * so a favorite outweighs a single view several times over rather than
+ * counting equally — one favorite in a category should generally still
+ * outrank a handful of idle views in another. Categories are then ranked
+ * by total score, ties broken by whichever signal (favorite or view)
+ * touched that category most recently across the two lists — `firstSeen`
+ * below records each category's earliest index across both inputs
+ * (lower index = more recent, since both lists are newest-first), and a
+ * lower `firstSeen` wins a tie the same way `categoryOrder`'s original
+ * recency tiebreak did before views existed.
+ *
+ * Apps are then pulled from ranked categories in that order, each
  * category's own apps sorted by `install_count` descending (the same
  * "popularity within the group" signal `getTopFreeApps` uses) as a
  * reasonable proxy for "worth surfacing" absent any other ranking
  * signal. Already-favorited apps are excluded — recommending someone an
- * app they've already saved isn't a recommendation. Returns `[]` (no
- * shelf) when there are no favorites yet, same "nothing to base a
- * recommendation on" empty-state posture `getSimilarApps` would hit for
- * an unknown slug — the caller (`ForYouShelf`) renders no shelf at all
- * for an empty result, same convention `Shelf` itself already uses for
- * an empty `apps` array, rather than showing a "why are you seeing
- * this" empty state for a row nobody would miss if it simply weren't
- * there.
+ * app they've already saved isn't a recommendation; already-viewed apps
+ * are not excluded, since opening a detail page once isn't the same
+ * commitment as favoriting it, and a visitor may well want it surfaced
+ * again (e.g. to finally install it). Returns `[]` (no shelf) when
+ * there's no signal at all yet, same "nothing to base a recommendation
+ * on" empty-state posture `getSimilarApps` would hit for an unknown
+ * slug — the caller (`ForYouShelf`) renders no shelf at all for an
+ * empty result, same convention `Shelf` itself already uses for an
+ * empty `apps` array, rather than showing a "why are you seeing this"
+ * empty state for a row nobody would miss if it simply weren't there.
  */
-export async function getCategoryAffinityApps(favoritedSlugs: string[], limit = 12): Promise<App[]> {
-  if (favoritedSlugs.length === 0) return resolveAfterDelay([]);
+const FAVORITE_WEIGHT = 3;
+const VIEW_WEIGHT = 1;
+
+export async function getCategoryAffinityApps(
+  favoritedSlugs: string[],
+  viewedCategories: string[] = [],
+  limit = 12
+): Promise<App[]> {
+  if (favoritedSlugs.length === 0 && viewedCategories.length === 0) return resolveAfterDelay([]);
 
   const merged = await getMergedApps();
   const bySlug = new Map(merged.map((app) => [app.slug, app]));
 
-  const categoryOrder: string[] = [];
-  const categoryCounts = new Map<string, number>();
+  const categoryScores = new Map<string, number>();
+  const firstSeen = new Map<string, number>(); // lower = more recent
+  let cursor = 0;
+
   for (const slug of favoritedSlugs) {
     const category = bySlug.get(slug)?.category;
     if (!category) continue;
-    if (!categoryCounts.has(category)) categoryOrder.push(category);
-    categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
+    categoryScores.set(category, (categoryScores.get(category) ?? 0) + FAVORITE_WEIGHT);
+    if (!firstSeen.has(category)) firstSeen.set(category, cursor);
+    cursor += 1;
   }
-  // Most-favorited category first; `categoryOrder`'s own order (recency
-  // of first favorite in it) breaks ties, since `sort` is stable.
-  const rankedCategories = [...categoryOrder].sort(
-    (a, b) => (categoryCounts.get(b) ?? 0) - (categoryCounts.get(a) ?? 0)
-  );
+  for (const category of viewedCategories) {
+    categoryScores.set(category, (categoryScores.get(category) ?? 0) + VIEW_WEIGHT);
+    if (!firstSeen.has(category)) firstSeen.set(category, cursor);
+    cursor += 1;
+  }
+
+  const rankedCategories = [...categoryScores.keys()].sort((a, b) => {
+    const scoreDiff = (categoryScores.get(b) ?? 0) - (categoryScores.get(a) ?? 0);
+    if (scoreDiff !== 0) return scoreDiff;
+    return (firstSeen.get(a) ?? Infinity) - (firstSeen.get(b) ?? Infinity);
+  });
 
   const favoritedSet = new Set(favoritedSlugs);
   const seen = new Set<string>();

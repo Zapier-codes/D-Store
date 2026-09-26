@@ -38,17 +38,19 @@ export async function getFavoritedAppsAction(slugs: string[]): Promise<App[]> {
 }
 
 /**
- * "For You" row — leaf `4.d.ii.zi`. Same thin-wrapper reasoning as
- * `getFavoritedAppsAction` above: `ForYouShelf` (a client component,
- * `components/ForYouShelf.tsx`) can read the visitor's favorited slugs
- * itself (`listFavorites()`, client-side IndexedDB), but the
- * category-affinity ranking logic belongs in `lib/catalog.ts` alongside
- * every other recommendation/shelf query, not duplicated into a client
- * module. `favoritedSlugs` is passed through untouched to
- * `getCategoryAffinityApps` — see that function's own doc comment for
- * the ranking rule and why it takes the slugs as a parameter rather
- * than reading IndexedDB itself.
+ * "For You" row — leaf `4.d.ii.zi`, tuned by `4.d.ii.zo`. Same
+ * thin-wrapper reasoning as `getFavoritedAppsAction` above: `ForYouShelf`
+ * (a client component, `components/ForYouShelf.tsx`) can read the
+ * visitor's favorited slugs and local view history itself
+ * (`listFavorites()`/`listViewHistory()`, both client-side browser
+ * storage), but the affinity-ranking logic belongs in `lib/catalog.ts`
+ * alongside every other recommendation/shelf query, not duplicated into
+ * a client module. `viewedCategories` arrives pre-resolved to category
+ * slugs (`ViewHistoryRecorder`/`lib/view-history.ts` capture the
+ * category directly at view time), so no extra catalog lookup is needed
+ * here the way `favoritedSlugs` needs one inside `getCategoryAffinityApps`
+ * itself.
  */
-export async function getForYouAppsAction(favoritedSlugs: string[]): Promise<App[]> {
-  return getCategoryAffinityApps(favoritedSlugs);
+export async function getForYouAppsAction(favoritedSlugs: string[], viewedCategories: string[] = []): Promise<App[]> {
+  return getCategoryAffinityApps(favoritedSlugs, viewedCategories);
 }

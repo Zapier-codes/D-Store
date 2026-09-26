@@ -23,6 +23,7 @@ import AppIconLive from "@/components/AppIconLive";
 import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
 import ViewPing from "@/components/ViewPing";
+import ViewHistoryRecorder from "@/components/ViewHistoryRecorder";
 import ThirdPartyDownloadButton from "@/components/ThirdPartyDownloadButton";
 import ThirdPartyNotice, { ThirdPartyBadge } from "@/components/ThirdPartyNotice";
 import { isThirdParty, thirdPartyLabel, sourceName, isNotProvided } from "@/lib/trust";
@@ -117,6 +118,7 @@ export default async function AppDetailPage({
     <CategoryThemeScope categorySlug={app.category} mode={mode}>
       <main className={styles.main}>
         <ViewPing appSlug={app.slug} />
+        <ViewHistoryRecorder appSlug={app.slug} category={app.category} />
         <AppStructuredData
           app={app}
           categoryName={category?.name ?? null}
