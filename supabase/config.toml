@@ -1,0 +1,91 @@
+# Supabase CLI project config for D-Store.
+#
+# Committed as part of 1.a.iii.zo/2.b.iii.zo's follow-up leaf, 5.f.i.zi
+# ("Provision Supabase ... via a committed supabase/migrations/ file per
+# the requirement above, not dashboard-authored SQL"). Generated with the
+# real CLI (`npx supabase init`, v2.118.0), then trimmed to this project's
+# actual shape rather than committed as the full default template --
+# every section below either matches a design decision already recorded
+# elsewhere in HANDOVER.md, or is left at the CLI default with a comment
+# saying why it's untouched.
+#
+# For detailed configuration reference documentation, visit:
+# https://supabase.com/docs/guides/local-development/cli/config
+project_id = "d-store"
+
+[api]
+enabled = true
+port = 54321
+# `public` only -- this repo has no other schema yet (no graphql use).
+schemas = ["public"]
+extra_search_path = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+health_timeout = "2m"
+major_version = 17
+
+[db.pooler]
+enabled = false
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+# No seed.sql yet -- this repo's data-fetch layer (lib/catalog.ts) still
+# reads from lib/mock-data.ts until 5.f.i.zo migrates the real schema and
+# a later leaf backfills it; nothing to seed a fresh local DB with today.
+enabled = false
+sql_paths = ["./seed.sql"]
+
+# Realtime is off: nothing in this repo subscribes to Postgres changes --
+# every write goes through this app's own Route Handlers (install/view/
+# review counters, 3.b.i/3.b.ii), which read the result back over the
+# same request/response cycle, not a live subscription.
+[realtime]
+enabled = false
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+# Storage is off on purpose, not an oversight: per the "Resolved -- binary
+# ownership" note in Section 0, D-Store never builds, signs, splits or
+# stores app binaries or other release assets -- that's the separate
+# Console (Zealot) repo's job, fronted by its own storage. This project's
+# Supabase instance holds only what D-Store itself generates and owns:
+# ratings, reviews, counters, abuse reports (see the "D-Store's Supabase
+# is not, and must never be, Zealot's Supabase" note in Section 0).
+[storage]
+enabled = false
+
+# Auth is off on purpose, not an oversight: D-STORE.md's "no accounts"
+# design decision holds sitewide (ConsentBanner's "No account required"
+# copy, Review/ReportFlag's anonymous-by-design schema, 1.a.iii.zi/zo).
+# The one authenticated surface this repo has -- /admin/* -- is gated by
+# its own HTTP Basic check against a Vercel env var (lib/admin-auth.ts,
+# 3.c.iv.zi), not Supabase Auth, so there's nothing here to configure.
+[auth]
+enabled = false
+
+[edge_runtime]
+# Left enabled, unlike auth/storage/realtime above: 5.f's own track
+# heading names Edge Functions (supabase/functions/) as the future home
+# for "webhooks, scheduled jobs, the eventual write-side of 5.g's Console
+# read contract" -- real, scoped future work, not speculative scope like
+# the disabled sections above. No functions exist yet, so this is inert
+# until one is committed.
+enabled = true
+policy = "per_worker"
+inspector_port = 8083
+deno_version = 2
+
+[analytics]
+# Off -- this repo's own traffic dashboard (3.c.ii.zi/zo) reads from its
+# own app-native counters (the "Resolved -- 3.b counter sourcing" note in
+# Section 0), not Supabase's log/analytics backend.
+enabled = false
