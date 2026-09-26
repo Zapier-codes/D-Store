@@ -16,6 +16,7 @@ import DataSafety from "@/components/DataSafety";
 import ReportAppForm from "@/components/ReportAppForm";
 import InstallButton from "@/components/InstallButton";
 import ShareButton from "@/components/ShareButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import MonetizationDisclosure from "@/components/MonetizationDisclosure";
 import StickyInstallBar from "@/components/StickyInstallBar";
 import AppIconLive from "@/components/AppIconLive";
@@ -175,6 +176,7 @@ export default async function AppDetailPage({
                 />
               )}
               <ShareButton appName={app.name} />
+              <FavoriteButton appSlug={app.slug} appName={app.name} appIcon={app.icon} />
               <span className={styles.installMeta}>
                 {app.size_mb.toFixed(1)} MB &middot; v{app.version}
                 {!isNotProvided(app, "min_android_version") && <> &middot; Android {app.min_android_version}+</>}

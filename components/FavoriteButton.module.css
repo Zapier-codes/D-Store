@@ -1,0 +1,59 @@
+/*
+ * Favorite button styles — leaf 4.d.i.zi.
+ *
+ * Mirrors ShareButton.module.css's outlined secondary-action
+ * treatment (same visual weight as Share, sitting right beside it) —
+ * `.favoriteButton[aria-pressed="true"]` swaps to a filled accent
+ * pill so a saved app's button reads as "on" at a glance, the same
+ * pressed/unpressed contrast InstallButton's Open/Uninstall group
+ * already uses.
+ */
+
+.favoriteButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background-color: transparent;
+  color: var(--color-border);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.favoriteButton:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.favoriteButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.favoriteButton:active {
+  background-color: var(--color-surface);
+}
+
+.favoriteButton[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.favoriteButton[aria-pressed="true"]:hover {
+  filter: brightness(1.08);
+}
+
+.icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .favoriteButton {
+    transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+  }
+}
