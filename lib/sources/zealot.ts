@@ -49,7 +49,7 @@ interface RawDataSafety {
   deletion_request_url: string | null;
 }
 
-interface RawVersion {
+export interface RawVersion {
   version_name: string | null;
   download_url: string | null;
   sha256: string | null;
@@ -59,7 +59,7 @@ interface RawVersion {
   compatibility: { min_sdk: number | null };
 }
 
-interface RawApp {
+export interface RawApp {
   id: string | number;
   package_name: string | null;
   /**
@@ -92,7 +92,7 @@ interface RawApp {
   versions: RawVersion[];
 }
 
-interface RawIndex {
+export interface RawIndex {
   schema_version: number;
   generated_at: string;
   sequence: number;
@@ -208,7 +208,7 @@ function normalizeZealotApp(raw: RawApp): App {
 
 // --- Fetch, verify, cache ---------------------------------------------
 
-async function readJsonFile<T>(parts: string[]): Promise<T | null> {
+export async function readJsonFile<T>(parts: string[]): Promise<T | null> {
   try {
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
@@ -219,7 +219,7 @@ async function readJsonFile<T>(parts: string[]): Promise<T | null> {
   }
 }
 
-async function writeJsonFile(parts: string[], data: unknown): Promise<void> {
+export async function writeJsonFile(parts: string[], data: unknown): Promise<void> {
   try {
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
@@ -231,7 +231,52 @@ async function writeJsonFile(parts: string[], data: unknown): Promise<void> {
   }
 }
 
-/** Fetches + fully verifies one candidate index. Returns `null` on ANY failure (network, signature, schema, freshness, rollback) -- every rejection reason is deliberately collapsed to the same "don't trust this" outcome for the caller, per this leaf's spec. */
+export { STATE_FILE, CACHE_FILE };
+
+/**
+ * Signature/schema/freshness/rollback checks only — no I/O beyond reading
+ * the last anti-rollback state, and no cache write. Split out of the old
+ * `fetchLiveIndex` (`5.g.i.zi`) as leaf `5.g.iv.zi`'s build-time snapshot
+ * script needs a checkpoint *between* "this index's signature/sequence
+ * check out" and "commit it as the new trusted cache" — that leaf verifies
+ * every referenced file's real SHA-256 in between, and must NOT persist
+ * `STATE_FILE`/`CACHE_FILE` if any of those checks fail, or a single bad
+ * build would permanently roll the anti-rollback counter forward on data
+ * this repo never actually finished trusting. Runtime's `fetchLiveIndex`
+ * below has no such extra check, so it calls this and `commitIndexState`
+ * back-to-back, same net behavior as before this split.
+ *
+ * Returns `null` on ANY failure (bad signature, wrong schema, expired,
+ * rolled back) -- every rejection reason collapses to the same
+ * "don't trust this" outcome, same posture the pre-split function used.
+ */
+export async function validateIndex(indexText: string, signatureText: string): Promise<RawIndex | null> {
+  const matchedKey = await verifySignature(indexText, signatureText);
+  if (!matchedKey) return null; // no pinned key matches -- never fall through to trusting the content anyway
+
+  let parsed: RawIndex;
+  try {
+    parsed = JSON.parse(indexText) as RawIndex;
+  } catch {
+    return null;
+  }
+
+  if (parsed.schema_version !== SUPPORTED_SCHEMA_VERSION) return null;
+  if (isExpired(parsed.expires_at)) return null;
+
+  const lastState = await readJsonFile<IndexState>(STATE_FILE);
+  if (isRollback({ sequence: parsed.sequence, generatedAt: parsed.generated_at }, lastState)) return null;
+
+  return parsed;
+}
+
+/** Persists a fully-validated (and, for the build-time path, file-hash-verified) index as the new trusted cache. Never call this on a candidate that hasn't cleared every check — this is the point of no return that advances the anti-rollback counter. */
+export async function commitIndexState(parsed: RawIndex): Promise<void> {
+  await writeJsonFile(STATE_FILE, { sequence: parsed.sequence, generatedAt: parsed.generated_at } satisfies IndexState);
+  await writeJsonFile(CACHE_FILE, parsed);
+}
+
+/** Fetches + fully verifies one candidate index over plain HTTP (the Pages CDN), then commits it immediately -- the runtime path, unchanged in behavior from before the `validateIndex`/`commitIndexState` split above. `scripts/snapshot-zealot-index.ts` (`5.g.iv.zi`) is the build-time path: same `validateIndex`, a per-file SHA-256 check in between, then the same `commitIndexState`. */
 async function fetchLiveIndex(baseUrl: string): Promise<RawIndex | null> {
   const base = baseUrl.replace(/\/+$/, "");
 
@@ -249,25 +294,10 @@ async function fetchLiveIndex(baseUrl: string): Promise<RawIndex | null> {
     return null; // network error -- caller falls back to cache
   }
 
-  const matchedKey = await verifySignature(indexText, signatureText);
-  if (!matchedKey) return null; // no pinned key matches -- never fall through to trusting the content anyway
+  const parsed = await validateIndex(indexText, signatureText);
+  if (!parsed) return null;
 
-  let parsed: RawIndex;
-  try {
-    parsed = JSON.parse(indexText) as RawIndex;
-  } catch {
-    return null;
-  }
-
-  if (parsed.schema_version !== SUPPORTED_SCHEMA_VERSION) return null;
-  if (isExpired(parsed.expires_at)) return null;
-
-  const lastState = await readJsonFile<IndexState>(STATE_FILE);
-  if (isRollback({ sequence: parsed.sequence, generatedAt: parsed.generated_at }, lastState)) return null;
-
-  await writeJsonFile(STATE_FILE, { sequence: parsed.sequence, generatedAt: parsed.generated_at } satisfies IndexState);
-  await writeJsonFile(CACHE_FILE, parsed);
-
+  await commitIndexState(parsed);
   return parsed;
 }
 
