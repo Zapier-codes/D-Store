@@ -175,6 +175,7 @@ export default async function AppDetailPage({
                   appSlug={app.slug}
                   appName={app.name}
                   currentVersion={app.version}
+                  apkUrl={app.apk}
                 />
               )}
               <ShareButton appName={app.name} />
@@ -279,6 +280,7 @@ export default async function AppDetailPage({
           tertiaryColor={app.tertiary_color}
           iconUrl={app.icon}
           watchTargetId="primary-install-row"
+          apkUrl={app.apk}
           thirdParty={thirdParty ? { downloadUrl: app.apk, sourceName: sourceName(app) } : undefined}
         />
       </main>

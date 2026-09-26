@@ -46,6 +46,7 @@ export default function StickyInstallBar({
   tertiaryColor,
   iconUrl,
   watchTargetId,
+  apkUrl,
   thirdParty,
 }: {
   appSlug: string;
@@ -57,6 +58,8 @@ export default function StickyInstallBar({
   /** 3.d.ii.zi — real icon URL, threaded through to AppIconLive/AppIcon; falls back to the generated tile when absent/not a real image. */
   iconUrl?: string;
   watchTargetId: string;
+  /** 5.g.ii.zi — stable download URL from the Console's signed index (`App.apk`), forwarded to this bar's own `InstallButton` instance. */
+  apkUrl: string;
   /** 5.h.iii.zi — when set, render the real download link instead of the simulated install button. */
   thirdParty?: { downloadUrl: string; sourceName: string };
 }) {
@@ -107,7 +110,7 @@ export default function StickyInstallBar({
           sourceName={thirdParty.sourceName}
         />
       ) : (
-        <InstallButton appSlug={appSlug} appName={appName} currentVersion={currentVersion} />
+        <InstallButton appSlug={appSlug} appName={appName} currentVersion={currentVersion} apkUrl={apkUrl} />
       )}
     </div>
   );
