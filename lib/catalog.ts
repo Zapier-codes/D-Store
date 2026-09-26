@@ -16,12 +16,12 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, developers, reviews, sponsoredSlots, searchQueries, type App, type AppOrigin, type Category, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
+import { apps, categories, collections, developers, reviews, sponsoredSlots, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
 import { createZealotSource as createLiveZealotSource } from "./sources/zealot";
 
-export type { App, AppOrigin, Category, Developer, SponsoredSlot, SearchQueryLog };
+export type { App, AppOrigin, Category, Collection, Developer, SponsoredSlot, SearchQueryLog };
 
 const SIMULATED_LATENCY_MS = 200;
 
@@ -123,6 +123,44 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 export async function getCategoryAppCount(slug: string): Promise<number> {
   const merged = await getMergedApps();
   return resolveAfterDelay(merged.filter((app) => app.category === slug).length);
+}
+
+// --- Collections: editorial groupings (leaf 4.c.ii.zo) -----------------
+
+export async function getCollections(): Promise<Collection[]> {
+  return resolveAfterDelay(collections);
+}
+
+export async function getCollectionBySlug(slug: string): Promise<Collection | null> {
+  const collection = collections.find((c) => c.slug === slug) ?? null;
+  return resolveAfterDelay(collection);
+}
+
+/**
+ * Member apps of one collection, in the collection's own curated order
+ * (`Collection.app_package_names`'s order — `sort`, not `filter`'s
+ * incidental catalog order, so re-ordering the seed data is enough to
+ * re-order the shelf/page without touching this function). Apps whose
+ * package name isn't in the merged catalog (a listing pulled from
+ * Aptoide, a future catalog refresh) are silently skipped rather than
+ * thrown on, the same defensive posture `mergeCatalogSources` already
+ * takes for a missing `package_name`.
+ */
+export async function getCollectionApps(slug: string): Promise<App[]> {
+  const collection = collections.find((c) => c.slug === slug);
+  if (!collection) return resolveAfterDelay([]);
+  const merged = await getMergedApps();
+  const byPackage = new Map(merged.filter((app) => app.package_name).map((app) => [app.package_name, app]));
+  const ordered = collection.app_package_names
+    .map((pkg) => byPackage.get(pkg))
+    .filter((app): app is App => app !== undefined);
+  return resolveAfterDelay(ordered);
+}
+
+/** Member-app count per collection, same "pass counts down, don't fetch per-card" pattern `getCategoryAppCount` established. */
+export async function getCollectionAppCount(slug: string): Promise<number> {
+  const apps = await getCollectionApps(slug);
+  return apps.length;
 }
 
 // --- Apps: listing & lookup -------------------------------------------

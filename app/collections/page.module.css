@@ -1,0 +1,19 @@
+/*
+ * Collections index layout — leaf 4.c.ii.zo. Same max-width/padding
+ * shell as app/categories/page.module.css.
+ */
+
+.main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}

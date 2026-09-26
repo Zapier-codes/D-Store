@@ -46,6 +46,33 @@ export interface Category {
 }
 
 /**
+ * Editorial collection — leaf `4.c.ii.zo` (docs/D-STORE.md §A, "Editorial
+ * collections (e.g. 'Privacy Tools')"). Genuinely new: the `5.g.i.zo`
+ * cross-repo review confirmed no `Collection` concept exists on either
+ * this repo's or Zealot's side yet. Distinct from `Category` — a
+ * category is one fixed home per app (`App.category`), while a
+ * collection is a human-curated cross-cutting theme any number of apps
+ * from any category can belong to (same relationship `is_editors_pick`
+ * already has to the rest of the catalog, just named/described and
+ * with more than one instance).
+ *
+ * `app_package_names` rather than `app_slugs`: the only apps in the
+ * live catalog today are Aptoide-origin (`5.h.iv.zi` removed the last
+ * first-party dummy entries), and `package_name` — not `slug` — is
+ * this repo's stable, source-independent join key for an app (see
+ * `lib/sources/types.ts`'s `mergeCatalogSources`, which dedupes on the
+ * same field). A collection referencing slugs would silently break if
+ * a future re-import ever changed how a slug gets derived; the package
+ * name won't.
+ */
+export interface Collection {
+  slug: string;
+  name: string;
+  description: string;
+  app_package_names: string[];
+}
+
+/**
  * Individual star-rating submission — leaf `3.b.ii.zi` (Metrics
  * Pipeline, Aggregation). `docs/D-STORE.md` §5 lists `Review`
  * (anonymous, rate-limited) as a needed new entity but doesn't spec
@@ -381,6 +408,48 @@ export const categories: Category[] = [
   // register (lib/category-theme.ts) attaches to. Zero apps until the
   // dummy entry below.
   { slug: "finance", name: "Finance", icon: "account_balance" },
+];
+
+/**
+ * Editorial collections — leaf `4.c.ii.zo`. Real editorial curation
+ * against the actual 12 real, live Aptoide-origin apps (`5.h.iv.zi`),
+ * not invented placeholder entries — same "no fabricated content"
+ * principle this file's other post-`5.h.iv.zi` comments already
+ * follow. "Privacy Tools" is deliberately not every app that could
+ * plausibly be *associated* with privacy (that would drift into
+ * curating-by-vibes); each member is here because its own real
+ * Aptoide listing text (`storage/downloads/aptoide-snapshot.json`,
+ * `media.description`) makes a specific, checkable privacy-relevant
+ * claim: Firefox's actual description leads with "a private web
+ * browser designed to protect your data, block trackers"; Obsidian's
+ * describes itself as working "on top of a local folder of plain text
+ * Markdown files" (local-first by architecture, not just by
+ * marketing); ReadEra's states plainly "No register" (no account, so
+ * no identity tied to reading activity) alongside "no ads." The
+ * other 9 apps in the catalog (WhatsApp, Termux, VLC, Waze, Khan
+ * Academy, GO Launcher Prime, Simple Alarm Clock, GitHub, My Expenses)
+ * make no such claim in their own listing text, so none are included
+ * here — `App.data_safety`/`contains_ads` can't be used as the
+ * criterion instead, since `lib/sources/aptoide.ts` currently sets
+ * those identically (`false`) for every Aptoide app as a documented
+ * placeholder, not real per-app disclosure data; using a field that
+ * can't actually distinguish apps would make this collection look
+ * data-driven when it isn't. A three-app collection is honest given
+ * today's 12-app catalog rather than padded to look fuller — the
+ * general mechanism (this array, `getCollections`/`getCollectionApps`
+ * in `lib/catalog.ts`, `/collections` + `/collections/[slug]`) is what
+ * this leaf actually delivers, and it supports adding more collections
+ * or backfilling this one the moment the catalog (`5.h.vi`, still
+ * open) grows past its current 12 hand-curated packages.
+ */
+export const collections: Collection[] = [
+  {
+    slug: "privacy-tools",
+    name: "Privacy Tools",
+    description:
+      "Apps that make a specific, checkable privacy claim in their own listing — tracker-blocking, local-first storage, or no forced account.",
+    app_package_names: ["org.mozilla.firefox", "md.obsidian", "org.readera"],
+  },
 ];
 
 /**

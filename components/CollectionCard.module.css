@@ -1,0 +1,87 @@
+/*
+ * Collection-card styles — leaf 4.c.ii.zo. Same shell as CategoryCard
+ * (components/CategoryCard.module.css) for visual consistency across
+ * all three card types this app uses (AppCard, CategoryCard,
+ * CollectionCard).
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  text-decoration: none;
+  color: inherit;
+  min-height: 44px;
+  transition: border-color 150ms ease;
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: var(--color-accent);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Press state — same treatment as AppCard/CategoryCard's (same shell, same rationale). */
+@media (prefers-reduced-motion: no-preference) {
+  .card {
+    transition: border-color 150ms ease, transform 100ms ease;
+  }
+
+  .card:active {
+    transform: scale(0.97);
+  }
+}
+
+.icon {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.description {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text);
+  opacity: 0.75;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.count {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--color-border);
+}
