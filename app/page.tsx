@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import Shelf from "@/components/Shelf";
 import SponsoredCard from "@/components/SponsoredCard";
 import ScrollReveal from "@/components/ScrollReveal";
+import ForYouShelf from "@/components/ForYouShelf";
 
 /**
  * Home page — leaf 0.d.i.zi wired in the hero, replacing the Phase 0
@@ -56,6 +57,21 @@ import ScrollReveal from "@/components/ScrollReveal";
  * it's already in the viewport on first paint, so the two don't
  * conflict, just layer (mount animation, then no further scroll
  * transition since it never leaves/re-enters view).
+ *
+ * Leaf `4.d.ii.zi` adds the "For You" row (`ForYouShelf`) at the very
+ * bottom, below every editorial/algorithmic shelf above. Unlike those,
+ * it isn't fetched here: the affinity signal (this visitor's local
+ * favorites) only exists in IndexedDB, unreachable from this server
+ * component, so `ForYouShelf` is a self-contained client component that
+ * fetches its own data client-side and renders nothing until/unless a
+ * non-empty recommendation list resolves (see its own doc comment).
+ * Placed last, not woven in above: every other shelf's `apps` are known
+ * at server-render time, so `firstNonEmptyShelf` below (the LCP budget
+ * pass, `3.d.ii.zo`) can reason about which one paints first — a row
+ * that only resolves after a client-side effect firing post-hydration
+ * should never be a candidate for that "first paint" priority slot, so
+ * it stays out of that calculation entirely by sitting after every
+ * shelf that participates in it.
  *
  * Leaf `5.h.i.zo` adds the first-party section and the hero's
  * first-party preference, per HANDOVER.md's "Resolved — catalog
@@ -174,6 +190,9 @@ export default async function Home() {
           extraSlot={<SponsoredCard />}
           priorityCount={firstNonEmptyShelf === "editorsPicks" ? 2 : 0}
         />
+      </ScrollReveal>
+      <ScrollReveal>
+        <ForYouShelf />
       </ScrollReveal>
     </main>
   );

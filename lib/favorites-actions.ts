@@ -21,7 +21,7 @@
  * already documents for `SearchBar`.
  */
 
-import { getAppBySlug, type App } from "@/lib/catalog";
+import { getAppBySlug, getCategoryAffinityApps, type App } from "@/lib/catalog";
 
 /**
  * Resolves saved slugs to their current `App` records, most-recently-
@@ -35,4 +35,20 @@ import { getAppBySlug, type App } from "@/lib/catalog";
 export async function getFavoritedAppsAction(slugs: string[]): Promise<App[]> {
   const apps = await Promise.all(slugs.map((slug) => getAppBySlug(slug)));
   return apps.filter((app): app is App => app !== null);
+}
+
+/**
+ * "For You" row — leaf `4.d.ii.zi`. Same thin-wrapper reasoning as
+ * `getFavoritedAppsAction` above: `ForYouShelf` (a client component,
+ * `components/ForYouShelf.tsx`) can read the visitor's favorited slugs
+ * itself (`listFavorites()`, client-side IndexedDB), but the
+ * category-affinity ranking logic belongs in `lib/catalog.ts` alongside
+ * every other recommendation/shelf query, not duplicated into a client
+ * module. `favoritedSlugs` is passed through untouched to
+ * `getCategoryAffinityApps` — see that function's own doc comment for
+ * the ranking rule and why it takes the slugs as a parameter rather
+ * than reading IndexedDB itself.
+ */
+export async function getForYouAppsAction(favoritedSlugs: string[]): Promise<App[]> {
+  return getCategoryAffinityApps(favoritedSlugs);
 }

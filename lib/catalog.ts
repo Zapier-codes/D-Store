@@ -618,6 +618,81 @@ export async function getSimilarApps(appSlug: string, limit = 6): Promise<App[]>
   return resolveAfterDelay(result);
 }
 
+/**
+ * Category-affinity recommendations — leaf `4.d.ii.zi`, first of the two
+ * `4.d.ii` (Recommendations) leaves. Backs the home page's "For You" row.
+ *
+ * There are no accounts (per docs/D-STORE.md §3) and no view-history
+ * store yet — `4.d.i`'s favorites (`lib/favorites.ts`, IndexedDB) is the
+ * only per-device signal that exists today that both (a) reflects a
+ * deliberate choice, not incidental browsing, and (b) is resolvable back
+ * to a category. So this leaf's affinity signal is "which categories has
+ * this visitor favorited apps in," not a full browsing-history model —
+ * `4.d.ii.zo` ("personalization tuning from local history") is where a
+ * richer signal (e.g. view history) gets folded in, once one exists.
+ *
+ * `favoritedSlugs` is passed in by the caller (`getForYouAppsAction`,
+ * `lib/favorites-actions.ts`) rather than read here directly: this file
+ * has no access to IndexedDB (server-only), same reason
+ * `getFavoritedAppsAction` takes `slugs` as a parameter instead of
+ * calling `listFavorites()` itself. Pass them in `listFavorites()`'s own
+ * order (most-recently-favorited first) so a tie between two categories'
+ * favorite counts below resolves toward the visitor's more recent taste.
+ *
+ * Ranking: categories are ordered by how many of the visitor's favorites
+ * fall into them (ties broken by recency, per the paragraph above); apps
+ * are then pulled from those categories in that category order, each
+ * category's own apps sorted by `install_count` descending (the same
+ * "popularity within the group" signal `getTopFreeApps` uses) as a
+ * reasonable proxy for "worth surfacing" absent any other ranking
+ * signal. Already-favorited apps are excluded — recommending someone an
+ * app they've already saved isn't a recommendation. Returns `[]` (no
+ * shelf) when there are no favorites yet, same "nothing to base a
+ * recommendation on" empty-state posture `getSimilarApps` would hit for
+ * an unknown slug — the caller (`ForYouShelf`) renders no shelf at all
+ * for an empty result, same convention `Shelf` itself already uses for
+ * an empty `apps` array, rather than showing a "why are you seeing
+ * this" empty state for a row nobody would miss if it simply weren't
+ * there.
+ */
+export async function getCategoryAffinityApps(favoritedSlugs: string[], limit = 12): Promise<App[]> {
+  if (favoritedSlugs.length === 0) return resolveAfterDelay([]);
+
+  const merged = await getMergedApps();
+  const bySlug = new Map(merged.map((app) => [app.slug, app]));
+
+  const categoryOrder: string[] = [];
+  const categoryCounts = new Map<string, number>();
+  for (const slug of favoritedSlugs) {
+    const category = bySlug.get(slug)?.category;
+    if (!category) continue;
+    if (!categoryCounts.has(category)) categoryOrder.push(category);
+    categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
+  }
+  // Most-favorited category first; `categoryOrder`'s own order (recency
+  // of first favorite in it) breaks ties, since `sort` is stable.
+  const rankedCategories = [...categoryOrder].sort(
+    (a, b) => (categoryCounts.get(b) ?? 0) - (categoryCounts.get(a) ?? 0)
+  );
+
+  const favoritedSet = new Set(favoritedSlugs);
+  const seen = new Set<string>();
+  const result: App[] = [];
+  for (const category of rankedCategories) {
+    const inCategory = merged
+      .filter((app) => app.category === category && !favoritedSet.has(app.slug) && !seen.has(app.slug))
+      .sort((a, b) => b.install_count - a.install_count);
+    for (const app of inCategory) {
+      if (result.length >= limit) break;
+      seen.add(app.slug);
+      result.push(app);
+    }
+    if (result.length >= limit) break;
+  }
+
+  return resolveAfterDelay(result);
+}
+
 /** Backs the developer profile page (0.g.iii.zo), `/developer/[slug]`. */
 export async function getDeveloperBySlug(slug: string): Promise<Developer | null> {
   const declared = developers.find((d) => d.slug === slug);
