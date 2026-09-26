@@ -16,12 +16,12 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, collections, developers, reviews, sponsoredSlots, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
+import { apps, categories, collections, developers, reviews, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type AppSponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
 import { createZealotSource as createLiveZealotSource } from "./sources/zealot";
 
-export type { App, AppOrigin, Category, Collection, Developer, SponsoredSlot, SearchQueryLog };
+export type { App, AppOrigin, Category, Collection, Developer, AppSponsoredSlot, SearchQueryLog };
 
 const SIMULATED_LATENCY_MS = 200;
 
@@ -746,112 +746,55 @@ export async function getAppsByDeveloper(developerSlug: string): Promise<App[]> 
   return resolveAfterDelay(result);
 }
 
-// --- Sponsored-slot scheduling (3.c.i.zo) -------------------------------------------
+// --- Sponsored placement, read-only (5.j.ii.zi) -------------------------------------------
 
 /**
- * Sponsored-slot scheduling tool — leaf `3.c.i.zo`, the second leaf of
- * `3.c.i` (Featuring). `SponsoredCard` (`0.d.iii.zo`) has always
- * rendered one hardcoded placeholder ("Your app could be here"); this
- * is the admin-facing seam that lets a scheduled booking take over that
- * slot for its date range instead, backing `/admin/sponsored`.
- *
- * All four functions below share the same in-memory-array seam as
- * every other mutator in this file (`setAppFeaturing` immediately
- * above being the most recent), operating on `sponsoredSlots`
- * (`lib/mock-data.ts`) instead of `apps` — swaps for real Supabase
- * reads/writes once `5.f.i` lands.
+ * Sponsored placement — leaf `5.j.ii.zi`, **retires** the `3.c.i.zo`
+ * admin-scheduling tool below it in history. Per the cross-repo
+ * "sponsored placement & collections" decision (`HANDOVER.md`), Zealot's
+ * Console is now where `sponsored_slots` windows are authored
+ * (`5.j.i.zo`) and this repo only reads them straight off each app via
+ * the signed index (`lib/sources/zealot.ts`) — no local
+ * create/update/delete seam, no standalone entity to keep in sync. Both
+ * functions below read `App.sponsored_slots` on the merged catalog;
+ * neither mutates anything.
  */
 
-/** Every scheduled slot, most recently created first — backs the admin listing at `/admin/sponsored`. */
-export async function getSponsoredSlots(): Promise<SponsoredSlot[]> {
-  const result = [...sponsoredSlots].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
+/** Every app carrying at least one sponsored-placement window, most recently updated first — backs the read-only listing at `/admin/sponsored`. */
+export async function getSponsoredApps(): Promise<App[]> {
+  const merged = await getMergedApps();
+  const result = merged
+    .filter((app) => app.sponsored_slots.length > 0)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   return resolveAfterDelay(result);
 }
 
 /**
- * The slot `SponsoredCard` should actually render today, or `null` if
- * none is scheduled — `SponsoredCard` falls back to its existing
- * static placeholder in that case, so scheduling a slot is additive,
- * never a regression from what already shipped in `0.d.iii.zo`.
+ * The app `SponsoredCard` should actually render today, or `null` if
+ * none has an active window — `SponsoredCard` falls back to its
+ * existing static placeholder in that case, same as before this leaf.
  *
- * "Active" means today's date falls within `[start_date, end_date]`
- * inclusive, compared at day granularity (both sides normalized to
- * midnight UTC) since `SponsoredSlot` only stores dates, not
- * timestamps — a slot scheduled to end "today" is still active for
- * all of today, not cut off at midnight of the day it was created.
+ * "Active" means today falls within `[starts_at, ends_at]` inclusive,
+ * per Zealot's own `date-time` fields (unlike the old day-granularity
+ * `SponsoredSlot`, these compare full timestamps).
  *
- * If more than one slot's window overlaps today — a real scheduling
- * conflict an admin UI should prevent going forward, but nothing in
- * `createSponsoredSlot` below rejects it yet — the most recently
- * *created* one wins (`getSponsoredSlots`' own sort order), rather
- * than throwing or silently picking whichever happens to be first in
- * the underlying array; deterministic, and consistent with "last
- * write wins" being the simplest reasonable default for a Phase 3
- * dummy-data tool with no real conflict-resolution UI yet.
+ * If more than one app has a window covering today — a real scheduling
+ * conflict the Console's own admin should prevent, not something this
+ * read-only reader can reject — the most recently *updated* app wins
+ * (`getSponsoredApps`' own sort order), the same deterministic
+ * "last write wins" default the retired entity used, now applied to
+ * apps instead of bookings.
  *
  * `referenceDate` defaults to `new Date()` but is accepted as a
  * parameter so this is exercisable without depending on the system
- * clock (a fixed date can be passed directly) — no test runner exists
- * in this sandbox to actually wire that up as an automated test, but
- * the seam is there for whoever adds one.
+ * clock — same seam the retired function offered.
  */
-export async function getActiveSponsoredSlot(referenceDate: Date = new Date()): Promise<SponsoredSlot | null> {
-  const today = referenceDate.toISOString().slice(0, 10); // YYYY-MM-DD, matches SponsoredSlot's date format
-  const active = (await getSponsoredSlots()).find(
-    (slot) => slot.start_date <= today && today <= slot.end_date
+export async function getActiveSponsoredSlot(referenceDate: Date = new Date()): Promise<App | null> {
+  const now = referenceDate.toISOString();
+  const active = (await getSponsoredApps()).find((app) =>
+    app.sponsored_slots.some((slot) => slot.starts_at <= now && now <= slot.ends_at)
   );
   return active ?? null;
-}
-
-export interface CreateSponsoredSlotInput {
-  name: string;
-  summary: string;
-  start_date: string; // YYYY-MM-DD
-  end_date: string; // YYYY-MM-DD
-}
-
-/** Schedules a new sponsored slot. No overlap validation — see `getActiveSponsoredSlot`'s comment on how an overlap is resolved if one occurs. */
-export async function createSponsoredSlot(input: CreateSponsoredSlotInput): Promise<SponsoredSlot> {
-  const slot: SponsoredSlot = {
-    id: `sponsored-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: input.name,
-    summary: input.summary,
-    start_date: input.start_date,
-    end_date: input.end_date,
-    created_at: new Date().toISOString(),
-  };
-  sponsoredSlots.push(slot);
-  return resolveAfterDelay(slot);
-}
-
-export type UpdateSponsoredSlotInput = Partial<CreateSponsoredSlotInput>;
-
-/** Edits an existing slot's creative or schedule. Returns the updated slot, or `null` if `id` doesn't match one. */
-export async function updateSponsoredSlot(
-  id: string,
-  updates: UpdateSponsoredSlotInput
-): Promise<SponsoredSlot | null> {
-  const slot = sponsoredSlots.find((s) => s.id === id);
-  if (!slot) {
-    return resolveAfterDelay(null);
-  }
-  if (updates.name !== undefined) slot.name = updates.name;
-  if (updates.summary !== undefined) slot.summary = updates.summary;
-  if (updates.start_date !== undefined) slot.start_date = updates.start_date;
-  if (updates.end_date !== undefined) slot.end_date = updates.end_date;
-  return resolveAfterDelay(slot);
-}
-
-/** Removes a scheduled slot. Returns whether a slot was actually found and removed. */
-export async function deleteSponsoredSlot(id: string): Promise<boolean> {
-  const index = sponsoredSlots.findIndex((s) => s.id === id);
-  if (index === -1) {
-    return resolveAfterDelay(false);
-  }
-  sponsoredSlots.splice(index, 1);
-  return resolveAfterDelay(true);
 }
 
 // --- Traffic dashboard (3.c.ii.zi) -------------------------------------------

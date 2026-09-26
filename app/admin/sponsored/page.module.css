@@ -1,8 +1,10 @@
 /*
- * Sponsored-slot scheduling — leaf 3.c.i.zo. Same plain-admin-page
- * shell (.main/.heading/.subheading) and table treatment as
- * app/admin/featuring/page.module.css, plus a form + status-badge
- * treatment that page didn't need.
+ * Sponsored placement, read-only — leaf `5.j.ii.zi`, retiring the
+ * `3.c.i.zo` scheduling tool's form/status-badge treatment (moved to
+ * the Zealot Console). Same plain-admin-page shell (`.main`/`.heading`/
+ * `.subheading`) and table + app-cell treatment as
+ * `app/admin/featuring/page.module.css`, since this is now the same
+ * kind of read-only listing that page already is.
  */
 
 .main {
@@ -24,96 +26,6 @@
   margin: -1rem 0 0;
   font-size: 0.9rem;
   color: var(--color-border);
-}
-
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-}
-
-.formRow {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-border);
-  flex: 1;
-  min-width: 200px;
-}
-
-.input {
-  font: inherit;
-  padding: 0.5rem 0.6rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-text);
-}
-
-.input:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-.formActions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.primaryButton {
-  font: inherit;
-  font-weight: 600;
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-accent-strong);
-  background: var(--color-accent);
-  color: var(--color-bg);
-  cursor: pointer;
-}
-
-.primaryButton:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.primaryButton:focus-visible,
-.secondaryButton:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-.secondaryButton {
-  font: inherit;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.error {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--color-error);
 }
 
 .table {
@@ -144,6 +56,25 @@
   padding: 0.6rem 1rem;
   vertical-align: middle;
   font-size: 0.9rem;
+}
+
+.appCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.windows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 .statusActive {

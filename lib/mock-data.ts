@@ -91,35 +91,27 @@ export interface Review {
 }
 
 /**
- * A scheduled sponsored-slot booking — leaf `3.c.i.zo` (Admin/Editorial
- * Tools, Featuring). Distinct from `SponsoredCard`'s own hardcoded
- * "Your app could be here" placeholder content (`0.d.iii.zo`): that
- * component's doc comment explains why sponsored content doesn't live
- * in the `App[]` catalog (no slug/detail page/rating of its own) — this
- * is the same reasoning applied to *scheduled* sponsored content, kept
- * as its own array rather than folded into `App` for the same reason.
+ * A sponsored-placement window on a real catalog app — leaf `5.j.ii.zi`.
+ * **Retires** the standalone `SponsoredSlot` entity this file used to
+ * define (its own id/name/summary/dates, scheduled via `/admin/sponsored`
+ * and never folded into `App[]`): per the cross-repo "sponsored placement
+ * & collections" decision recorded in `HANDOVER.md`, real Play-Store-style
+ * sponsored placement uses the app's *own* listing as the creative — no
+ * separate ad copy — so this is now just a `[{starts_at, ends_at}]` window
+ * living directly on `App.sponsored_slots` (matches Zealot's signed index
+ * shape exactly, `$defs/app.sponsored_slots` in `catalog_index_v2.schema.json`),
+ * not a distinct entity with its own name/summary to keep in sync.
  *
- * `name`/`summary` are the only creative fields, matching exactly what
- * `SponsoredCard` already renders (a name line + the "Sponsored" badge)
- * — no click-through URL yet, since the card itself isn't a `<Link>`
- * (see that component's comment on why: "no real click-through yet").
- * `start_date`/`end_date` are ISO dates (day granularity, no time-of-day
- * scheduling); a slot is active when today falls within `[start_date,
- * end_date]` inclusive — see `getActiveSponsoredSlot` in
- * `lib/catalog.ts` for the exact comparison.
- *
- * Empty by default: no sponsored slot is scheduled out of the box, so
- * `SponsoredCard` keeps rendering its existing static placeholder until
- * an admin schedules one via `/admin/sponsored` — the same "empty until
- * populated" posture `reviews` above already established.
+ * Authoring moved to the Zealot Console (`5.j.i.zo`) — this repo only
+ * reads the window and, when today falls within `[starts_at, ends_at]`
+ * inclusive, renders that app as the sponsored card via
+ * `getActiveSponsoredSlot` in `lib/catalog.ts`. ISO date-times (not
+ * day-only dates like the old entity), matching the index's own
+ * `format: date-time` fields.
  */
-export interface SponsoredSlot {
-  id: string;
-  name: string;
-  summary: string;
-  start_date: string; // ISO date, YYYY-MM-DD
-  end_date: string; // ISO date, YYYY-MM-DD
-  created_at: string; // ISO date
+export interface AppSponsoredSlot {
+  starts_at: string; // ISO date-time
+  ends_at: string; // ISO date-time
 }
 
 
@@ -161,6 +153,16 @@ export interface App {
   rating_count: number;
   is_featured: boolean;
   is_editors_pick: boolean;
+
+  /**
+   * Sponsored-placement windows — leaf `5.j.ii.zi`. See
+   * `AppSponsoredSlot` above for why this replaced the old standalone
+   * `SponsoredSlot` entity. Empty for every app until a real window is
+   * published (Aptoide-origin apps always carry `[]` — sponsorship is a
+   * first-party Console feature, same "editorial calls are first-party-
+   * only" posture `is_featured`/`is_editors_pick` already use).
+   */
+  sponsored_slots: AppSponsoredSlot[];
   min_android_version: string;
   size_mb: number;
   sha256_checksum: string;
@@ -515,9 +517,6 @@ export const apps: App[] = [];
  * discarding or double-counting it.
  */
 export const reviews: Review[] = [];
-
-/** Scheduled sponsored-slot bookings — leaf `3.c.i.zo`. See `SponsoredSlot` above for why this is empty by default. */
-export const sponsoredSlots: SponsoredSlot[] = [];
 
 /**
  * One recorded search — leaf `3.c.ii.zo`. `query` is stored exactly as

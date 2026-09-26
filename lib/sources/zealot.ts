@@ -97,6 +97,14 @@ export interface RawApp {
    * reader already uses for `publisher.verified` just above.
    */
   editorial?: { featured: boolean | null; editors_pick: boolean | null } | null;
+  /**
+   * Sponsored-placement windows — leaf `5.j.ii.zi`. Required on the
+   * Zealot side (`catalog_index_v2.schema.json`'s `$defs/app` lists it
+   * under `required`), but read as optional/defaulted-to-`[]` here —
+   * same conservative posture this reader already takes for `editorial`
+   * just above, in case an older cached index predates this field.
+   */
+  sponsored_slots?: { starts_at: string; ends_at: string }[];
 }
 
 export interface RawIndex {
@@ -187,6 +195,10 @@ function normalizeZealotApp(raw: RawApp): App {
     // on Zealot's side still falls to `false`, never invented as true.
     is_featured: raw.editorial?.featured ?? false,
     is_editors_pick: raw.editorial?.editors_pick ?? false,
+    // 5.j.ii.zi -- read straight through from the Console's signed index,
+    // same "this repo stays write-free" posture as the two flags above;
+    // authoring moved to the Console (5.j.i.zo), not a local admin tool.
+    sponsored_slots: raw.sponsored_slots ?? [],
     developer_verified: raw.publisher.verified ?? false, // 5.g.iii.zi -- the Console's own developer/agreement-status flag, read straight through; unset is "not verified", not an error
     min_android_version: latest?.compatibility?.min_sdk ? `API ${latest.compatibility.min_sdk}` : "Not provided",
     size_mb: latest?.size_bytes ? Math.round((latest.size_bytes / (1024 * 1024)) * 10) / 10 : 0,

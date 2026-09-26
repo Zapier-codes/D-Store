@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getActiveSponsoredSlot } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
 import styles from "./SponsoredCard.module.css";
@@ -13,15 +14,15 @@ import styles from "./SponsoredCard.module.css";
  * `AppCard` — the only visual difference is the `Sponsored` label
  * replacing the rating, which is the "clearly labeled" requirement.
  *
- * This is a dummy/native placeholder, not a real ad unit: there is no
- * ad network integration, no real creative, and no click-through yet.
- * `App`-shaped dummy content lives inline here (name/summary/colors)
- * rather than in `lib/mock-data.ts`/`lib/catalog.ts`, since a sponsored
- * slot isn't a catalog app — it doesn't have a slug, detail page, or
- * rating, and mixing it into the real `App[]` dataset would leak a
- * fake app into search/category/trending logic that all read from
- * that same array. Wiring a real ad slot (network, targeting, a
- * click-through target) is future/real-backend work, not this leaf.
+ * Originally a dummy/native placeholder with no real creative and no
+ * click-through: `App`-shaped content lived inline here rather than in
+ * `lib/mock-data.ts`, since a sponsored slot wasn't a catalog app.
+ * **Leaf `5.j.ii.zi` retires that**: per the cross-repo "sponsored
+ * placement" decision, real Play-Store-style sponsored placement uses
+ * the app's own listing as the creative, not separate ad copy — so
+ * this now renders a real catalog `App` (icon, name, summary, and a
+ * real click-through to its detail page) whenever one has an active
+ * `sponsored_slots` window, instead of a fake unlinkable stand-in.
  *
  * Placement: rendered by `app/page.tsx` as an extra child passed into
  * the Editor's Picks `Shelf` via its new `extraSlot` prop (see
@@ -29,32 +30,30 @@ import styles from "./SponsoredCard.module.css";
  * so it reads as "woven into" the listing, not interrupting the
  * curated order those apps were fetched in.
  *
- * `3.c.i.zo` (sponsored-slot scheduling tool) wires this into
- * `getActiveSponsoredSlot` (`lib/catalog.ts`): if an admin has
- * scheduled a slot whose `[start_date, end_date]` window covers today
- * (via `/admin/sponsored`), that slot's `name`/`summary` render here
- * instead of the static "Your app could be here" copy below. No slot
- * scheduled, or none active today, falls back to that original
- * placeholder unchanged — scheduling is additive, not a prerequisite
- * for this card to render something. Making this component `async`
- * (it wasn't before) is safe at its one call site: `app/page.tsx` is
- * itself an async server component already awaiting sibling catalog
+ * `getActiveSponsoredSlot` (`lib/catalog.ts`) now returns the `App`
+ * itself, sourced from whatever window the Console (Zealot) published
+ * in its signed index (`5.j.i.zo` — this repo authors nothing locally
+ * anymore, see `/admin/sponsored`'s read-only successor). No app with
+ * an active window falls back to the original static "Your app could
+ * be here" placeholder, unchanged. Making this component `async` (it
+ * wasn't before `3.c.i.zo`) is safe at its one call site: `app/page.tsx`
+ * is itself an async server component already awaiting sibling catalog
  * calls, and Next's App Router renders async server components as
  * children the same way as sync ones.
  */
 export default async function SponsoredCard() {
-  const activeSlot = await getActiveSponsoredSlot();
-  const name = activeSlot?.name ?? "Your app could be here";
-  const summary = activeSlot?.summary;
+  const activeApp = await getActiveSponsoredSlot();
+  const name = activeApp?.name ?? "Your app could be here";
+  const summary = activeApp?.summary;
 
-  return (
-    <div className={styles.card} aria-label="Sponsored">
+  const content = (
+    <>
       <div className={styles.icon}>
         <AppIcon
           name={name}
-          primaryColor="var(--color-accent)"
-          secondaryColor="var(--color-accent-strong)"
-          tertiaryColor="var(--color-surface)"
+          primaryColor={activeApp?.primary_color ?? "var(--color-accent)"}
+          secondaryColor={activeApp?.secondary_color ?? "var(--color-accent-strong)"}
+          tertiaryColor={activeApp?.tertiary_color ?? "var(--color-surface)"}
         />
       </div>
 
@@ -66,6 +65,20 @@ export default async function SponsoredCard() {
           <span className={styles.badge}>Sponsored</span>
         </p>
       </div>
+    </>
+  );
+
+  if (activeApp) {
+    return (
+      <Link href={`/app/${activeApp.slug}`} className={styles.card} aria-label={`Sponsored: ${name}`}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={styles.card} aria-label="Sponsored">
+      {content}
     </div>
   );
 }
