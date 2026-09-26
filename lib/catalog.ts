@@ -357,40 +357,30 @@ export async function submitReview(
 }
 
 /**
- * Admin featuring toggle — leaf `3.c.i.zi` (Admin/Editorial Tools,
- * Featuring). Flips `is_featured` and/or `is_editors_pick` on a single
- * app; either flag is optional so a caller can update just one without
- * clobbering the other. Same seam as every other mutator in this file:
- * writes through the in-memory dummy `apps` array today, swaps for a
- * real Supabase `UPDATE` once `5.f.i` lands, and its caller
- * (`app/api/admin/apps/[slug]/featuring/route.ts`) doesn't change when
- * that happens.
+ * Admin featuring toggle — leaf `3.c.i.zi` originally, **disabled by
+ * `5.g.v.zi`**: featured/Editors' Pick now read straight from the
+ * Console's signed index (`lib/sources/zealot.ts`'s `editorial` block),
+ * so this repo stays write-free on the editorial side, per that leaf's
+ * own text ("this repo stays write-free on the editorial side"). Local
+ * toggles would be silently overwritten on the next index fetch anyway,
+ * since `getFeaturedApps`/`getEditorsPicks` read the merged catalog, not
+ * a separately-cached copy — same "no shadow state to fall out of sync"
+ * reasoning this file already applies elsewhere.
  *
- * `getFeaturedApps`/`getEditorsPicks` above already read these two
- * fields straight off the `App` row with no separate cache to
- * invalidate, so a toggle here is immediately reflected the next time
- * either shelf is fetched — no extra bookkeeping needed the way
- * `getTrendingApps`'s materialized cache would require.
- *
- * Returns the updated `App`, or `null` for an unknown slug — same
- * "not found" shape every other slug-keyed lookup/mutator in this file
- * uses.
+ * Kept as a function (rather than deleted outright) so its one caller,
+ * `app/api/admin/apps/[slug]/featuring/route.ts`, has a single place to
+ * import a clear "disabled" signal from instead of duplicating this
+ * decision inline. Always throws; never mutates `apps` and never
+ * resolves — this is a genuine "stop calling this" leaf, not a
+ * differently-shaped success path.
  */
 export async function setAppFeaturing(
-  slug: string,
-  updates: { is_featured?: boolean; is_editors_pick?: boolean }
+  _slug: string,
+  _updates: { is_featured?: boolean; is_editors_pick?: boolean }
 ): Promise<App | null> {
-  const app = apps.find((a) => a.slug === slug);
-  if (!app) {
-    return resolveAfterDelay(null);
-  }
-  if (updates.is_featured !== undefined) {
-    app.is_featured = updates.is_featured;
-  }
-  if (updates.is_editors_pick !== undefined) {
-    app.is_editors_pick = updates.is_editors_pick;
-  }
-  return resolveAfterDelay(app);
+  throw new Error(
+    "setAppFeaturing is disabled (5.g.v.zi): featured/Editors' Pick are now read-only, sourced from the Console's signed index. Set them in the Zealot Console instead."
+  );
 }
 
 // --- Home page shelves (0.d) -------------------------------------------

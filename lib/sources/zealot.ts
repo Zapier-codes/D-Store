@@ -90,6 +90,13 @@ export interface RawApp {
   updated_at: string;
   /** Newest first — matches `App#catalog_releases`'s documented order on the Zealot side, so `versions[0]` (never a re-sort here) is always the latest. */
   versions: RawVersion[];
+  /**
+   * Task 31a's editorial block — leaf `5.g.v.zi`. Absent/`null` fields
+   * mean the Console hasn't set an editorial flag yet, same
+   * conservative "falls to `false`, never assumed true" posture this
+   * reader already uses for `publisher.verified` just above.
+   */
+  editorial?: { featured: boolean | null; editors_pick: boolean | null } | null;
 }
 
 export interface RawIndex {
@@ -174,8 +181,12 @@ function normalizeZealotApp(raw: RawApp): App {
     view_count: 0,
     avg_rating: 0,
     rating_count: 0,
-    is_featured: false, // editorial (31a) isn't wired here yet -- v2's editorial{} block is reserved/false on Zealot's side too
-    is_editors_pick: false,
+    // 5.g.v.zi -- read straight through from the Console's signed index;
+    // this repo stays write-free on the editorial side (see
+    // `setAppFeaturing` in `lib/catalog.ts`, now disabled). Missing/null
+    // on Zealot's side still falls to `false`, never invented as true.
+    is_featured: raw.editorial?.featured ?? false,
+    is_editors_pick: raw.editorial?.editors_pick ?? false,
     developer_verified: raw.publisher.verified ?? false, // 5.g.iii.zi -- the Console's own developer/agreement-status flag, read straight through; unset is "not verified", not an error
     min_android_version: latest?.compatibility?.min_sdk ? `API ${latest.compatibility.min_sdk}` : "Not provided",
     size_mb: latest?.size_bytes ? Math.round((latest.size_bytes / (1024 * 1024)) * 10) / 10 : 0,

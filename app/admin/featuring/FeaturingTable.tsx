@@ -1,61 +1,20 @@
-"use client";
-
-import { useState } from "react";
 import type { App } from "@/lib/catalog";
 import AppIcon from "@/components/AppIcon";
 import styles from "./page.module.css";
 
 /**
- * Client half of the `3.c.i.zi` admin toggle. Needs to be a client
- * component (unlike almost every other `app/**` page in this repo)
- * because each toggle fires an optimistic PATCH against
- * `app/api/admin/apps/[slug]/featuring/route.ts` and has to reflect
- * the new state immediately without a full page reload — the same
- * click-and-see-it-flip interaction `InstallButton` (`3.a.iv`)
- * already established for the storefront side, reused here for the
- * admin side.
- *
- * State is seeded from the server-fetched `apps` prop and then owned
- * locally; a toggle updates local state immediately (optimistic) and
- * rolls back if the PATCH fails, rather than waiting on the round
- * trip before showing any change — `lib/catalog.ts`'s simulated
- * latency (`SIMULATED_LATENCY_MS`) would otherwise make every click
- * feel laggy.
+ * Read-only display of Featured/Editors' Pick — leaf `3.c.i.zi`
+ * originally, **made read-only by `5.g.v.zi`**. Both flags now come
+ * straight from the Console's (Zealot) signed index
+ * (`lib/sources/zealot.ts`'s `editorial` block), so this repo stays
+ * write-free on the editorial side; there is nothing left here to
+ * toggle. No longer a client component — the optimistic-PATCH toggle
+ * logic this file used to hold (`3.a.iv`-style click-and-see-it-flip)
+ * has no server-side mutation to call now that
+ * `app/api/admin/apps/[slug]/featuring/route.ts` answers `410 Gone`
+ * for every PATCH, so plain server-rendered markup is all this needs.
  */
-export default function FeaturingTable({ apps: initialApps }: { apps: App[] }) {
-  const [apps, setApps] = useState(initialApps);
-  const [pendingSlug, setPendingSlug] = useState<string | null>(null);
-  const [errorSlug, setErrorSlug] = useState<string | null>(null);
-
-  async function toggle(slug: string, field: "is_featured" | "is_editors_pick") {
-    const current = apps.find((a) => a.slug === slug);
-    if (!current) return;
-
-    const nextValue = !current[field];
-    setErrorSlug(null);
-    setPendingSlug(slug);
-    setApps((prev) =>
-      prev.map((a) => (a.slug === slug ? { ...a, [field]: nextValue } : a))
-    );
-
-    try {
-      const res = await fetch(`/api/admin/apps/${slug}/featuring`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: nextValue }),
-      });
-      if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
-    } catch {
-      // Roll back on failure — flip it back to what it was before the click.
-      setApps((prev) =>
-        prev.map((a) => (a.slug === slug ? { ...a, [field]: !nextValue } : a))
-      );
-      setErrorSlug(slug);
-    } finally {
-      setPendingSlug(null);
-    }
-  }
-
+export default function FeaturingTable({ apps }: { apps: App[] }) {
   return (
     <table className={styles.table}>
       <thead>
@@ -80,33 +39,24 @@ export default function FeaturingTable({ apps: initialApps }: { apps: App[] }) {
                 </span>
                 <span>{app.name}</span>
               </div>
-              {errorSlug === app.slug && (
-                <span className={styles.error}>Update failed — reverted</span>
-              )}
             </td>
             <td className={styles.td}>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={app.is_featured}
-                disabled={pendingSlug === app.slug}
-                onClick={() => toggle(app.slug, "is_featured")}
+              <span
+                role="status"
+                aria-label={app.is_featured ? "Featured" : "Not featured"}
                 className={`${styles.toggle} ${app.is_featured ? styles.toggleOn : ""}`}
               >
                 <span className={styles.toggleKnob} />
-              </button>
+              </span>
             </td>
             <td className={styles.td}>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={app.is_editors_pick}
-                disabled={pendingSlug === app.slug}
-                onClick={() => toggle(app.slug, "is_editors_pick")}
+              <span
+                role="status"
+                aria-label={app.is_editors_pick ? "Editors' Pick" : "Not an Editors' Pick"}
                 className={`${styles.toggle} ${app.is_editors_pick ? styles.toggleOn : ""}`}
               >
                 <span className={styles.toggleKnob} />
-              </button>
+              </span>
             </td>
           </tr>
         ))}
