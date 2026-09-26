@@ -284,6 +284,30 @@ export interface App {
    */
   developer_website?: string | null;
   /**
+   * "Verified developer" status — leaf `5.g.iii.zi`. Sourced from the
+   * verified-developer flag in the Console's (Zealot's) signed catalog
+   * index, per `docs/D-STORE.md` §7's "Catalog source" row ("publisher
+   * and verified-developer flag"). This is Zealot-derived attestation
+   * about the *developer's* agreement/identity status with the
+   * Console — a different claim from `sha256_checksum`/
+   * `signing_certificate_fingerprint`'s "Verify this APK" (which is
+   * about one specific file) — so it gets its own field rather than
+   * being folded into either.
+   *
+   * Required, like `is_featured`/`is_editors_pick`: those two are also
+   * editorial/agreement flags that only ever come from the Console,
+   * default `false` for a third-party (Aptoide) entry with no such
+   * relationship to attest to. `isThirdParty` (`lib/trust.ts`) is still
+   * the gate the detail page reads through before rendering the
+   * badge — not because this field could honestly disagree with it
+   * today (every non-`zealot` source sets `false`), but so a future
+   * third source inherits the same suppression `is_featured`/
+   * `is_editors_pick`'s own "editorial calls are first-party-only"
+   * comment already documents, instead of relying on every adapter
+   * remembering to set this one field correctly forever.
+   */
+  developer_verified: boolean;
+  /**
    * Fields the source genuinely did not provide — leaf `5.h.iii.zo`.
    * Absent (the default) means everything is provided, so no first-party
    * entry needed editing. A listed field still carries a typed

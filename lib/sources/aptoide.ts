@@ -287,6 +287,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     rating_count: 0,
     is_featured: false, // editorial calls are first-party-only, per 5.g.v — third-party apps are never featured/editor's-pick
     is_editors_pick: false,
+    developer_verified: false, // 5.g.iii.zi — Aptoide has no verified-developer/agreement relationship with D-Store to attest to; same "editorial calls are first-party-only" posture as the two flags above
     min_android_version: sdkToAndroidVersion(raw.file.hardware?.sdk),
     size_mb: sizeMb,
     sha256_checksum: "Not provided",

@@ -22,6 +22,18 @@ export function thirdPartyLabel(app: Pick<App, "origin">): string | null {
   return null;
 }
 
+/**
+ * `5.g.iii.zi` — true only when a first-party app's `developer_verified`
+ * flag is set. Routed through `isThirdParty` rather than reading
+ * `developer_verified` directly, matching this file's own stated
+ * purpose ("a future third source inherits the suppression instead of
+ * having to remember it") even though every current non-`zealot`
+ * adapter already hardcodes the field to `false`.
+ */
+export function isVerifiedDeveloper(app: Pick<App, "origin" | "developer_verified">): boolean {
+  return !isThirdParty(app) && app.developer_verified;
+}
+
 /** Display name of the source that delivers the file, for button/notice copy. */
 export function sourceName(app: Pick<App, "origin">): string {
   return app.origin === "aptoide" ? "Aptoide" : "Zealot";

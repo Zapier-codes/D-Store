@@ -62,7 +62,15 @@ interface RawVersion {
 interface RawApp {
   id: string | number;
   package_name: string | null;
-  publisher: { name: string; profile_url: string | null };
+  /**
+   * `verified` — leaf `5.g.iii.zi`. The Console's own developer/
+   * agreement-status attestation (docs/D-STORE.md §7's "publisher and
+   * verified-developer flag"); `null`/absent means the Console hasn't
+   * set it, treated the same conservative way as every other
+   * not-yet-populated boolean this reader reads (falls to `false`
+   * below, never assumed true).
+   */
+  publisher: { name: string; profile_url: string | null; verified: boolean | null };
   listing: {
     title: string;
     description: string | null;
@@ -168,6 +176,7 @@ function normalizeZealotApp(raw: RawApp): App {
     rating_count: 0,
     is_featured: false, // editorial (31a) isn't wired here yet -- v2's editorial{} block is reserved/false on Zealot's side too
     is_editors_pick: false,
+    developer_verified: raw.publisher.verified ?? false, // 5.g.iii.zi -- the Console's own developer/agreement-status flag, read straight through; unset is "not verified", not an error
     min_android_version: latest?.compatibility?.min_sdk ? `API ${latest.compatibility.min_sdk}` : "Not provided",
     size_mb: latest?.size_bytes ? Math.round((latest.size_bytes / (1024 * 1024)) * 10) / 10 : 0,
     sha256_checksum: latest?.sha256 ?? "Not provided",

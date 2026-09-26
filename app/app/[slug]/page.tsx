@@ -26,7 +26,7 @@ import ViewPing from "@/components/ViewPing";
 import ViewHistoryRecorder from "@/components/ViewHistoryRecorder";
 import ThirdPartyDownloadButton from "@/components/ThirdPartyDownloadButton";
 import ThirdPartyNotice, { ThirdPartyBadge } from "@/components/ThirdPartyNotice";
-import { isThirdParty, thirdPartyLabel, sourceName, isNotProvided } from "@/lib/trust";
+import { isThirdParty, thirdPartyLabel, sourceName, isNotProvided, isVerifiedDeveloper } from "@/lib/trust";
 import styles from "./page.module.css";
 
 /**
@@ -147,6 +147,14 @@ export default async function AppDetailPage({
               // 5.h.iii.zi — third-party publishers have no /developer/[slug] page (no static
               // Developer row), so the name is plain text rather than a link to a 404.
               developerName && <span className={styles.developerLink}>by {developerName}</span>
+            )}
+            {isVerifiedDeveloper(app) && (
+              // 5.g.iii.zi — sourced from the Console's signed-index verified-developer
+              // flag (never claimed for a third-party/Aptoide app; isVerifiedDeveloper
+              // gates on isThirdParty the same way the Verify-this-APK section does).
+              <span className={styles.badge}>
+                <span aria-hidden="true">✓</span> Verified developer
+              </span>
             )}
 
             <div className={styles.stats}>
