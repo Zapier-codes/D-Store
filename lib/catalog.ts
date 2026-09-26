@@ -19,6 +19,7 @@
 import { apps, categories, developers, reviews, sponsoredSlots, searchQueries, type App, type AppOrigin, type Category, type Developer, type Review, type SponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
+import { createZealotSource as createLiveZealotSource } from "./sources/zealot";
 
 export type { App, AppOrigin, Category, Developer, SponsoredSlot, SearchQueryLog };
 
@@ -29,22 +30,21 @@ function resolveAfterDelay<T>(value: T): Promise<T> {
 }
 
 /**
- * The Zealot ("first-party") source — leaf `5.h.ii.zi`. There is no
- * live Zealot index reader yet (`5.g.i.zi`, separate and not started),
- * so this wraps the existing in-memory `apps` array from
- * `lib/mock-data.ts` behind the same `CatalogSource` interface the
- * Aptoide adapter uses, rather than special-casing it. When `5.g.i.zi`
- * lands, only this function's body changes — every caller below stays
- * the same, the same seam pattern this file's header comment already
- * commits to for the eventual Supabase swap.
+ * The Zealot ("first-party") source — leaf `5.h.ii.zi`, now backed by the
+ * live signed-index reader (`5.g.i.zi`, `lib/sources/zealot.ts`) instead
+ * of the in-memory `apps` array from `lib/mock-data.ts`. Exactly the swap
+ * this function's comment previously committed to: only this function's
+ * body changed, every caller below is untouched.
+ *
+ * `lib/sources/zealot.ts` itself falls back to an empty catalog whenever
+ * no live index is configured/reachable/verifiable yet (see that file's
+ * own comments), never to `mock-data.ts`'s dummy `apps` — mixing a real
+ * signed source with invented dummy entries under the same `origin:
+ * "zealot"` label would misrepresent which of the two a given app
+ * actually came from.
  */
 function createZealotSource(): CatalogSource {
-  return {
-    origin: "zealot",
-    async getApps() {
-      return apps;
-    },
-  };
+  return createLiveZealotSource();
 }
 
 /**
