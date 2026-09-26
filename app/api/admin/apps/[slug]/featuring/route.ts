@@ -23,8 +23,10 @@ import { guardAdminRequest } from "@/lib/admin-auth";
  * Next.js app at all. Real auth for this surface is real-backend work,
  * naturally sequenced behind `5.f.i` (Supabase) landing, not something
  * to half-wire against dummy data now. Revisit once `5.g.iii.zi`
- * (verified-developer badge, sourced from the Console's Supabase-side
- * agreement status) gives this repo its first real read of
+ * (verified-developer badge, sourced from the verified-developer flag
+ * in the Console's signed index — never a live read of the Console's
+ * own database, which is Zealot's own separate Supabase project, not
+ * this repo's) gives this repo its first real read of
  * privileged/account state to key an admin check off of.
  */
 export async function PATCH(

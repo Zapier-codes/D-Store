@@ -13,6 +13,13 @@
 -- No foundational "create the application table" migration exists yet
 -- in this repo (that's closer to 5.f.i.zo's scope); if the project this
 -- gets pushed against doesn't have the base table, create that first.
+--
+-- "The target project" is D-Store's own, dedicated Supabase project --
+-- never Zealot's. Zealot (github.com/Zapier-codes/zealot) already runs
+-- its own separate Supabase-hosted Postgres for its own console schema
+-- (see HANDOVER.md's "Cross-checked -- D-Store's Supabase is not, and
+-- must never be, Zealot's Supabase" note); this repo reads Zealot's
+-- catalog data via its signed index, never via a shared database.
 
 alter table public.application
   add column is_featured boolean not null default false,

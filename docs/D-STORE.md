@@ -192,7 +192,7 @@ D-Store is two systems, not one:
 | **Developer Console** | Where developers submit their `.aab` (Android App Bundle), sign a copyright/distribution agreement (same function as Play Store's developer agreement), and manage listings. It also compiles, signs and stores the resulting APK | **Separate site — not this repo** |
 | **D-Store (this repo)** | The public, no-login, front-facing storefront (Play Store features, web-based) — browse, search, view app details, and a download button that links to the Console-held APK | **This repo** |
 
-**This repo has no submission UI, no AAB upload, no developer authentication, and no agreement-signing flow.** Its only relationship to the Console is reading the metadata the Console's pipeline writes to Supabase, and linking out to the Console site for anyone who wants to submit an app.
+**This repo has no submission UI, no AAB upload, no developer authentication, and no agreement-signing flow.** Its only relationship to the Console is reading the Console's signed catalog index — never a live query against the Console's own database, which is Zealot's separately, its own Supabase project, not this repo's — and linking out to the Console site for anyone who wants to submit an app.
 
 ### The compile pipeline (bridges the two systems)
 
