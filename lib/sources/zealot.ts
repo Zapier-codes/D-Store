@@ -28,7 +28,7 @@
  * missing snapshot file, not an error.
  */
 
-import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
+import type { App, AppOrigin, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
 import { verifySignature, isRollback, isExpired, SUPPORTED_SCHEMA_VERSION, type IndexState } from "./zealot-trust";
@@ -105,6 +105,28 @@ export interface RawApp {
    * just above, in case an older cached index predates this field.
    */
   sponsored_slots?: { starts_at: string; ends_at: string }[];
+  /**
+   * Collection membership — leaf `5.j.ii.zo`. Slugs into the index's
+   * own top-level `collections` registry (`RawIndex.collections`
+   * below). Optional/defaulted-to-`[]` here, same conservative posture
+   * `sponsored_slots` just above already takes for an older cached
+   * index that predates a field.
+   */
+  collections?: string[];
+}
+
+/**
+ * Editorial-collection registry — leaf `5.j.ii.zo`. The Console's own
+ * authored `slug`/`name`/`description` per collection
+ * (`catalog_index_v2.schema.json`'s `$defs/collection`, confirmed
+ * landed by Task 31a — see `HANDOVER.md`'s `5.g.v.zi` note); each
+ * `RawApp.collections` entry above is a slug resolving against this
+ * list, not a separate per-app name/description of its own.
+ */
+export interface RawCollection {
+  slug: string;
+  name: string;
+  description: string;
 }
 
 export interface RawIndex {
@@ -113,6 +135,14 @@ export interface RawIndex {
   sequence: number;
   expires_at: string;
   apps: RawApp[];
+  /**
+   * Top-level collection registry — leaf `5.j.ii.zo`. Optional/
+   * defaulted-to-`[]` at every read site below, same posture every
+   * other possibly-missing-on-an-older-cache field in this file uses —
+   * an index generated before Task 31a's collections work predates it
+   * entirely, not just predates individual apps' membership in it.
+   */
+  collections?: RawCollection[];
 }
 
 // --- Normalization --------------------------------------------------------
@@ -199,6 +229,10 @@ function normalizeZealotApp(raw: RawApp): App {
     // same "this repo stays write-free" posture as the two flags above;
     // authoring moved to the Console (5.j.i.zo), not a local admin tool.
     sponsored_slots: raw.sponsored_slots ?? [],
+    // 5.j.ii.zo -- read straight through, same "this repo stays
+    // write-free" posture as sponsored_slots/is_featured/is_editors_pick
+    // just above; authoring lives in the Console, not a local admin tool.
+    collections: raw.collections ?? [],
     developer_verified: raw.publisher.verified ?? false, // 5.g.iii.zi -- the Console's own developer/agreement-status flag, read straight through; unset is "not verified", not an error
     min_android_version: latest?.compatibility?.min_sdk ? `API ${latest.compatibility.min_sdk}` : "Not provided",
     size_mb: latest?.size_bytes ? Math.round((latest.size_bytes / (1024 * 1024)) * 10) / 10 : 0,
@@ -325,6 +359,38 @@ async function fetchLiveIndex(baseUrl: string): Promise<RawIndex | null> {
 }
 
 /**
+ * Resolves and caches the current trusted index for this server
+ * process's lifetime — same "once per process, not once per caller"
+ * memoization `getMergedApps` (`lib/catalog.ts`) already applies one
+ * layer up, pulled down into this module so `createZealotSource().getApps()`
+ * and `getZealotCollections()` (leaf `5.j.ii.zo`) share one resolution
+ * instead of each independently fetching/reading the same index —
+ * `getMergedApps`'s own cache means this only matters for the rare case
+ * both get called directly rather than through it, but there's no
+ * reason to risk a duplicate live fetch when a shared cache is free.
+ */
+let cachedIndex: RawIndex | null = null;
+let indexResolved = false;
+
+async function resolveIndex(): Promise<RawIndex | null> {
+  if (indexResolved) return cachedIndex;
+
+  const baseUrl = process.env.ZEALOT_CATALOG_INDEX_BASE_URL?.trim();
+  let index: RawIndex | null = null;
+
+  if (baseUrl) {
+    index = await fetchLiveIndex(baseUrl);
+  }
+  if (!index) {
+    index = await readJsonFile<RawIndex>(CACHE_FILE);
+  }
+
+  cachedIndex = index;
+  indexResolved = true;
+  return index;
+}
+
+/**
  * `CatalogSource` for Zealot's first-party index. Snapshot-cached in
  * memory per server lifetime like every other source
  * (`getMergedApps` in `lib/catalog.ts` already caches the merged result,
@@ -344,19 +410,23 @@ export function createZealotSource(): CatalogSource {
   return {
     origin: ZEALOT_ORIGIN,
     async getApps(): Promise<App[]> {
-      const baseUrl = process.env.ZEALOT_CATALOG_INDEX_BASE_URL?.trim();
-      let index: RawIndex | null = null;
-
-      if (baseUrl) {
-        index = await fetchLiveIndex(baseUrl);
-      }
-
-      if (!index) {
-        index = await readJsonFile<RawIndex>(CACHE_FILE);
-      }
-
+      const index = await resolveIndex();
       if (!index) return []; // never fetched successfully, ever -- same "empty is a valid state" precedent lib/sources/aptoide.ts set for a missing snapshot
       return index.apps.map(normalizeZealotApp);
     },
   };
+}
+
+/**
+ * The collection registry off the same signed index — leaf `5.j.ii.zo`.
+ * Read-only, straight through: `RawCollection`'s shape already matches
+ * `Collection` (`lib/mock-data.ts`) field-for-field, so no per-field
+ * mapping is needed the way `normalizeZealotApp` needs for `App`.
+ * `[]` when the index has no registry yet (older cache) or hasn't ever
+ * resolved — `lib/catalog.ts`'s `getCollections()` treats an empty
+ * registry as a valid, unremarkable state, same as an empty catalog.
+ */
+export async function getZealotCollections(): Promise<Collection[]> {
+  const index = await resolveIndex();
+  return index?.collections ?? [];
 }

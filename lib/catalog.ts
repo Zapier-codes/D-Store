@@ -16,10 +16,10 @@
  * Supabase is wired in later.
  */
 
-import { apps, categories, collections, developers, reviews, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type AppSponsoredSlot, type SearchQueryLog } from "./mock-data";
+import { apps, categories, developers, reviews, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type AppSponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
-import { createZealotSource as createLiveZealotSource } from "./sources/zealot";
+import { createZealotSource as createLiveZealotSource, getZealotCollections } from "./sources/zealot";
 
 export type { App, AppOrigin, Category, Collection, Developer, AppSponsoredSlot, SearchQueryLog };
 
@@ -125,36 +125,49 @@ export async function getCategoryAppCount(slug: string): Promise<number> {
   return resolveAfterDelay(merged.filter((app) => app.category === slug).length);
 }
 
-// --- Collections: editorial groupings (leaf 4.c.ii.zo) -----------------
+// --- Collections: editorial groupings, read-only (5.j.ii.zo) -----------
 
+/**
+ * Editorial collection registry — leaf `4.c.ii.zo` originally, **retired
+ * in favor of the Console's signed index by `5.j.ii.zo`**, the same
+ * "this repo stays write-free, sourced from Zealot" move `setAppFeaturing`
+ * (`5.g.v.zi`) and the sponsored-placement functions below already made.
+ * `getZealotCollections()` (`lib/sources/zealot.ts`) reads the same
+ * cached/live index `getMergedApps()` already resolves apps from — no
+ * separate fetch path, no local seed array left to fall out of sync.
+ */
 export async function getCollections(): Promise<Collection[]> {
-  return resolveAfterDelay(collections);
+  const registry = await getZealotCollections();
+  return resolveAfterDelay(registry);
 }
 
 export async function getCollectionBySlug(slug: string): Promise<Collection | null> {
-  const collection = collections.find((c) => c.slug === slug) ?? null;
+  const registry = await getZealotCollections();
+  const collection = registry.find((c) => c.slug === slug) ?? null;
   return resolveAfterDelay(collection);
 }
 
 /**
- * Member apps of one collection, in the collection's own curated order
- * (`Collection.app_package_names`'s order — `sort`, not `filter`'s
- * incidental catalog order, so re-ordering the seed data is enough to
- * re-order the shelf/page without touching this function). Apps whose
- * package name isn't in the merged catalog (a listing pulled from
- * Aptoide, a future catalog refresh) are silently skipped rather than
- * thrown on, the same defensive posture `mergeCatalogSources` already
- * takes for a missing `package_name`.
+ * Member apps of one collection. Membership moved from an
+ * `app_package_names` list living on the collection itself (`4.c.ii.zo`'s
+ * original shape) to `App.collections` — each app's own list of
+ * collection slugs, read straight off the Console's index the same way
+ * `sponsored_slots` already is (`5.j.ii.zi`). That means there's no
+ * curator-supplied order to preserve anymore (the old `sort` on
+ * `app_package_names`'s order); apps are sorted by `install_count`
+ * descending instead, the same "popularity within the group" fallback
+ * `getCategoryAffinityApps` uses when it has nothing more specific to
+ * rank by. Aptoide-origin apps always carry `collections: []` (a
+ * first-party-only Console field), so a collection can only ever
+ * surface Zealot-origin apps today — a real consequence of moving
+ * membership onto the app, not something this function works around.
  */
 export async function getCollectionApps(slug: string): Promise<App[]> {
-  const collection = collections.find((c) => c.slug === slug);
-  if (!collection) return resolveAfterDelay([]);
   const merged = await getMergedApps();
-  const byPackage = new Map(merged.filter((app) => app.package_name).map((app) => [app.package_name, app]));
-  const ordered = collection.app_package_names
-    .map((pkg) => byPackage.get(pkg))
-    .filter((app): app is App => app !== undefined);
-  return resolveAfterDelay(ordered);
+  const result = merged
+    .filter((app) => app.collections.includes(slug))
+    .sort((a, b) => b.install_count - a.install_count);
+  return resolveAfterDelay(result);
 }
 
 /** Member-app count per collection, same "pass counts down, don't fetch per-card" pattern `getCategoryAppCount` established. */

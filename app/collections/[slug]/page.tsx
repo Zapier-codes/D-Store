@@ -14,13 +14,12 @@ import styles from "./page.module.css";
  * `/categories/[slug]`, `/developer/[slug]`).
  *
  * No filters here unlike `/categories/[slug]` (`0.g.ii.zo`) — a
- * collection is a small, hand-curated list by definition (three apps
- * today), not a large browsable set that needs narrowing. The
- * `EmptyState` branch still exists for a collection whose member
- * packages have all since left the live catalog (a real possibility:
- * `getCollectionApps` silently drops any `app_package_names` entry no
- * longer present in `getMergedApps()`), not because today's one seeded
- * collection is expected to hit it.
+ * collection is a small, hand-curated list by definition, not a large
+ * browsable set that needs narrowing. The `EmptyState` branch exists
+ * for a real, current possibility since `5.j.ii.zo`: collection
+ * membership (`App.collections`) is a first-party-only Console field,
+ * so a collection with no Zealot-origin apps in it yet — or none at
+ * all — renders empty rather than erroring.
  */
 export default async function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

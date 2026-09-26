@@ -10,9 +10,9 @@ import styles from "./page.module.css";
  *
  * Counts are fetched once here via `getCollectionAppCount` per
  * collection and passed down, same reasoning `/categories` already
- * documents for its own per-card counts (small, fixed list — one
- * collection today — so N small awaited calls up front beats each
- * card fetching its own).
+ * documents for its own per-card counts (small, fixed list — the
+ * Console's own collection registry today — so N small awaited calls
+ * up front beats each card fetching its own).
  */
 export default async function CollectionsPage() {
   const items = await getCollections();
