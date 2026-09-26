@@ -20,9 +20,28 @@ import styles from "./Footer.module.css";
  * /privacy, /terms, /dmca, /about, and /feed.xml are all real pages
  * now (2.d.i.zi/zo, 2.d.ii.zo, 0.j.iv.zo, 4.c.i.zi respectively) — no
  * remaining forward references in this file's links.
+ *
+ * `5.g.iii.zo` — "Submit an app" link to the Console (Zealot) site,
+ * the actual submission entry point per docs/D-STORE.md §8 ("This repo
+ * has no submission UI... linking out to the Console site for anyone
+ * who wants to submit an app"). Sourced from `NEXT_PUBLIC_CONSOLE_URL`
+ * — same "configured, not hardcoded" pattern `ZEALOT_CATALOG_INDEX_BASE_URL`
+ * already uses for the Console's index endpoint (`lib/sources/zealot.ts`),
+ * and the same `NEXT_PUBLIC_` prefix `BASE_URL` already uses in
+ * `app/sitemap.ts`/`app/feed.xml/route.ts` for this repo's own site URL.
+ * Deliberately **no fallback URL is invented** here (unlike those two
+ * call sites, which fall back to this repo's own known production
+ * origin) — a wrong guess at the Console's real address would either
+ * 404 or, worse, point at somewhere this repo doesn't control, and this
+ * file's own honesty convention (`5.h.iii.zo`'s "Not provided", not an
+ * invented default) already covers exactly this case: unset means the
+ * link is simply omitted, never a dead or fabricated href.
  */
 export default async function Footer() {
   const stats = await getPublicStats();
+  const rawConsoleUrl = process.env.NEXT_PUBLIC_CONSOLE_URL?.trim();
+  const consoleUrl =
+    rawConsoleUrl && rawConsoleUrl.startsWith("https://") ? rawConsoleUrl : null;
 
   return (
     <footer className={styles.footer}>
@@ -36,6 +55,16 @@ export default async function Footer() {
         </span>
 
         <nav className={styles.legal} aria-label="Site">
+          {consoleUrl && (
+            <a
+              href={consoleUrl}
+              className={styles.legalLink}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Submit an app
+            </a>
+          )}
           <Link href="/about" className={styles.legalLink}>
             About
           </Link>
