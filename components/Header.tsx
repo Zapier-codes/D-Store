@@ -47,6 +47,9 @@ import styles from "./Header.module.css";
  * `/collections` added by leaf `4.c.ii.zo` (Editorial collections) —
  * not a forward reference, added the same "once the page exists" way
  * `/charts/top-free`/`/charts/new` were.
+ *
+ * `/saved` added by leaf `4.d.i.zo` ("Saved apps" view), same
+ * once-the-page-exists convention.
  */
 export default function Header({ theme }: { theme: Theme }) {
   return (
@@ -79,6 +82,9 @@ export default function Header({ theme }: { theme: Theme }) {
           </Link>
           <Link href="/collections" className={styles.navLink}>
             Collections
+          </Link>
+          <Link href="/saved" className={styles.navLink}>
+            Saved
           </Link>
           <Link href="/charts/top-free" className={styles.navLink}>
             Top Free
