@@ -577,15 +577,37 @@ export async function getNewAndUpdated(limit = 12): Promise<App[]> {
 
 // --- Search & related content (0.g) -------------------------------------------
 
-/** Case-insensitive substring match over name + summary — good enough for Phase 0's dummy dataset size. */
+/**
+ * Case-insensitive substring match over name + summary — good enough for
+ * Phase 0's dummy dataset size.
+ *
+ * `6.a.iii.zi` extends the "first-party shelf always first" rule
+ * (`5.h.i.zo`, home page) to search: a Zealot/D-Store (`origin ===
+ * "zealot"`) app that matches the query is hard-pinned to result
+ * position 1, the same prepend mechanism the home-page shelf already
+ * uses — not a weight added to the relevance sort below it. Confirmed
+ * with the product owner (the leaf's own "open decision" note):
+ * "first only among matching results," not unconditional — a
+ * first-party app that doesn't match the query at all is never
+ * injected, only reordered to the front *if* it's already one of the
+ * matches. `findIndex`+`splice`+`unshift` rather than a sort
+ * comparator so every other match keeps its existing relative
+ * relevance order untouched; only the one first-party match (if any)
+ * moves.
+ */
 export async function searchApps(query: string): Promise<App[]> {
   const needle = query.trim().toLowerCase();
   if (!needle) return resolveAfterDelay([]);
   const merged = await getMergedApps();
-  const result = merged.filter(
+  const matches = merged.filter(
     (app) => app.name.toLowerCase().includes(needle) || app.summary.toLowerCase().includes(needle)
   );
-  return resolveAfterDelay(result);
+  const firstPartyIndex = matches.findIndex((app) => app.origin === "zealot");
+  if (firstPartyIndex > 0) {
+    const [firstParty] = matches.splice(firstPartyIndex, 1);
+    matches.unshift(firstParty);
+  }
+  return resolveAfterDelay(matches);
 }
 
 /**
