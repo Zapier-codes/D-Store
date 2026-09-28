@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getCurrentTenant } from "@/lib/tenant";
 import styles from "./page.module.css";
 
-export const metadata: Metadata = {
-  title: "About & Help — D-Store",
-  description: "What D-Store is, how it works, and answers to common questions about installing FOSS Android apps without an account.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // 6.b.ii.zi: tab title carries the resolved tenant's name; body copy below is still D-Store's (flagged in HANDOVER.md).
+  const tenant = await getCurrentTenant();
+  return {
+    title: `About & Help — ${tenant.branding.display_name}`,
+    description: "What D-Store is, how it works, and answers to common questions about installing FOSS Android apps without an account.",
+  };
+}
 
 /**
  * About D-Store / Help & FAQ page — leaf 0.j.iv.zo, closing out 0.j

@@ -4,6 +4,8 @@ import { getTheme } from "@/lib/theme";
 import { getRegion } from "@/lib/region";
 import { hasGivenConsent } from "@/lib/consent";
 import RegionProvider from "@/components/RegionProvider";
+import { getCurrentTenant } from "@/lib/tenant";
+import { brandingCss } from "@/lib/tenant-config";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConsentBanner from "@/components/ConsentBanner";
@@ -64,14 +66,15 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
  */
 export async function generateMetadata(): Promise<Metadata> {
   const theme = await getTheme();
+  const tenant = await getCurrentTenant();
   const splashUrl = theme === "light" ? "/splash-light.svg" : "/splash.svg";
 
   return {
-    title: "D-Store",
+    title: tenant.branding.display_name,
     description: "F-Droid-style Android app store — Phase 0 UI revamp (dummy data)",
     appleWebApp: {
       capable: true,
-      title: "D-Store",
+      title: tenant.branding.display_name,
       statusBarStyle: theme === "light" ? "default" : "black-translucent",
       startupImage: [
         {
@@ -138,8 +141,18 @@ export default async function RootLayout({
   // check.
   const consented = await hasGivenConsent();
 
+  // 6.b.ii.zi — per-tenant branding (lib/tenant.ts). `null` for the default tenant, so
+  // today's two themes render untouched; otherwise just a hex-validated accent override.
+  const tenant = await getCurrentTenant();
+  const tenantCss = brandingCss(tenant);
+
   return (
     <html lang="en" data-theme={theme}>
+      {tenantCss && (
+        <head>
+          <style dangerouslySetInnerHTML={{ __html: tenantCss }} />
+        </head>
+      )}
       <body>
         {/*
           Skip link — follow-up to leaf 3.d.i.zo (HANDOVER.md; WCAG
@@ -158,7 +171,7 @@ export default async function RootLayout({
           Skip to main content
         </a>
         <RegionProvider region={region}>
-          <Header theme={theme} />
+          <Header theme={theme} brandName={tenant.branding.display_name} />
           {/*
             Every page under app/ already renders its own <main> (see
             e.g. app/page.tsx) — this div is only a focusable landing

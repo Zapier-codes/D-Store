@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getCurrentTenant } from "@/lib/tenant";
 import styles from "./page.module.css";
 
-export const metadata: Metadata = {
-  title: "DMCA Policy — D-Store",
-  description: "How to file a copyright takedown notice or counter-notice for an app listed on D-Store.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // 6.b.ii.zi: tab title carries the resolved tenant's name; body copy below is still D-Store's (flagged in HANDOVER.md).
+  const tenant = await getCurrentTenant();
+  return {
+    title: `DMCA Policy — ${tenant.branding.display_name}`,
+    description: "How to file a copyright takedown notice or counter-notice for an app listed on D-Store.",
+  };
+}
 
 const LAST_UPDATED = "September 15, 2026";
 

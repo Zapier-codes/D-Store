@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getCurrentTenant } from "@/lib/tenant";
 import styles from "./page.module.css";
 
-export const metadata: Metadata = {
-  title: "Terms of Service — D-Store",
-  description: "The terms for using D-Store: what the catalog is, sideloading responsibility, no-account ratings and reports, and content rules.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // 6.b.ii.zi: tab title carries the resolved tenant's name; body copy below is still D-Store's (flagged in HANDOVER.md).
+  const tenant = await getCurrentTenant();
+  return {
+    title: `Terms of Service — ${tenant.branding.display_name}`,
+    description: "The terms for using D-Store: what the catalog is, sideloading responsibility, no-account ratings and reports, and content rules.",
+  };
+}
 
 const LAST_UPDATED = "September 15, 2026";
 

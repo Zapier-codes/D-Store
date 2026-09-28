@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getCurrentTenant } from "@/lib/tenant";
 import styles from "./page.module.css";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — D-Store",
-  description: "How D-Store handles data: no accounts, cookie preferences, and what little is stored for anonymous ratings and reports.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // 6.b.ii.zi: tab title carries the resolved tenant's name; body copy below is still D-Store's (flagged in HANDOVER.md).
+  const tenant = await getCurrentTenant();
+  return {
+    title: `Privacy Policy — ${tenant.branding.display_name}`,
+    description: "How D-Store handles data: no accounts, cookie preferences, and what little is stored for anonymous ratings and reports.",
+  };
+}
 
 const LAST_UPDATED = "September 15, 2026";
 

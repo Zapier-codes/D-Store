@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getPublicStats } from "@/lib/catalog";
+import { getCurrentTenant } from "@/lib/tenant";
 import styles from "./Footer.module.css";
 
 /**
@@ -39,6 +40,7 @@ import styles from "./Footer.module.css";
  */
 export default async function Footer() {
   const stats = await getPublicStats();
+  const tenant = await getCurrentTenant(); // 6.b.ii.zi
   const rawConsoleUrl = process.env.NEXT_PUBLIC_CONSOLE_URL?.trim();
   const consoleUrl =
     rawConsoleUrl && rawConsoleUrl.startsWith("https://") ? rawConsoleUrl : null;
@@ -47,7 +49,7 @@ export default async function Footer() {
     <footer className={styles.footer}>
       <div className={styles.bar}>
         <span className={styles.copy}>
-          &copy; {new Date().getFullYear()} D-Store &middot; No account required
+          &copy; {new Date().getFullYear()} {tenant.branding.display_name} &middot; No account required
         </span>
 
         <span className={styles.stats}>

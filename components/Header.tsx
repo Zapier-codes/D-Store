@@ -51,12 +51,12 @@ import styles from "./Header.module.css";
  * `/saved` added by leaf `4.d.i.zo` ("Saved apps" view), same
  * once-the-page-exists convention.
  */
-export default function Header({ theme }: { theme: Theme }) {
+export default function Header({ theme, brandName = "D-Store" }: { theme: Theme; brandName?: string }) {
   return (
     <header className={styles.header}>
       <div className={styles.bar}>
         <Link href="/" className={styles.brand}>
-          D-Store
+          {brandName}
         </Link>
 
         <SearchBar />

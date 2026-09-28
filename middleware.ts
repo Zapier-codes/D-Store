@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { lookupRegion } from "@/lib/ipapi";
 import { REGION_COOKIE_NAME, encodeRegion } from "@/lib/region";
 import { checkAdminAuth, adminDeniedResponse, isAdminPath } from "@/lib/admin-auth";
+import { normalizeHost, TENANT_HOST_HEADER } from "@/lib/tenant-host";
 
 /**
  * Region-context provider — leaf 0.h.i.zo, the "calls the client once
@@ -43,12 +44,23 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // 6.b.ii.zi — forward the normalized Host for tenant resolution (lib/tenant.ts does the
+  // verified lookup on the Node side; see that file for why not here). Any client-supplied
+  // copy of this header is deleted first: a visitor must never be able to pick their tenant
+  // by sending it. Uses `Host` only, not `X-Forwarded-Host` (spoofable unless a trusted
+  // proxy overwrites it).
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete(TENANT_HOST_HEADER);
+  const tenantHost = normalizeHost(request.headers.get("host"));
+  if (tenantHost) requestHeaders.set(TENANT_HOST_HEADER, tenantHost);
+  const forward = () => NextResponse.next({ request: { headers: requestHeaders } });
+
   if (request.cookies.has(REGION_COOKIE_NAME)) {
-    return NextResponse.next();
+    return forward();
   }
 
   const region = await lookupRegion();
-  const response = NextResponse.next();
+  const response = forward();
   response.cookies.set(REGION_COOKIE_NAME, encodeRegion(region), {
     path: "/",
     sameSite: "lax",
