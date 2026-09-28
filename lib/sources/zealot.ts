@@ -26,16 +26,75 @@
  * unset means "no live source configured yet," the same honest
  * empty-catalog fallback `lib/sources/aptoide.ts` already uses for a
  * missing snapshot file, not an error.
+ *
+ * `6.b.ii.zo` — which index this reader resolves against is now a
+ * per-tenant value (`CatalogScope`, below), not one process-wide env var.
+ * The default tenant's scope is still exactly that env var, with the same
+ * cache/state files it always used, so nothing changes until a second
+ * tenant is configured.
  */
 
 import type { App, AppOrigin, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
 import { ALL_REGIONS } from "../mock-data";
+import { DEFAULT_TENANT_ID, type TenantConfig } from "../tenant-config";
 import type { CatalogSource } from "./types";
 import { verifySignature, isRollback, isExpired, SUPPORTED_SCHEMA_VERSION, type IndexState } from "./zealot-trust";
 
 const ZEALOT_ORIGIN: AppOrigin = "zealot";
+// The default tenant keeps the original file names (the build-time snapshot script,
+// `scripts/snapshot-zealot-index.ts`, and `outputFileTracingIncludes` both depend on them).
+// Every other tenant gets its own pair, keyed by `tenant_id` (which `TENANT_ID_PATTERN` in
+// `lib/tenant-config.ts` restricts to `[a-z0-9-]`, so it's always a safe file-name fragment):
+// a shared anti-rollback state file would make two unrelated indexes look like rollbacks of
+// each other, and a shared cache would let one tenant's catalog be served as another's.
 const STATE_FILE = ["storage", "downloads", "zealot-index-state.json"];
 const CACHE_FILE = ["storage", "downloads", "zealot-index-cache.json"];
+
+function stateFileFor(tenantId: string): string[] {
+  return tenantId === DEFAULT_TENANT_ID ? STATE_FILE : ["storage", "downloads", `zealot-index-state.${tenantId}.json`];
+}
+function cacheFileFor(tenantId: string): string[] {
+  return tenantId === DEFAULT_TENANT_ID ? CACHE_FILE : ["storage", "downloads", `zealot-index-cache.${tenantId}.json`];
+}
+
+// --- Per-tenant catalog scope (6.b.ii.zo) --------------------------------
+
+/**
+ * Which signed index a reader resolves against, and under which tenant's cache/anti-rollback
+ * state. `baseUrl: null` means "no first-party Zealot source for this scope."
+ */
+export interface CatalogScope {
+  tenantId: string;
+  baseUrl: string | null;
+}
+
+/**
+ * Tenant -> catalog scope. Pure (the env is a parameter).
+ *
+ * - **Default tenant:** `ZEALOT_CATALOG_INDEX_BASE_URL`, exactly as before this leaf. An unset
+ *   value still means "no live fetch," and the reader still falls back to the last verified disk
+ *   cache (which is how the build-time snapshot reaches a runtime with no env var set).
+ * - **Any other tenant:** its own `catalog_index_base_url` and nothing else. Absent/`null`/`""`
+ *   means the tenant has no Zealot source (per `tenant-config.schema.json`: nothing to fetch,
+ *   not an error) — it does NOT fall back to the default tenant's index or cache, which would
+ *   show one tenant's catalog under another's brand. Non-`https://` values are refused here as
+ *   well as in `validateTenantRecord` (this is the last line before a `fetch`).
+ */
+export function catalogScopeForTenant(
+  tenant: Pick<TenantConfig, "tenant_id" | "catalog_index_base_url">,
+  env: Record<string, string | undefined> = process.env,
+): CatalogScope {
+  if (tenant.tenant_id === DEFAULT_TENANT_ID) {
+    return { tenantId: DEFAULT_TENANT_ID, baseUrl: env.ZEALOT_CATALOG_INDEX_BASE_URL?.trim() || null };
+  }
+  const url = tenant.catalog_index_base_url?.trim();
+  return { tenantId: tenant.tenant_id, baseUrl: url && url.startsWith("https://") ? url : null };
+}
+
+/** Stable identity of a scope: same tenant + same index URL. Also what `lib/catalog.ts` keys its merged-catalog cache on. */
+export function catalogScopeKey(scope: CatalogScope): string {
+  return `${scope.tenantId}\n${scope.baseUrl ?? ""}`;
+}
 
 // --- Raw v2 envelope (only the fields this reader actually reads; see
 // docs/catalog_index_v2.md / .schema.json in the Zealot repo for the full
@@ -328,7 +387,7 @@ export { STATE_FILE, CACHE_FILE };
  * rolled back) -- every rejection reason collapses to the same
  * "don't trust this" outcome, same posture the pre-split function used.
  */
-export async function validateIndex(indexText: string, signatureText: string): Promise<RawIndex | null> {
+export async function validateIndex(indexText: string, signatureText: string, tenantId: string = DEFAULT_TENANT_ID): Promise<RawIndex | null> {
   const matchedKey = await verifySignature(indexText, signatureText);
   if (!matchedKey) return null; // no pinned key matches -- never fall through to trusting the content anyway
 
@@ -342,20 +401,20 @@ export async function validateIndex(indexText: string, signatureText: string): P
   if (parsed.schema_version !== SUPPORTED_SCHEMA_VERSION) return null;
   if (isExpired(parsed.expires_at)) return null;
 
-  const lastState = await readJsonFile<IndexState>(STATE_FILE);
+  const lastState = await readJsonFile<IndexState>(stateFileFor(tenantId));
   if (isRollback({ sequence: parsed.sequence, generatedAt: parsed.generated_at }, lastState)) return null;
 
   return parsed;
 }
 
 /** Persists a fully-validated (and, for the build-time path, file-hash-verified) index as the new trusted cache. Never call this on a candidate that hasn't cleared every check — this is the point of no return that advances the anti-rollback counter. */
-export async function commitIndexState(parsed: RawIndex): Promise<void> {
-  await writeJsonFile(STATE_FILE, { sequence: parsed.sequence, generatedAt: parsed.generated_at } satisfies IndexState);
-  await writeJsonFile(CACHE_FILE, parsed);
+export async function commitIndexState(parsed: RawIndex, tenantId: string = DEFAULT_TENANT_ID): Promise<void> {
+  await writeJsonFile(stateFileFor(tenantId), { sequence: parsed.sequence, generatedAt: parsed.generated_at } satisfies IndexState);
+  await writeJsonFile(cacheFileFor(tenantId), parsed);
 }
 
 /** Fetches + fully verifies one candidate index over plain HTTP (the Pages CDN), then commits it immediately -- the runtime path, unchanged in behavior from before the `validateIndex`/`commitIndexState` split above. `scripts/snapshot-zealot-index.ts` (`5.g.iv.zi`) is the build-time path: same `validateIndex`, a per-file SHA-256 check in between, then the same `commitIndexState`. */
-async function fetchLiveIndex(baseUrl: string): Promise<RawIndex | null> {
+async function fetchLiveIndex(baseUrl: string, tenantId: string): Promise<RawIndex | null> {
   const base = baseUrl.replace(/\/+$/, "");
 
   let indexText: string;
@@ -372,43 +431,58 @@ async function fetchLiveIndex(baseUrl: string): Promise<RawIndex | null> {
     return null; // network error -- caller falls back to cache
   }
 
-  const parsed = await validateIndex(indexText, signatureText);
+  const parsed = await validateIndex(indexText, signatureText, tenantId);
   if (!parsed) return null;
 
-  await commitIndexState(parsed);
+  await commitIndexState(parsed, tenantId);
   return parsed;
 }
 
 /**
- * Resolves and caches the current trusted index for this server
- * process's lifetime — same "once per process, not once per caller"
- * memoization `getMergedApps` (`lib/catalog.ts`) already applies one
- * layer up, pulled down into this module so `createZealotSource().getApps()`
- * and `getZealotCollections()` (leaf `5.j.ii.zo`) share one resolution
- * instead of each independently fetching/reading the same index —
- * `getMergedApps`'s own cache means this only matters for the rare case
- * both get called directly rather than through it, but there's no
- * reason to risk a duplicate live fetch when a shared cache is free.
+ * Resolves and caches a scope's trusted index for this server process's lifetime — same
+ * "once per process, not once per caller" memoization `getMergedApps` (`lib/catalog.ts`)
+ * applies one layer up, pulled down into this module so `createZealotSource().getApps()`
+ * and `getZealotCollections()` (leaf `5.j.ii.zo`) share one resolution instead of each
+ * independently fetching/reading the same index.
+ *
+ * `6.b.ii.zo`: one memo entry per scope (tenant + index URL) instead of one global. The
+ * *promise* is memoized, so concurrent first requests for the same tenant share one fetch;
+ * a null result is memoized like before (no retry until the process restarts — unchanged
+ * behavior, deliberately not altered by this leaf). A rejected resolution is dropped so a
+ * transient throw isn't cached forever.
  */
-let cachedIndex: RawIndex | null = null;
-let indexResolved = false;
+const indexMemo = new Map<string, Promise<RawIndex | null>>();
 
-async function resolveIndex(): Promise<RawIndex | null> {
-  if (indexResolved) return cachedIndex;
-
-  const baseUrl = process.env.ZEALOT_CATALOG_INDEX_BASE_URL?.trim();
+async function loadIndex(scope: CatalogScope): Promise<RawIndex | null> {
   let index: RawIndex | null = null;
 
-  if (baseUrl) {
-    index = await fetchLiveIndex(baseUrl);
+  if (scope.baseUrl) {
+    index = await fetchLiveIndex(scope.baseUrl, scope.tenantId);
   }
-  if (!index) {
-    index = await readJsonFile<RawIndex>(CACHE_FILE);
+  // Only the default tenant may read its disk cache without a configured URL (that's how the
+  // build-time snapshot reaches a runtime with no env var). A non-default tenant with no URL
+  // has no Zealot source at all — serving a leftover cache would resurrect a catalog the
+  // operator removed.
+  if (!index && (scope.baseUrl || scope.tenantId === DEFAULT_TENANT_ID)) {
+    index = await readJsonFile<RawIndex>(cacheFileFor(scope.tenantId));
   }
-
-  cachedIndex = index;
-  indexResolved = true;
   return index;
+}
+
+function resolveIndex(scope: CatalogScope): Promise<RawIndex | null> {
+  const key = catalogScopeKey(scope);
+  let pending = indexMemo.get(key);
+  if (!pending) {
+    pending = loadIndex(scope);
+    indexMemo.set(key, pending);
+    pending.catch(() => indexMemo.delete(key));
+  }
+  return pending;
+}
+
+/** Test seam: drops every memoized scope. */
+export function resetZealotIndexMemo(): void {
+  indexMemo.clear();
 }
 
 /**
@@ -427,11 +501,11 @@ async function resolveIndex(): Promise<RawIndex | null> {
  * once-verified catalog. This reader takes the "serve stale" side of that
  * tradeoff; revisit once there's a real outage to learn from.
  */
-export function createZealotSource(): CatalogSource {
+export function createZealotSource(scope: CatalogScope): CatalogSource {
   return {
     origin: ZEALOT_ORIGIN,
     async getApps(): Promise<App[]> {
-      const index = await resolveIndex();
+      const index = await resolveIndex(scope);
       if (!index) return []; // never fetched successfully, ever -- same "empty is a valid state" precedent lib/sources/aptoide.ts set for a missing snapshot
       return index.apps.map(normalizeZealotApp);
     },
@@ -447,7 +521,7 @@ export function createZealotSource(): CatalogSource {
  * resolved — `lib/catalog.ts`'s `getCollections()` treats an empty
  * registry as a valid, unremarkable state, same as an empty catalog.
  */
-export async function getZealotCollections(): Promise<Collection[]> {
-  const index = await resolveIndex();
+export async function getZealotCollections(scope: CatalogScope): Promise<Collection[]> {
+  const index = await resolveIndex(scope);
   return index?.collections ?? [];
 }

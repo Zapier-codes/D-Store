@@ -37,7 +37,13 @@ export interface TenantConfig {
   expires_at: string;
   branding: TenantBranding;
   cdn_base: string;
-  catalog_index_base_url?: string;
+  /**
+   * `6.b.ii.zo` — this tenant's signed catalog index (the per-tenant equivalent of
+   * `ZEALOT_CATALOG_INDEX_BASE_URL`). `null`/absent/`""` = "no first-party Zealot source
+   * configured for this tenant" (spec: nothing to fetch, not an error). Read via
+   * `catalogScopeForTenant` in `lib/sources/zealot.ts`, never directly.
+   */
+  catalog_index_base_url?: string | null;
   domains: string[];
   is_default_tenant: boolean;
 }
@@ -96,7 +102,9 @@ export function validateTenantRecord(raw: unknown): TenantConfig | null {
     }
   }
   const catalog = raw.catalog_index_base_url;
-  if (catalog !== undefined && (typeof catalog !== "string" || (catalog !== "" && !catalog.startsWith("https://")))) return null;
+  // The spec types this `string | null` (default null): a record that says "no catalog for this tenant" with an
+  // explicit null is valid, and must not get the whole tenant record dropped.
+  if (catalog !== undefined && catalog !== null && (typeof catalog !== "string" || (catalog !== "" && !catalog.startsWith("https://")))) return null;
 
   return {
     schema_version: TENANT_CONFIG_SCHEMA_VERSION,
@@ -111,7 +119,7 @@ export function validateTenantRecord(raw: unknown): TenantConfig | null {
       ...(typeof branding.logo_sha256 === "string" ? { logo_sha256: branding.logo_sha256 } : {}),
     },
     cdn_base,
-    ...(typeof catalog === "string" ? { catalog_index_base_url: catalog } : {}),
+    ...(typeof catalog === "string" || catalog === null ? { catalog_index_base_url: catalog } : {}),
     domains: cleanDomains,
     is_default_tenant: false, // never taken from the wire: informational-only flag, and only the compiled-in seed is the default
   };

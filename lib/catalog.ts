@@ -19,7 +19,14 @@
 import { apps, categories, developers, reviews, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type AppSponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
-import { createZealotSource as createLiveZealotSource, getZealotCollections } from "./sources/zealot";
+import {
+  createZealotSource as createLiveZealotSource,
+  getZealotCollections,
+  catalogScopeForTenant,
+  catalogScopeKey,
+  type CatalogScope,
+} from "./sources/zealot";
+import { getCurrentTenant } from "./tenant";
 
 export type { App, AppOrigin, Category, Collection, Developer, AppSponsoredSlot, SearchQueryLog };
 
@@ -43,25 +50,53 @@ function resolveAfterDelay<T>(value: T): Promise<T> {
  * "zealot"` label would misrepresent which of the two a given app
  * actually came from.
  */
-function createZealotSource(): CatalogSource {
-  return createLiveZealotSource();
+function createZealotSource(scope: CatalogScope): CatalogSource {
+  return createLiveZealotSource(scope);
+}
+
+/**
+ * Which tenant's Zealot index this request reads — leaf `6.b.ii.zo`. Resolved from the
+ * request's `Host` the same way branding is (`getCurrentTenant`, `6.b.ii.zi`), so every
+ * function in this file is tenant-scoped without any caller changing: pages, route handlers
+ * and server actions all run inside a request, and an unknown host / `localhost` / preview
+ * is the default tenant, whose scope is still `ZEALOT_CATALOG_INDEX_BASE_URL`.
+ *
+ * Deliberately NOT wrapped in a try/catch that falls back to the default tenant when there's
+ * no request: Next signals "this must render dynamically" by throwing out of `headers()`, and
+ * swallowing that would silently bake the default tenant's catalog into a static page.
+ */
+async function getCatalogScope(): Promise<CatalogScope> {
+  return catalogScopeForTenant(await getCurrentTenant());
 }
 
 /**
  * Merged catalog — Zealot first (so it wins any `package_name`
  * collision per `mergeCatalogSources`), then Aptoide's ingested
- * snapshot. Computed once per server lifetime and cached: the Aptoide
- * side already reads from a cached snapshot file
- * (`lib/sources/aptoide.ts`), and `apps` itself is a stable in-memory
- * array, so nothing here needs to be recomputed on every call — mirrors
+ * snapshot. Computed once per server lifetime *per tenant scope* and
+ * cached (`6.b.ii.zo`: was one process-wide value): the Aptoide side
+ * already reads from a cached snapshot file (`lib/sources/aptoide.ts`),
+ * so nothing here needs to be recomputed on every call — mirrors
  * `loadSnapshot`'s own caching in that file.
+ *
+ * Flagged, not changed by this leaf: the Aptoide snapshot is a single
+ * third-party catalog with no tenant concept, so every tenant still
+ * merges the same Aptoide apps in behind its own Zealot index. This
+ * leaf scopes the *Zealot* index (the only tenant-owned catalog);
+ * whether a white-label tenant should also carry Aptoide is a product
+ * call, not a string swap.
  */
-let cachedMergedApps: App[] | null = null;
+const mergedAppsByScope = new Map<string, Promise<App[]>>();
 
 async function getMergedApps(): Promise<App[]> {
-  if (cachedMergedApps) return cachedMergedApps;
-  cachedMergedApps = await mergeCatalogSources([createZealotSource(), createAptoideSource()]);
-  return cachedMergedApps;
+  const scope = await getCatalogScope();
+  const key = catalogScopeKey(scope);
+  let pending = mergedAppsByScope.get(key);
+  if (!pending) {
+    pending = mergeCatalogSources([createZealotSource(scope), createAptoideSource()]);
+    mergedAppsByScope.set(key, pending);
+    pending.catch(() => mergedAppsByScope.delete(key));
+  }
+  return pending;
 }
 
 // --- Public stats (4.c.i.zo) --------------------------------------------
@@ -137,12 +172,12 @@ export async function getCategoryAppCount(slug: string): Promise<number> {
  * separate fetch path, no local seed array left to fall out of sync.
  */
 export async function getCollections(): Promise<Collection[]> {
-  const registry = await getZealotCollections();
+  const registry = await getZealotCollections(await getCatalogScope());
   return resolveAfterDelay(registry);
 }
 
 export async function getCollectionBySlug(slug: string): Promise<Collection | null> {
-  const registry = await getZealotCollections();
+  const registry = await getZealotCollections(await getCatalogScope());
   const collection = registry.find((c) => c.slug === slug) ?? null;
   return resolveAfterDelay(collection);
 }
