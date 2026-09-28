@@ -48,6 +48,8 @@ export default function StickyInstallBar({
   watchTargetId,
   apkUrl,
   thirdParty,
+  releaseId,
+  rolloutPercentage,
 }: {
   appSlug: string;
   appName: string;
@@ -62,6 +64,9 @@ export default function StickyInstallBar({
   apkUrl: string;
   /** 5.h.iii.zi — when set, render the real download link instead of the simulated install button. */
   thirdParty?: { downloadUrl: string; sourceName: string };
+  /** 5.c.iv.zo — forwarded straight through to this bar's own `InstallButton` instance, same as `apkUrl` above. */
+  releaseId: string;
+  rolloutPercentage: number;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -110,7 +115,14 @@ export default function StickyInstallBar({
           sourceName={thirdParty.sourceName}
         />
       ) : (
-        <InstallButton appSlug={appSlug} appName={appName} currentVersion={currentVersion} apkUrl={apkUrl} />
+        <InstallButton
+          appSlug={appSlug}
+          appName={appName}
+          currentVersion={currentVersion}
+          apkUrl={apkUrl}
+          releaseId={releaseId}
+          rolloutPercentage={rolloutPercentage}
+        />
       )}
     </div>
   );

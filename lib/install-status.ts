@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { getDeviceId, isDeviceInRollout } from "./rollout";
 
 /**
  * Device-local install status.
@@ -93,14 +94,35 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-function resolveStatus(record: InstalledRecord | null, currentVersion: string): InstallStatus {
+function resolveStatus(
+  record: InstalledRecord | null,
+  currentVersion: string,
+  rolloutReady: boolean,
+  rolloutIncluded: boolean,
+): InstallStatus {
   if (!record) return "not-installed";
-  return compareVersions(record.version, currentVersion) < 0 ? "outdated" : "up-to-date";
+  const isNewer = compareVersions(record.version, currentVersion) < 0;
+  if (!isNewer) return "up-to-date";
+  // Task 5.c.iv.zo -- a newer catalog version exists, but Play-parity
+  // staged rollout (Zealot's `30f`) means that alone isn't enough to
+  // surface it: this device also has to be in the release's rollout
+  // bucket. While that bucket check hasn't resolved yet (`!rolloutReady`
+  // -- it's an async crypto.subtle call, see lib/rollout.ts), this
+  // deliberately reads as "up-to-date" rather than flashing "Update"
+  // and then retracting it a moment later -- the same "don't show it
+  // before we've earned it" posture `loaded` already uses below for the
+  // localStorage read itself.
+  return rolloutReady && rolloutIncluded ? "outdated" : "up-to-date";
 }
 
 /**
  * Reads/writes this app's device-local install record and derives a
- * status against the catalog's current `currentVersion`. `loaded` is
+ * status against the catalog's current `currentVersion` — gated,
+ * `5.c.iv.zo`, by this device's own rollout-bucket inclusion for
+ * `releaseId`/`rolloutPercentage` (Zealot's `30f`, see `lib/rollout.ts`):
+ * a newer version existing in the catalog isn't sufficient on its own
+ * to surface "Update" if this device hasn't been rolled into that
+ * release's bucket yet. `loaded` is
  * false for the first client render (localStorage can't be read during
  * SSR, so this avoids a hydration-mismatch flash by rendering a neutral
  * "checking…" state until the effect below runs) — same pattern the
@@ -112,9 +134,22 @@ function resolveStatus(record: InstalledRecord | null, currentVersion: string): 
  * 0.j.ii.zi) stay in sync without lifting state into a shared parent —
  * a click in one immediately updates the other.
  */
-export function useInstallStatus(appSlug: string, currentVersion: string) {
+export function useInstallStatus(
+  appSlug: string,
+  currentVersion: string,
+  releaseId: string,
+  rolloutPercentage: number,
+) {
   const [loaded, setLoaded] = useState(false);
   const [record, setRecord] = useState<InstalledRecord | null>(null);
+  // Task 5.c.iv.zo -- undefined until the async bucket check below
+  // resolves; kept separate from `loaded` above (a synchronous
+  // localStorage read) since this one genuinely can't be answered on
+  // the same tick, and the two false/not-ready states must never be
+  // conflated -- `resolveStatus` needs to know specifically whether the
+  // *rollout* check is done, not just whether the install record is.
+  const [rolloutReady, setRolloutReady] = useState(false);
+  const [rolloutIncluded, setRolloutIncluded] = useState(false);
 
   const refresh = useCallback(() => {
     setRecord(readRecord(appSlug));
@@ -131,7 +166,41 @@ export function useInstallStatus(appSlug: string, currentVersion: string) {
     return () => window.removeEventListener(CHANGE_EVENT, onChange);
   }, [appSlug, refresh]);
 
-  const status: InstallStatus = loaded ? resolveStatus(record, currentVersion) : "not-installed";
+  useEffect(() => {
+    let cancelled = false;
+    // percentage >= 100 needs no crypto round-trip at all -- the vast
+    // majority case (every app not currently mid-ramp), and keeps this
+    // synchronous-feeling for the common path rather than showing a
+    // spurious "up-to-date" flash while an unnecessary digest runs.
+    if (rolloutPercentage >= 100) {
+      setRolloutReady(true);
+      setRolloutIncluded(true);
+      return;
+    }
+    setRolloutReady(false);
+    const deviceId = getDeviceId();
+    if (!deviceId) {
+      // No resolvable device id (storage disabled/unavailable) -- fail
+      // toward NOT surfacing a gated update, same conservative posture
+      // `readRecord` already takes for a corrupt/missing record, rather
+      // than assuming inclusion just because the check couldn't run.
+      setRolloutReady(true);
+      setRolloutIncluded(false);
+      return;
+    }
+    isDeviceInRollout(deviceId, releaseId, rolloutPercentage).then((included) => {
+      if (cancelled) return;
+      setRolloutIncluded(included);
+      setRolloutReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [releaseId, rolloutPercentage]);
+
+  const status: InstallStatus = loaded
+    ? resolveStatus(record, currentVersion, rolloutReady, rolloutIncluded)
+    : "not-installed";
 
   const markInstalled = useCallback(
     (version: string) => writeRecord(appSlug, version),

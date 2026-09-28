@@ -178,6 +178,38 @@ export interface App {
   sha256_checksum: string;
   signing_certificate_fingerprint: string;
   play_store_rejection_reason: string | null;
+  /**
+   * Staged rollout — leaf `5.c.iv.zo`, mirrors Zealot's `Release`
+   * columns of the same name (`30f` on that repo's own board) straight
+   * through the signed index's new `versions[].rollout` block
+   * (`5.g.i.zi`'s reader, extended). `rollout_percentage` is 0-100
+   * (100 = fully available); `rollout_status` is the admin-controlled
+   * ramp state. Every Aptoide-origin app gets the honest fully-rolled-
+   * out default (`100`/`"complete"`) — staged rollout is a first-party
+   * Console feature, same "first-party-only" posture `is_featured`/
+   * `sponsored_slots`/`collections` already established — as does every
+   * Zealot-origin app read from an older cached index that predates
+   * this field, same conservative fallback the reader already uses for
+   * `editorial`/`sponsored_slots`.
+   */
+  rollout_percentage: number;
+  rollout_status: "active" | "halted" | "complete";
+  /**
+   * The live version's own stable id — Zealot's `Release#id`, required
+   * on every `versions[]` entry in the signed index. Not previously
+   * threaded through to `App` because nothing needed it: `apk`/
+   * `version` already carried everything `InstallButton` used. Needed
+   * now as the second half of the rollout bucket's input alongside a
+   * per-device id, so the *same* release always buckets a given device
+   * the same way, and two different releases don't accidentally share
+   * a bucket decision for that device. Aptoide apps get a stable
+   * stand-in (`raw.file.vercode`, that source's own closest analogue
+   * to a release id) — never actually used to gate anything there,
+   * since `rollout_percentage` is always `100` for that origin, but
+   * kept non-empty so `App.release_id` is never a lie-by-omission for
+   * any app regardless of origin.
+   */
+  release_id: string;
   permissions: string[];
   screenshots: string[];
   changelog: string;

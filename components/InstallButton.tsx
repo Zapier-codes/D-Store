@@ -59,6 +59,14 @@ import styles from "./InstallButton.module.css";
  * `lib/install-status.ts`'s shared progress event into both the button
  * fill and `WavyProgressRing`) and is flagged forward rather than
  * bundled into this leaf's stated scope.
+ *
+ * `5.c.iv.zo` — a newer `currentVersion` no longer flips this button to
+ * "Update" unconditionally: `useInstallStatus` now also checks this
+ * device's own rollout-bucket inclusion (`lib/rollout.ts`, mirroring
+ * Zealot's `30f`) against `releaseId`/`rolloutPercentage`, so a device
+ * not yet rolled into a staged release simply keeps seeing "Open,"
+ * exactly the outcome Play itself gives a user outside a rollout's
+ * current percentage.
  */
 
 type UiState = "idle" | "installing";
@@ -68,16 +76,24 @@ export default function InstallButton({
   appName,
   currentVersion,
   apkUrl,
+  releaseId,
+  rolloutPercentage,
 }: {
   appSlug: string;
   appName: string;
   currentVersion: string;
   /** 5.g.ii.zi — stable download URL from the Console's signed index (`App.apk`); "" when no release is attached yet. */
   apkUrl: string;
+  /** 5.c.iv.zo — `App.release_id`, the second half of the rollout bucket's input alongside this device's own id. */
+  releaseId: string;
+  /** 5.c.iv.zo — `App.rollout_percentage`; gates whether "Update" is surfaced at all once a newer `currentVersion` exists. */
+  rolloutPercentage: number;
 }) {
   const { loaded, status, markInstalled, markUninstalled } = useInstallStatus(
     appSlug,
     currentVersion,
+    releaseId,
+    rolloutPercentage,
   );
   const [uiState, setUiState] = useState<UiState>("idle");
 

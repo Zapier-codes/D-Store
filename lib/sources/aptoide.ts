@@ -291,6 +291,9 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     collections: [], // 5.j.ii.zo — collection membership is a first-party Console feature; same posture as the flags/sponsorship above
     developer_verified: false, // 5.g.iii.zi — Aptoide has no verified-developer/agreement relationship with D-Store to attest to; same "editorial calls are first-party-only" posture as the two flags above
     min_android_version: sdkToAndroidVersion(raw.file.hardware?.sdk),
+    rollout_percentage: 100, // 5.c.iv.zo — staged rollout is a first-party Console feature; same posture as the editorial/sponsorship/collections defaults above
+    rollout_status: "complete",
+    release_id: String(raw.file.vercode), // this source's own closest analogue to a release id; never actually used to gate anything since rollout_percentage is always 100 here, kept non-empty so the field is never a lie-by-omission
     size_mb: sizeMb,
     sha256_checksum: "Not provided",
     signing_certificate_fingerprint: "Not provided",

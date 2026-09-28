@@ -50,6 +50,7 @@ interface RawDataSafety {
 }
 
 export interface RawVersion {
+  release_id: string | number | null;
   version_name: string | null;
   download_url: string | null;
   sha256: string | null;
@@ -57,6 +58,14 @@ export interface RawVersion {
   signing_fingerprint: string | null;
   changelog: string | null;
   compatibility: { min_sdk: number | null };
+  /**
+   * `5.c.iv.zo` — Zealot's `30f`. Optional/defaulted here, same
+   * conservative posture `editorial`/`sponsored_slots` below already
+   * take for an older cached index that predates a field: an index
+   * snapshotted before Zealot's `30f` landed has no `rollout` key at
+   * all, and that must read as fully-available, not as a hard zero.
+   */
+  rollout?: { percentage: number; status: "active" | "halted" | "complete" } | null;
 }
 
 export interface RawApp {
@@ -238,6 +247,18 @@ function normalizeZealotApp(raw: RawApp): App {
     size_mb: latest?.size_bytes ? Math.round((latest.size_bytes / (1024 * 1024)) * 10) / 10 : 0,
     sha256_checksum: latest?.sha256 ?? "Not provided",
     signing_certificate_fingerprint: latest?.signing_fingerprint ?? "Not provided",
+    // 5.c.iv.zo -- read straight through from the Console's signed index,
+    // same "this repo stays write-free" posture as the fields above; an
+    // older cached index without a `rollout` block reads as fully
+    // available, never as a hard zero (see RawVersion's own comment).
+    rollout_percentage: latest?.rollout?.percentage ?? 100,
+    rollout_status: latest?.rollout?.status ?? "complete",
+    // `String(...)` -- App.release_id is a string everywhere (Aptoide's
+    // own stand-in is `String(vercode)`); Zealot's release_id arrives as
+    // a number over JSON. Missing entirely (no release attached yet, or
+    // an index predating this field) falls to the app's own id, which is
+    // still unique enough for bucketing purposes and never empty.
+    release_id: latest?.release_id != null ? String(latest.release_id) : `zealot-${raw.id}`,
     play_store_rejection_reason: null,
     permissions: [],
     screenshots: [], // reserved on Zealot's side (Task 27d) -- always empty today, not guessed
