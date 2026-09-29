@@ -51,8 +51,11 @@ import styles from "./NotifyToggle.module.css";
  *  - The `denied` text lives in the `aria-live` region and takes focus when a
  *    click causes it, because the button that had focus is removed.
  *
- * Until `5.k.ii.zo` lands there is no `push` handler in `public/sw.js`, so a
- * subscription made with this control today would receive nothing usable.
+ * `public/sw.js` has its `push`, `notificationclick` and `pushsubscriptionchange`
+ * handlers (`5.k.ii.zo`), so a subscription made here can show a notification
+ * once something sends one. Nothing does yet: the sender (`5.k.iii.zi`/`zo`)
+ * and its trigger (Held `5.k.iv.zi`) are still open, so turning this on today
+ * subscribes the device but no update notification will arrive.
  */
 
 type View = "hidden" | "needs_home_screen" | PushState;
