@@ -27,6 +27,7 @@ import {
   type CatalogScope,
 } from "./sources/zealot";
 import { getCurrentTenant } from "./tenant";
+import { DEFAULT_TENANT_ID } from "./tenant-config";
 
 export type { App, AppOrigin, Category, Collection, Developer, AppSponsoredSlot, SearchQueryLog };
 
@@ -141,6 +142,89 @@ export async function getPublicStats(): Promise<PublicStats> {
     totalApps: merged.length,
     totalDownloads: merged.reduce((sum, app) => sum + app.install_count, 0),
   };
+}
+
+// --- Web Push dispatch catalog (5.k.xii.zo) ------------------------------
+
+/**
+ * The only five fields the Web Push dispatch plan (`lib/push-plan.ts`,
+ * `PlanApp`) reads. Nothing else about an app leaves this function: no
+ * install counts, no download URLs, no checksums.
+ */
+export interface DispatchCatalogApp {
+  slug: string;
+  name: string;
+  version: string;
+  rollout_percentage: number;
+  rollout_status: "active" | "halted" | "complete";
+}
+
+/**
+ * Thrown by `getDispatchCatalog()` when the request resolves to a tenant
+ * other than the default one. The dispatch route (`5.k.xiii.zi`) maps it
+ * to a fixed, clear status instead of planning against the wrong catalog.
+ * Carries no tenant id, on purpose: the route must not echo which tenants
+ * exist to whoever holds the dispatch secret's URL.
+ */
+export class DispatchTenantError extends Error {
+  readonly reason = "non_default_tenant" as const;
+  constructor() {
+    super("dispatch catalog is only available for the default tenant");
+    this.name = "DispatchTenantError";
+  }
+}
+
+/**
+ * Catalog view for the Web Push dispatch — leaf `5.k.xii.zo`. Server-side
+ * only, and only meaningful inside a request (it resolves the tenant from
+ * `Host`, like every other function in this file).
+ *
+ * **Decision 1 — tenant scope: default tenant only.** `getMergedApps()`
+ * follows the request's `Host`, but a push subscription records no
+ * tenant, and `push_notified_version` is keyed by slug alone. Planning
+ * one tenant's catalog against subscriptions and baselines that may
+ * belong to another would notify people about versions of apps they
+ * never saw, or advance a baseline for the wrong catalog. So any request
+ * that resolves to a non-default tenant is refused with
+ * `DispatchTenantError`, rather than answered from that tenant's index.
+ * The caller (a scheduled job) is expected to use the primary host. The
+ * check is on `tenant_id`, the same test `catalogScopeForTenant` uses,
+ * not on the wire-informational `is_default_tenant` flag. Making
+ * dispatch tenant-aware means giving subscriptions and baselines a
+ * tenant column, which is its own leaf.
+ *
+ * **Decision 2 — origin: Aptoide-origin apps are included.** A visitor
+ * can save them, and their snapshot (`storage/downloads/`) is refreshed
+ * on a schedule, so their versions do change. **Flagged: those version
+ * strings are third-party data** — this store neither signs nor vets them
+ * (Zealot-origin versions come from the verified signed index) — and a
+ * change in Aptoide's own numbering scheme would notify subscribers.
+ * They always carry `100`/`"complete"`, so rollout never holds them back.
+ *
+ * Reads `getMergedApps()`, not `getApps()`: no `resolveAfterDelay` (a
+ * scheduled job should not pay 200 ms of simulated latency) and no region
+ * filtering (a region filter would silently drop apps from the plan).
+ * Returns a fresh array of fresh objects; the cached merged array and
+ * its `App` objects are never mutated or handed out, so a caller that
+ * sorts or edits the result cannot corrupt what pages render.
+ *
+ * Errors: a non-default tenant throws `DispatchTenantError`. A catalog
+ * read failure, or calling this outside a request (Next signals dynamic
+ * rendering by throwing out of `headers()`), propagates unchanged and is
+ * deliberately not swallowed — an empty catalog here would be
+ * indistinguishable from "nothing to notify".
+ */
+export async function getDispatchCatalog(): Promise<DispatchCatalogApp[]> {
+  const tenant = await getCurrentTenant();
+  if (tenant.tenant_id !== DEFAULT_TENANT_ID) throw new DispatchTenantError();
+  const merged = await getMergedApps();
+  return merged.map((app) => ({
+    slug: app.slug,
+    name: app.name,
+    version: app.version,
+    rollout_percentage: app.rollout_percentage,
+    rollout_status: app.rollout_status,
+  }));
 }
 
 
