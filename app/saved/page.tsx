@@ -8,6 +8,7 @@ import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import SkeletonCard from "@/components/SkeletonCard";
 import EmptyState from "@/components/EmptyState";
+import NotifyToggle from "@/components/NotifyToggle";
 import styles from "./page.module.css";
 
 /**
@@ -43,6 +44,11 @@ import styles from "./page.module.css";
  * IndexedDB record is left in place rather than actively pruned here
  * (out of scope for this leaf; the record simply never resolves to a
  * card again unless the app returns to the catalog).
+ *
+ * `NotifyToggle` (`5.k.ix.zo`) sits between the heading and the grid, in
+ * every state (loading, empty, populated): opting in does not depend on
+ * having saved an app yet. It decides for itself whether to show
+ * anything, so this page carries no push logic.
  */
 export default function SavedPage() {
   const [loaded, setLoaded] = useState(false);
@@ -69,6 +75,9 @@ export default function SavedPage() {
   return (
     <main className={styles.main}>
       <h1 className={styles.heading}>Saved apps</h1>
+
+      {/* Renders nothing unless push is configured and supported (5.k.ix.zo). */}
+      <NotifyToggle />
 
       {!loaded ? (
         <ShelfGrid>

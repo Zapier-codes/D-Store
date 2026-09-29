@@ -1,0 +1,96 @@
+/*
+ * "Notify me about updates" control styles  leaf 5.k.ix.zo.
+ *
+ * A quiet outlined panel, not a banner: the control sits under the
+ * "Saved apps" heading and should not compete with the app grid.
+ * The button reuses FavoriteButton.module.css's outlined pill
+ * treatment (same size, same hover and focus-visible rules), so the two
+ * saved-app actions read as one family. All colors are existing tokens
+ * (`--color-*`), so both themes are covered without new values.
+ */
+
+.toggle {
+  --gap: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap);
+  max-width: 40rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+}
+
+.description,
+.note,
+.status {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--color-text);
+}
+
+.note {
+  opacity: 0.85;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-accent);
+  background-color: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* The live region stays in the DOM (a screen reader must already be watching it), so when it is empty
+   it must not add a gap of its own. `display: none` would remove it from the accessibility tree. */
+.status:empty {
+  margin-top: calc(-1 * var(--gap));
+}
+
+.status:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.error {
+  color: var(--color-error);
+}
+
+.link {
+  font-size: 0.9rem;
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .button {
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+}
