@@ -156,3 +156,162 @@ export function classifyApp(app: PlanApp, baselineVersion: string | undefined): 
     return "unchanged";
   }
 }
+
+// --- buildPlan (5.k.x.zo) -------------------------------------------------
+
+/**
+ * The most entries (`notify` + `baseline`) one plan may carry — leaf
+ * `5.k.x.zo`. **100.** Every entry is a write the caller must make (a
+ * baseline row) and, for `notify`, a fan-out to that app's subscribers,
+ * all inside one serverless invocation; 100 keeps a run comfortably small
+ * while still clearing the first run after deployment (which baselines
+ * every subscribed app) in a run or two. Entries over the cap are not
+ * dropped: they are counted in `counts.deferred`, get no entry, and — since
+ * nothing was recorded for them — classify the same way on the next run.
+ * The cap applies to the combined list in slug order, so a run always
+ * makes progress (every included entry becomes `unchanged` next run).
+ */
+export const MAX_PLAN = 100;
+
+export interface PlanNotifyEntry {
+  slug: string;
+  name: string;
+  /** Normalized (trimmed) — exactly the version `classifyApp` compared. */
+  version: string;
+}
+
+export interface PlanBaselineEntry {
+  slug: string;
+  /** Normalized (trimmed). */
+  version: string;
+}
+
+export interface PlanCounts {
+  /** Distinct catalog slugs that are subscribed to (after first-wins dedupe). */
+  considered: number;
+  /** Entries in `notify` (after the cap). */
+  notify: number;
+  /** Entries in `baseline` (after the cap). */
+  baseline: number;
+  unchanged: number;
+  held_back: number;
+  /** `notify`/`baseline` classifications left out by `MAX_PLAN`. */
+  deferred: number;
+}
+
+export interface DispatchPlan {
+  notify: PlanNotifyEntry[];
+  baseline: PlanBaselineEntry[];
+  counts: PlanCounts;
+}
+
+function emptyPlan(): DispatchPlan {
+  return {
+    notify: [],
+    baseline: [],
+    counts: { considered: 0, notify: 0, baseline: 0, unchanged: 0, held_back: 0, deferred: 0 },
+  };
+}
+
+/**
+ * Builds the whole-catalog dispatch plan: for every catalog app somebody is
+ * subscribed to, what should the next run do. Pure, never throws.
+ *
+ * - **Only `subscribedSlugs` are considered.** A slug nobody subscribed to
+ *   gets no baseline row; a later first subscriber is handled by
+ *   `classifyApp`'s no-baseline rule.
+ * - **Duplicate slugs: first wins.** They can happen —
+ *   `mergeCatalogSources` dedupes on `package_name`, and on slug only for
+ *   package-less apps, so two apps with different packages can share a
+ *   slug. The first in `apps` order is the one considered; later ones are
+ *   ignored (not counted). The result therefore depends on `apps` order
+ *   only when slugs collide.
+ * - **Sorted by slug** (plain code-unit order, not locale-dependent), so
+ *   the same input always gives a byte-identical plan.
+ * - **Capped at `MAX_PLAN`** combined `notify` + `baseline` entries; the
+ *   rest are counted in `deferred`. `unchanged`/`held_back` produce no
+ *   entry, only a count, and are never capped.
+ * - `considered = notify + baseline + unchanged + held_back + deferred`.
+ * - **Fails safe.** `baselines` must be a `Map`; anything else (or any
+ *   error while reading) yields an empty plan, because treating an
+ *   unreadable baseline set as "no baselines" would plan a baseline write
+ *   for every app and overwrite the real ones. `subscribedSlugs` that is
+ *   not iterable is likewise an empty plan (nobody is subscribed).
+ *
+ * Idempotency: feeding the returned `notify` and `baseline` versions back in
+ * as baselines gives an empty plan, apart from anything `deferred`.
+ */
+export function buildPlan(
+  apps: readonly PlanApp[],
+  baselines: ReadonlyMap<string, string>,
+  subscribedSlugs: Iterable<string>,
+): DispatchPlan {
+  try {
+    if (!(baselines instanceof Map)) return emptyPlan();
+    if (subscribedSlugs === null || typeof subscribedSlugs !== "object") return emptyPlan();
+    if (!Array.isArray(apps)) return emptyPlan();
+
+    const subscribed = new Set<string>();
+    for (const slug of subscribedSlugs) {
+      if (typeof slug === "string" && slug.length > 0) subscribed.add(slug);
+    }
+
+    // First occurrence of each subscribed slug wins. Each app's fields are
+    // read once into a plain snapshot, so what is classified is what is
+    // recorded, whatever the input's getters do.
+    const chosen = new Map<string, PlanApp>();
+    for (const app of apps) {
+      if (typeof app !== "object" || app === null) continue;
+      let slug: unknown;
+      try {
+        slug = app.slug;
+      } catch {
+        continue; // cannot even read the slug: cannot be matched to a subscriber
+      }
+      if (typeof slug !== "string" || !subscribed.has(slug) || chosen.has(slug)) continue;
+      try {
+        chosen.set(slug, {
+          slug,
+          name: app.name,
+          version: app.version,
+          rollout_percentage: app.rollout_percentage,
+          rollout_status: app.rollout_status,
+        });
+      } catch {
+        // A field that throws when read: this one app is `unchanged` (a
+        // blank version never classifies as anything else) and still owns
+        // its slug; it must not stop the rest of the plan.
+        chosen.set(slug, { slug, name: "", version: "", rollout_percentage: 0, rollout_status: "active" });
+      }
+    }
+
+    const slugs = [...chosen.keys()].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+
+    const plan = emptyPlan();
+    plan.counts.considered = slugs.length;
+
+    for (const slug of slugs) {
+      const app = chosen.get(slug) as PlanApp;
+      const decision = classifyApp(app, baselines.get(slug));
+
+      if (decision === "unchanged") {
+        plan.counts.unchanged++;
+      } else if (decision === "held_back") {
+        plan.counts.held_back++;
+      } else if (plan.notify.length + plan.baseline.length >= MAX_PLAN) {
+        plan.counts.deferred++;
+      } else {
+        // classifyApp said notify/baseline, so the version is valid.
+        const version = normalizeVersion(app.version) as string;
+        if (decision === "notify") plan.notify.push({ slug, name: app.name, version });
+        else plan.baseline.push({ slug, version });
+      }
+    }
+
+    plan.counts.notify = plan.notify.length;
+    plan.counts.baseline = plan.baseline.length;
+    return plan;
+  } catch {
+    return emptyPlan();
+  }
+}
