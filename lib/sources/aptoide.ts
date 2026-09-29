@@ -29,7 +29,10 @@
  */
 
 import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
-import { appTypeForLegacyCategory } from "../taxonomy";
+import { appTypeForLegacyCategory, readCategory } from "../taxonomy";
+import { categories as legacyCategories } from "../mock-data";
+
+const LEGACY_CATEGORY_SLUGS: readonly string[] = legacyCategories.map((c) => c.slug);
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
 
@@ -260,6 +263,13 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
   if (!raw.file.hardware?.sdk) notProvided.push("min_android_version");
   if (!hasUsableAge(raw.age)) notProvided.push("content_rating"); // the conservative "Adults only 18+" fallback stays as the stored value but is never displayed as if Aptoide had rated it
 
+  // 5.i.ii.zi — the curated map (and its "internet" fallback) only ever yields
+  // legacy slugs, so today this always reads as recognized; it goes through
+  // the tolerant reader anyway so a typo or a Play-style slug added to the
+  // map can never put an unknown string on `App.category`.
+  const mappedCategory = categoryForPackage(raw.package);
+  const category = readCategory(mappedCategory, appTypeForLegacyCategory(mappedCategory), LEGACY_CATEGORY_SLUGS);
+
   const app: App = {
     id: `aptoide-${raw.id}`,
     slug,
@@ -278,8 +288,9 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     version: raw.file.vername,
     license: "Not provided",
     is_published: true,
-    category: categoryForPackage(raw.package), // real mapping — see CATEGORY_BY_PACKAGE above
-    app_type: appTypeForLegacyCategory(categoryForPackage(raw.package)), // 5.i.i.zi — true for the legacy slugs ("games" is a game); replaced by 5.i.ii.zi/zo
+    category: category.category, // real mapping — see CATEGORY_BY_PACKAGE above, read through the tolerant reader (5.i.ii.zi)
+    ...(category.raw === null ? {} : { category_raw: category.raw }),
+    app_type: appTypeForLegacyCategory(mappedCategory), // 5.i.i.zi — true for the legacy slugs ("games" is a game); replaced by 5.i.ii.zo
     created_at: raw.added || nowIso,
     updated_at: raw.modified || nowIso,
 

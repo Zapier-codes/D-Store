@@ -159,3 +159,50 @@ export function checkCategory(appType: unknown, category: unknown): CategoryChec
 export function appTypeForLegacyCategory(category: string): AppType {
   return category === "games" ? "game" : "app";
 }
+
+/** Longest raw category string kept in `App.category_raw`; anything longer is cut. */
+export const CATEGORY_RAW_MAX = 100;
+
+export interface ReadCategoryResult {
+  /** What `App.category` is set to: the value if recognized, else `UNCATEGORIZED.slug`. */
+  category: string;
+  /** The producer's own value when it was present but not recognized (cut to `CATEGORY_RAW_MAX`), else `null`. */
+  raw: string | null;
+}
+
+/**
+ * The tolerant category reader — leaf `5.i.ii.zi`. Decides what a source
+ * shows for the `category` value it was handed, without ever rejecting the
+ * app or the index it came from.
+ *
+ * A value is **recognized** when it is a string that either (a) is in the
+ * vocabulary for `appType` (`checkCategory`), or (b) is one of
+ * `legacySlugs` — the 12 slugs the storefront's category pages, counts and
+ * themes are built on today. (b) is a transition rule: until `5.i.ii.zo`
+ * moves the UI to this vocabulary, reading a Play-vocabulary slug as
+ * "known" is correct but the storefront has no page for it, while reading a
+ * legacy slug as unknown would empty the existing category pages.
+ *
+ * Anything else — a string in neither list, an empty string, a number, an
+ * object, `null`, `undefined` — is `UNCATEGORIZED`. When the value was a
+ * non-empty string, it is kept in `raw` (cut to `CATEGORY_RAW_MAX`) so
+ * nothing is lost if the vocabulary catches up; every other shape gives
+ * `raw: null` because there is no string to keep.
+ *
+ * Exact match, no trimming or case folding, like `checkCategory`. Never
+ * throws. Callers that want a *default* for an absent value (as
+ * `lib/sources/zealot.ts` does) apply it before calling this.
+ */
+export function readCategory(
+  raw: unknown,
+  appType: AppType,
+  legacySlugs: readonly string[],
+): ReadCategoryResult {
+  if (typeof raw !== "string" || raw.length === 0) {
+    return { category: UNCATEGORIZED.slug, raw: null };
+  }
+  if (checkCategory(appType, raw).known || legacySlugs.includes(raw)) {
+    return { category: raw, raw: null };
+  }
+  return { category: UNCATEGORIZED.slug, raw: raw.slice(0, CATEGORY_RAW_MAX) };
+}

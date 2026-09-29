@@ -147,6 +147,13 @@ export interface App {
    * `sports` is both an app category and a game genre.
    */
   category: string; // Category.slug today; see `lib/taxonomy.ts`
+  /**
+   * `5.i.ii.zi` — set only when the source supplied a category string the
+   * tolerant reader (`readCategory`, `lib/taxonomy.ts`) did not recognize; then
+   * `category` is `"uncategorized"` and this holds the producer's own value.
+   * Absent otherwise. Nothing displays it.
+   */
+  category_raw?: string;
   created_at: string; // ISO date
   updated_at: string; // ISO date
 

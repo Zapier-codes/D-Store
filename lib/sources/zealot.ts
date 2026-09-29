@@ -35,13 +35,15 @@
  */
 
 import type { App, AppOrigin, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
-import { appTypeForLegacyCategory } from "../taxonomy";
-import { ALL_REGIONS } from "../mock-data";
+import { appTypeForLegacyCategory, readCategory } from "../taxonomy";
+import { ALL_REGIONS, categories as legacyCategories } from "../mock-data";
 import { DEFAULT_TENANT_ID, type TenantConfig } from "../tenant-config";
 import type { CatalogSource } from "./types";
 import { verifySignature, isRollback, isExpired, SUPPORTED_SCHEMA_VERSION, type IndexState } from "./zealot-trust";
 
 const ZEALOT_ORIGIN: AppOrigin = "zealot";
+
+const LEGACY_CATEGORY_SLUGS: readonly string[] = legacyCategories.map((c) => c.slug);
 // The default tenant keeps the original file names (the build-time snapshot script,
 // `scripts/snapshot-zealot-index.ts`, and `outputFileTracingIncludes` both depend on them).
 // Every other tenant gets its own pair, keyed by `tenant_id` (which `TENANT_ID_PATTERN` in
@@ -262,6 +264,15 @@ function normalizeZealotApp(raw: RawApp): App {
       rawSafety.encrypted_in_transit !== null,
   };
 
+  // 5.i.ii.zi — an absent (`null`/`undefined`) category keeps today's default
+  // (`CATEGORY_FALLBACK`, so first-party apps still land in "internet" until
+  // the Console populates the field); only a value that IS present but not
+  // recognized becomes "uncategorized". `typeof` guards a producer that sends
+  // a non-string: `readCategory` treats it as unrecognized instead of throwing.
+  const rawCategory: unknown = raw.category ?? CATEGORY_FALLBACK;
+  const appType = typeof rawCategory === "string" ? appTypeForLegacyCategory(rawCategory) : "app";
+  const category = readCategory(rawCategory, appType, LEGACY_CATEGORY_SLUGS);
+
   const app: App = {
     id: `zealot-${raw.id}`,
     slug: raw.slug,
@@ -280,8 +291,9 @@ function normalizeZealotApp(raw: RawApp): App {
     version: latest?.version_name ?? "Not provided",
     license: raw.license ?? "Not provided",
     is_published: true,
-    category: raw.category ?? CATEGORY_FALLBACK,
-    app_type: appTypeForLegacyCategory(raw.category ?? CATEGORY_FALLBACK), // 5.i.i.zi — v2's index carries no app_type yet; same legacy derivation as lib/sources/aptoide.ts, replaced by 5.i.ii.zi
+    category: category.category, // 5.i.ii.zi — read through the tolerant reader: an unrecognized string becomes "uncategorized", never a rejection
+    ...(category.raw === null ? {} : { category_raw: category.raw }),
+    app_type: appType, // 5.i.i.zi — v2's index carries no app_type yet; same legacy derivation as lib/sources/aptoide.ts, replaced by 5.i.ii.zo
     created_at: raw.created_at || nowIso,
     updated_at: raw.updated_at || nowIso,
 
