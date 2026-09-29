@@ -1,5 +1,5 @@
 /**
- * Web Push subscription store — leaves `5.k.vii.zo` and `5.k.xi.zo`.
+ * Web Push subscription store — leaves `5.k.vii.zo`, `5.k.xi.zo` and `5.k.xiv.zo`.
  *
  * SERVER-ONLY. This module holds the Supabase **service-role** key's only
  * code path in the repo. Import it from route handlers, never from a
@@ -8,7 +8,7 @@
  * time, never at import time, so importing this file with the variables unset
  * is safe and `next build` needs neither.
  *
- * Three operations, all over Supabase's PostgREST HTTP API with plain `fetch`:
+ * Four operations, all over Supabase's PostgREST HTTP API with plain `fetch`:
  *
  * - `upsertSubscription` calls the `replace_push_subscription` SQL function
  *   (`5.k.vii.zi`) — one transaction, so a failure never leaves a device
@@ -19,6 +19,10 @@
  *   response body: the distinct subscribed slugs (`subscribed_slugs()`,
  *   `5.k.xi.zi`) and the `push_notified_version` baselines for them. It is
  *   read-only; baseline writes belong to the sender (`5.k.iii.zo`).
+ * - `readRecipients` (`5.k.xiv.zo`) reads who to send to — every device's
+ *   endpoint and keys with the requested slugs it subscribed to — through the
+ *   paged `push_recipients()` function (`5.k.xiv.zi`). It returns secrets, so
+ *   its result must never be logged, and it never returns a partial list.
  *
  * Decision, recorded: plain `fetch`, not `@supabase/supabase-js`. This module
  * makes two requests against tables and a function whose shape this repo
@@ -422,4 +426,163 @@ export async function readDispatchState(deps: PushStoreDeps = {}): Promise<Dispa
   }
 
   return { ok: true, subscribedSlugs, baselines };
+}
+
+// ---------------------------------------------------------------------------
+// Recipients read — leaf `5.k.xiv.zo`
+// ---------------------------------------------------------------------------
+
+/**
+ * Rows asked for per page of `push_recipients()` (`p_limit`). Two limits
+ * shape it. It must stay below `PUSH_MAX_ROWS`, so PostgREST can never cut a
+ * page short without saying so. And a page must fit `PUSH_MAX_BODY_BYTES`
+ * even when every row is as large as a valid row can be: an endpoint of
+ * `MAX_ENDPOINT_LENGTH` (2048) plus keys of 87 and 22 characters plus JSON
+ * overhead is about 2.3 KB, and 200 of those is about 460 KB, inside 512 KiB.
+ * Real push endpoints are a few hundred bytes, so a real page is far smaller.
+ * The SQL function accepts up to 500; this is deliberately lower.
+ */
+export const PUSH_RECIPIENT_PAGE = 200;
+
+/**
+ * Runaway guard on the page loop: 100 pages of `PUSH_RECIPIENT_PAGE` is
+ * 20,000 (device, slug) rows. Reaching it means something is wrong (a cursor
+ * that does not advance, or a table far beyond this site's scale), and the
+ * read is `unavailable` rather than an unbounded loop of requests.
+ */
+export const PUSH_RECIPIENT_MAX_PAGES = 100;
+
+/** The most slugs one call may ask about; the SQL function raises above 1000. */
+export const PUSH_RECIPIENT_MAX_SLUGS = 1000;
+
+/** One device and the requested slugs it is subscribed to. Holds secrets: never log it. */
+export interface PushRecipient {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  /** Distinct, in the order the database returned them (slug byte order). Never empty. */
+  slugs: string[];
+}
+
+export type RecipientsResult =
+  | { ok: true; devices: PushRecipient[] }
+  | { ok: false; reason: "not_configured" | "unavailable" | "invalid_input" };
+
+/**
+ * Every device subscribed to at least one of `slugs`, with the subset of
+ * `slugs` it is subscribed to. Devices come back in endpoint byte order.
+ *
+ * Calls `POST /rest/v1/rpc/push_recipients` page by page, following the
+ * keyset cursor (the last row's endpoint and slug) until a page holds fewer
+ * rows than were asked for. Argument names match the SQL function exactly.
+ *
+ * Never a partial answer: `unavailable` covers a failed request on any page,
+ * an oversized or non-JSON body, a page that is not an array or holds more
+ * rows than asked for, a row that fails validation (endpoint via
+ * `validateEndpoint`, keys via `validateP256dh`/`validateAuth`, a slug that
+ * was not asked for), a repeated (endpoint, slug), a device whose keys differ
+ * between rows, and more than `PUSH_RECIPIENT_MAX_PAGES` pages.
+ *
+ * `slugs` must each pass `validateSlugs` (duplicates are dropped) and number
+ * at most `PUSH_RECIPIENT_MAX_SLUGS`, else `invalid_input` before any request.
+ * An empty list is `ok` with no devices and makes no request. Nothing logged
+ * here contains an endpoint, a key or a slug.
+ */
+export async function readRecipients(
+  slugs: string[],
+  deps: PushStoreDeps = {},
+): Promise<RecipientsResult> {
+  if (!Array.isArray(slugs)) return { ok: false, reason: "invalid_input" };
+  const wanted = new Set<string>();
+  for (const slug of slugs) {
+    if (typeof slug !== "string" || !validateSlugs([slug]).ok) {
+      return { ok: false, reason: "invalid_input" };
+    }
+    wanted.add(slug);
+  }
+  if (wanted.size > PUSH_RECIPIENT_MAX_SLUGS) return { ok: false, reason: "invalid_input" };
+  if (wanted.size === 0) return { ok: true, devices: [] };
+
+  const cfg = readConfig(deps.env ?? process.env);
+  if (!cfg) return { ok: false, reason: "not_configured" };
+
+  const unavailable: RecipientsResult = { ok: false, reason: "unavailable" };
+  const slugList = [...wanted];
+
+  const byEndpoint = new Map<string, PushRecipient>();
+  const seenPairs = new Set<string>();
+  let afterEndpoint: string | null = null;
+  let afterSlug: string | null = null;
+
+  for (let page = 0; ; page++) {
+    if (page >= PUSH_RECIPIENT_MAX_PAGES) {
+      console.error("push-store: recipients failed, too many pages");
+      return unavailable;
+    }
+
+    const read = await readJson(
+      cfg,
+      deps,
+      "POST",
+      "/rest/v1/rpc/push_recipients",
+      {
+        p_slugs: slugList,
+        p_after_endpoint: afterEndpoint,
+        p_after_slug: afterSlug,
+        p_limit: PUSH_RECIPIENT_PAGE,
+      },
+      "recipients",
+    );
+    if (!read.ok || !Array.isArray(read.json)) return unavailable;
+    const rows: unknown[] = read.json;
+    // More rows than asked for means the function is not the one we think.
+    if (rows.length > PUSH_RECIPIENT_PAGE) {
+      console.error("push-store: recipients failed, page larger than requested");
+      return unavailable;
+    }
+
+    let lastEndpoint = "";
+    let lastSlug = "";
+    for (const row of rows) {
+      if (!isRecord(row)) return unavailable;
+      const { endpoint, p256dh, auth, slug } = row;
+      if (
+        typeof endpoint !== "string" ||
+        typeof p256dh !== "string" ||
+        typeof auth !== "string" ||
+        typeof slug !== "string" ||
+        !validateEndpoint(endpoint).ok ||
+        !validateP256dh(p256dh).ok ||
+        !validateAuth(auth).ok ||
+        !wanted.has(slug)
+      ) {
+        return unavailable;
+      }
+
+      const pair = `${endpoint}\n${slug}`;
+      if (seenPairs.has(pair)) return unavailable;
+      seenPairs.add(pair);
+
+      const device = byEndpoint.get(endpoint);
+      if (device) {
+        // One device has one set of keys. A mismatch is corrupt data, and
+        // sending with the wrong keys would fail every push to it.
+        if (device.p256dh !== p256dh || device.auth !== auth) return unavailable;
+        device.slugs.push(slug);
+      } else {
+        byEndpoint.set(endpoint, { endpoint, p256dh, auth, slugs: [slug] });
+      }
+
+      lastEndpoint = endpoint;
+      lastSlug = slug;
+    }
+
+    // Fewer rows than asked for: that was the last page. A full page may or
+    // may not be, so ask again with the cursor.
+    if (rows.length < PUSH_RECIPIENT_PAGE) break;
+    afterEndpoint = lastEndpoint;
+    afterSlug = lastSlug;
+  }
+
+  return { ok: true, devices: [...byEndpoint.values()] };
 }
