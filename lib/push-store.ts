@@ -1,5 +1,5 @@
 /**
- * Web Push subscription store — leaves `5.k.vii.zo`, `5.k.xi.zo` and `5.k.xiv.zo`.
+ * Web Push subscription store — leaves `5.k.vii.zo`, `5.k.xi.zo`, `5.k.xiv.zo` and `5.k.xv.zo`.
  *
  * SERVER-ONLY. This module holds the Supabase **service-role** key's only
  * code path in the repo. Import it from route handlers, never from a
@@ -8,7 +8,7 @@
  * time, never at import time, so importing this file with the variables unset
  * is safe and `next build` needs neither.
  *
- * Four operations, all over Supabase's PostgREST HTTP API with plain `fetch`:
+ * Five operations, all over Supabase's PostgREST HTTP API with plain `fetch`:
  *
  * - `upsertSubscription` calls the `replace_push_subscription` SQL function
  *   (`5.k.vii.zi`) — one transaction, so a failure never leaves a device
@@ -18,11 +18,15 @@
  * - `readDispatchState` (`5.k.xi.zo`) is the only operation that reads a
  *   response body: the distinct subscribed slugs (`subscribed_slugs()`,
  *   `5.k.xi.zi`) and the `push_notified_version` baselines for them. It is
- *   read-only; baseline writes belong to the sender (`5.k.iii.zo`).
+ *   read-only; baseline writes are `writeNotifiedVersions` below.
  * - `readRecipients` (`5.k.xiv.zo`) reads who to send to — every device's
  *   endpoint and keys with the requested slugs it subscribed to — through the
  *   paged `push_recipients()` function (`5.k.xiv.zi`). It returns secrets, so
  *   its result must never be logged, and it never returns a partial list.
+ * - `writeNotifiedVersions` (`5.k.xv.zo`) records the diff baseline — the
+ *   version last dealt with, per slug — through the atomic
+ *   `upsert_push_notified_versions()` function (`5.k.xv.zi`). It writes only
+ *   the entries the caller passes; which ones qualify is the caller's call.
  *
  * Decision, recorded: plain `fetch`, not `@supabase/supabase-js`. This module
  * makes two requests against tables and a function whose shape this repo
@@ -585,4 +589,124 @@ export async function readRecipients(
   }
 
   return { ok: true, devices: [...byEndpoint.values()] };
+}
+
+// ---------------------------------------------------------------------------
+// Notified-version write — leaf `5.k.xv.zo`
+// ---------------------------------------------------------------------------
+
+/**
+ * Entries per `upsert_push_notified_versions` call. `MAX_PLAN` (lib/push-plan.ts)
+ * is 100 entries per dispatch run, so one call covers a whole plan today; the
+ * chunking exists so a caller passing more is still safe, not because a plan
+ * needs it. Each call is atomic; several calls are not (see below).
+ */
+export const PUSH_NOTIFIED_CHUNK = 100;
+
+/** Most entries one `writeNotifiedVersions` call accepts (ten chunks). More is `invalid_input`. */
+export const PUSH_NOTIFIED_MAX_ENTRIES = 1000;
+
+/** Longest version string accepted. Versions come from the catalog (Aptoide's are third-party data); this is a sanity bound, not a format rule. */
+export const PUSH_NOTIFIED_MAX_VERSION_LENGTH = 200;
+
+/** A baseline to record: `version` is the last version dealt with for `slug`. */
+export interface NotifiedVersionEntry {
+  slug: string;
+  version: string;
+}
+
+export type WriteNotifiedResult =
+  | { ok: true; written: number }
+  | { ok: false; reason: "not_configured" | "unavailable" | "invalid_input" };
+
+/**
+ * Record `entries` as the diff baseline (`push_notified_version`), through
+ * `POST /rest/v1/rpc/upsert_push_notified_versions` with exactly the
+ * arguments `p_slugs` and `p_versions` (parallel arrays).
+ *
+ * Writes only what it is given: it decides nothing about which apps
+ * qualify (`5.k.xvii.zi` does), and it never derives, trims or rewrites a
+ * version. Entries are validated before any request: every slug must pass
+ * `validateSlugs`, every version must be a non-empty string that is already
+ * trimmed (the plan carries normalized versions; recording an untrimmed one
+ * would not match what `classifyApp` compares next run) and at most
+ * `PUSH_NOTIFIED_MAX_VERSION_LENGTH` characters, and no slug may repeat
+ * (the SQL function refuses duplicates too). Anything else is `invalid_input`,
+ * with nothing sent. An empty list is `ok` with `written: 0`, no request and no
+ * config check.
+ *
+ * Chunks of `PUSH_NOTIFIED_CHUNK` are sent one after another. Each chunk is
+ * atomic; the whole call is not. If a later chunk fails, earlier chunks stay
+ * written and the result is `unavailable`. That is safe: a baseline that was
+ * not recorded is simply planned again next run (`classifyApp` sees the same
+ * version and the same absent or older baseline), so the worst case is one
+ * repeated notification for an app whose baseline landed in a failed chunk,
+ * never a missed one. The caller must treat `unavailable` as "some baselines
+ * may be recorded".
+ *
+ * The RPC returns a bare JSON integer, the number of rows written. A body that
+ * is not an integer equal to the chunk size is `unavailable`, not trusted.
+ * Nothing logged contains a slug, a version or a key (a fixed label and a
+ * status code only), and PostgREST error bodies are never read.
+ */
+export async function writeNotifiedVersions(
+  entries: NotifiedVersionEntry[],
+  deps: PushStoreDeps = {},
+): Promise<WriteNotifiedResult> {
+  if (!Array.isArray(entries) || entries.length > PUSH_NOTIFIED_MAX_ENTRIES) {
+    return { ok: false, reason: "invalid_input" };
+  }
+
+  const slugs: string[] = [];
+  const versions: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (!isRecord(entry)) return { ok: false, reason: "invalid_input" };
+    const { slug, version } = entry;
+    if (
+      typeof slug !== "string" ||
+      !validateSlugs([slug]).ok ||
+      seen.has(slug) ||
+      typeof version !== "string" ||
+      version.length === 0 ||
+      version.length > PUSH_NOTIFIED_MAX_VERSION_LENGTH ||
+      version !== version.trim()
+    ) {
+      return { ok: false, reason: "invalid_input" };
+    }
+    seen.add(slug);
+    slugs.push(slug);
+    versions.push(version);
+  }
+  if (slugs.length === 0) return { ok: true, written: 0 };
+
+  const cfg = readConfig(deps.env ?? process.env);
+  if (!cfg) return { ok: false, reason: "not_configured" };
+
+  let written = 0;
+  for (let at = 0; at < slugs.length; at += PUSH_NOTIFIED_CHUNK) {
+    const chunkSlugs = slugs.slice(at, at + PUSH_NOTIFIED_CHUNK);
+    const chunkVersions = versions.slice(at, at + PUSH_NOTIFIED_CHUNK);
+
+    const read = await readJson(
+      cfg,
+      deps,
+      "POST",
+      "/rest/v1/rpc/upsert_push_notified_versions",
+      { p_slugs: chunkSlugs, p_versions: chunkVersions },
+      "notified-versions",
+    );
+    if (
+      !read.ok ||
+      typeof read.json !== "number" ||
+      !Number.isInteger(read.json) ||
+      read.json !== chunkSlugs.length
+    ) {
+      if (read.ok) console.error("push-store: notified-versions failed, unexpected result");
+      return { ok: false, reason: "unavailable" };
+    }
+    written += read.json;
+  }
+
+  return { ok: true, written };
 }
