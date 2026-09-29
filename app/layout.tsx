@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConsentBanner from "@/components/ConsentBanner";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import PushSync from "@/components/PushSync";
 
 /**
  * `generateMetadata` — leaf 4.b.ii.zo (Progressive Web App →
@@ -187,6 +188,7 @@ export default async function RootLayout({
           <Footer />
           {!consented && <ConsentBanner />}
           <ServiceWorkerRegister />
+          <PushSync />
         </RegionProvider>
       </body>
     </html>

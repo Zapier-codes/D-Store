@@ -71,6 +71,22 @@ function dispatchChange(slug: string) {
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { slug } }));
 }
 
+/**
+ * Subscribe to same-tab favorite changes (add/remove). Returns the
+ * unsubscribe function. The callback takes no argument: listeners that need
+ * the current list re-read it with `listFavorites()`. The event is same-tab
+ * only — IndexedDB has no cross-tab notification, so a change made in another
+ * tab is not seen here (callers pick it up on their next mount). Added for
+ * `5.k.ix.zi`; `CHANGE_EVENT` itself stays private, and `useFavorite`'s
+ * behavior is unchanged.
+ */
+export function onFavoritesChange(callback: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => callback();
+  window.addEventListener(CHANGE_EVENT, handler);
+  return () => window.removeEventListener(CHANGE_EVENT, handler);
+}
+
 /** Every saved favorite, most-recently-added first. Empty on any failure. */
 export async function listFavorites(): Promise<FavoriteRecord[]> {
   const db = await openDb();
