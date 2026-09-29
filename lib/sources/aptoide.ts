@@ -29,6 +29,7 @@
  */
 
 import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
+import { appTypeForLegacyCategory } from "../taxonomy";
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
 
@@ -278,6 +279,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     license: "Not provided",
     is_published: true,
     category: categoryForPackage(raw.package), // real mapping — see CATEGORY_BY_PACKAGE above
+    app_type: appTypeForLegacyCategory(categoryForPackage(raw.package)), // 5.i.i.zi — true for the legacy slugs ("games" is a game); replaced by 5.i.ii.zi/zo
     created_at: raw.added || nowIso,
     updated_at: raw.modified || nowIso,
 

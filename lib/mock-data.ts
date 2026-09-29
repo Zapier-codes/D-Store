@@ -38,6 +38,8 @@
  * same interface a real Supabase client will use later is leaf 0.a.ii.zo.
  */
 
+import type { AppType } from "./taxonomy";
+
 export interface Category {
   slug: string;
   name: string;
@@ -131,7 +133,20 @@ export interface App {
   version: string;
   license: string;
   is_published: boolean;
-  category: string; // Category.slug
+  /**
+   * `5.i.i.zi` — `"app"` or `"game"`; decides which vocabulary in
+   * `lib/taxonomy.ts` `category` is checked against. Today's sources fill it
+   * from the legacy 12-slug set (`appTypeForLegacyCategory`); the real value
+   * arrives with `5.i.ii.zi` (tolerant reader) once Zealot publishes it.
+   */
+  app_type: AppType;
+  /**
+   * An open string (not restricted to the `categories` list below or to
+   * `lib/taxonomy.ts`'s vocabulary — `checkCategory` reports whether it is
+   * known, it does not reject). Only unambiguous together with `app_type`:
+   * `sports` is both an app category and a game genre.
+   */
+  category: string; // Category.slug today; see `lib/taxonomy.ts`
   created_at: string; // ISO date
   updated_at: string; // ISO date
 

@@ -35,6 +35,7 @@
  */
 
 import type { App, AppOrigin, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
+import { appTypeForLegacyCategory } from "../taxonomy";
 import { ALL_REGIONS } from "../mock-data";
 import { DEFAULT_TENANT_ID, type TenantConfig } from "../tenant-config";
 import type { CatalogSource } from "./types";
@@ -280,6 +281,7 @@ function normalizeZealotApp(raw: RawApp): App {
     license: raw.license ?? "Not provided",
     is_published: true,
     category: raw.category ?? CATEGORY_FALLBACK,
+    app_type: appTypeForLegacyCategory(raw.category ?? CATEGORY_FALLBACK), // 5.i.i.zi — v2's index carries no app_type yet; same legacy derivation as lib/sources/aptoide.ts, replaced by 5.i.ii.zi
     created_at: raw.created_at || nowIso,
     updated_at: raw.updated_at || nowIso,
 

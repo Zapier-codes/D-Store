@@ -26,6 +26,7 @@ import {
   catalogScopeKey,
   type CatalogScope,
 } from "./sources/zealot";
+import type { AppType } from "./taxonomy";
 import { getCurrentTenant } from "./tenant";
 import { DEFAULT_TENANT_ID } from "./tenant-config";
 
@@ -299,6 +300,8 @@ export async function getCollectionAppCount(slug: string): Promise<number> {
 
 export interface GetAppsOptions {
   category?: string;
+  /** `5.i.i.zi` — restrict to apps or games. Combine with `category`, which is only unambiguous alongside it. */
+  appType?: AppType;
   limit?: number;
   license?: string;
   maxSizeMb?: number;
@@ -341,6 +344,9 @@ export function filterAppsByRegion(source: App[], regionCode: string): App[] {
  */
 export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
   let result = await getMergedApps();
+  if (options.appType) {
+    result = result.filter((app) => app.app_type === options.appType);
+  }
   if (options.category) {
     result = result.filter((app) => app.category === options.category);
   }
