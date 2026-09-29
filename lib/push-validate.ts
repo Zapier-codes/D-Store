@@ -87,7 +87,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
  * canonical encoding: wrong alphabet, an impossible length, or non-zero
  * padding bits in the last character.
  */
-function decodeBase64Url(s: string): Uint8Array | null {
+export function decodeBase64Url(s: string): Uint8Array | null {
   if (!BASE64URL_CHARS.test(s) || s.length % 4 === 1) return null;
   const out = new Uint8Array(Math.floor((s.length * 6) / 8));
   let acc = 0;
