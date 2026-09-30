@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getApps, getCategories } from "@/lib/catalog";
+import { getApps, getTaxonomyCategories } from "@/lib/catalog";
 
 /**
  * sitemap.xml — leaf 2.d.iii.zi (Legal & Compliance, SEO), per
@@ -39,7 +39,7 @@ import { getApps, getCategories } from "@/lib/catalog";
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://d-store-nu.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [apps, categories] = await Promise.all([getApps(), getCategories()]);
+  const [apps, categories] = await Promise.all([getApps(), getTaxonomyCategories()]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: "daily", priority: 1 },
@@ -51,7 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const categoryRoutes: MetadataRoute.Sitemap = categories.map((category) => ({
-    url: `${BASE_URL}/categories/${category.slug}`,
+    url: `${BASE_URL}/categories/${category.app_type}/${category.slug}`,
     changeFrequency: "weekly",
     priority: 0.6,
   }));

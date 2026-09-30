@@ -36,11 +36,14 @@ const SIZE_BUCKETS = [
  */
 export default function CategoryFilters({
   categorySlug,
+  basePath,
   licenses,
   selectedLicense,
   selectedMaxSize,
 }: {
   categorySlug: string;
+  /** `5.i.iv.zi` — where "Clear filters" goes. Defaults to the legacy `/categories/<categorySlug>`; the two-axis page passes `/categories/<appType>/<slug>`. */
+  basePath?: string;
   licenses: string[];
   selectedLicense: string;
   selectedMaxSize: string;
@@ -74,7 +77,7 @@ export default function CategoryFilters({
         Apply
       </button>
       {(selectedLicense || selectedMaxSize) && (
-        <Link href={`/categories/${categorySlug}`} className={styles.clear}>
+        <Link href={basePath ?? `/categories/${categorySlug}`} className={styles.clear}>
           Clear filters
         </Link>
       )}

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Category } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
 import styles from "./CategoryCard.module.css";
 
@@ -26,12 +25,19 @@ import styles from "./CategoryCard.module.css";
 export default function CategoryCard({
   category,
   appCount,
+  href,
+  noun = "app",
 }: {
-  category: Category;
+  /** Only `slug` and `name` are read, so both the legacy `Category` and a two-axis `TaxonomyCategory` fit. */
+  category: { slug: string; name: string };
   appCount: number;
+  /** `5.i.iv.zi` — defaults to the legacy `/categories/<slug>`; the two-axis pages pass `/categories/<appType>/<slug>`. */
+  href?: string;
+  /** `5.i.iv.zi` — singular noun for the count ("app", "game"); the plural adds an `s`. */
+  noun?: string;
 }) {
   return (
-    <Link href={`/categories/${category.slug}`} className={styles.card}>
+    <Link href={href ?? `/categories/${category.slug}`} className={styles.card}>
       <div className={styles.icon}>
         {/* Categories have no per-category color fields (see file-header
             comment), so every tile uses the shared accent token in place
@@ -46,7 +52,7 @@ export default function CategoryCard({
       <div className={styles.info}>
         <p className={styles.name}>{category.name}</p>
         <p className={styles.count}>
-          {appCount} {appCount === 1 ? "app" : "apps"}
+          {appCount} {appCount === 1 ? noun : `${noun}s`}
         </p>
       </div>
     </Link>

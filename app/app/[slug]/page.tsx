@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getCategoryBySlug } from "@/lib/catalog";
+import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getTaxonomyCategory } from "@/lib/catalog";
+import { toPlay } from "@/lib/taxonomy";
 import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
@@ -104,7 +105,12 @@ export default async function AppDetailPage({
 
   const similarApps = await getSimilarApps(app.slug);
   const developer = await getDeveloperBySlug(app.developer_slug);
-  const category = await getCategoryBySlug(app.category);
+  // 5.i.iv.zi — the display name now comes from the two-axis taxonomy: the
+  // app's stored category goes through the read-time shim (`toPlay`), so a
+  // legacy `internet` app reads "Communication". `uncategorized` has no entry
+  // (`null`), so no name is passed on, as an unknown legacy slug always did.
+  const taxonomy = toPlay(app.category, app.app_type);
+  const category = await getTaxonomyCategory(taxonomy.app_type, taxonomy.category);
   const mode = await getTheme();
 
   // 5.h.iii.zi — third-party apps (Aptoide) never carry Zealot-derived

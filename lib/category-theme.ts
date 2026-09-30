@@ -1,4 +1,5 @@
 import type { Category } from "./mock-data";
+import { toPlay, type AppType } from "./taxonomy";
 import type { Theme } from "./theme";
 
 /**
@@ -228,4 +229,28 @@ export function resolveCategoryTheme(
   }
   const theme = CATEGORY_THEMES[categorySlug];
   return theme ? theme[mode] : undefined;
+}
+
+/**
+ * Stopgap — leaf `5.i.iv.zi`, deleted by `5.i.v.zi` when the registry is
+ * re-keyed to the two-axis model. `CATEGORY_THEMES` is still keyed on the
+ * legacy slugs (`finance`, `reading`), but the new category pages know a
+ * category as `(appType, slug)` — `books-and-reference`, not `reading` — so
+ * without this the "Sanctuary" skin would vanish from its page the moment the
+ * page moved. Returns the key in `CATEGORY_THEMES` to hand to
+ * `resolveCategoryTheme`/`CategoryThemeScope` for a two-axis category: the
+ * slug itself if it is a key on the app axis (`finance`), else the first
+ * registered legacy slug that `toPlay` maps to this pair (`reading` for
+ * `books-and-reference`), else the slug unchanged (which resolves to no
+ * register, the base theme). Never throws.
+ */
+export function themeSlugForTaxonomy(appType: AppType, category: string): string {
+  if (appType === "app" && Object.prototype.hasOwnProperty.call(CATEGORY_THEMES, category)) {
+    return category;
+  }
+  for (const key of Object.keys(CATEGORY_THEMES)) {
+    const pair = toPlay(key);
+    if (pair.app_type === appType && pair.category === category) return key;
+  }
+  return category;
 }
