@@ -32,6 +32,7 @@ import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField, T
 import { CATEGORY_RAW_MAX, toPlay, UNCATEGORIZED } from "../taxonomy";
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
+import { readVersionHistory } from "../version-history";
 
 const APTOIDE_ORIGIN: AppOrigin = "aptoide";
 const API_BASE = "https://ws75.aptoide.com/api/7";
@@ -100,6 +101,12 @@ export interface AptoideRawApp {
   urls?: { w?: string };
   added: string;
   modified: string;
+  /**
+   * `5.h.v.zo` — Aptoide's `listAppVersions` response, attached by
+   * `scripts/fetch-aptoide-versions.ts`. Untyped because it is read
+   * purely through `readVersionHistory`'s safe reader.
+   */
+  versions?: unknown;
 }
 
 // --- Trust gate (5.h.iv.zo) ---------------------------------------------
@@ -362,9 +369,11 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
   // renders "Not provided" for it via `isNotProvided`.
   const notProvided: NotProvidedField[] = [
     "play_store_status", // Aptoide says nothing about Play Store listing status (many of these apps ARE on Play)
-    "version_history", // 5.c.v.zo -- the snapshot carries no version list (nodes.versions.list is not in it)
     "monetization", // no ads / in-app-purchase flags — `appcoins.*` is Aptoide's own AppCoins billing, not "contains ads"/"IAP"
   ];
+  
+  // 5.h.v.zo — read version history if it was attached by the fetcher script
+  const history = readVersionHistory(raw.versions);
   const permissions = mapPermissions(raw.file.used_permissions);
   if (permissions === null) notProvided.push("permissions");
   if (!raw.file.hardware?.sdk) notProvided.push("min_android_version");
@@ -446,6 +455,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     origin: APTOIDE_ORIGIN,
     package_name: raw.package,
     not_provided: notProvided,
+    ...(history.entries.length > 0 ? { version_history: history.entries, version_history_omitted: history.omitted } : {}),
   };
 
   return app;
