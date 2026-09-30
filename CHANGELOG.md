@@ -267,3 +267,4 @@ The inherited upstream Fossdroid-Core history (2016–2018). These commits preda
 - 2026-09-30 · `5.c.viii.zi` — `components/VersionAdvisory.tsx` and CSS module: banner for a halted or pulled newest release, nothing otherwise; not mounted; NOT type-checked, rendered or run (operator request); focus run 52 done of 53
 - 2026-09-30 · `5.c.viii.zo` — `VersionAdvisory` mounted once in the detail-page header above the install row; NOT type-checked, built or run (operator request); focus run complete, 53 done of 53
 - 2026-09-30 · `5.c.ii.zo` — older versions in the version history get a download link or a one-line reason (`readDownloadUrl`, `decideDownload`, `VersionHistory`); ten tests added; NOT run or type-checked (operator request)
+- 2026-09-30 · `5.h.vi.zi` — WIP: `scripts/probe-aptoide.sh` (read-only Aptoide endpoint discovery for the operator's Termux) and the run procedure; Current position -> `5.h.vi.zi`; NOT run or tested (operator request)
