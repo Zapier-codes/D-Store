@@ -35,15 +35,14 @@
  */
 
 import type { App, AppOrigin, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
-import { appTypeForLegacyCategory, readCategory } from "../taxonomy";
-import { ALL_REGIONS, categories as legacyCategories } from "../mock-data";
+import { CATEGORY_RAW_MAX, checkCategory, toPlay, UNCATEGORIZED, type AppType } from "../taxonomy";
+import { ALL_REGIONS } from "../mock-data";
 import { DEFAULT_TENANT_ID, type TenantConfig } from "../tenant-config";
 import type { CatalogSource } from "./types";
 import { verifySignature, isRollback, isExpired, SUPPORTED_SCHEMA_VERSION, type IndexState } from "./zealot-trust";
 
 const ZEALOT_ORIGIN: AppOrigin = "zealot";
 
-const LEGACY_CATEGORY_SLUGS: readonly string[] = legacyCategories.map((c) => c.slug);
 // The default tenant keeps the original file names (the build-time snapshot script,
 // `scripts/snapshot-zealot-index.ts`, and `outputFileTracingIncludes` both depend on them).
 // Every other tenant gets its own pair, keyed by `tenant_id` (which `TENANT_ID_PATTERN` in
@@ -231,8 +230,45 @@ function slugifyName(name: string): string {
   return base || "developer";
 }
 
-/** Same fallback `lib/sources/aptoide.ts`'s `categoryForPackage` uses for an app it can't place — v2's `category` field is reserved/null for every app today (confirmed by reading `app/services/catalog_index/serializer.rb`), so every Zealot-origin entry hits this fallback until Task 30 populates the real field. */
-const CATEGORY_FALLBACK = "internet";
+/**
+ * 5.i.vii.zi — places the `category` string Zealot's signed index carries on the two-axis
+ * taxonomy. Pure; never throws; producers control the input.
+ *
+ * Zealot's v2 schema publishes `category` as Play's own enum naming (`art_and_design`,
+ * `communications`, `game_action`, ...; `docs/catalog_index_v2.schema.json` @ Zealot `2af75cba`)
+ * and has NO `app_type` field, so `app_type` is derived here: a `game_` prefix means `game`,
+ * anything else `app`. (When Zealot publishes `app_type`, read it in preference to this.)
+ * The enum is turned into this repo's vocabulary slug (underscores -> hyphens; `game_` stripped;
+ * Play's `communications` is this repo's `communication`) and then CHECKED against the
+ * vocabulary for the derived type, so nothing is trusted just because it has the right shape.
+ *
+ * Order, first match wins:
+ *  1. a Zealot enum value that maps into the vocabulary -> that pair;
+ *  2. anything `toPlay` already understands (a Play slug, or a legacy slug from an old cached
+ *     index) -> `toPlay`'s pair, so `LEGACY_TO_PLAY` stays the one legacy mapping;
+ *  3. an ABSENT value (`null`, `undefined`, `""`, non-string) -> `uncategorized`, no raw kept.
+ *     **Decision (recorded): Zealot's old `internet` default is gone.** An app the Console has
+ *     not categorized is `uncategorized`, not Communication: a wrong shelf is worse than none,
+ *     and the guess would feed the For You shelf a false interest (same call as Aptoide's
+ *     unmapped package, `5.i.vi.zo`);
+ *  4. a present string nobody recognizes -> `uncategorized`, the string kept (cut to
+ *     `CATEGORY_RAW_MAX`) in `category_raw`.
+ */
+export function placeZealotCategory(raw: unknown): { app_type: AppType; category: string; category_raw: string | null } {
+  if (typeof raw !== "string" || raw.length === 0) {
+    return { app_type: "app", category: UNCATEGORIZED.slug, category_raw: null };
+  }
+  const isGame = raw.startsWith("game_");
+  const appType: AppType = isGame ? "game" : "app";
+  let slug = (isGame ? raw.slice("game_".length) : raw).replace(/_/g, "-");
+  if (!isGame && slug === "communications") slug = "communication";
+  if (checkCategory(appType, slug).known) return { app_type: appType, category: slug, category_raw: null };
+
+  const placed = toPlay(raw);
+  if (placed.via !== "unknown") return { app_type: placed.app_type, category: placed.category, category_raw: null };
+
+  return { app_type: "app", category: UNCATEGORIZED.slug, category_raw: raw.slice(0, CATEGORY_RAW_MAX) };
+}
 
 function normalizeZealotApp(raw: RawApp): App {
   const nowIso = new Date().toISOString();
@@ -264,14 +300,8 @@ function normalizeZealotApp(raw: RawApp): App {
       rawSafety.encrypted_in_transit !== null,
   };
 
-  // 5.i.ii.zi — an absent (`null`/`undefined`) category keeps today's default
-  // (`CATEGORY_FALLBACK`, so first-party apps still land in "internet" until
-  // the Console populates the field); only a value that IS present but not
-  // recognized becomes "uncategorized". `typeof` guards a producer that sends
-  // a non-string: `readCategory` treats it as unrecognized instead of throwing.
-  const rawCategory: unknown = raw.category ?? CATEGORY_FALLBACK;
-  const appType = typeof rawCategory === "string" ? appTypeForLegacyCategory(rawCategory) : "app";
-  const category = readCategory(rawCategory, appType, LEGACY_CATEGORY_SLUGS);
+  // 5.i.vii.zi — Play slug and real `app_type` from the index's category (see `placeZealotCategory`).
+  const placed = placeZealotCategory(raw.category);
 
   const app: App = {
     id: `zealot-${raw.id}`,
@@ -291,9 +321,9 @@ function normalizeZealotApp(raw: RawApp): App {
     version: latest?.version_name ?? "Not provided",
     license: raw.license ?? "Not provided",
     is_published: true,
-    category: category.category, // 5.i.ii.zi — read through the tolerant reader: an unrecognized string becomes "uncategorized", never a rejection
-    ...(category.raw === null ? {} : { category_raw: category.raw }),
-    app_type: appType, // 5.i.i.zi — v2's index carries no app_type yet; same legacy derivation as lib/sources/aptoide.ts, replaced by 5.i.ii.zo
+    category: placed.category, // 5.i.vii.zi — a Play slug; an absent category is "uncategorized", an unrecognized one too (kept in category_raw)
+    ...(placed.category_raw === null ? {} : { category_raw: placed.category_raw }),
+    app_type: placed.app_type, // 5.i.vii.zi — derived from the index's category (`game_` prefix); the v2 index has no app_type field yet
     created_at: raw.created_at || nowIso,
     updated_at: raw.updated_at || nowIso,
 
