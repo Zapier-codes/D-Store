@@ -343,7 +343,7 @@ On 2026-09-30, after `origin/master` was fetched (at `73d67b8`), all **31** open
 - [ ] 9 — `5.c.iii.zi` rollback: install-older-version flow *(no detail text, and it changes install behaviour: split per Section 1 before coding, and replace it here with its sub-leaves)*
 - [x] 10 — `5.k.vi.zo` shared limiter and throttle of the two push routes
 - [x] 11 — `5.d.ii.zi` throttle install and view counters *(reuses item 10's limiter)*
-- [ ] 12 — `5.d.ii.zo` throttle ratings and reports *(reuses item 10's limiter)*
+- [x] 12 — `5.d.ii.zo` throttle ratings and reports *(reuses item 10's limiter)*
 - [ ] 13 — `5.k.iv.zi` scheduled GitHub Actions workflow that triggers push dispatch and send *(Unheld, option C)*
 - [ ] 14 — `3.c.iii.zi` report queue *(Unheld; after item 12; **must be split first**: report intake write route, per-moderator authentication, then the queue UI)*
 - [ ] 15 — `5.g.v.zo` read-only, token-authenticated stats endpoint for Zealot's admin *(two-repo session: Zealot's Task 31b reader first, then the D-Store route; the SQL half is already written, see the leaf; `[~]`)*
