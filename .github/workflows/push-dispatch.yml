@@ -1,0 +1,22 @@
+name: Dispatch Push Notifications
+
+on:
+  schedule:
+    - cron: "0 * * * *" # Hourly
+  workflow_dispatch:
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Push Dispatch
+        run: |
+          curl -X POST "${{ secrets.D_STORE_URL }}/api/push/dispatch" \
+            -H "Authorization: Bearer ${{ secrets.PUSH_DISPATCH_SECRET }}" \
+            -H "Content-Type: application/json"
+      
+      - name: Trigger Push Send
+        run: |
+          curl -X POST "${{ secrets.D_STORE_URL }}/api/push/send" \
+            -H "Authorization: Bearer ${{ secrets.PUSH_DISPATCH_SECRET }}" \
+            -H "Content-Type: application/json"
