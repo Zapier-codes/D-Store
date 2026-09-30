@@ -35,6 +35,8 @@ import {
   type TaxonomyCategory,
 } from "./taxonomy";
 import { getCurrentTenant } from "./tenant";
+import { isThirdParty } from "./trust";
+import { reportedStatsFor } from "./third-party-stats";
 import { DEFAULT_TENANT_ID } from "./tenant-config";
 
 export type { TaxonomyCategory };
@@ -727,11 +729,35 @@ export async function getEditorsPicks(limit = 12): Promise<App[]> {
  * one (`getFeaturedApps`/`getTrendingApps`/`getEditorsPicks` all
  * default to a home-shelf-sized slice) — a chart page's whole point
  * is showing the full ranked list, not a preview of it.
+ *
+ * **Mixed-list rule — leaf `5.h.viii.zo` (decided and recorded).**
+ * First-party apps are ranked by D-Store's own `install_count`; a
+ * third-party app's `install_count` is always 0 (this store never
+ * installed it), so it is ranked by the source's *reported* downloads
+ * (`reportedStatsFor(app)?.downloads`, `lib/third-party-stats.ts`)
+ * instead. The two numbers are never put on one axis — a first-party
+ * app with 40 installs would otherwise sit below a third-party app
+ * reporting 500 million. The result is **two ranked groups, first-party
+ * first, then third-party**, each in descending order of its own
+ * counter. A third-party app with no reported downloads goes last in
+ * its group; ties break on `slug` so the order is deterministic. The
+ * return type is unchanged (one array, the two groups concatenated);
+ * the Top Free page splits it back into two labelled sections with
+ * `isThirdParty` and restarts the rank numbers in each.
  */
 export async function getTopFreeApps(): Promise<App[]> {
   const merged = await getMergedApps();
-  const result = [...merged].sort((a, b) => b.install_count - a.install_count);
-  return resolveAfterDelay(result);
+  const firstParty = merged
+    .filter((app) => !isThirdParty(app))
+    .sort((a, b) => b.install_count - a.install_count || a.slug.localeCompare(b.slug));
+  const thirdParty = merged
+    .filter((app) => isThirdParty(app))
+    .sort(
+      (a, b) =>
+        (reportedStatsFor(b)?.downloads ?? -1) - (reportedStatsFor(a)?.downloads ?? -1) ||
+        a.slug.localeCompare(b.slug)
+    );
+  return resolveAfterDelay([...firstParty, ...thirdParty]);
 }
 
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */

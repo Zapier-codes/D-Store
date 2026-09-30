@@ -24,3 +24,11 @@
   font-size: 0.9rem;
   color: var(--color-border);
 }
+
+/* Third-party section heading — leaf 5.h.viii.zo. Same weight as .heading,
+   one step smaller; the .subheading rule under it is reused as-is. */
+.sectionHeading {
+  margin: 0.5rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}

@@ -1,4 +1,5 @@
 import { getTopFreeApps } from "@/lib/catalog";
+import { isThirdParty, sourceName } from "@/lib/trust";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import styles from "./page.module.css";
@@ -25,9 +26,21 @@ import styles from "./page.module.css";
  * see that function's own doc comment for why "Top Free" here is
  * honestly just install-count order over the whole catalog rather
  * than a real free-vs-paid split this catalog has no concept of.
+ *
+ * Two ranked sections — leaf `5.h.viii.zo`. `getTopFreeApps` returns the
+ * first-party group (ranked by D-Store installs) followed by the
+ * third-party group (ranked by the source's reported downloads); the two
+ * counters are never merged (see that function's doc comment for the
+ * rule). This page splits the array with `isThirdParty` and restarts the
+ * rank numbers in each section, so "1" in the second section is the top
+ * third-party app, not a rank below every first-party one. The section
+ * is omitted when it is empty.
  */
 export default async function TopFreeChartPage() {
   const apps = await getTopFreeApps();
+  const firstParty = apps.filter((app) => !isThirdParty(app));
+  const thirdParty = apps.filter((app) => isThirdParty(app));
+  const thirdPartySource = thirdParty[0] ? sourceName(thirdParty[0]) : "";
 
   return (
     <main className={styles.main}>
@@ -37,10 +50,25 @@ export default async function TopFreeChartPage() {
       </p>
 
       <ShelfGrid>
-        {apps.map((app, index) => (
+        {firstParty.map((app, index) => (
           <AppCard key={app.slug} app={app} rank={index + 1} />
         ))}
       </ShelfGrid>
+
+      {thirdParty.length > 0 && (
+        <>
+          <h2 className={styles.sectionHeading}>Third-party apps</h2>
+          <p className={styles.subheading}>
+            Ranked by downloads reported by {thirdPartySource}, not by D-Store installs, so these
+            numbers are not comparable with the list above.
+          </p>
+          <ShelfGrid>
+            {thirdParty.map((app, index) => (
+              <AppCard key={app.slug} app={app} rank={index + 1} />
+            ))}
+          </ShelfGrid>
+        </>
+      )}
     </main>
   );
 }
