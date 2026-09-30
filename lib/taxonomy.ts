@@ -206,3 +206,112 @@ export function readCategory(
   }
   return { category: UNCATEGORIZED.slug, raw: raw.slice(0, CATEGORY_RAW_MAX) };
 }
+
+/** A point on the two-axis taxonomy: which list (`app_type`) and which entry (`category`). */
+export interface TaxonomyPair {
+  app_type: AppType;
+  category: string;
+}
+
+/**
+ * The 12 legacy F-Droid-inherited category slugs (`categories` in
+ * `lib/mock-data.ts`) mapped onto the Play-model taxonomy — leaf `5.i.iii.zi`.
+ *
+ * Every entry is a judgement call and the operator may overrule any of them;
+ * changing one is a one-line edit here and nothing else. Play's target names
+ * are as remembered (see the module comment), not re-checked. Where a legacy
+ * slug has no clean Play equivalent the nearest is chosen and flagged:
+ *
+ *  - `games` -> `game` / `uncategorized`. A legacy *category* that is really
+ *    an `app_type`: it carries no genre, and inventing one (say `casual`)
+ *    would claim something nobody knows. Zero apps carry it today (Minecraft
+ *    404'd on Aptoide; see `lib/sources/aptoide.ts`), so this costs nothing.
+ *  - `multimedia` -> `video-players-and-editors`. Play splits it with
+ *    `music-and-audio`; the one ingested app (VLC) is a video player. A
+ *    music app carrying `multimedia` would be filed under video.
+ *  - `internet` -> `communication`. Play files browsers and messengers there
+ *    (Firefox and WhatsApp are the two ingested apps). `internet` is also
+ *    the *fallback* for every unmapped Aptoide package and every Zealot app
+ *    without a category, so anything that landed there by default lands in
+ *    `communication` too — that guess is `5.i.v.zo`'s to revisit.
+ *  - `system` -> `tools` and `development` -> `tools`. Play has no system or
+ *    developer category; `tools` is the nearest for both (Termux, GitHub).
+ *  - `time` -> `productivity`. Calendars fit; alarm clocks (the one ingested
+ *    app) are often listed under Tools on Play, so this one is weakest.
+ *  - `writing` -> `productivity`. Note-taking (Obsidian) sits there on Play.
+ *
+ * The other five are direct: `navigation` -> `maps-and-navigation`,
+ * `science-education` -> `education`, `theming` -> `personalization`,
+ * `reading` -> `books-and-reference`, `finance` -> `finance`.
+ *
+ * Many-to-one is fine (`system`, `development` -> `tools`;
+ * `time`, `writing` -> `productivity`); one-to-many is not possible in a
+ * table, which is exactly why `multimedia` needed a pick.
+ */
+export const LEGACY_TO_PLAY: Readonly<Record<string, TaxonomyPair>> = {
+  system: { app_type: "app", category: "tools" },
+  multimedia: { app_type: "app", category: "video-players-and-editors" },
+  games: { app_type: "game", category: UNCATEGORIZED.slug },
+  internet: { app_type: "app", category: "communication" },
+  navigation: { app_type: "app", category: "maps-and-navigation" },
+  "science-education": { app_type: "app", category: "education" },
+  theming: { app_type: "app", category: "personalization" },
+  time: { app_type: "app", category: "productivity" },
+  reading: { app_type: "app", category: "books-and-reference" },
+  writing: { app_type: "app", category: "productivity" },
+  development: { app_type: "app", category: "tools" },
+  finance: { app_type: "app", category: "finance" },
+};
+
+/** The legacy slugs `LEGACY_TO_PLAY` covers, in table order. */
+export const LEGACY_SLUGS: readonly string[] = Object.keys(LEGACY_TO_PLAY);
+
+export type ToPlayVia = "vocabulary" | "legacy" | "unknown";
+
+export interface ToPlayResult extends TaxonomyPair {
+  /** How it was resolved: already Play vocabulary, translated from a legacy slug, or not recognized. */
+  via: ToPlayVia;
+}
+
+/**
+ * Translates any category string to a point on the two-axis taxonomy — leaf
+ * `5.i.iii.zi`. The read-time shim `5.i.iii.zo` puts in front of the catalog
+ * so an app carrying a legacy slug and one carrying a Play slug land on the
+ * same page. Resolution order, first match wins:
+ *
+ *  1. **In the vocabulary** — for `appType` if given, else for either list
+ *     (apps first, then games). Returned unchanged, `via: "vocabulary"`.
+ *  2. **A legacy slug** (`LEGACY_TO_PLAY`) — returns its mapped pair,
+ *     `via: "legacy"`. Ignores `appType`: a legacy app's `app_type` was itself
+ *     derived from the slug (`appTypeForLegacyCategory`).
+ *  3. **Anything else** (unknown string, empty, non-string, a name like
+ *     `constructor`) — `uncategorized`, `via: "unknown"`, keeping `appType`
+ *     if given, else `"app"`.
+ *
+ * **Pass `appType` whenever you have it.** A bare slug is ambiguous on the
+ * two axes (`sports` is in both lists): without `appType` it resolves to the
+ * app category. Exact match, no trimming or case folding, like
+ * `checkCategory`. Idempotent: feeding a result back in (with its own
+ * `app_type`) returns the same pair. Never throws, never reads a name off the
+ * prototype chain (producers control these strings).
+ */
+export function toPlay(category: unknown, appType?: AppType): ToPlayResult {
+  const fallbackType: AppType = appType ?? "app";
+  if (typeof category !== "string" || category.length === 0) {
+    return { app_type: fallbackType, category: UNCATEGORIZED.slug, via: "unknown" };
+  }
+
+  const types: readonly AppType[] = appType ? [appType] : APP_TYPES;
+  for (const type of types) {
+    if (checkCategory(type, category).known) {
+      return { app_type: type, category, via: "vocabulary" };
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(LEGACY_TO_PLAY, category)) {
+    const pair = LEGACY_TO_PLAY[category];
+    return { app_type: pair.app_type, category: pair.category, via: "legacy" };
+  }
+
+  return { app_type: fallbackType, category: UNCATEGORIZED.slug, via: "unknown" };
+}
