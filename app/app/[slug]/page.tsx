@@ -6,6 +6,7 @@ import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
+import PermissionDiffNotice from "../../../../components/PermissionDiffNotice";
 import VersionHistory from "@/components/VersionHistory";
 import VersionAdvisory from "@/components/VersionAdvisory";
 import RatingSummary from "@/components/RatingSummary";

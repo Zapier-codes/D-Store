@@ -17,7 +17,7 @@ language plpgsql
 security definer
 as $$ declare
   v_now timestamptz := now();
-  v_window_start timestamptz := date_trunc('second', v_now) - (extract(epoch from v_now) % p_window_seconds) * interval '1 second';
+  v_window_start timestamptz := to_timestamp(floor(extract(epoch from v_now) / p_window_seconds) * p_window_seconds);
   v_count integer;
 begin
   insert into public.rate_limit (bucket_key, window_start, count)

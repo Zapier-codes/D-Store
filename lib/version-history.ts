@@ -123,7 +123,7 @@ function readEntry(item: unknown): VersionEntry | null {
     ...readRollout(item.rollout),
     status: readVersionStatus(item.status),
     download_url: readDownloadUrl(item.download_url),
-    permissions: Array.isArray(item.permissions) ? item.permissions.filter((p: unknown) => typeof p === "string").map((p: string) => p.replace(/^android\.permission\./, "")) : [],
+    permissions: Array.isArray(item.compatibility?.permissions) ? item.compatibility.permissions.filter((p: unknown) => typeof p === "string").map((p: string) => p.replace(/^android\.permission\./, "")) : [],
   };
 }
 
