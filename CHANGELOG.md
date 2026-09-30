@@ -272,3 +272,4 @@ The inherited upstream Fossdroid-Core history (2016–2018). These commits preda
 - 2026-09-30 · `5.h.vi.zo` — split into `5.h.ix`–`5.h.xii`; operator-reported Aptoide acceptance and decisions 2–6 recorded; docs-only
 - 2026-09-30 · focus run 2 — opened with 9 buildable leaves of 31 open; docs-only, no leaf completed, `0 done of 9`
 - 2026-09-30 · Held leaves resolved — 11 binary-ownership leaves and `3.c.iii.zo` marked `[-]`; `3.c.iii.zi`, `5.k.iv.zi`, `5.k.vi.zo`, `5.d.ii.zi`, `5.d.ii.zo` unheld into focus run 2 (now 0 done of 14); docs-only
+- 2026-09-30 · `5.g.v.zo` — WIP: stats migrations (`app_counter`, `search_log`, `store_stats()`), RLS hardening of the four original tables, `scripts/apply-migrations.sh`; `5.g.v.zo` and `5.d.i.zo` unblocked as two-repo sessions, focus run 2 now `0 done of 16`
