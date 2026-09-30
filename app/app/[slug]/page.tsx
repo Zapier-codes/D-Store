@@ -207,7 +207,7 @@ export default async function AppDetailPage({
                   appSlug={app.slug}
                   appName={app.name}
                   currentVersion={app.version}
-                  apkUrl={app.apk}
+                  apkUrl={app.version_status === "pulled" ? "" : app.apk}
                   releaseId={app.release_id}
                   rolloutPercentage={app.rollout_percentage}
                 />
@@ -323,7 +323,7 @@ export default async function AppDetailPage({
           tertiaryColor={app.tertiary_color}
           iconUrl={app.icon}
           watchTargetId="primary-install-row"
-          apkUrl={app.apk}
+          apkUrl={app.version_status === "pulled" ? "" : app.apk}
           releaseId={app.release_id}
           rolloutPercentage={app.rollout_percentage}
           thirdParty={thirdParty ? { downloadUrl: app.apk, sourceName: sourceName(app) } : undefined}
