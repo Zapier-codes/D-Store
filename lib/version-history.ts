@@ -37,6 +37,7 @@ export interface VersionEntry {
    * *offered* is `decideDownload`'s call, not this field's.
    */
   download_url: string | null;
+  permissions: string[];
 }
 
 export interface VersionHistory {
@@ -122,6 +123,7 @@ function readEntry(item: unknown): VersionEntry | null {
     ...readRollout(item.rollout),
     status: readVersionStatus(item.status),
     download_url: readDownloadUrl(item.download_url),
+    permissions: Array.isArray(item.permissions) ? item.permissions.filter((p: unknown) => typeof p === "string").map((p: string) => p.replace(/^android\.permission\./, "")) : [],
   };
 }
 
@@ -163,4 +165,10 @@ export function decideDownload(entry: VersionEntry): DownloadOffer {
   if (entry.rollout_status !== "complete" || entry.rollout_percentage < 100) return { offered: false, reason: "rolling_out" };
   if (entry.download_url === null) return { offered: false, reason: "no_link" };
   return { offered: true, url: entry.download_url };
+}
+
+export function diffPermissions(newPerms: string[] | undefined, oldPerms: string[] | undefined): string[] {
+  if (!Array.isArray(newPerms) || !Array.isArray(oldPerms)) return []; // Unknown if either is missing
+  const oldSet = new Set(oldPerms);
+  return newPerms.filter(p => !oldSet.has(p));
 }

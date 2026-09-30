@@ -256,6 +256,7 @@ export default async function AppDetailPage({
             Version History
           </h2>
           <VersionHistory app={app} />
+      <PermissionDiffNotice app={app} />
         </section>
 
         <section aria-labelledby="ratings-heading">

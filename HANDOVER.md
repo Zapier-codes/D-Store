@@ -347,7 +347,7 @@ On 2026-09-30, after `origin/master` was fetched (at `73d67b8`), all **31** open
 - [x] 13 — `5.k.iv.zi` scheduled GitHub Actions workflow that triggers push dispatch and send *(Unheld, option C)*
 - [x] 14 — `3.c.iii.zi` report queue *(Unheld; after item 12; **must be split first**: report intake write route, per-moderator authentication, then the queue UI)*
 - [x] 15 — `5.g.v.zo` read-only, token-authenticated stats endpoint for Zealot's admin *(two-repo session: Zealot's Task 31b reader first, then the D-Store route; the SQL half is already written, see the leaf; `[~]`)*
-- [ ] 16 — `5.d.i.zo` permission-diff alert between app versions *(two-repo session: Zealot populates `releases.permissions` first, then the D-Store diff and notice; must be split first)*
+- [x] 16 — `5.d.i.zo` permission-diff alert between app versions *(two-repo session: Zealot populates `releases.permissions` first, then the D-Store diff and notice; must be split first)*
 
 **Done so far: 8 of 16.**
 
