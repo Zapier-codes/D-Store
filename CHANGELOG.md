@@ -1,0 +1,258 @@
+# D-Store — Patch Ledger
+
+*Leaf `5.d.iii.zo`. An append-only record of every change that reached `master`, oldest first. The single source of truth for what to work on is still `HANDOVER.md`; this file records what has landed.*
+
+## How to read and keep this file
+
+- Each line is `hash · date · leaf path — short title`. The title is the commit subject cut at its first `;`, so the full account of any leaf (decisions, what was verified, what was not) lives in that leaf's **Done** note in `HANDOVER.md`, not here.
+- Lines were generated from `git log --reverse` at the time of writing (239 commits before the commit that added this file). This file's own commit is not listed in itself; the entry for `5.d.iii.zo` below carries no hash for that reason.
+- **Every session appends exactly one line** for its leaf, in the same commit as the code and the `HANDOVER.md` update (Section 3, step 2). A session cannot know its own commit hash before committing, so new lines are written as `leaf path — title` and the hash is left out. Never rewrite or reorder existing lines.
+- Entries marked **split** or **docs-only** changed no code. Entries that say *NOT type-checked, built or run* were written at the operator's request without verification; the `HANDOVER.md` Current position lists what is still owed from them.
+
+## Before the leaf program (14 commits)
+
+The inherited upstream Fossdroid-Core history (2016–2018). These commits predate D-Store and have no leaf path.
+
+- `22074e4` · 2016-12-04 — First commit
+- `6b00f2f` · 2016-12-04 — Fix wrong link in config file
+- `3c2462d` · 2016-12-04 — MIT license, have fun :raised_hands:
+- `a2fc3f5` · 2016-12-04 — Semplified search code
+- `48e3c20` · 2017-01-23 — Closed #3: Define all the parameters in the app/config/parameters.yml.dist file
+- `e2303d2` · 2017-01-23 — Symfony upgraded from 2.6 to 2.8
+- `2ec0178` · 2017-01-23 — Updated README.md
+- `cba30fd` · 2017-04-08 — Fixed #4: Error installing Symfony using Composer 1.3.x
+- `02d3706` · 2017-04-13 — Composer.lock ignored
+- `0db7d6d` · 2017-04-13 — Color Thief PHP updated
+- `ce897b5` · 2017-04-13 — Fix README.md
+- `90d3072` · 2017-10-12 — End of line
+- `4f2b1d8` · 2017-10-25 — Remove non-utf8 characters before save to db
+- `6385c1f` · 2018-02-10 — Typo
+
+## Leaf program (225 commits, and the entry for this leaf)
+
+- `3d49e4f` · 2026-09-14 · `docs` — add D-Store product & architecture documentation
+- `6f31aba` · 2026-09-14 · `docs` — add HANDOVER.md — session task-splitting protocol
+- `2e018f7` · 2026-09-14 · `docs` — add Phase 5 — Infrastructure & Distribution
+- `0b1878e` · 2026-09-14 · `docs` — add split/compressed OTA delivery + catalog DB & platform risk
+- `c75cf54` · 2026-09-14 · `docs` — split Console/Storefront systems, Supabase metadata, AAB pipeline
+- `30ff318` · 2026-09-14 · `1.a.i.zi` — add install_count, avg_rating, rating_count fields
+- `8a71c11` · 2026-09-14 · `resequence` — pivot to Supabase (metadata) + GitHub Releases (binaries/metrics), pull 5.f.i.zi forward
+- `f2ac868` · 2026-09-14 · `resequence` — flip storage roles — Telegram S3 drive primary (existing/active), GitHub Actions pipeline-only, no binary storage/distribution on GitHub
+- `1dca520` · 2026-09-14 · `resequence` — clarify Telegram is storage-only, entire CI workflow (incl. release-to-Telegram step) runs in one GitHub Actions run
+- `09c38b9` · 2026-09-14 · `docs` — add cache-location note (storage/downloads) to standing handoff process
+- `46b9953` · 2026-09-14 · `docs` — fix apply commands in handoff process — cd ~/D-Store first, patches applied from ~/storage/downloads
+- `22db53e` · 2026-09-14 · `docs` — add standing rule — always hand off exactly one patch file, combine multi-commit sessions with format-patch --stdout
+- `269bd44` · 2026-09-14 · `resequence` — add Phase 0 (UI revamp priority) — Vercel live preview, dummy data over current catalog, supersedes 1.b-1.d and 2.a-2.c UI leaves
+- `4043990` · 2026-09-14 · `WIP: 0.a.i.zi` — Next.js app at repo root (zero-config Vercel import), legacy Symfony moved to legacy-symfony/
+- `4f3fb53` · 2026-09-14 · `0.a.i.zi` — confirm Vercel dashboard import complete, live at d-store-nu.vercel.app
+- `6fb04db` · 2026-09-14 · `0.a.i.zo` — confirm live preview renders end-to-end on placeholder page
+- `81a335d` · 2026-09-14 · `0.a.ii.zi` — mock catalog dataset seeded from legacy entities and real screenshots
+- `5949ed7` · 2026-09-14 · `resequence` — add 0.h — Geo-Regionalization Foundation (ipapi.co) leaves
+- `2858215` · 2026-09-14 · `0.a.ii.zo` — local data-fetch layer over the mock dataset
+- `4e2de53` · 2026-09-14 · `0.b.i.zi` — define dark theme (Cinematic Gold) color tokens
+- `2312919` · 2026-09-14 · `0.b.i.zo` — define dark theme vignette/gradient background treatment
+- `27637de` · 2026-09-14 · `0.b.ii.zi` — define light theme (Scientific Blue) color tokens
+- `fc76ba4` · 2026-09-14 · `0.b.ii.zo` — WCAG AA contrast-check light theme accent variants
+- `5a8506a` · 2026-09-14 · `0.b.iii.zi` — cookie-based theme storage, read server-side (no flash)
+- `234e78f` · 2026-09-14 · `0.b.iii.zo` — theme toggle transition animation
+- `9b233ce` · 2026-09-14 · `0.c.i.zi` — header — responsive nav + search bar
+- `f45837c` · 2026-09-14 · `0.c.i.zo` — header — theme toggle integration
+- `084bdb3` · 2026-09-14 · `0.c.ii.zi` — responsive shelf-grid (2→6 columns)
+- `0a4c59d` · 2026-09-14 · `0.c.ii.zo` — small/dense app-card component
+- `ed371fb` · 2026-09-14 · `0.c.iii.zi` — footer legal links (Privacy, Terms, DMCA)
+- `8521f2b` · 2026-09-14 · `0.c.iii.zo` — footer RSS link + no-account-required notice
+- `492c36e` · 2026-09-14 · `0.d.i.zi` — cinematic hero for one featured app
+- `2e323be` · 2026-09-14 · `0.d.i.zo` — hero reveal animation, respecting prefers-reduced-motion
+- `296dbb2` · 2026-09-14 · `0.d.ii.zi` — home page Featured shelf
+- `134ea66` · 2026-09-14 · `0.d.ii.zo` — home page Trending shelf
+- `1817f4f` · 2026-09-14 · `0.d.iii.zi` — home page Editor's Picks shelf
+- `fa7db5e` · 2026-09-14 · `0.d.iii.zo` — sponsored card slot on home page
+- `9d5fa9b` · 2026-09-14 · `0.e.i.zi` — screenshot carousel + /app/[slug] detail page route
+- `8c98441` · 2026-09-14 · `0.e.i.zo` — lightbox viewer for screenshot carousel
+- `9624a17` · 2026-09-14 · `0.e.ii.zi` — expandable description on app detail page
+- `3cc9f22` · 2026-09-14 · `0.e.ii.zo` — What's New changelog block on app detail page
+- `b2db7f5` · 2026-09-14 · `0.e.iii.zi` — rating stars + histogram on app detail page
+- `7ef57b3` · 2026-09-14 · `0.e.iii.zo` — anonymous rating submission widget
+- `b5635af` · 2026-09-14 · `0.f.i.zi` — SHA-256 checksum display on app detail page
+- `3c77091` · 2026-09-14 · `0.f.i.zo` — digital signature info display on app detail page
+- `a9e87be` · 2026-09-14 · `0.f.ii.zi` — Why not on Play Store disclosure on app detail page
+- `ff866cf` · 2026-09-14 · `0.f.ii.zo` — permissions disclosure list on app detail page
+- `ed7cc10` · 2026-09-14 · `0.f.iii.zi` — anonymous Report app form on app detail page — closes out 0.f
+- `8e2322f` · 2026-09-14 · `0.g.i.zi` — instant search suggestions in header
+- `62c99ce` · 2026-09-14 · `0.g.i.zo` — search results page at /search
+- `42b9759` · 2026-09-14 · `0.g.ii.zi` — category grid page + per-category apps listing
+- `7b32c4e` · 2026-09-14 · `0.g.ii.zo` — advanced filters (license, size) on per-category page — closes out 0.g.ii
+- `f2c90ba` · 2026-09-14 · `0.g.iii.zi` — similar-apps rail on app detail page
+- `44b40f1` · 2026-09-15 · `0.g.iii.zo` — developer profile page (dummy)
+- `d40f09a` · 2026-09-15 · `0.h.i.zi` — ipapi.co geolocation client wrapper
+- `0f4ff77` · 2026-09-15 · `0.h.i.zo` — region-context provider (once-per-session, cookie-cached)
+- `5ad4dce` · 2026-09-15 · `0.h.ii.zi` — available_regions dummy field on App
+- `f89528f` · 2026-09-15 · `0.h.ii.zo` — region-filter helper in the catalog fetch layer
+- `b2f3420` · 2026-09-15 · `1.a.i.zo` — add is_featured, is_editors_pick flags to the app entity
+- `5cf077f` · 2026-09-15 · `1.a.ii.zi` — add sha256_checksum field to the app entity
+- `fea1dbc` · 2026-09-15 · `1.a.ii.zo` — add play_store_rejection_reason field to the app entity
+- `f65ae92` · 2026-09-15 · `1.a.iii.zi` — create Review entity (anonymous, rate-limited)
+- `fd54260` · 2026-09-15 · `1.a.iii.zo` — create ReportFlag entity, closing out 1.a
+- `103c5cb` · 2026-09-15 · `2.b.iii.zo` — report review queue (admin), closing out 2.b
+- `c70ecaf` · 2026-09-15 · `2.d.i.zi` — Privacy Policy page
+- `a3a6854` · 2026-09-15 · `2.d.i.zo` — terms of service page, closing out 2.d.i
+- `7250645` · 2026-09-15 · `2.d.ii.zi` — cookie/ad consent banner
+- `10e617c` · 2026-09-15 · `2.d.ii.zo` — DMCA/takedown process page, closing out 2.d.ii
+- `d83c888` · 2026-09-15 · `2.d.iii.zi` — per-app sitemap.xml
+- `c45320f` · 2026-09-15 · `2.d.iii.zo` — schema.org SoftwareApplication structured data, closing out 2.d
+- `b2a28ec` · 2026-09-15 · `3.a.i.zi` — intersection-observer reveal utility
+- `c38309b` · 2026-09-15 · `3.a.i.zo` — apply ScrollReveal to shelves/hero, closing out 3.a.i
+- `d44c59a` · 2026-09-15 · `3.a.ii.zi` — button/card hover & press states, plus dark-theme --color-accent-strong parity fix
+- `6024907` · 2026-09-15 · `3.a.ii.zo` — split into new milestone 3.a.iv (Install Button) — no install button existed to animate
+- `fcc59c8` · 2026-09-15 · `3.a.iv.zi` — dummy install button (idle/installing/installed) on app detail page
+- `96ee23b` · 2026-09-15 · `3.a.iv.zo` — install-button progress-fill animation, closes out 3.a.iv
+- `0fd274d` · 2026-09-15 · `3.a.iii.zi` — skeleton shimmer components + loading.tsx across all data-fetching routes
+- `c39e317` · 2026-09-15 · `3.a.iii.zo` — empty/error/404 state designs
+- `58622c7` · 2026-09-15 · `0.i.i.zi` — CategoryTheme token schema
+- `298ea24` · 2026-09-15 · `0.i.i.zo` — Vault and Sanctuary CategoryTheme registers
+- `a8668bf` · 2026-09-15 · `0.j.i.zi` — detail-page header trust-signal stats row
+- `2606301` · 2026-09-15 · `0.j.iii/0.j.iv` — audit note — content rating, data safety, ads/IAP disclosure, About page
+- `018b17a` · 2026-09-15 · `0.j.i.zo` — install-button post-install Open/Uninstall state
+- `344643d` · 2026-09-15 · `0.j.ii.zi` — sticky/anchored install action + lively dummy icons + device-aware install status
+- `e163fcd` · 2026-09-15 · `docs` — flag unresolved SQL-vs-Doctrine reconciliation for 1.a
+- `3df1a9f` · 2026-09-15 · `0.j.iii.zi` — content_rating field + detail-page header display
+- `1e79fbf` · 2026-09-15 · `0.j.iii.zo` — Data Safety section on app detail page
+- `997fd4d` · 2026-09-15 · `0.j.iv.zi` — contains_ads / in-app-purchases indicator near Install button
+- `7f5e555` · 2026-09-15 · `0.j.iv.zo` — About D-Store / Help & FAQ page, closing out 0.j
+- `28e4fa7` · 2026-09-15 · `0.i.ii.zi` — category-theme resolver, scoped CSS custom properties
+- `35d86bd` · 2026-09-15 · `0.i.ii.zo` — wire category-theme resolver into detail/browse pages
+- `a7950dd` · 2026-09-15 · `0.i.iii.zi` — audit category-theme default fallback across all 12 categories
+- `0480e52` · 2026-09-15 · `0.i.iii.zo` — WCAG AA contrast audit for CategoryTheme registers, closes 0.i
+- `9f8a114` · 2026-09-15 · `3.b.i.zi` — install-count increment endpoint (app-native counters)
+- `57e6e71` · 2026-09-15 · `3.b.i.zo` — view-count increment endpoint, closes 3.b.i
+- `6df5907` · 2026-09-16 · `3.b.ii.zi` — denormalized avg_rating/rating_count aggregation job
+- `2088ecd` · 2026-09-16 · `3.b.ii.zo` — daily materialized Trending cache, closes 3.b
+- `ec2a91d` · 2026-09-16 · `3.b.iii.zi` — Top Free chart page
+- `2008e80` · 2026-09-16 · `0.b.iv` — fix light theme text-contrast bug + give it its own futuristic gradient
+- `0cff169` · 2026-09-16 · `3.b.iii.zo` — New & Updated chart page, closes out 3.b (Metrics Pipeline)
+- `7307ccd` · 2026-09-16 · `3.c.i.zi` — admin toggle for is_featured/is_editors_pick
+- `7aeb724` · 2026-09-16 · `3.c.i.zo` — sponsored-slot scheduling tool
+- `b733d22` · 2026-09-16 · `3.c.ii.zi` — traffic dashboard
+- `0e64f20` · 2026-09-16 · `3.c.ii.zo` — top-searches dashboard
+- `ba88b14` · 2026-09-16 · `0.j.v` — circular wavy install-progress ring (Play Store app parity) + Hero glass redesign
+- `d56f404` · 2026-09-24 · `docs(5.a-5.g)` — Zealot compiles, signs and stores the APK
+- `7885a4b` · 2026-09-24 · `docs(5.f-5.g)` — Console publishes a signed catalog index
+- `5ea2b37` · 2026-09-24 · `docs(5.h)` — catalog sources (Aptoide MCP + Zealot first), cross-repo review, Play-parity leaves
+- `07431de` · 2026-09-24 · `5.h.i.zi` — add App.origin (zealot | aptoide), dummy entries of both origins, getApps origin filter
+- `7faaa1d` · 2026-09-24 · `5.h.ii.zi` — Aptoide catalog source adapter, merged into lib/catalog.ts
+- `0d38552` · 2026-09-24 · `5.h.ii.zo` — scheduled Aptoide ingestion via GitHub Actions
+- `46cfec2` · 2026-09-24 · `5.h.ii` — remove all dummy Aptoide-origin data, ingest 12 real apps from operator batch
+- `ad3579c` · 2026-09-24 · `5.h.i.zo` — home page first-party section, hero preference, trending ranking, origin label
+- `61ccfc1` · 2026-09-24 · `5.h.iii.zi` — third-party trust labelling (label, Aptoide download routing, no Verify block)
+- `c17de12` · 2026-09-24 · `5.h.iii.zo` — "Not provided" states for fields the third-party source does not supply
+- `7a37453` · 2026-09-24 · `3.c.iv.zi` — gate /admin/* and /api/admin/* behind Basic auth (fails closed)
+- `0a710c0` · 2026-09-24 · `redeploy` — pick up ADMIN_PASSWORD
+- `b84c1b3` · 2026-09-24 · `3.d.i.zi` — WCAG 2.1 AA contrast audit, both themes
+- `7edae61` · 2026-09-24 · `5.h.iv.zi` — wire every catalog read to the merged catalog, remove last dummy data, derive third-party developers
+- `7f8223d` · 2026-09-25 · `fix` — outputFileTracingIncludes for storage/downloads (Vercel deploy gap)
+- `2ee22a0` · 2026-09-25 · `3.d.i.zo` — keyboard nav + focus-visible audit, both themes
+- `0f32be3` · 2026-09-25 · `WIP: 3.d.ii.zi` — real icon images (next/image) for third-party apps
+- `41cff05` · 2026-09-25 · `3.d.ii.zi` — finish real screenshot images (next/image) for third-party apps
+- `77c0b8a` · 2026-09-25 · `3.d.ii.zo` — Lighthouse LCP < 2.5s budget pass
+- `c3ec7c4` · 2026-09-25 · `3.d.iii.zi` — prefers-reduced-motion audit sitewide
+- `4680f99` · 2026-09-25 · `3.d.iii.zo` — static fallback states for all animations
+- `a6029a7` · 2026-09-25 · `4.a` — cancel Ads Infrastructure per operator directive, resequence to 4.b.i.zi
+- `fedff19` · 2026-09-25 · `4.b.i.zi` — web app manifest
+- `b9a26e3` · 2026-09-25 · `4.b.i.zo` — service worker offline shell
+- `a179e8e` · 2026-09-25 · `4.b.ii.zi` — theme-aware app icons
+- `475c701` · 2026-09-25 · `4.b.ii.zo` — splash screens per theme
+- `8f58b53` · 2026-09-25 · `4.c.i.zi` — RSS/Atom feed for new & updated apps
+- `dccb90d` · 2026-09-25 · `4.c.i.zo` — public stats footer widget
+- `233da2e` · 2026-09-25 · `4.c.ii.zi` — share button + QR code for direct install
+- `d459b3b` · 2026-09-25 · `follow-up to 3.d.i.zo` — RateThisApp roving-tabindex, SearchBar combobox, skip link
+- `9b338ca` · 2026-09-26 · `feat(task-5.g.i.zi, 5.g.iv.zo)` — signed catalog-index reader + key pinning
+- `275d1b8` · 2026-09-26 · `5.g.i.zo` — cross-repo review of Zealot's catalog index v2, out-of-band
+- `b295a8d` · 2026-09-26 · `4.c.ii.zo` — editorial collections (e.g. "Privacy Tools")
+- `2475555` · 2026-09-26 · `4.d.i.zi` — IndexedDB-based local favorites
+- `b7a95a3` · 2026-09-26 · `4.d.i.zo` — "Saved apps" view (no login)
+- `dd31323` · 2026-09-26 · `4.d.ii.zi` — category-affinity "For You" row
+- `2d0d40f` · 2026-09-26 · `4.d.ii.zo` — personalization tuning from local history
+- `b16a945` · 2026-09-26 · `1.a.ii.zo` — convert play_store_rejection_reason to Supabase SQL
+- `5c629a7` · 2026-09-26 · `1.a.iii.zi` — convert Review entity to Supabase SQL
+- `1441493` · 2026-09-26 · `docs+fix` — D-Store's Supabase must be its own project, not Zealot's
+- `dc75249` · 2026-09-26 · `1.a.iii.zo` — convert ReportFlag entity to Supabase SQL
+- `7e66c81` · 2026-09-26 · `2.b.iii.zo` — audit report queue for Doctrine hard-dependencies
+- `3f6b8cc` · 2026-09-26 · `5.f.i.zi` — provision Supabase project scaffold
+- `ff46a9b` · 2026-09-26 · `5.f.i.zo` — migrate Application/Category schema into Supabase
+- `9dc0e65` · 2026-09-26 · `5.g.ii.zi` — real download link resolves to Console's stable download_url
+- `89edc58` · 2026-09-26 · `5.g.iii.zi` — Verified developer badge, sourced from the Console's signed index
+- `181ab10` · 2026-09-26 · `5.g.iii.zo` — footer link to the Console site as the submission entry point
+- `3a4a26e` · 2026-09-26 · `5.g.iv.zi` — build-time Zealot index snapshot with per-file SHA-256 verification
+- `2e86ebb` · 2026-09-26 · `WIP 5.g.v.zi` — read featured/Editors' Pick from the Console's signed index
+- `76e907d` · 2026-09-26 · `5.i (new)` — category/genre taxonomy split, doc-only
+- `abf0b90` · 2026-09-26 · `5.g.v.zi` — confirm Task 31a shape for sponsored slots/collections — held, doc-only
+- `629decb` · 2026-09-26 · `5.j (new)` — sponsored placement & collections, Play-model parity, doc-only
+- `e1a4a46` · 2026-09-26 · `5.g.v.zi` — close out (featured/editors_pick scope shipped)
+- `798e3cd` · 2026-09-26 · `5.j.ii.zi` — retire SponsoredSlot entity, read sponsored_slots off the index
+- `fe943e9` · 2026-09-26 · `WIP 5.j.ii.zo` — read collections[] registry from Zealot index (unverified)
+- `2d575ff` · 2026-09-26 · `5.j.ii.zo` — verify + close out (collections registry from Zealot index)
+- `606457f` · 2026-09-27 · `6.a/6.b` — document cross-repo D-Store Updater & multi-tenant program in HANDOVER.md
+- `56e687a` · 2026-09-27 · `6.a.iii.zi` — hard-pin first-party (Zealot) match to search result position 1
+- `573d22e` · 2026-09-27 · `6.a` — record additive-only Zealot scope decision, correct 6.a.i.zo premise
+- `6071163` · 2026-09-27 · `6.b` — correct multi-tenant model to single-runtime, no fork-per-tenant
+- `e4b36fd` · 2026-09-28 · `5.c.iv.zo` — staged rollout — read rollout/release_id off the index, gate Update by device bucket
+- `840e36b` · 2026-09-28 · `6.b.ii.zi` — per-tenant domain resolution and branding (signed registry, default-tenant fallback)
+- `eb02d43` · 2026-09-28 · `6.b.ii.zo` — per-tenant catalog scope in the index-reading layer
+- `a24c2cb` · 2026-09-29 · `6.a.iv.zo` — close out 6.a
+- `c197f0b` · 2026-09-29 · `5.c.i.zi` — mark superseded by Storeapp
+- `ec6b685` · 2026-09-29 · `5.c.i.zo` — split into new track 5.k (Web Push for saved-app updates)
+- `5e139fb` · 2026-09-29 · `5.k.i.zi` — Supabase migration for Web Push subscription storage
+- `e15d6d9` · 2026-09-29 · `5.k.i.zo` — split into 5.k.v (store) and 5.k.vi (routes)
+- `06e371e` · 2026-09-29 · `5.k.v.zi` — push subscription validation (lib/push-validate.ts)
+- `6dcc28d` · 2026-09-29 · `5.k.v.zo` — split into 5.k.vii.zi (atomic replace SQL fn) and 5.k.vii.zo (push-store.ts)
+- `f00c8b9` · 2026-09-29 · `5.k.vii.zi` — atomic replace_push_subscription SQL function
+- `d99288b` · 2026-09-29 · `5.k.vii.zo` — lib/push-store.ts (service-role subscription store)
+- `d931410` · 2026-09-29 · `5.k.vi.zi` — POST /api/push/subscribe and /unsubscribe
+- `1fb2ba8` · 2026-09-29 · `5.k.iv.zo` — privacy disclosure for opt-in Web Push
+- `0854ccd` · 2026-09-29 · `5.k.ii.zi` — split into 5.k.viii (subscribe flow) and 5.k.ix (sync + control)
+- `fdd394b` · 2026-09-29 · `5.k.viii.zi` — lib/push-support.ts (capability detection, VAPID key decoding, slug selection)
+- `e3c0485` · 2026-09-29 · `5.k.viii.zo` — lib/push-client.ts (browser subscribe/unsubscribe flow)
+- `45831c4` · 2026-09-29 · `5.k.ix.zi` — favorites -> push subscription re-sync (lib/push-sync.ts, components/PushSync.tsx, onFavoritesChange)
+- `238ad4a` · 2026-09-29 · `5.k.ix.zo` — "Notify me about updates" control on /saved (components/NotifyToggle.tsx)
+- `cdcabc4` · 2026-09-29 · `5.k.ii.zo` — push, notificationclick and pushsubscriptionchange handlers in public/sw.js
+- `f6d8250` · 2026-09-29 · `5.k.iii.zi` — split into 5.k.x (plan), 5.k.xi (inputs), 5.k.xii (auth + catalog scope), 5.k.xiii (route)
+- `95c0bf6` · 2026-09-29 · `5.k.x.zi` — lib/push-plan.ts classifyApp (rollout, no-baseline, version-comparison decisions)
+- `a2fe6ae` · 2026-09-29 · `5.k.x.zo` — lib/push-plan.ts buildPlan (MAX_PLAN=100, first-wins duplicate slugs, code-unit sort, fail-safe)
+- `42eb726` · 2026-09-29 · `5.k.xi.zi` — public.subscribed_slugs() SQL function (distinct, byte-ordered, service_role only)
+- `9cecfb3` · 2026-09-29 · `5.k.xi.zo` — readDispatchState in lib/push-store.ts (subscribed_slugs RPC + batched baselines, byte cap, fail-closed on full page)
+- `43b393c` · 2026-09-29 · `5.k.xii.zi` — lib/push-dispatch-auth.ts checkDispatchAuth (Bearer, fail closed 503, constant-time SHA-256 compare)
+- `af4d62c` · 2026-09-29 · `5.k.xii.zo` — lib/catalog.ts getDispatchCatalog (default-tenant-only, Aptoide included, five fields, no delay/no mutation)
+- `788e86c` · 2026-09-29 · `5.k.xiii.zi` — POST /api/push/dispatch read-only route (auth -> store -> catalog -> buildPlan
+- `25d1de7` · 2026-09-29 · `5.k.xiii.zo` — document push env vars, dispatch route statuses and plan JSON in docs/VERCEL-SETUP.md
+- `6e4ad96` · 2026-09-29 · `5.k.iii.zo` — split the sender into 5.k.xiv-5.k.xvii (docs-only)
+- `8c61a23` · 2026-09-29 · `5.k.xiv.zi` — public.push_recipients() keyset-paged SQL function (service_role only)
+- `c2065e9` · 2026-09-29 · `5.k.xiv.zo` — readRecipients in lib/push-store.ts (paged push_recipients RPC, all-or-nothing)
+- `77cccd3` · 2026-09-29 · `5.k.xv.zi` — public.upsert_push_notified_versions() atomic baseline-write SQL function (service_role only)
+- `9ba2e61` · 2026-09-29 · `5.k.xv.zo` — writeNotifiedVersions in lib/push-store.ts (chunked upsert_push_notified_versions RPC, validated, bare-integer result check)
+- `10330ab` · 2026-09-29 · `5.k.xvi.zi` — lib/push-fanout.ts pure fan-out (per-(device, app) messages, 32-char per-slug Topic, TTL, per-device cap)
+- `ff74a78` · 2026-09-29 · `5.k.xvi.zo` — web-push dependency and lib/push-send.ts classified sender (per-call VAPID, vapid_mismatch refusal, host allowlist, one-parser host…
+- `cb8ea6d` · 2026-09-29 · `5.k.xvii.zi` — lib/push-run.ts orchestrator (read, fan out, send, prune, record baselines)
+- `9b2899c` · 2026-09-29 · `5.k.xvii.zo` — POST /api/push/send opt-in sending route, sender env docs, smoke test
+- `95ae17b` · 2026-09-29 · `5.i.i.zi` — lib/taxonomy.ts (app_type, Play-seeded vocabulary, checkCategory), App.app_type, getApps appType filter
+- `5324af9` · 2026-09-29 · `5.i.ii.zi` — tolerant category reader (readCategory in lib/taxonomy.ts, wired into aptoide and zealot normalizers, optional App.category_raw)
+- `ad0fa33` · 2026-09-30 · `5.i.ii.zo` — split into 5.i.iii, 5.i.iv, 5.i.v (six leaves, docs-only, no code)
+- `927b519` · 2026-09-30 · `5.i.iii.zi` — LEGACY_TO_PLAY mapping table and toPlay in lib/taxonomy.ts (pure)
+- `449110b` · 2026-09-30 · `5.i.iii.zo` — two-axis read model and read-time shim (getTaxonomyCategories/Category/AppCount, getApps taxonomy option, pure helpers in lib/taxonomy.ts)
+- `86055d2` · 2026-09-30 · `5.i.iv.zi` — move category pages, card, filters, detail-page category name and sitemap onto the two-axis read model
+- `917f021` · 2026-09-30 · `5.i.iv.zo` — 308 redirects for the twelve legacy /categories URLs via next.config.mjs
+- `984a9be` · 2026-09-30 · `5.i.v.zi` — re-key CATEGORY_THEMES to (appType, category)
+- `1d3f74d` · 2026-09-30 · `5.i.v.zo` — split into 5.i.vi (zi view-history/ForYouShelf via toPlay, zo Aptoide emits Play) and 5.i.vii (zi Zealot emits Play, zo delete shim and…
+- `702193d` · 2026-09-30 · `5.i.vi.zi` — view history and For You shelf compare on Play slugs (affinityCategory, listViewedCategories, getCategoryAffinityApps translates both sides)
+- `8034426` · 2026-09-30 · `5.i.vi.zo` — Aptoide emits Play slugs and a real app_type via toPlay
+- `d3b91c0` · 2026-09-30 · `5.i.vii.zi` — Zealot emits Play slugs and a real app_type via placeZealotCategory
+- `bb11149` · 2026-09-30 · `5.i.vii.zo` — delete the read-time shim, appTypeForLegacyCategory and readCategory
+- `a49878e` · 2026-09-30 · `5.h.iv.zo` — Aptoide ingestion trust gate (only file.malware.rank TRUSTED is kept, skips logged with reason)
+- `3cdb2ee` · 2026-09-30 · `5.h.v.zi` — split into 5.h.vii (zi Aptoide stats reader, zo detail/Hero/RatingSummary) and 5.h.viii (zi cards, zo Top Free ranking)
+- `9824c42` · 2026-09-30 · `5.h.vii.zi` — readAptoideStats and optional App.third_party_stats (Aptoide's reported rating and downloads, validated, votes kept only if complete and…
+- `0b4ae78` · 2026-09-30 · `5.h.vii.zo` — detail page, Hero and RatingSummary show a third-party app's own rating (real vote histogram) and downloads labelled as reported by its…
+- `fb0d141` · 2026-09-30 · `5.h.viii.zi` — AppCard shows a third-party app's own reported rating (or nothing) instead of a store-native 0.0
+- `d7e581f` · 2026-09-30 · `5.h.viii.zo` — Top Free ranks first-party by install_count and third-party by reported downloads as two separate groups (mixed-list rule recorded)
+- `7b4622e` · 2026-09-30 · `5.d.iii.zi` — split into 5.d.iv.zi (unit-test harness and unit tests) and 5.d.iv.zo (e2e smoke test)
+- `d2770a2` · 2026-09-30 · `5.d.iv.zi` — npm test script (node:test via npx tsx) and eight unit-test files over the pure lib modules, incl. the Aptoide stats reader over the 12…
+- `99b1749` · 2026-09-30 · `5.d.iv.zo` — scripts/smoke.ts and npm run smoke: browse, download (install counter) and rate checks against a running next start
+- 2026-09-30 · `5.d.iii.zo` — catalog acceptance and moderation policy (`docs/MODERATION.md`) and this patch ledger (`CHANGELOG.md`); docs-only, no code changed
