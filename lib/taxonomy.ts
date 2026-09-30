@@ -315,3 +315,110 @@ export function toPlay(category: unknown, appType?: AppType): ToPlayResult {
 
   return { app_type: fallbackType, category: UNCATEGORIZED.slug, via: "unknown" };
 }
+
+/**
+ * A vocabulary entry on the two-axis model, with everything a browse page
+ * needs — leaf `5.i.iii.zo`. `Category` in `lib/mock-data.ts` is the legacy
+ * one-axis shape and stays until `5.i.v.zo`.
+ */
+export interface TaxonomyCategory extends TaxonomyEntry {
+  app_type: AppType;
+  /** Material Symbols name, as `Category.icon` is. Not rendered as a glyph yet (`AppIcon` draws an initial tile) — data for when it is. */
+  icon: string;
+}
+
+/** Icon per vocabulary entry, keyed `"<app_type>:<slug>"`. Chosen by hand from the Material Symbols set; not verified to render. */
+const TAXONOMY_ICONS: Readonly<Record<string, string>> = {
+  "app:art-and-design": "palette",
+  "app:auto-and-vehicles": "directions_car",
+  "app:beauty": "face",
+  "app:books-and-reference": "menu_book",
+  "app:business": "business_center",
+  "app:comics": "auto_stories",
+  "app:communication": "chat",
+  "app:dating": "favorite",
+  "app:education": "school",
+  "app:entertainment": "movie",
+  "app:events": "event",
+  "app:finance": "account_balance",
+  "app:food-and-drink": "restaurant",
+  "app:health-and-fitness": "fitness_center",
+  "app:house-and-home": "home",
+  "app:libraries-and-demo": "widgets",
+  "app:lifestyle": "self_improvement",
+  "app:maps-and-navigation": "navigation",
+  "app:medical": "medical_services",
+  "app:music-and-audio": "music_note",
+  "app:news-and-magazines": "newspaper",
+  "app:parenting": "child_care",
+  "app:personalization": "brush",
+  "app:photography": "photo_camera",
+  "app:productivity": "task_alt",
+  "app:shopping": "shopping_cart",
+  "app:social": "group",
+  "app:sports": "sports_soccer",
+  "app:tools": "build",
+  "app:travel-and-local": "flight",
+  "app:video-players-and-editors": "video_library",
+  "app:weather": "partly_cloudy_day",
+  "game:action": "bolt",
+  "game:adventure": "explore",
+  "game:arcade": "sports_esports",
+  "game:board": "grid_view",
+  "game:card": "style",
+  "game:casino": "casino",
+  "game:casual": "toys",
+  "game:educational": "school",
+  "game:music": "music_note",
+  "game:puzzle": "extension",
+  "game:racing": "sports_motorsports",
+  "game:role-playing": "shield",
+  "game:simulation": "settings_suggest",
+  "game:sports": "sports_soccer",
+  "game:strategy": "psychology",
+  "game:trivia": "quiz",
+  "game:word": "spellcheck",
+};
+
+const FALLBACK_ICON = "category";
+
+/**
+ * Every vocabulary entry as a `TaxonomyCategory`: the 32 app categories, then
+ * the 17 game genres, each list in vocabulary order. **`uncategorized` is not
+ * listed** — it is what unknown values are shown as, not a shelf to browse
+ * (`5.i.iv.zo` decides whether it gets a page). Fresh objects each call.
+ */
+export function listTaxonomyCategories(): TaxonomyCategory[] {
+  return APP_TYPES.flatMap((appType) =>
+    vocabularyFor(appType).map((entry) => ({
+      app_type: appType,
+      slug: entry.slug,
+      name: entry.name,
+      icon: TAXONOMY_ICONS[`${appType}:${entry.slug}`] ?? FALLBACK_ICON,
+    })),
+  );
+}
+
+/** One entry of `listTaxonomyCategories()`, or `null` (including for `uncategorized` and any unknown). Never throws. */
+export function findTaxonomyCategory(appType: unknown, slug: unknown): TaxonomyCategory | null {
+  if (!isAppType(appType) || typeof slug !== "string") return null;
+  return listTaxonomyCategories().find((c) => c.app_type === appType && c.slug === slug) ?? null;
+}
+
+/**
+ * Whether an app belongs to the category `(appType, slug)` **after**
+ * translating its own stored category through `toPlay` — so an app carrying
+ * the legacy `internet` and one carrying `communication` are both in
+ * `("app", "communication")`. This is the read-time shim `5.i.iii.zo` puts in
+ * front of the catalog; it goes when `5.i.v.zo` makes the sources emit Play
+ * slugs natively. Also works for `("game", "uncategorized")`, which is where
+ * a legacy `games` app lands.
+ */
+export function appInTaxonomyCategory(
+  app: { category: string; app_type: AppType },
+  appType: AppType,
+  slug: string,
+): boolean {
+  const pair = toPlay(app.category, app.app_type);
+  return pair.app_type === appType && pair.category === slug;
+}

@@ -26,10 +26,17 @@ import {
   catalogScopeKey,
   type CatalogScope,
 } from "./sources/zealot";
-import type { AppType } from "./taxonomy";
+import {
+  appInTaxonomyCategory,
+  findTaxonomyCategory,
+  listTaxonomyCategories,
+  type AppType,
+  type TaxonomyCategory,
+} from "./taxonomy";
 import { getCurrentTenant } from "./tenant";
 import { DEFAULT_TENANT_ID } from "./tenant-config";
 
+export type { TaxonomyCategory };
 export type { App, AppOrigin, Category, Collection, Developer, AppSponsoredSlot, SearchQueryLog };
 
 const SIMULATED_LATENCY_MS = 200;
@@ -239,6 +246,29 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
   return resolveAfterDelay(category);
 }
 
+/**
+ * Two-axis read model — leaf `5.i.iii.zo`. Additive: `getCategories`,
+ * `getCategoryBySlug` and `getCategoryAppCount` above keep their one-flat-slug
+ * shape and the pages still call them; `5.i.iv` moves the callers here.
+ * The vocabulary entries (32 app categories, 17 game genres) come from
+ * `lib/taxonomy.ts`; `uncategorized` is not listed or looked up (see
+ * `listTaxonomyCategories`), though `getApps({ taxonomy })` and
+ * `getTaxonomyAppCount` still accept it.
+ */
+export async function getTaxonomyCategories(): Promise<TaxonomyCategory[]> {
+  return resolveAfterDelay(listTaxonomyCategories());
+}
+
+export async function getTaxonomyCategory(appType: AppType, slug: string): Promise<TaxonomyCategory | null> {
+  return resolveAfterDelay(findTaxonomyCategory(appType, slug));
+}
+
+/** Apps in `(appType, slug)` after the read-time shim — legacy and Play slugs counted together. */
+export async function getTaxonomyAppCount(appType: AppType, slug: string): Promise<number> {
+  const merged = await getMergedApps();
+  return resolveAfterDelay(merged.filter((app) => appInTaxonomyCategory(app, appType, slug)).length);
+}
+
 /** App count per category — same value `Category.count` held in the legacy entity, derived here instead of stored. */
 export async function getCategoryAppCount(slug: string): Promise<number> {
   const merged = await getMergedApps();
@@ -302,6 +332,15 @@ export interface GetAppsOptions {
   category?: string;
   /** `5.i.i.zi` — restrict to apps or games. Combine with `category`, which is only unambiguous alongside it. */
   appType?: AppType;
+  /**
+   * `5.i.iii.zo` — restrict to one category on the two-axis model, matched
+   * through the read-time shim (`appInTaxonomyCategory`): an app's stored
+   * category is translated with `toPlay` first, so legacy and Play slugs land
+   * together. Unlike `category` (a bare stored-slug comparison, unchanged),
+   * this needs the `app_type` because `sports` is on both axes. ANDs with
+   * every other option.
+   */
+  taxonomy?: { appType: AppType; category: string };
   limit?: number;
   license?: string;
   maxSizeMb?: number;
@@ -349,6 +388,10 @@ export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
   }
   if (options.category) {
     result = result.filter((app) => app.category === options.category);
+  }
+  if (options.taxonomy) {
+    const { appType, category } = options.taxonomy;
+    result = result.filter((app) => appInTaxonomyCategory(app, appType, category));
   }
   if (options.license) {
     result = result.filter((app) => app.license === options.license);
