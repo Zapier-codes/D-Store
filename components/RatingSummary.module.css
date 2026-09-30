@@ -100,3 +100,11 @@
   text-align: right;
   opacity: 0.7;
 }
+
+/* 5.h.vii.zo — the "reported by <source>" caption and the no-ratings note for third-party apps; full width under the summary/histogram row. */
+.source {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}

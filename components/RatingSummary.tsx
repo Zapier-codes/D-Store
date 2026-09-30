@@ -1,4 +1,6 @@
 import type { App } from "@/lib/catalog";
+import { isThirdParty, sourceName } from "@/lib/trust";
+import { reportedStatsFor } from "@/lib/third-party-stats";
 import styles from "./RatingSummary.module.css";
 
 /**
@@ -22,6 +24,13 @@ import styles from "./RatingSummary.module.css";
  * — e.g. avg 4.6 renders 4 full stars plus a 5th star filled 60% —
  * via a clipped foreground glyph layered over a muted background glyph,
  * matching how Play Store's own rating stars render fractional fill.
+ *
+ * `5.h.vii.zo` — a third-party app is different: its own average, count and
+ * REAL vote histogram come from the source (`App.third_party_stats`) and are
+ * shown labelled as the source's, never as D-Store visitors' ratings. The
+ * synthetic histogram below is for first-party apps only; a third-party app
+ * whose histogram is missing or does not add up (`votes: null`) gets no bars
+ * rather than an invented set.
  */
 
 function starFillFractions(avgRating: number): number[] {
@@ -52,8 +61,25 @@ function syntheticHistogram(avgRating: number, ratingCount: number) {
 }
 
 export default function RatingSummary({ app }: { app: App }) {
-  const fillFractions = starFillFractions(app.avg_rating);
-  const histogram = syntheticHistogram(app.avg_rating, app.rating_count);
+  const thirdParty = isThirdParty(app);
+  const source = sourceName(app);
+  const reported = thirdParty ? reportedStatsFor(app)?.rating ?? null : null;
+
+  if (thirdParty && (reported === null || reported.total === 0)) {
+    return (
+      <p className={styles.source}>
+        {reported === null ? `Ratings not provided by ${source}.` : `No ratings on ${source} yet.`}
+      </p>
+    );
+  }
+
+  const average = thirdParty ? reported!.average : app.avg_rating;
+  const ratingCount = thirdParty ? reported!.total : app.rating_count;
+  const histogram = thirdParty
+    ? (reported!.votes ?? []).map((vote) => ({ star: vote.star as number, count: vote.count }))
+    : syntheticHistogram(app.avg_rating, app.rating_count);
+
+  const fillFractions = starFillFractions(average);
   const maxCount = Math.max(...histogram.map((row) => row.count), 1);
 
   const histogramLabel = histogram
@@ -63,7 +89,7 @@ export default function RatingSummary({ app }: { app: App }) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.summary}>
-        <span className={styles.average}>{app.avg_rating.toFixed(1)}</span>
+        <span className={styles.average}>{average.toFixed(1)}</span>
         <div className={styles.stars} aria-hidden="true">
           {fillFractions.map((fraction, index) => (
             <span key={index} className={styles.starWrap}>
@@ -74,20 +100,26 @@ export default function RatingSummary({ app }: { app: App }) {
             </span>
           ))}
         </div>
-        <span className={styles.count}>{app.rating_count.toLocaleString()} ratings</span>
+        <span className={styles.count}>{ratingCount.toLocaleString()} ratings</span>
       </div>
 
-      <div className={styles.histogram} role="img" aria-label={`Rating breakdown: ${histogramLabel}`}>
-        {histogram.map((row) => (
-          <div key={row.star} className={styles.row} aria-hidden="true">
-            <span className={styles.rowLabel}>{row.star}</span>
-            <div className={styles.barTrack}>
-              <div className={styles.barFill} style={{ width: `${(row.count / maxCount) * 100}%` }} />
+      {histogram.length > 0 && (
+        <div className={styles.histogram} role="img" aria-label={`Rating breakdown: ${histogramLabel}`}>
+          {histogram.map((row) => (
+            <div key={row.star} className={styles.row} aria-hidden="true">
+              <span className={styles.rowLabel}>{row.star}</span>
+              <div className={styles.barTrack}>
+                <div className={styles.barFill} style={{ width: `${(row.count / maxCount) * 100}%` }} />
+              </div>
+              <span className={styles.rowCount}>{row.count.toLocaleString()}</span>
             </div>
-            <span className={styles.rowCount}>{row.count.toLocaleString()}</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {thirdParty && (
+        <p className={styles.source}>Ratings reported by {source}. They are not ratings from D-Store visitors.</p>
+      )}
     </div>
   );
 }

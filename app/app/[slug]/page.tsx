@@ -27,6 +27,8 @@ import ViewHistoryRecorder from "@/components/ViewHistoryRecorder";
 import ThirdPartyDownloadButton from "@/components/ThirdPartyDownloadButton";
 import ThirdPartyNotice, { ThirdPartyBadge } from "@/components/ThirdPartyNotice";
 import { isThirdParty, thirdPartyLabel, sourceName, isNotProvided, isVerifiedDeveloper } from "@/lib/trust";
+import { reportedStatsFor } from "@/lib/third-party-stats";
+import ReportedStats from "@/components/ReportedStats";
 import styles from "./page.module.css";
 
 /**
@@ -162,14 +164,25 @@ export default async function AppDetailPage({
             )}
 
             <div className={styles.stats}>
-              <span className={styles.rating}>
-                <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
-                <span className={styles.statMuted}> ({app.rating_count.toLocaleString()})</span>
-              </span>
+              {thirdParty ? (
+                // 5.h.vii.zo — a third-party app's own rating and downloads, labelled as
+                // reported by its source; the store-native 0.0 (0) / 0+ installs are not shown.
+                <ReportedStats
+                  stats={reportedStatsFor(app)}
+                  sourceName={sourceName(app)}
+                  ratingClassName={styles.rating}
+                  mutedClassName={styles.statMuted}
+                />
+              ) : (
+                <span className={styles.rating}>
+                  <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
+                  <span className={styles.statMuted}> ({app.rating_count.toLocaleString()})</span>
+                </span>
+              )}
               <span className={styles.statMuted}>
                 {isNotProvided(app, "content_rating") ? "Rating not provided" : app.content_rating}
               </span>
-              <span className={styles.statMuted}>{app.install_count.toLocaleString()}+ installs</span>
+              {!thirdParty && <span className={styles.statMuted}>{app.install_count.toLocaleString()}+ installs</span>}
               {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
               {originLabel && <ThirdPartyBadge label={originLabel} />}
             </div>

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
+import ReportedStats from "./ReportedStats";
+import { isThirdParty, sourceName } from "@/lib/trust";
+import { reportedStatsFor } from "@/lib/third-party-stats";
 import styles from "./Hero.module.css";
 
 /**
@@ -86,11 +89,23 @@ export default function Hero({ app }: { app: App }) {
           <p className={styles.summary}>{app.summary}</p>
 
           <div className={styles.meta}>
-            <span className={styles.rating}>
-              <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
-              <span className={styles.metaMuted}> ({app.rating_count.toLocaleString()})</span>
-            </span>
-            <span className={styles.metaMuted}>{app.install_count.toLocaleString()}+ installs</span>
+            {isThirdParty(app) ? (
+              // 5.h.vii.zo — the source's own figures, labelled as reported; not the store-native 0s.
+              <ReportedStats
+                stats={reportedStatsFor(app)}
+                sourceName={sourceName(app)}
+                ratingClassName={styles.rating}
+                mutedClassName={styles.metaMuted}
+              />
+            ) : (
+              <>
+                <span className={styles.rating}>
+                  <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
+                  <span className={styles.metaMuted}> ({app.rating_count.toLocaleString()})</span>
+                </span>
+                <span className={styles.metaMuted}>{app.install_count.toLocaleString()}+ installs</span>
+              </>
+            )}
             <span className={styles.metaMuted}>{app.license}</span>
           </div>
 

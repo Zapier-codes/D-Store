@@ -70,6 +70,10 @@ export default function AppStructuredData({
     jsonLd.author = { "@type": "Person", name: developerName };
   }
 
+  // 5.h.vii.zo — decision recorded: this emits only the STORE-NATIVE counters. A
+  // third-party source's own rating (`App.third_party_stats`) is deliberately not
+  // emitted here: structured data is a claim to search engines that D-Store cannot
+  // back, and the source's histogram and download figure are reported, not measured.
   if (app.rating_count > 0) {
     jsonLd.aggregateRating = {
       "@type": "AggregateRating",
