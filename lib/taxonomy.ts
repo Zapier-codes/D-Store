@@ -317,6 +317,25 @@ export function toPlay(category: unknown, appType?: AppType): ToPlayResult {
 }
 
 /**
+ * The category slug that "For You" affinity (`getCategoryAffinityApps`,
+ * `lib/view-history.ts`) compares on — leaf `5.i.vi.zi`. A stored or legacy
+ * slug goes through `toPlay`, so `internet` and `communication` count as the
+ * same interest and a visitor's stored history keeps matching apps whether
+ * a source emits the legacy slug or the Play one. `uncategorized` (which is
+ * what an unknown, empty or non-string value becomes) returns `null`: "the
+ * app has no category we know" is not an interest, and recommending every
+ * uncategorized app to someone who opened one would be noise. Only the slug
+ * is returned, not the app type: the one slug in both vocabularies is
+ * `sports`, and a stored history entry carries no `app_type`, so for a
+ * stored slug the type cannot be recovered (`toPlay` tries `app` first).
+ * Pure; never throws.
+ */
+export function affinityCategory(category: unknown, appType?: AppType): string | null {
+  const pair = toPlay(category, appType);
+  return pair.category === UNCATEGORIZED.slug ? null : pair.category;
+}
+
+/**
  * A vocabulary entry on the two-axis model, with everything a browse page
  * needs — leaf `5.i.iii.zo`. `Category` in `lib/mock-data.ts` is the legacy
  * one-axis shape and stays until `5.i.v.zo`.

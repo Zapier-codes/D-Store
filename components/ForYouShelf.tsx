@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { listFavorites } from "@/lib/favorites";
-import { listViewHistory } from "@/lib/view-history";
+import { listViewedCategories } from "@/lib/view-history";
 import { getForYouAppsAction } from "@/lib/favorites-actions";
 import type { App } from "@/lib/catalog";
 import ShelfGrid from "./ShelfGrid";
@@ -49,7 +49,8 @@ export default function ForYouShelf() {
 
     async function load() {
       const favorites = await listFavorites();
-      const viewedCategories = listViewHistory().map((entry) => entry.category);
+      // 5.i.vi.zi — already translated to Play slugs (see `listViewedCategories`).
+      const viewedCategories = listViewedCategories();
       if (favorites.length === 0 && viewedCategories.length === 0) return;
       const recommended = await getForYouAppsAction(
         favorites.map((f) => f.slug),

@@ -27,6 +27,7 @@ import {
   type CatalogScope,
 } from "./sources/zealot";
 import {
+  affinityCategory,
   appInTaxonomyCategory,
   findTaxonomyCategory,
   listTaxonomyCategories,
@@ -881,13 +882,21 @@ export async function getCategoryAffinityApps(
   let cursor = 0;
 
   for (const slug of favoritedSlugs) {
-    const category = bySlug.get(slug)?.category;
+    // 5.i.vi.zi — compare on the Play slug, not the stored one, so a legacy-slug
+    // app and a viewed Play slug for the same interest agree; an app with no
+    // known category is not an interest (`affinityCategory` -> null).
+    const favApp = bySlug.get(slug);
+    const category = favApp ? affinityCategory(favApp.category, favApp.app_type) : null;
     if (!category) continue;
     categoryScores.set(category, (categoryScores.get(category) ?? 0) + FAVORITE_WEIGHT);
     if (!firstSeen.has(category)) firstSeen.set(category, cursor);
     cursor += 1;
   }
-  for (const category of viewedCategories) {
+  for (const viewed of viewedCategories) {
+    // Idempotent for a Play slug, so it is safe whether the caller already
+    // translated (`listViewedCategories`) or not.
+    const category = affinityCategory(viewed);
+    if (category === null) continue;
     categoryScores.set(category, (categoryScores.get(category) ?? 0) + VIEW_WEIGHT);
     if (!firstSeen.has(category)) firstSeen.set(category, cursor);
     cursor += 1;
@@ -904,7 +913,10 @@ export async function getCategoryAffinityApps(
   const result: App[] = [];
   for (const category of rankedCategories) {
     const inCategory = merged
-      .filter((app) => app.category === category && !favoritedSet.has(app.slug) && !seen.has(app.slug))
+      .filter(
+        (app) =>
+          affinityCategory(app.category, app.app_type) === category && !favoritedSet.has(app.slug) && !seen.has(app.slug)
+      )
       .sort((a, b) => b.install_count - a.install_count);
     for (const app of inCategory) {
       if (result.length >= limit) break;

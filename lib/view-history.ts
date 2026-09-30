@@ -32,6 +32,8 @@
  * write/read failure never blocks rendering.
  */
 
+import { affinityCategory } from "./taxonomy";
+
 export interface ViewHistoryEntry {
   slug: string;
   category: string;
@@ -93,4 +95,23 @@ export function recordView(app: { slug: string; category: string }): void {
 /** Every recorded view, most-recent first. Empty on any failure. */
 export function listViewHistory(): ViewHistoryEntry[] {
   return readHistory().sort((a, b) => b.viewedAt.localeCompare(a.viewedAt));
+}
+
+/**
+ * The categories this visitor viewed, most-recent first, as Play-vocabulary
+ * slugs — leaf `5.i.vi.zi`. Entries are stored as whatever slug the app
+ * carried when it was viewed (a legacy slug such as `internet` for anything
+ * recorded before the taxonomy moved), and that stored format is deliberately
+ * unchanged; the translation happens here, on read, through
+ * `affinityCategory`, so an old entry and a new one for the same interest
+ * agree. An entry whose category is not one we know is dropped, not turned
+ * into a guess. Empty on any storage failure.
+ */
+export function listViewedCategories(): string[] {
+  const result: string[] = [];
+  for (const entry of listViewHistory()) {
+    const category = affinityCategory(entry.category);
+    if (category !== null) result.push(category);
+  }
+  return result;
 }
