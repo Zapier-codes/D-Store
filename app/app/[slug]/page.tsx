@@ -6,6 +6,7 @@ import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
+import VersionHistory from "@/components/VersionHistory";
 import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
 import ChecksumDisplay from "@/components/ChecksumDisplay";
@@ -240,6 +241,15 @@ export default async function AppDetailPage({
             What&rsquo;s New
           </h2>
           <Changelog app={app} />
+        </section>
+
+        {/* 5.c.vi.zo -- version history, first-party and third-party alike: the
+            component itself shows the "Not provided" state for a source with no list. */}
+        <section aria-labelledby="version-history-heading">
+          <h2 id="version-history-heading" className={styles.sectionTitle}>
+            Version History
+          </h2>
+          <VersionHistory app={app} />
         </section>
 
         <section aria-labelledby="ratings-heading">
