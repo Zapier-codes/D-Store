@@ -70,8 +70,10 @@ const BACKOFF_CAP_MS = 60000;
 const RETRY_AFTER_CAP_MS = 120000;
 const BLOCK_STRIKES = 3;
 
-const PILOT_MAX_REQUESTS = 3;
-const PILOT_MAX_CANDIDATES = 300;
+import { loadIngestConfig } from "../lib/ingest-config";
+const ingestConfig = loadIngestConfig();
+const PILOT_MAX_REQUESTS = ingestConfig.crawl.maxRequests;
+const PILOT_MAX_CANDIDATES = ingestConfig.crawl.maxCandidates;
 
 const CANDIDATES_FILE = "aptoide-crawl-candidates.jsonl";
 const CHECKPOINT_FILE = "aptoide-crawl-checkpoint.json";
