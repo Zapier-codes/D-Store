@@ -7,6 +7,7 @@ import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
 import VersionHistory from "@/components/VersionHistory";
+import VersionAdvisory from "@/components/VersionAdvisory";
 import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
 import ChecksumDisplay from "@/components/ChecksumDisplay";
@@ -187,6 +188,11 @@ export default async function AppDetailPage({
               {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
               {originLabel && <ThirdPartyBadge label={originLabel} />}
             </div>
+
+            {/* 5.c.viii.zo -- shown once, above the install area, so a visitor reads it
+                before acting; renders nothing for an available release and for every
+                third-party app (no version_status), so it needs no branch here. */}
+            <VersionAdvisory app={app} />
 
             <div className={styles.installRow} id="primary-install-row">
               {thirdParty ? (

@@ -265,3 +265,4 @@ The inherited upstream Fossdroid-Core history (2016–2018). These commits preda
 - 2026-09-30 · `5.c.vii.zi` — `lib/version-advisory.ts` (`readVersionStatus`, `decideAdvisory`) and 11 unit tests; NOT run or type-checked (operator request); focus run 50 done of 53
 - 2026-09-30 · `5.c.vii.zo` — per-version `status` carried from the index: `RawVersion.status`, `App.version_status`, `VersionEntry.status`; two tests added; NOT run or type-checked (operator request); focus run 51 done of 53
 - 2026-09-30 · `5.c.viii.zi` — `components/VersionAdvisory.tsx` and CSS module: banner for a halted or pulled newest release, nothing otherwise; not mounted; NOT type-checked, rendered or run (operator request); focus run 52 done of 53
+- 2026-09-30 · `5.c.viii.zo` — `VersionAdvisory` mounted once in the detail-page header above the install row; NOT type-checked, built or run (operator request); focus run complete, 53 done of 53
