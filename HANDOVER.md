@@ -341,7 +341,7 @@ On 2026-09-30, after `origin/master` was fetched (at `73d67b8`), all **31** open
 - [x] 7 — `5.h.xii.zo` live check on Vercel with the larger snapshot *(needs the operator's live deployment; the sandbox cannot reach it — write the check and have the operator run it, and say so)*
 - [x] 8 — `5.h.v.zo` version history from Aptoide's `listAppVersions` / `app/getVersions`
 - [ ] 9 — `5.c.iii.zi` rollback: install-older-version flow *(no detail text, and it changes install behaviour: split per Section 1 before coding, and replace it here with its sub-leaves)*
-- [ ] 10 — `5.k.vi.zo` shared limiter and throttle of the two push routes *(Unheld; Supabase counter table and SQL function, `lib/rate-limit.ts`; goes before 11, 12 and 14; split per Section 1 if it bundles more than one piece)*
+- [x] 10 — `5.k.vi.zo` shared limiter and throttle of the two push routes
 - [ ] 11 — `5.d.ii.zi` throttle install and view counters *(reuses item 10's limiter)*
 - [ ] 12 — `5.d.ii.zo` throttle ratings and reports *(reuses item 10's limiter)*
 - [ ] 13 — `5.k.iv.zi` scheduled GitHub Actions workflow that triggers push dispatch and send *(Unheld, option C)*
