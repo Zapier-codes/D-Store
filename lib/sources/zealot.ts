@@ -35,6 +35,7 @@
  */
 
 import type { App, AppOrigin, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
+import { readVersionStatus } from "../version-advisory";
 import { readVersionHistory } from "../version-history";
 import { CATEGORY_RAW_MAX, checkCategory, toPlay, UNCATEGORIZED, type AppType } from "../taxonomy";
 import { ALL_REGIONS } from "../mock-data";
@@ -128,6 +129,12 @@ export interface RawVersion {
    * all, and that must read as fully-available, not as a hard zero.
    */
   rollout?: { percentage: number; status: "active" | "halted" | "complete" } | null;
+  /**
+   * `5.c.vii.zo` — the release's lifecycle status (Zealot Task 27f-a), distinct
+   * from `rollout.status`. Optional here: an older cached index has none, and
+   * `readVersionStatus` reads that as `"available"`.
+   */
+  status?: "available" | "halted" | "pulled" | null;
 }
 
 export interface RawApp {
@@ -373,6 +380,9 @@ function normalizeZealotApp(raw: RawApp): App {
     // index that was read but had no versions gives an empty list, not "not provided".
     version_history: history.entries,
     version_history_omitted: history.omitted,
+    // 5.c.vii.zo -- the newest release's lifecycle status, read through the same
+    // safe reader the history entries use; NOT `rollout_status` above.
+    version_status: readVersionStatus(latest?.status),
 
     developer_slug: slugifyName(raw.publisher.name),
     developer_name: raw.publisher.name,

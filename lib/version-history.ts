@@ -10,6 +10,8 @@
  * for old versions (`5.c.ii.zo`, Held). See HANDOVER.md, `5.c.ii.zi`'s note.
  */
 
+import { readVersionStatus, type VersionStatus } from "./version-advisory";
+
 export type VersionRolloutStatus = "active" | "halted" | "complete";
 
 export interface VersionEntry {
@@ -21,6 +23,12 @@ export interface VersionEntry {
   /** 0-100; 100 = fully available. */
   rollout_percentage: number;
   rollout_status: VersionRolloutStatus;
+  /**
+   * The release's lifecycle status (`5.c.vii.zo`): `"available"`, `"halted"` or
+   * `"pulled"`. Not the rollout ramp above. An entry with no or an unknown
+   * `status` (an older cached index) is `"available"`.
+   */
+  status: VersionStatus;
 }
 
 export interface VersionHistory {
@@ -78,6 +86,7 @@ function readEntry(item: unknown): VersionEntry | null {
     changelog: notes === "" ? null : notes.slice(0, MAX_CHANGELOG_LENGTH),
     size_mb: readSizeMb(item.size_bytes),
     ...readRollout(item.rollout),
+    status: readVersionStatus(item.status),
   };
 }
 

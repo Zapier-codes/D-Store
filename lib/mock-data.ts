@@ -40,6 +40,7 @@
 
 import type { AppType } from "./taxonomy";
 import type { VersionEntry } from "./version-history";
+import type { VersionStatus } from "./version-advisory";
 
 export interface Category {
   slug: string;
@@ -242,6 +243,13 @@ export interface App {
   version_history?: VersionEntry[];
   /** Releases the reader left out (malformed or past its cap); see `readVersionHistory`. */
   version_history_omitted?: number;
+  /**
+   * The lifecycle status of the newest release (`versions[0].status` in the
+   * index): `"available"`, `"halted"` or `"pulled"` — leaf `5.c.vii.zo`.
+   * Distinct from `rollout_status`, which is the staged-rollout ramp. Optional:
+   * a third-party app has none, and no advisory is shown for it.
+   */
+  version_status?: VersionStatus;
   /**
    * The live version's own stable id — Zealot's `Release#id`, required
    * on every `versions[]` entry in the signed index. Not previously

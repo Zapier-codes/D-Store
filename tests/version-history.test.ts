@@ -29,9 +29,9 @@ test("a full entry is read field by field, and carries no link, checksum or date
   const { entries, omitted } = readVersionHistory([full]);
   assert.equal(omitted, 0);
   assert.deepEqual(entries, [
-    { version_name: "2.1.0", changelog: "Fixes.", size_mb: 5, rollout_percentage: 40, rollout_status: "active" },
+    { version_name: "2.1.0", changelog: "Fixes.", size_mb: 5, rollout_percentage: 40, rollout_status: "active", status: "available" },
   ]);
-  assert.deepEqual(Object.keys(entries[0]).sort(), ["changelog", "rollout_percentage", "rollout_status", "size_mb", "version_name"]);
+  assert.deepEqual(Object.keys(entries[0]).sort(), ["changelog", "rollout_percentage", "rollout_status", "size_mb", "status", "version_name"]);
 });
 
 test("anything that is not an array is an empty history and never throws", () => {
@@ -155,4 +155,24 @@ test("the input is not mutated", () => {
   const before = JSON.stringify(input);
   readVersionHistory(input);
   assert.equal(JSON.stringify(input), before);
+});
+
+// Leaf 5.c.vii.zo: the per-entry lifecycle status, distinct from the rollout ramp.
+test("each entry carries the release's lifecycle status, read safely", () => {
+  const status = (value: unknown) => readVersionHistory([{ version_name: "1.0", status: value }]).entries[0].status;
+  assert.equal(status("available"), "available");
+  assert.equal(status("halted"), "halted");
+  assert.equal(status("pulled"), "pulled");
+  for (const bad of [undefined, null, 7, {}, [], "HALTED", " pulled", "held", ""]) assert.equal(status(bad), "available");
+});
+
+test("the lifecycle status and the rollout status do not affect each other", () => {
+  const { entries } = readVersionHistory([
+    { version_name: "2.0", status: "available", rollout: { percentage: 10, status: "halted" } },
+    { version_name: "1.0", status: "pulled", rollout: { percentage: 100, status: "complete" } },
+  ]);
+  assert.deepEqual(
+    entries.map((e) => [e.status, e.rollout_status]),
+    [["available", "halted"], ["pulled", "complete"]],
+  );
 });
