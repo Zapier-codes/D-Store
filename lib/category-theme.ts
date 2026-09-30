@@ -1,5 +1,4 @@
-import type { Category } from "./mock-data";
-import { toPlay, type AppType } from "./taxonomy";
+import type { AppType } from "./taxonomy";
 import type { Theme } from "./theme";
 
 /**
@@ -51,10 +50,15 @@ export interface CategoryThemeTokens {
 
 /**
  * A full category register: independent dark and light token sets,
- * keyed to the `Category.slug` (`lib/mock-data.ts`) it re-skins.
+ * keyed to the two-axis category it re-skins — `(appType, category)`, the
+ * Play-vocabulary pair from `lib/taxonomy.ts` (leaf `5.i.v.zi`; it was a
+ * single legacy `Category.slug` before). Both halves are needed: `sports`
+ * is an app category and a game genre, and a register for one must not
+ * skin the other.
  */
 export interface CategoryTheme {
-  categorySlug: Category["slug"];
+  appType: AppType;
+  category: string;
   /** Human-readable register name, e.g. "Vault", "Sanctuary" — surfaced nowhere in the UI yet, but keeps registers self-describing in code/reviews. */
   name: string;
   dark: CategoryThemeTokens;
@@ -62,19 +66,35 @@ export interface CategoryTheme {
 }
 
 /**
- * Registry a resolver (0.i.ii.zi) will look up by category slug.
- * Deliberately `Partial` — most categories have no register and must
- * fall back to the plain `0.b` base tokens (0.i.iii.zi), not every
- * `Category.slug` is expected to have an entry here.
+ * Registry a resolver looks up by `themeKey(appType, category)`.
+ * Deliberately sparse — most categories have no register and must fall
+ * back to the plain `0.b` base tokens (0.i.iii.zi), not every vocabulary
+ * entry is expected to have one here.
  *
- * Populated starting with 0.i.i.zo (Vault, Sanctuary); empty for now —
- * this leaf is the schema only.
+ * Keyed by the composite string from `themeKey`, not by a bare slug
+ * (leaf `5.i.v.zi`): a bare slug is ambiguous across the two axes
+ * (`sports`), so the key carries the axis. Populated by 0.i.i.zo (Vault,
+ * Sanctuary).
  */
-export type CategoryThemeRegistry = Partial<Record<Category["slug"], CategoryTheme>>;
+export type CategoryThemeRegistry = Readonly<Record<string, CategoryTheme>>;
+
+/**
+ * The registry key for a two-axis category — `"app:finance"`,
+ * `"game:sports"`. Collision-free by construction: the axis prefix keeps
+ * the app category `sports` and the game genre `sports` apart, and a
+ * taxonomy slug is `[a-z0-9-]` only (`taxonomySlug`), so it can never
+ * contain the `:` separator and two different pairs can never produce the
+ * same key. The prefix also means no slug can spell an inherited object
+ * property (`"app:constructor"` is not `"constructor"`).
+ */
+export function themeKey(appType: AppType, category: string): string {
+  return `${appType}:${category}`;
+}
 
 /**
  * "Vault" — leaf 0.i.i.zo, first reference register. Attaches to the
- * new `finance` category (`lib/mock-data.ts`), whose one app so far,
+ * `finance` category (Play's "Finance", `app` axis — the slug is the same
+ * on the legacy and the two-axis model), whose one app so far,
  * "Ledger Vault", supplied this register's accent colors so the app's
  * own icon palette and its category skin agree rather than clash.
  *
@@ -98,7 +118,8 @@ export type CategoryThemeRegistry = Partial<Record<Category["slug"], CategoryThe
  * 9.11:1 / 9.60:1. No change needed for this register.
  */
 const VAULT_THEME: CategoryTheme = {
-  categorySlug: "finance",
+  appType: "app",
+  category: "finance",
   name: "Vault",
   dark: {
     bg: "#07080a",
@@ -121,8 +142,9 @@ const VAULT_THEME: CategoryTheme = {
 
 /**
  * "Sanctuary" — leaf 0.i.i.zo, second reference register. Attaches to
- * the existing `reading` category (`lib/mock-data.ts`), whose new
- * scripture app, "Quiet Verse", supplied this register's accent colors
+ * `books-and-reference` on the `app` axis (leaf `5.i.v.zi`; the legacy
+ * `reading` slug maps here through `toPlay`), whose scripture app,
+ * "Quiet Verse", supplied this register's accent colors
  * for the same reason `finance`/"Vault" does above.
  *
  * Light leans on soft daylight cloud-blues — airy, per the
@@ -149,7 +171,8 @@ const VAULT_THEME: CategoryTheme = {
  * accentStrong pairing in both registers already passed.
  */
 const SANCTUARY_THEME: CategoryTheme = {
-  categorySlug: "reading",
+  appType: "app",
+  category: "books-and-reference",
   name: "Sanctuary",
   dark: {
     bg: "#0d1229",
@@ -172,85 +195,47 @@ const SANCTUARY_THEME: CategoryTheme = {
 };
 
 export const CATEGORY_THEMES: CategoryThemeRegistry = {
-  finance: VAULT_THEME,
-  reading: SANCTUARY_THEME,
+  [themeKey(VAULT_THEME.appType, VAULT_THEME.category)]: VAULT_THEME,
+  [themeKey(SANCTUARY_THEME.appType, SANCTUARY_THEME.category)]: SANCTUARY_THEME,
 };
 
 /**
- * Resolver — leaf 0.i.ii.zi. Given a category slug and the current
- * dark/light mode (`lib/theme.ts`'s `Theme`, already read server-side
- * by every page via `getTheme()`), returns the matching register's
- * token set for that mode, or `undefined` if the category has no
- * register — most categories won't (`CATEGORY_THEMES` is `Partial`),
- * and `undefined` is the correct, unremarkable result of that, not an
- * error case this function needs to handle specially.
+ * Resolver — leaf 0.i.ii.zi, re-keyed to the two-axis model by
+ * `5.i.v.zi`. Given a category as `(appType, category)` — the Play
+ * vocabulary pair, so callers pass what `toPlay` returns for an app or
+ * what the `/categories/[appType]/[slug]` route already has — and the
+ * current dark/light mode (`lib/theme.ts`'s `Theme`, already read
+ * server-side by every page via `getTheme()`), returns the matching
+ * register's token set for that mode, or `undefined` if the category has
+ * no register — most won't, and `undefined` is the correct, unremarkable
+ * result of that, not an error case. Never throws: a missing `appType` or
+ * `category`, or a value that is not a string, is simply "no register".
  *
  * The dedicated "no register" *fallback* behavior (rendering the
- * plain `0.b` base tokens instead, and re-auditing contrast once every
- * register exists) is `0.i.iii.zi`/`zo` — separate leaves. What this
- * function does for `undefined` is already the fallback in substance
- * (nothing to apply, so the caller naturally inherits whatever tokens
- * are already in scope), `0.i.iii.zi` is about *auditing and
- * documenting* that that's correct across every category, not new
- * behavior this resolver still needs.
+ * plain `0.b` base tokens instead) is `0.i.iii.zi`/`zo`'s audit: what
+ * this function does for `undefined` is already the fallback in
+ * substance (nothing to apply, so `CategoryThemeScope` renders its
+ * children with no wrapping element and they keep the `0.b` base tokens
+ * `app/globals.css`'s `[data-theme]` block applied at the document root).
  *
- * Leaf `0.i.iii.zi` audit result: every one of the 12 current
- * `categories` (`lib/mock-data.ts`) was checked against
- * `CATEGORY_THEMES` — only `finance` ("Vault") and `reading`
- * ("Sanctuary") have a register; the other 10 (`system`, `multimedia`,
- * `games`, `internet`, `navigation`, `science-education`, `theming`,
- * `time`, `writing`, `development`) correctly resolve to `undefined`
- * in both modes, which `CategoryThemeScope` renders as `children` with
- * no wrapping element — meaning those pages are never left unstyled,
- * they simply keep whatever `0.b` base tokens `app/globals.css`'s
- * `[data-theme]` block already applied at the document root. Verified
- * two ways: (1) a faithful reimplementation of this lookup run for all
- * 12 slugs × both modes confirmed `hasRegister === (resolved tokens
- * truthy)` with zero mismatches; (2) `next build` + `next start`,
- * fetching `/categories/games` (unregistered) and `/categories/finance`
- * (registered) — `games` has zero `--color-bg` occurrences anywhere in
- * the HTML (no scoped override emitted at all) while still carrying
- * `data-theme="dark"` on `<html>` (the base theme, applied via
- * `globals.css`'s attribute selector, not inline style — this is what
- * "never unstyled" actually rests on), and `finance` does emit its
- * Vault dark token (`--color-bg:#07080a`) as expected. No code change
- * was needed for this to hold — this leaf is the audit that confirms
- * it holds for every category today and stays true as new categories
- * are added, since a new unregistered slug takes the exact same path
- * through `resolveCategoryTheme` and `CategoryThemeScope` that every
- * currently-unregistered category already does.
+ * Leaf `5.i.v.zi` re-audit (a scratch check, not committed; results are
+ * in that leaf's Done note): every entry of the
+ * Play vocabulary (both axes, plus `uncategorized`) was resolved in both
+ * modes; exactly `app:finance` and `app:books-and-reference` return a
+ * register, the game-axis `sports` does not pick up an app-axis register,
+ * and every other entry resolves to `undefined`.
  */
 export function resolveCategoryTheme(
-  categorySlug: Category["slug"] | undefined,
+  appType: AppType | undefined,
+  category: string | undefined,
   mode: Theme
 ): CategoryThemeTokens | undefined {
-  if (!categorySlug) {
+  if (typeof appType !== "string" || typeof category !== "string" || !appType || !category) {
     return undefined;
   }
-  const theme = CATEGORY_THEMES[categorySlug];
-  return theme ? theme[mode] : undefined;
-}
-
-/**
- * Stopgap — leaf `5.i.iv.zi`, deleted by `5.i.v.zi` when the registry is
- * re-keyed to the two-axis model. `CATEGORY_THEMES` is still keyed on the
- * legacy slugs (`finance`, `reading`), but the new category pages know a
- * category as `(appType, slug)` — `books-and-reference`, not `reading` — so
- * without this the "Sanctuary" skin would vanish from its page the moment the
- * page moved. Returns the key in `CATEGORY_THEMES` to hand to
- * `resolveCategoryTheme`/`CategoryThemeScope` for a two-axis category: the
- * slug itself if it is a key on the app axis (`finance`), else the first
- * registered legacy slug that `toPlay` maps to this pair (`reading` for
- * `books-and-reference`), else the slug unchanged (which resolves to no
- * register, the base theme). Never throws.
- */
-export function themeSlugForTaxonomy(appType: AppType, category: string): string {
-  if (appType === "app" && Object.prototype.hasOwnProperty.call(CATEGORY_THEMES, category)) {
-    return category;
+  const key = themeKey(appType, category);
+  if (!Object.prototype.hasOwnProperty.call(CATEGORY_THEMES, key)) {
+    return undefined;
   }
-  for (const key of Object.keys(CATEGORY_THEMES)) {
-    const pair = toPlay(key);
-    if (pair.app_type === appType && pair.category === category) return key;
-  }
-  return category;
+  return CATEGORY_THEMES[key][mode];
 }

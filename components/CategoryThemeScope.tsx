@@ -1,16 +1,17 @@
 import type { CSSProperties } from "react";
-import type { Category } from "@/lib/mock-data";
+import type { AppType } from "@/lib/taxonomy";
 import type { Theme } from "@/lib/theme";
 import { resolveCategoryTheme, type CategoryThemeTokens } from "@/lib/category-theme";
 import styles from "./CategoryThemeScope.module.css";
 
 /**
  * Category-theme scope — leaf 0.i.ii.zi (resolver + scoped emission),
- * wired into real pages by 0.i.ii.zo: `app/app/[slug]/page.tsx` (App
- * Detail, 0.e) wraps its `<main>` with this, `categorySlug={app.category}`;
- * `app/categories/[slug]/page.tsx` (category browse, 0.g.ii) does the
- * same with `categorySlug={slug}` directly, since that page already
- * *is* one category's context.
+ * wired into real pages by 0.i.ii.zo, re-keyed to the two-axis model by
+ * `5.i.v.zi`. It takes a category as `appType` + `category` (the Play
+ * vocabulary pair): `app/app/[slug]/page.tsx` (App Detail, 0.e) wraps its
+ * `<main>` with this, passing the pair `toPlay` gives for the app;
+ * `app/categories/[appType]/[slug]/page.tsx` (category browse) passes its
+ * own route params, since that page already *is* one category's context.
  *
  * Server-rendered, no client JS: the inline `style` block is computed
  * during render from `resolveCategoryTheme()`, the same no-flash
@@ -43,15 +44,17 @@ import styles from "./CategoryThemeScope.module.css";
  * there's no reason to add a DOM node for it.
  */
 export default function CategoryThemeScope({
-  categorySlug,
+  appType,
+  category,
   mode,
   children,
 }: {
-  categorySlug: Category["slug"] | undefined;
+  appType: AppType | undefined;
+  category: string | undefined;
   mode: Theme;
   children: React.ReactNode;
 }) {
-  const tokens = resolveCategoryTheme(categorySlug, mode);
+  const tokens = resolveCategoryTheme(appType, category, mode);
 
   if (!tokens) {
     return <>{children}</>;

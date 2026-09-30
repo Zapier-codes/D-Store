@@ -121,7 +121,7 @@ export default async function AppDetailPage({
   const developerName = developer?.name ?? app.developer_name ?? null;
 
   return (
-    <CategoryThemeScope categorySlug={app.category} mode={mode}>
+    <CategoryThemeScope appType={taxonomy.app_type} category={taxonomy.category} mode={mode}>
       <main className={styles.main}>
         <ViewPing appSlug={app.slug} />
         <ViewHistoryRecorder appSlug={app.slug} category={app.category} />

@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTaxonomyCategory, getApps } from "@/lib/catalog";
 import { UNCATEGORIZED, isAppType } from "@/lib/taxonomy";
-import { themeSlugForTaxonomy } from "@/lib/category-theme";
 import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ShelfGrid from "@/components/ShelfGrid";
@@ -33,9 +32,9 @@ import styles from "./page.module.css";
  *
  * Filters (`license`, `maxSize`) work exactly as on the legacy page, with
  * the "Clear filters" link pointing back here (`CategoryFilters`'s
- * `basePath`). The theme skin is looked up with `themeSlugForTaxonomy`, a
- * stopgap until `5.i.v.zi` re-keys the registry, so `finance` keeps "Vault"
- * and `books-and-reference` keeps "Sanctuary" (`reading` in the registry).
+ * `basePath`). The theme skin is looked up by `(appType, slug)` directly
+ * (`5.i.v.zi` re-keyed the registry), so `finance` keeps "Vault" and
+ * `books-and-reference` keeps "Sanctuary".
  */
 export default async function TaxonomyCategoryPage({
   params,
@@ -73,7 +72,7 @@ export default async function TaxonomyCategoryPage({
   const mode = await getTheme();
 
   return (
-    <CategoryThemeScope categorySlug={themeSlugForTaxonomy(appType, slug)} mode={mode}>
+    <CategoryThemeScope appType={appType} category={slug} mode={mode}>
       <main className={styles.main}>
         <h1 className={styles.heading}>{category.name}</h1>
 
