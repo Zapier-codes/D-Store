@@ -2,10 +2,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   MAX_CHANGELOG_LENGTH,
+  MAX_DOWNLOAD_URL_LENGTH,
   MAX_VERSIONS_SCANNED,
   MAX_VERSION_HISTORY,
   MAX_VERSION_NAME_LENGTH,
+  decideDownload,
   readVersionHistory,
+  type VersionEntry,
 } from "../lib/version-history";
 
 // Leaf 5.c.v.zi.
@@ -25,13 +28,29 @@ const EMPTY = { entries: [], omitted: 0 };
 // Not a list: none of these may throw or produce entries.
 const NOT_LISTS: unknown[] = [undefined, null, NaN, 0, 1, "1.0", true, {}, () => 1, Symbol("x")];
 
-test("a full entry is read field by field, and carries no link, checksum or date", () => {
+test("a full entry is read field by field, and carries no checksum, fingerprint or date", () => {
   const { entries, omitted } = readVersionHistory([full]);
   assert.equal(omitted, 0);
   assert.deepEqual(entries, [
-    { version_name: "2.1.0", changelog: "Fixes.", size_mb: 5, rollout_percentage: 40, rollout_status: "active", status: "available" },
+    {
+      version_name: "2.1.0",
+      changelog: "Fixes.",
+      size_mb: 5,
+      rollout_percentage: 40,
+      rollout_status: "active",
+      status: "available",
+      download_url: "https://example.invalid/a.apk",
+    },
   ]);
-  assert.deepEqual(Object.keys(entries[0]).sort(), ["changelog", "rollout_percentage", "rollout_status", "size_mb", "status", "version_name"]);
+  assert.deepEqual(Object.keys(entries[0]).sort(), [
+    "changelog",
+    "download_url",
+    "rollout_percentage",
+    "rollout_status",
+    "size_mb",
+    "status",
+    "version_name",
+  ]);
 });
 
 test("anything that is not an array is an empty history and never throws", () => {
@@ -175,4 +194,105 @@ test("the lifecycle status and the rollout status do not affect each other", () 
     entries.map((e) => [e.status, e.rollout_status]),
     [["available", "halted"], ["pulled", "complete"]],
   );
+});
+
+// Leaf 5.c.ii.zo: each release's own download URL, kept only when it is a plain https URL.
+const url = (download_url: unknown) => readVersionHistory([{ version_name: "1", download_url }]).entries[0].download_url;
+
+test("download_url: a plain https URL is kept, trimmed, as the parser writes it", () => {
+  assert.equal(url("https://zealot.example/download/releases/456"), "https://zealot.example/download/releases/456");
+  assert.equal(url("  https://zealot.example/a.apk \n"), "https://zealot.example/a.apk");
+  assert.equal(url("https://zealot.example:8443/a.apk?x=1#f"), "https://zealot.example:8443/a.apk?x=1#f");
+  assert.equal(url("https://Zealot.Example/a"), "https://zealot.example/a"); // host is lower-cased by the parser
+});
+
+test("download_url: anything that is not a plain https URL is null", () => {
+  const bad: unknown[] = [
+    undefined, null, "", "   ", 5, {}, [], true, () => 1,
+    "http://zealot.example/a.apk",
+    "HTTPS://zealot.example/a.apk", // literal, case-sensitive prefix
+    "//zealot.example/a.apk",
+    "/download/releases/456",
+    "zealot.example/a.apk",
+    "javascript:alert(1)",
+    "data:text/html,x",
+    "ftp://zealot.example/a.apk",
+    "https:zealot.example/a.apk",
+    "https://",
+    "https://user:pw@zealot.example/a.apk",
+    "https://user@zealot.example/a.apk",
+    "https://zeal ot.example/a.apk",
+    "https://zealot.example/a\tapk",
+    "https://zealot.example/a\napk",
+    "https://zealot.example/a\u0000apk",
+    "https://zealot.example/a\u007fapk",
+    "https://[bad/a.apk",
+  ];
+  for (const value of bad) assert.equal(url(value), null, String(value));
+});
+
+test("download_url: a length over the limit is null; the limit itself is kept", () => {
+  const base = "https://zealot.example/";
+  assert.equal(url(base + "a".repeat(MAX_DOWNLOAD_URL_LENGTH - base.length)), base + "a".repeat(MAX_DOWNLOAD_URL_LENGTH - base.length));
+  assert.equal(url(base + "a".repeat(MAX_DOWNLOAD_URL_LENGTH - base.length + 1)), null);
+});
+
+test("download_url: what is returned is what the parser reads, so a backslash cannot move the host", () => {
+  const out = url("https://good.example\\@evil.example/a.apk");
+  if (out !== null) assert.equal(new URL(out).hostname, "good.example");
+});
+
+test("an entry with a bad download_url is still an entry", () => {
+  const { entries, omitted } = readVersionHistory([{ version_name: "1", download_url: "javascript:alert(1)" }]);
+  assert.equal(omitted, 0);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].download_url, null);
+});
+
+const entry = (over: Partial<VersionEntry> = {}): VersionEntry => ({
+  version_name: "1.0",
+  changelog: null,
+  size_mb: null,
+  rollout_percentage: 100,
+  rollout_status: "complete",
+  status: "available",
+  download_url: "https://zealot.example/a.apk",
+  ...over,
+});
+
+test("decideDownload: an available, fully rolled-out release with a link is offered", () => {
+  assert.deepEqual(decideDownload(entry()), { offered: true, url: "https://zealot.example/a.apk" });
+});
+
+test("decideDownload: a pulled or halted release is never offered, whatever else is true", () => {
+  assert.deepEqual(decideDownload(entry({ status: "pulled" })), { offered: false, reason: "pulled" });
+  assert.deepEqual(decideDownload(entry({ status: "halted" })), { offered: false, reason: "halted" });
+  assert.deepEqual(decideDownload(entry({ status: "pulled", rollout_status: "active", rollout_percentage: 10, download_url: null })), {
+    offered: false,
+    reason: "pulled",
+  });
+});
+
+test("decideDownload: a release still rolling out (or paused mid-rollout, or under 100%) is not offered", () => {
+  assert.deepEqual(decideDownload(entry({ rollout_status: "active", rollout_percentage: 40 })), { offered: false, reason: "rolling_out" });
+  assert.deepEqual(decideDownload(entry({ rollout_status: "halted", rollout_percentage: 40 })), { offered: false, reason: "rolling_out" });
+  assert.deepEqual(decideDownload(entry({ rollout_status: "complete", rollout_percentage: 99 })), { offered: false, reason: "rolling_out" });
+  assert.deepEqual(decideDownload(entry({ rollout_status: "active", rollout_percentage: 100 })), { offered: false, reason: "rolling_out" });
+});
+
+test("decideDownload: an available, complete release with no usable link says so", () => {
+  assert.deepEqual(decideDownload(entry({ download_url: null })), { offered: false, reason: "no_link" });
+});
+
+test("decideDownload agrees with the reader end to end", () => {
+  const { entries } = readVersionHistory([
+    { version_name: "3", download_url: "https://zealot.example/3" },
+    { version_name: "2", download_url: "https://zealot.example/2", status: "pulled" },
+    { version_name: "1", download_url: "http://zealot.example/1" },
+  ]);
+  assert.deepEqual(entries.map((e) => decideDownload(e)), [
+    { offered: true, url: "https://zealot.example/3" },
+    { offered: false, reason: "pulled" },
+    { offered: false, reason: "no_link" },
+  ]);
 });
