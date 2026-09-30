@@ -362,6 +362,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
   // renders "Not provided" for it via `isNotProvided`.
   const notProvided: NotProvidedField[] = [
     "play_store_status", // Aptoide says nothing about Play Store listing status (many of these apps ARE on Play)
+    "version_history", // 5.c.v.zo -- the snapshot carries no version list (nodes.versions.list is not in it)
     "monetization", // no ads / in-app-purchase flags — `appcoins.*` is Aptoide's own AppCoins billing, not "contains ads"/"IAP"
   ];
   const permissions = mapPermissions(raw.file.used_permissions);

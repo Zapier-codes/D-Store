@@ -35,6 +35,7 @@
  */
 
 import type { App, AppOrigin, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
+import { readVersionHistory } from "../version-history";
 import { CATEGORY_RAW_MAX, checkCategory, toPlay, UNCATEGORIZED, type AppType } from "../taxonomy";
 import { ALL_REGIONS } from "../mock-data";
 import { DEFAULT_TENANT_ID, type TenantConfig } from "../tenant-config";
@@ -303,6 +304,7 @@ function normalizeZealotApp(raw: RawApp): App {
   // 5.i.vii.zi — Play slug and real `app_type` from the index's category (see `placeZealotCategory`).
   const placed = placeZealotCategory(raw.category);
 
+  const history = readVersionHistory(raw.versions);
   const app: App = {
     id: `zealot-${raw.id}`,
     slug: raw.slug,
@@ -366,6 +368,11 @@ function normalizeZealotApp(raw: RawApp): App {
     permissions: [],
     screenshots: [], // reserved on Zealot's side (Task 27d) -- always empty today, not guessed
     changelog: latest?.changelog?.trim() || "No changelog provided.",
+    // 5.c.v.zo -- the whole `versions[]` (newest first, never re-sorted) through
+    // the pure reader; `latest` above is still `versions[0]`, untouched. An
+    // index that was read but had no versions gives an empty list, not "not provided".
+    version_history: history.entries,
+    version_history_omitted: history.omitted,
 
     developer_slug: slugifyName(raw.publisher.name),
     developer_name: raw.publisher.name,
