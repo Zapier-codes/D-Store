@@ -1,0 +1,44 @@
+/*
+ * Version advisory banner styles — leaf 5.c.viii.zi. The callout shell
+ * (.wrapper) is copied from PlayStoreDisclosure.module.css / DataSafety
+ * .module.css rather than inventing a new variant; the only additions are a
+ * heavier start edge in an existing token and a title. The words in the
+ * title carry the meaning, so colour is never the only signal.
+ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.halted {
+  border-inline-start: 4px solid var(--color-accent);
+}
+
+.pulled {
+  border-inline-start: 4px solid var(--color-error);
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.halted .title {
+  color: var(--color-accent);
+}
+
+.pulled .title {
+  color: var(--color-error);
+}
+
+.message {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
