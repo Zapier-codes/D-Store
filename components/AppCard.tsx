@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
-import { thirdPartyLabel } from "@/lib/trust";
+import { thirdPartyLabel, isThirdParty, sourceName } from "@/lib/trust";
+import { reportedStatsFor } from "@/lib/third-party-stats";
 import styles from "./AppCard.module.css";
 
 /**
@@ -63,6 +64,15 @@ import styles from "./AppCard.module.css";
  * the one existing card" shape `rank` already established rather than a
  * second bespoke chart-card component.
  *
+ * Rating line — leaf `5.h.viii.zi`. A third-party app's store-native
+ * `avg_rating` is always 0 (D-Store has no ratings for it), so the card
+ * never prints it: it shows the source's own average (`reportedStatsFor`,
+ * `lib/third-party-stats.ts`) only when the source reported at least one
+ * rating, with a tooltip saying whose rating it is and how many votes
+ * (the "Third-party (via Aptoide)" chip sits in the same row), and prints
+ * no rating at all when the source has none or gave none, rather than a
+ * `0.0`. First-party cards are unchanged.
+ *
  * Optional `priority` — leaf `3.d.ii.zo` (LCP budget pass). Threaded
  * straight to `AppIcon`/`next/image`. Defaults to `false` (lazy) —
  * only `Shelf`'s leading-card call sites set this, for the shelf that
@@ -80,6 +90,9 @@ export default function AppCard({
   caption?: string;
   priority?: boolean;
 }) {
+  const thirdParty = isThirdParty(app);
+  const reportedRating = reportedStatsFor(app)?.rating ?? null;
+
   return (
     <Link href={`/app/${app.slug}`} className={styles.card}>
       <div className={styles.icon}>
@@ -101,9 +114,21 @@ export default function AppCard({
         </p>
 
         <p className={styles.meta}>
-          <span className={styles.rating}>
-            <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
-          </span>
+          {!thirdParty && (
+            <span className={styles.rating}>
+              <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
+            </span>
+          )}
+          {thirdParty && reportedRating !== null && reportedRating.total > 0 && (
+            <span
+              className={styles.rating}
+              title={`${reportedRating.average.toFixed(1)} average from ${reportedRating.total.toLocaleString()} ${
+                reportedRating.total === 1 ? "rating" : "ratings"
+              } on ${sourceName(app)}`}
+            >
+              <span aria-hidden="true">★</span> {reportedRating.average.toFixed(1)}
+            </span>
+          )}
           {app.is_editors_pick && (
             <span className={styles.badge}>Editors&rsquo; Pick</span>
           )}
