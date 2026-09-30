@@ -1,0 +1,36 @@
+name: Aptoide Crawl & Fetch
+
+on:
+  schedule:
+    - cron: "0 0 * * 0" # Weekly on Sunday at 00:00 UTC
+  workflow_dispatch:
+
+jobs:
+  crawl-and-fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+
+      - name: Run Crawl (bounded chunks)
+        run: npx tsx scripts/crawl-aptoide.ts
+
+      - name: Run Fetch (getMeta)
+        run: npx tsx scripts/fetch-aptoide-meta.ts
+
+      - name: Run Merge
+        run: npx tsx scripts/merge-aptoide-snapshot.ts
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: update aptoide snapshot via crawl & fetch"
+          branch: aptoide-snapshot-update
+          title: "Automated Aptoide Snapshot Update"
+          body: |
+            Automated crawl, fetch, and merge of Aptoide apps.
+            - Runner country and counts are in `storage/downloads/aptoide-crawl-last-run.json`.
+            - Fetch results are in `storage/downloads/aptoide-meta-last-run.json`.
