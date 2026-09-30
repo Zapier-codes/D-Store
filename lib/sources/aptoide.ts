@@ -29,10 +29,7 @@
  */
 
 import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
-import { appTypeForLegacyCategory, readCategory } from "../taxonomy";
-import { categories as legacyCategories } from "../mock-data";
-
-const LEGACY_CATEGORY_SLUGS: readonly string[] = legacyCategories.map((c) => c.slug);
+import { CATEGORY_RAW_MAX, toPlay, UNCATEGORIZED } from "../taxonomy";
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
 
@@ -152,8 +149,23 @@ const CATEGORY_BY_PACKAGE: Record<string, string> = {
   "org.totschnig.myexpenses": "finance",
 };
 
-function categoryForPackage(packageName: string): string {
-  return CATEGORY_BY_PACKAGE[packageName] ?? "internet"; // unmapped package (not yet in the operator's curated batch) — same fallback the old hardcoded placeholder used
+/**
+ * `5.i.vi.zo` — the curated table above still holds the twelve legacy slugs
+ * it was written with; they are translated to the Play vocabulary by `toPlay`
+ * (`LEGACY_TO_PLAY`, the one mapping), not re-typed here, so there is no
+ * second table to keep in step. Returns `null` for a package that is not in
+ * the table (not yet in the operator's curated batch).
+ *
+ * **Decision (recorded): an unmapped package is `uncategorized`, not
+ * `internet`/Communication.** The old `internet` fallback was a guess that
+ * put any unknown package on the Communication shelf, and a wrong shelf is
+ * worse than no shelf: it would surface, say, a game or a bank app next to
+ * messaging apps and feed the For You shelf a false interest. Its
+ * `app_type` is `app`, because nothing tells us a package is a game.
+ * Today it changes nothing visible: all twelve snapshot packages are mapped.
+ */
+function categoryForPackage(packageName: string): string | null {
+  return Object.prototype.hasOwnProperty.call(CATEGORY_BY_PACKAGE, packageName) ? CATEGORY_BY_PACKAGE[packageName] : null;
 }
 
 /**
@@ -263,12 +275,18 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
   if (!raw.file.hardware?.sdk) notProvided.push("min_android_version");
   if (!hasUsableAge(raw.age)) notProvided.push("content_rating"); // the conservative "Adults only 18+" fallback stays as the stored value but is never displayed as if Aptoide had rated it
 
-  // 5.i.ii.zi — the curated map (and its "internet" fallback) only ever yields
-  // legacy slugs, so today this always reads as recognized; it goes through
-  // the tolerant reader anyway so a typo or a Play-style slug added to the
-  // map can never put an unknown string on `App.category`.
+  // 5.i.vi.zo — Play slugs and a real `app_type`, both from `toPlay`. A package
+  // outside the curated table is `uncategorized` (see `categoryForPackage`); a
+  // table value `toPlay` does not know (a typo added to the table) is also
+  // `uncategorized`, and the string is kept in `category_raw` rather than lost.
   const mappedCategory = categoryForPackage(raw.package);
-  const category = readCategory(mappedCategory, appTypeForLegacyCategory(mappedCategory), LEGACY_CATEGORY_SLUGS);
+  const placed = mappedCategory === null ? null : toPlay(mappedCategory);
+  const appType = placed?.app_type ?? "app";
+  const categorySlug = placed?.category ?? UNCATEGORIZED.slug;
+  const categoryRaw =
+    mappedCategory !== null && placed !== null && placed.via === "unknown" && mappedCategory.length > 0
+      ? mappedCategory.slice(0, CATEGORY_RAW_MAX)
+      : null;
 
   const app: App = {
     id: `aptoide-${raw.id}`,
@@ -288,9 +306,9 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     version: raw.file.vername,
     license: "Not provided",
     is_published: true,
-    category: category.category, // real mapping — see CATEGORY_BY_PACKAGE above, read through the tolerant reader (5.i.ii.zi)
-    ...(category.raw === null ? {} : { category_raw: category.raw }),
-    app_type: appTypeForLegacyCategory(mappedCategory), // 5.i.i.zi — true for the legacy slugs ("games" is a game); replaced by 5.i.ii.zo
+    category: categorySlug, // 5.i.vi.zo — a Play slug: CATEGORY_BY_PACKAGE's legacy value through toPlay
+    ...(categoryRaw === null ? {} : { category_raw: categoryRaw }),
+    app_type: appType, // 5.i.vi.zo — from toPlay, not derived from the legacy slug
     created_at: raw.added || nowIso,
     updated_at: raw.modified || nowIso,
 

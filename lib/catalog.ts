@@ -29,6 +29,7 @@ import {
 import {
   affinityCategory,
   appInTaxonomyCategory,
+  toPlay,
   findTaxonomyCategory,
   listTaxonomyCategories,
   type AppType,
@@ -808,7 +809,17 @@ export async function getSimilarApps(appSlug: string, limit = 6): Promise<App[]>
   const merged = await getMergedApps();
   const source = merged.find((a) => a.slug === appSlug);
   if (!source) return resolveAfterDelay([]);
-  const result = merged.filter((app) => app.category === source.category && app.slug !== appSlug).slice(0, limit);
+  // 5.i.vi.zo — compare on the translated pair, not the stored string: Aptoide
+  // apps now carry Play slugs while Zealot's still carry legacy ones until
+  // `5.i.vii.zi`, so raw equality would stop matching across the two sources.
+  const sourcePair = toPlay(source.category, source.app_type);
+  const result = merged
+    .filter((app) => {
+      if (app.slug === appSlug) return false;
+      const pair = toPlay(app.category, app.app_type);
+      return pair.app_type === sourcePair.app_type && pair.category === sourcePair.category;
+    })
+    .slice(0, limit);
   return resolveAfterDelay(result);
 }
 
