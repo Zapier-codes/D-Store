@@ -268,3 +268,6 @@ The inherited upstream Fossdroid-Core history (2016–2018). These commits preda
 - 2026-09-30 · `5.c.viii.zo` — `VersionAdvisory` mounted once in the detail-page header above the install row; NOT type-checked, built or run (operator request); focus run complete, 53 done of 53
 - 2026-09-30 · `5.c.ii.zo` — older versions in the version history get a download link or a one-line reason (`readDownloadUrl`, `decideDownload`, `VersionHistory`); ten tests added; NOT run or type-checked (operator request)
 - 2026-09-30 · `5.h.vi.zi` — WIP: `scripts/probe-aptoide.sh` (read-only Aptoide endpoint discovery for the operator's Termux) and the run procedure; Current position -> `5.h.vi.zi`; NOT run or tested (operator request)
+- 2026-09-30 · `5.h.vi.zi` — second Aptoide probe recorded (offset paging works, max page 100, follow `next`; list items lack `file.malware`, so per-app `getMeta` is required); docs-only
+- 2026-09-30 · `5.h.vi.zo` — split into `5.h.ix`–`5.h.xii`; operator-reported Aptoide acceptance and decisions 2–6 recorded; docs-only
+- 2026-09-30 · focus run 2 — opened with 9 buildable leaves of 31 open; docs-only, no leaf completed, `0 done of 9`
