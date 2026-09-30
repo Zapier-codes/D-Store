@@ -28,7 +28,7 @@
  * thing that would need to change if the answer is "MCP, not raw API."
  */
 
-import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
+import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField, ThirdPartyRating, ThirdPartyStats } from "../mock-data";
 import { CATEGORY_RAW_MAX, toPlay, UNCATEGORIZED } from "../taxonomy";
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
@@ -91,6 +91,12 @@ export interface AptoideRawApp {
   };
   age?: AptoideAge;
   appcoins?: AptoideAppcoins;
+  /**
+   * `5.h.vii.zi` — read through `readAptoideStats` only. Also present in a real
+   * response and deliberately NOT read: `stats.prating` and `stats.pdownloads`
+   * (unexplained; `pdownloads` equals `downloads` in all 12 ingested apps).
+   */
+  stats?: unknown;
   urls?: { w?: string };
   added: string;
   modified: string;
@@ -123,6 +129,60 @@ export function aptoideTrustVerdict(raw: Parameters<typeof aptoideScanRank>[0]):
     rank,
     reason: rank === null ? "no file.malware.rank in the response" : `file.malware.rank is "${rank.slice(0, 40)}", not "${APTOIDE_TRUSTED_RANK}"`,
   };
+}
+
+// --- Aptoide's own rating and download figure (5.h.vii.zi) ----------------
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** A finite number >= 0 within the safe-integer range, floored; otherwise `null`. Strings, `NaN`, negatives and `Infinity` are not numbers here. */
+function readCount(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > Number.MAX_SAFE_INTEGER) return null;
+  return Math.floor(value);
+}
+
+const VOTE_STARS = [5, 4, 3, 2, 1] as const;
+
+function readAptoideRating(value: unknown): ThirdPartyRating | null {
+  if (!isPlainObject(value)) return null;
+  const total = readCount(value.total);
+  const average = value.avg;
+  if (total === null || typeof average !== "number" || !Number.isFinite(average) || average < 0 || average > 5) return null;
+
+  // The histogram is kept only when it is complete and adds up to `total`: a
+  // partial or inconsistent one would draw bars that contradict the count.
+  let votes: ThirdPartyRating["votes"] = null;
+  if (Array.isArray(value.votes)) {
+    const built: { star: 5 | 4 | 3 | 2 | 1; count: number }[] = [];
+    for (const star of VOTE_STARS) {
+      const entry = value.votes.find((v) => isPlainObject(v) && v.value === star);
+      const count = isPlainObject(entry) ? readCount(entry.count) : null;
+      if (count === null) break;
+      built.push({ star, count });
+    }
+    if (built.length === VOTE_STARS.length && built.reduce((sum, v) => sum + v.count, 0) === total) votes = built;
+  }
+  return { average, total, votes };
+}
+
+/**
+ * Aptoide's own rating (`stats.rating`) and download figure (`stats.downloads`),
+ * or `null` when neither is usable. Pure; never throws; every part is validated
+ * because the response is third-party data. **Reads nothing else from `stats`**
+ * — `prating` and `pdownloads` are unexplained (see `AptoideRawApp.stats`).
+ *
+ * `downloads` is a *reported* figure: in the committed snapshot every value is a
+ * round bucket and equals `pdownloads`, so it must never be presented as a count
+ * D-Store or Aptoide measured.
+ */
+export function readAptoideStats(raw: { stats?: unknown } | null | undefined): ThirdPartyStats | null {
+  const stats = raw?.stats;
+  if (!isPlainObject(stats)) return null;
+  const rating = readAptoideRating(stats.rating);
+  const downloads = readCount(stats.downloads);
+  return rating === null && downloads === null ? null : { rating, downloads };
 }
 
 // --- Field mappings -----------------------------------------------------
@@ -322,6 +382,8 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
       ? mappedCategory.slice(0, CATEGORY_RAW_MAX)
       : null;
 
+  const thirdPartyStats = readAptoideStats(raw);
+
   const app: App = {
     id: `aptoide-${raw.id}`,
     slug,
@@ -343,6 +405,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     category: categorySlug, // 5.i.vi.zo — a Play slug: CATEGORY_BY_PACKAGE's legacy value through toPlay
     ...(categoryRaw === null ? {} : { category_raw: categoryRaw }),
     app_type: appType, // 5.i.vi.zo — from toPlay, not derived from the legacy slug
+    ...(thirdPartyStats === null ? {} : { third_party_stats: thirdPartyStats }), // 5.h.vii.zi — Aptoide's own reported rating and downloads; NOT this store's counters below, which stay 0
     ...(aptoideScanRank(raw) === null ? {} : { third_party_scan_rank: aptoideScanRank(raw) as string }), // 5.h.iv.zo — Aptoide's own scan rank, carried as reported and labelled as Aptoide's on the detail page
     created_at: raw.added || nowIso,
     updated_at: raw.modified || nowIso,

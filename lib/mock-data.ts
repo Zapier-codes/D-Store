@@ -115,6 +115,23 @@ export interface AppSponsoredSlot {
 }
 
 
+/** `5.h.vii.zi` — a third-party source's own rating, as reported. */
+export interface ThirdPartyRating {
+  /** 0-5 as reported. Meaningless when `total` is 0 (Aptoide sends 0). */
+  average: number;
+  /** Number of votes, a non-negative integer. */
+  total: number;
+  /** Vote counts for 5, 4, 3, 2, 1 stars in that order, summing to `total`; `null` when the source's histogram was missing, malformed or did not add up. */
+  votes: { star: 5 | 4 | 3 | 2 | 1; count: number }[] | null;
+}
+
+/** `5.h.vii.zi` — what a third-party source reports about an app's ratings and downloads. Each part is `null` when absent or unusable. */
+export interface ThirdPartyStats {
+  rating: ThirdPartyRating | null;
+  /** A reported figure, not a measured one: Aptoide's values are round buckets (1M, 5M, ... 2B). */
+  downloads: number | null;
+}
+
 export interface App {
   id: string;
   slug: string;
@@ -343,6 +360,16 @@ export interface App {
    * source's scan.
    */
   third_party_scan_rank?: string;
+  /**
+   * `5.h.vii.zi` — the third-party source's own rating and download figure,
+   * as reported (Aptoide's `stats.rating` and `stats.downloads`). Only set
+   * for third-party apps whose response carried at least one usable part;
+   * never set for first-party apps. **Not** this store's counters:
+   * `install_count`, `avg_rating` and `rating_count` stay D-Store's own (0
+   * for a third-party app), and nothing sums this field into them. Display
+   * is `5.h.vii.zo`/`5.h.viii`; nothing reads it yet.
+   */
+  third_party_stats?: ThirdPartyStats;
   /**
    * Publisher name as the source reports it — leaf `5.h.iii.zi`. Only
    * set for third-party apps, whose developers have no static
