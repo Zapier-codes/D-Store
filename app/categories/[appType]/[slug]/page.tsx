@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTaxonomyCategory, getApps } from "@/lib/catalog";
-import { isAppType } from "@/lib/taxonomy";
+import { UNCATEGORIZED, isAppType } from "@/lib/taxonomy";
 import { themeSlugForTaxonomy } from "@/lib/category-theme";
 import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
@@ -25,8 +25,9 @@ import styles from "./page.module.css";
  * cannot collide in the Next router, so the legacy pages coexist with these.
  *
  * `notFound()` on an `appType` other than `app`/`game`, and on a slug the
- * vocabulary does not contain for that type — which includes `uncategorized`
- * (unlisted; whether it gets a page is `5.i.iv.zo`'s to decide). Apps are
+ * vocabulary does not contain for that type — except `uncategorized`, which
+ * `5.i.iv.zo` decided IS served (for both types) but stays unlisted: the
+ * legacy `games` URL redirects to `/categories/game/uncategorized`. Apps are
  * matched with `getApps({ taxonomy })`, the read-time shim, so an app still
  * carrying a legacy slug appears under its Play equivalent.
  *
@@ -49,7 +50,13 @@ export default async function TaxonomyCategoryPage({
   if (!isAppType(appType)) {
     notFound();
   }
-  const category = await getTaxonomyCategory(appType, slug);
+  // `uncategorized` is the one slug that is served but not in the vocabulary
+  // (unlisted on /categories and in the sitemap): the read-time shim files
+  // there every legacy `games` app and every app whose category was not
+  // recognized, and the legacy `games` URL redirects to
+  // `/categories/game/uncategorized`, so it has to resolve (`5.i.iv.zo`).
+  const category =
+    slug === UNCATEGORIZED.slug ? { name: UNCATEGORIZED.name } : await getTaxonomyCategory(appType, slug);
   if (!category) {
     notFound();
   }

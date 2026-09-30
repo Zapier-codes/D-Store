@@ -35,6 +35,41 @@ const nextConfig = {
       },
     ],
   },
+  // 5.i.iv.zo — the twelve legacy `/categories/<slug>` URLs (indexed and
+  // bookmarked before the two-axis taxonomy) permanently redirect (308) to
+  // their Play-model homes, `/categories/<app_type>/<category>`. Done here,
+  // not in `app/categories/[appType]/page.tsx`, because a redirect thrown from
+  // a page under `app/categories/loading.tsx` runs after the loading shell has
+  // already streamed a 200, so it never becomes a real HTTP redirect (seen in
+  // `next start`); a config redirect happens before any page renders. Next
+  // carries the query string (`license`, `maxSize`) over to the destination.
+  //
+  // **This table is a hand-kept copy of `LEGACY_TO_PLAY` in `lib/taxonomy.ts`**
+  // (this file is plain ESM and cannot import that TypeScript). If a row there
+  // changes, change it here in the same commit. That page still exists as the
+  // fallback: it 404s any other one-segment slug and would redirect a legacy
+  // slug if this table ever missed one.
+  async redirects() {
+    const legacyToPlay = {
+      system: "app/tools",
+      multimedia: "app/video-players-and-editors",
+      games: "game/uncategorized",
+      internet: "app/communication",
+      navigation: "app/maps-and-navigation",
+      "science-education": "app/education",
+      theming: "app/personalization",
+      time: "app/productivity",
+      reading: "app/books-and-reference",
+      writing: "app/productivity",
+      development: "app/tools",
+      finance: "app/finance",
+    };
+    return Object.entries(legacyToPlay).map(([legacy, target]) => ({
+      source: `/categories/${legacy}`,
+      destination: `/categories/${target}`,
+      permanent: true,
+    }));
+  },
 };
 
 export default nextConfig;
