@@ -12,11 +12,19 @@ export function ThirdPartyBadge({ label }: { label: string }) {
   return <span className={styles.badge}>{label}</span>;
 }
 
-export default function ThirdPartyNotice({ sourceName }: { sourceName: string }) {
+export default function ThirdPartyNotice({ sourceName, scanRank }: { sourceName: string; scanRank?: string }) {
   return (
-    <p className={styles.notice}>
-      This app is listed from a third-party catalog. The file is delivered by {sourceName}, not
-      by D-Store, and hasn&rsquo;t been verified by us.
-    </p>
+    <>
+      <p className={styles.notice}>
+        This app is listed from a third-party catalog. The file is delivered by {sourceName}, not
+        by D-Store, and hasn&rsquo;t been verified by us.
+      </p>
+      {scanRank && (
+        <p className={styles.notice}>
+          {sourceName}&rsquo;s own malware scan reports: {scanRank}. This is {sourceName}&rsquo;s
+          result, not a check by D-Store.
+        </p>
+      )}
+    </>
   );
 }

@@ -204,7 +204,7 @@ export default async function AppDetailPage({
               hasInAppPurchases={app.has_in_app_purchases}
               notProvided={isNotProvided(app, "monetization")}
             />
-            {thirdParty && <ThirdPartyNotice sourceName={sourceName(app)} />}
+            {thirdParty && <ThirdPartyNotice sourceName={sourceName(app)} scanRank={app.third_party_scan_rank} />}
           </div>
         </header>
 

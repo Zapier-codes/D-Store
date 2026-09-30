@@ -336,6 +336,14 @@ export interface App {
    */
   package_name?: string;
   /**
+   * `5.h.iv.zo` — the third-party source's own malware-scan rank, as
+   * reported (Aptoide's `file.malware.rank`, e.g. `"TRUSTED"`). Only set for
+   * third-party apps whose response carried one; never set for first-party
+   * apps, and never a claim by D-Store. The detail page labels it as the
+   * source's scan.
+   */
+  third_party_scan_rank?: string;
+  /**
    * Publisher name as the source reports it — leaf `5.h.iii.zi`. Only
    * set for third-party apps, whose developers have no static
    * `Developer` row (so `getDeveloperBySlug` returns null for them and

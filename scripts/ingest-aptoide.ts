@@ -16,6 +16,12 @@
  *   npx tsx scripts/ingest-aptoide.ts --search "password manager" --limit 5
  *   (both flags can be combined; results are deduped by package name)
  *
+ * Trust gate (`5.h.iv.zo`): a response is kept only when Aptoide's own
+ * `file.malware.rank` is exactly "TRUSTED". Everything else (UNKNOWN, WARN,
+ * a missing rank, ...) is dropped from the snapshot and listed in the printed
+ * summary with its package and reason — never skipped silently. The same gate
+ * applies to `--packages` and `--search`.
+ *
  * Network note: this script talks to `ws75.aptoide.com` directly and
  * was written and schema-verified against real probe output
  * (`aptoide-probe.txt`) but not run end-to-end in the sandbox this
@@ -25,7 +31,7 @@
  * summary before trusting the snapshot.
  */
 
-import { fetchAptoideApp, fetchAptoideSearch, type AptoideRawApp } from "../lib/sources/aptoide";
+import { aptoideTrustVerdict, fetchAptoideApp, fetchAptoideSearch, type AptoideRawApp } from "../lib/sources/aptoide";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -60,11 +66,19 @@ async function main() {
 
   const byPackage = new Map<string, AptoideRawApp>();
   const errors: string[] = [];
+  const skipped: string[] = [];
+
+  // 5.h.iv.zo — the single place a response enters the snapshot.
+  const admit = (app: AptoideRawApp): void => {
+    const verdict = aptoideTrustVerdict(app);
+    if (verdict.trusted) byPackage.set(app.package, app);
+    else skipped.push(`${app.package}: ${verdict.reason}`);
+  };
 
   for (const pkg of args.packages) {
     try {
       const app = await fetchAptoideApp(pkg);
-      if (app) byPackage.set(app.package, app);
+      if (app) admit(app);
       else errors.push(`${pkg}: not found`);
     } catch (err) {
       errors.push(`${pkg}: ${(err as Error).message}`);
@@ -74,7 +88,7 @@ async function main() {
   for (const query of args.searches) {
     try {
       const results = await fetchAptoideSearch(query, args.limit);
-      for (const app of results) byPackage.set(app.package, app);
+      for (const app of results) admit(app);
     } catch (err) {
       errors.push(`search "${query}": ${(err as Error).message}`);
     }
@@ -87,6 +101,10 @@ async function main() {
   await writeFile(outFile, JSON.stringify(snapshot, null, 2), "utf-8");
 
   console.log(`Wrote ${snapshot.length} app(s) to ${outFile}`);
+  if (skipped.length) {
+    console.log(`${skipped.length} skipped by the trust gate (Aptoide's file.malware.rank is not "TRUSTED"):`);
+    for (const e of skipped) console.log(`  - ${e}`);
+  }
   if (errors.length) {
     console.log(`${errors.length} error(s):`);
     for (const e of errors) console.log(`  - ${e}`);

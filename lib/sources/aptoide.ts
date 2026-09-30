@@ -55,6 +55,12 @@ interface AptoideFile {
   used_permissions?: string[];
   signature?: AptoideSignature;
   hardware?: { sdk?: number };
+  /**
+   * Aptoide's own malware scan result — the real path is `file.malware`
+   * (`5.h.iv.zo`; the old top-level `malware` on `AptoideRawApp` never
+   * existed in a real response). Present in all 12 ingested responses.
+   */
+  malware?: { rank?: string };
 }
 
 interface AptoideAge {
@@ -85,10 +91,38 @@ export interface AptoideRawApp {
   };
   age?: AptoideAge;
   appcoins?: AptoideAppcoins;
-  malware?: { rank?: string }; // "TRUSTED" | "UNKNOWN" | ...
   urls?: { w?: string };
   added: string;
   modified: string;
+}
+
+// --- Trust gate (5.h.iv.zo) ---------------------------------------------
+
+/** The only rank Aptoide reports that this store lists. Exact match: no case folding or trimming. */
+export const APTOIDE_TRUSTED_RANK = "TRUSTED";
+
+/** Aptoide's scan rank for a response, or `null` when the response carries none (a missing, non-object or non-string value). Never throws. */
+export function aptoideScanRank(raw: { file?: { malware?: { rank?: unknown } | null } | null } | null | undefined): string | null {
+  const rank = raw?.file?.malware?.rank;
+  return typeof rank === "string" && rank.length > 0 ? rank : null;
+}
+
+export type AptoideTrustVerdict = { trusted: true; rank: string } | { trusted: false; rank: string | null; reason: string };
+
+/**
+ * Whether ingestion may keep a response: only `file.malware.rank === "TRUSTED"`.
+ * Anything else — `UNKNOWN`, `WARN`, `CRITICAL`, any other string, a missing
+ * rank — is refused, with a reason the caller must log (never a silent skip).
+ * A missing rank is refused rather than assumed clean.
+ */
+export function aptoideTrustVerdict(raw: Parameters<typeof aptoideScanRank>[0]): AptoideTrustVerdict {
+  const rank = aptoideScanRank(raw);
+  if (rank === APTOIDE_TRUSTED_RANK) return { trusted: true, rank };
+  return {
+    trusted: false,
+    rank,
+    reason: rank === null ? "no file.malware.rank in the response" : `file.malware.rank is "${rank.slice(0, 40)}", not "${APTOIDE_TRUSTED_RANK}"`,
+  };
 }
 
 // --- Field mappings -----------------------------------------------------
@@ -309,6 +343,7 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     category: categorySlug, // 5.i.vi.zo — a Play slug: CATEGORY_BY_PACKAGE's legacy value through toPlay
     ...(categoryRaw === null ? {} : { category_raw: categoryRaw }),
     app_type: appType, // 5.i.vi.zo — from toPlay, not derived from the legacy slug
+    ...(aptoideScanRank(raw) === null ? {} : { third_party_scan_rank: aptoideScanRank(raw) as string }), // 5.h.iv.zo — Aptoide's own scan rank, carried as reported and labelled as Aptoide's on the detail page
     created_at: raw.added || nowIso,
     updated_at: raw.modified || nowIso,
 
