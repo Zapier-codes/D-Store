@@ -4,7 +4,7 @@
  * Local shape only. Nothing here reads the signed index, and nothing in this
  * file changes what any page shows: publishing `app_type`/`category` in the
  * index is `5.i.i.zo` (Zealot's), reading them tolerantly is `5.i.ii.zi`, and
- * moving the 12 current slugs and the UI onto this vocabulary is `5.i.ii.zo`.
+ * moving the 12 legacy slugs and the UI onto this vocabulary was `5.i.ii.zo` (split; finished by `5.i.vii.zo`).
  *
  * The model, in one paragraph. Every app has an `app_type` — a small closed
  * enum, `"app"` or `"game"` — and a `category`, an open string. The category
@@ -147,65 +147,8 @@ export function checkCategory(appType: unknown, category: unknown): CategoryChec
   return entry ? { known: true, entry } : { known: false };
 }
 
-/**
- * The `app_type` for a category slug from the 12-slug F-Droid-inherited set
- * the catalog uses today (`lib/mock-data.ts`'s `categories`, and what
- * `lib/sources/aptoide.ts` maps into): `games` is a game, everything else an
- * app. This exists only so that the two source normalizers can fill the new
- * required `App.app_type` with something true until `5.i.ii.zi`/`5.i.ii.zo`
- * replace those slugs; it is not part of the target taxonomy and goes away
- * with them.
- */
-export function appTypeForLegacyCategory(category: string): AppType {
-  return category === "games" ? "game" : "app";
-}
-
 /** Longest raw category string kept in `App.category_raw`; anything longer is cut. */
 export const CATEGORY_RAW_MAX = 100;
-
-export interface ReadCategoryResult {
-  /** What `App.category` is set to: the value if recognized, else `UNCATEGORIZED.slug`. */
-  category: string;
-  /** The producer's own value when it was present but not recognized (cut to `CATEGORY_RAW_MAX`), else `null`. */
-  raw: string | null;
-}
-
-/**
- * The tolerant category reader — leaf `5.i.ii.zi`. Decides what a source
- * shows for the `category` value it was handed, without ever rejecting the
- * app or the index it came from.
- *
- * A value is **recognized** when it is a string that either (a) is in the
- * vocabulary for `appType` (`checkCategory`), or (b) is one of
- * `legacySlugs` — the 12 slugs the storefront's category pages, counts and
- * themes are built on today. (b) is a transition rule: until `5.i.ii.zo`
- * moves the UI to this vocabulary, reading a Play-vocabulary slug as
- * "known" is correct but the storefront has no page for it, while reading a
- * legacy slug as unknown would empty the existing category pages.
- *
- * Anything else — a string in neither list, an empty string, a number, an
- * object, `null`, `undefined` — is `UNCATEGORIZED`. When the value was a
- * non-empty string, it is kept in `raw` (cut to `CATEGORY_RAW_MAX`) so
- * nothing is lost if the vocabulary catches up; every other shape gives
- * `raw: null` because there is no string to keep.
- *
- * Exact match, no trimming or case folding, like `checkCategory`. Never
- * throws. Callers that want a *default* for an absent value (as
- * `lib/sources/zealot.ts` does) apply it before calling this.
- */
-export function readCategory(
-  raw: unknown,
-  appType: AppType,
-  legacySlugs: readonly string[],
-): ReadCategoryResult {
-  if (typeof raw !== "string" || raw.length === 0) {
-    return { category: UNCATEGORIZED.slug, raw: null };
-  }
-  if (checkCategory(appType, raw).known || legacySlugs.includes(raw)) {
-    return { category: raw, raw: null };
-  }
-  return { category: UNCATEGORIZED.slug, raw: raw.slice(0, CATEGORY_RAW_MAX) };
-}
 
 /** A point on the two-axis taxonomy: which list (`app_type`) and which entry (`category`). */
 export interface TaxonomyPair {
@@ -283,7 +226,7 @@ export interface ToPlayResult extends TaxonomyPair {
  *     (apps first, then games). Returned unchanged, `via: "vocabulary"`.
  *  2. **A legacy slug** (`LEGACY_TO_PLAY`) — returns its mapped pair,
  *     `via: "legacy"`. Ignores `appType`: a legacy app's `app_type` was itself
- *     derived from the slug (`appTypeForLegacyCategory`).
+ *     derived from the slug (`games` was the only game).
  *  3. **Anything else** (unknown string, empty, non-string, a name like
  *     `constructor`) — `uncategorized`, `via: "unknown"`, keeping `appType`
  *     if given, else `"app"`.
@@ -425,19 +368,16 @@ export function findTaxonomyCategory(appType: unknown, slug: unknown): TaxonomyC
 }
 
 /**
- * Whether an app belongs to the category `(appType, slug)` **after**
- * translating its own stored category through `toPlay` — so an app carrying
- * the legacy `internet` and one carrying `communication` are both in
- * `("app", "communication")`. This is the read-time shim `5.i.iii.zo` puts in
- * front of the catalog; it goes when `5.i.v.zo` makes the sources emit Play
- * slugs natively. Also works for `("game", "uncategorized")`, which is where
- * a legacy `games` app lands.
+ * Whether an app belongs to the category `(appType, slug)`, by its stored
+ * pair. Every source now emits Play slugs and a real `app_type`
+ * (`5.i.vi.zo`, `5.i.vii.zi`), so this is a direct comparison — the read-time
+ * shim `5.i.iii.zo` put here (translating the stored slug through `toPlay`)
+ * is gone (`5.i.vii.zo`). `("game", "uncategorized")` works like any other pair.
  */
 export function appInTaxonomyCategory(
   app: { category: string; app_type: AppType },
   appType: AppType,
   slug: string,
 ): boolean {
-  const pair = toPlay(app.category, app.app_type);
-  return pair.app_type === appType && pair.category === slug;
+  return app.app_type === appType && app.category === slug;
 }

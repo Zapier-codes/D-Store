@@ -135,9 +135,9 @@ export interface App {
   is_published: boolean;
   /**
    * `5.i.i.zi` — `"app"` or `"game"`; decides which vocabulary in
-   * `lib/taxonomy.ts` `category` is checked against. Today's sources fill it
-   * from the legacy 12-slug set (`appTypeForLegacyCategory`); the real value
-   * arrives with `5.i.ii.zi` (tolerant reader) once Zealot publishes it.
+   * `lib/taxonomy.ts` `category` is checked against. Both sources fill it
+   * (`lib/sources/aptoide.ts` from `toPlay`; `lib/sources/zealot.ts` from the
+   * index's category — Zealot's v2 index has no `app_type` field yet).
    */
   app_type: AppType;
   /**
@@ -149,7 +149,7 @@ export interface App {
   category: string; // Category.slug today; see `lib/taxonomy.ts`
   /**
    * `5.i.ii.zi` — set only when the source supplied a category string the
-   * tolerant reader (`readCategory`, `lib/taxonomy.ts`) did not recognize; then
+   * source's own placement (`toPlay`/`placeZealotCategory`) did not recognize; then
    * `category` is `"uncategorized"` and this holds the producer's own value.
    * Absent otherwise. Nothing displays it.
    */

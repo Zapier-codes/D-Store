@@ -29,7 +29,6 @@ import {
 import {
   affinityCategory,
   appInTaxonomyCategory,
-  toPlay,
   findTaxonomyCategory,
   listTaxonomyCategories,
   type AppType,
@@ -265,7 +264,7 @@ export async function getTaxonomyCategory(appType: AppType, slug: string): Promi
   return resolveAfterDelay(findTaxonomyCategory(appType, slug));
 }
 
-/** Apps in `(appType, slug)` after the read-time shim — legacy and Play slugs counted together. */
+/** Apps stored in `(appType, slug)` — a direct comparison of the stored pair. */
 export async function getTaxonomyAppCount(appType: AppType, slug: string): Promise<number> {
   const merged = await getMergedApps();
   return resolveAfterDelay(merged.filter((app) => appInTaxonomyCategory(app, appType, slug)).length);
@@ -335,12 +334,11 @@ export interface GetAppsOptions {
   /** `5.i.i.zi` — restrict to apps or games. Combine with `category`, which is only unambiguous alongside it. */
   appType?: AppType;
   /**
-   * `5.i.iii.zo` — restrict to one category on the two-axis model, matched
-   * through the read-time shim (`appInTaxonomyCategory`): an app's stored
-   * category is translated with `toPlay` first, so legacy and Play slugs land
-   * together. Unlike `category` (a bare stored-slug comparison, unchanged),
-   * this needs the `app_type` because `sports` is on both axes. ANDs with
-   * every other option.
+   * `5.i.iii.zo` — restrict to one category on the two-axis model
+   * (`appInTaxonomyCategory`, a direct comparison of the stored pair since
+   * `5.i.vii.zo`). Unlike `category` (a bare stored-slug comparison), this
+   * needs the `app_type` because `sports` is on both axes. ANDs with every
+   * other option.
    */
   taxonomy?: { appType: AppType; category: string };
   limit?: number;
@@ -809,16 +807,10 @@ export async function getSimilarApps(appSlug: string, limit = 6): Promise<App[]>
   const merged = await getMergedApps();
   const source = merged.find((a) => a.slug === appSlug);
   if (!source) return resolveAfterDelay([]);
-  // 5.i.vi.zo — compare on the translated pair, not the stored string: Aptoide
-  // apps now carry Play slugs while Zealot's still carry legacy ones until
-  // `5.i.vii.zi`, so raw equality would stop matching across the two sources.
-  const sourcePair = toPlay(source.category, source.app_type);
+  // 5.i.vii.zo — every source emits Play slugs now, so compare the stored
+  // (app_type, category) pair directly; no read-time translation.
   const result = merged
-    .filter((app) => {
-      if (app.slug === appSlug) return false;
-      const pair = toPlay(app.category, app.app_type);
-      return pair.app_type === sourcePair.app_type && pair.category === sourcePair.category;
-    })
+    .filter((app) => app.slug !== appSlug && appInTaxonomyCategory(app, source.app_type, source.category))
     .slice(0, limit);
   return resolveAfterDelay(result);
 }
