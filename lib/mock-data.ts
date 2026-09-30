@@ -39,6 +39,7 @@
  */
 
 import type { AppType } from "./taxonomy";
+import type { VersionEntry } from "./version-history";
 
 export interface Category {
   slug: string;
@@ -233,6 +234,14 @@ export interface App {
    */
   rollout_percentage: number;
   rollout_status: "active" | "halted" | "complete";
+  /**
+   * Older releases, newest first — leaf `5.c.v.zi` (`lib/version-history.ts`).
+   * Optional: only a first-party app whose index carried `versions[]` has it;
+   * a third-party app has none and lists `"version_history"` in `not_provided`.
+   */
+  version_history?: VersionEntry[];
+  /** Releases the reader left out (malformed or past its cap); see `readVersionHistory`. */
+  version_history_omitted?: number;
   /**
    * The live version's own stable id — Zealot's `Release#id`, required
    * on every `versions[]` entry in the signed index. Not previously
@@ -432,7 +441,8 @@ export type NotProvidedField =
   | "play_store_status"
   | "monetization"
   | "min_android_version"
-  | "content_rating";
+  | "content_rating"
+  | "version_history";
 
 /**
  * Which catalog source an app came from — leaf `5.h.i.zi` (Catalog Sources,

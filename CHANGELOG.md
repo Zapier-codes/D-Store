@@ -257,3 +257,4 @@ The inherited upstream Fossdroid-Core history (2016–2018). These commits preda
 - `99b1749` · 2026-09-30 · `5.d.iv.zo` — scripts/smoke.ts and npm run smoke: browse, download (install counter) and rate checks against a running next start
 - 2026-09-30 · `5.d.iii.zo` — catalog acceptance and moderation policy (`docs/MODERATION.md`) and this patch ledger (`CHANGELOG.md`); docs-only, no code changed
 - 2026-09-30 · `5.c.ii.zi` — split into `5.c.v` (version-history data: reader, normalizer) and `5.c.vi` (display: component, page section); docs-only, no feature code changed; ran the owed `npm ci`, `npm test` (55 pass) and `tsc` (one test-file error, flagged)
+- 2026-09-30 · `5.c.v.zi` — `lib/version-history.ts` (`readVersionHistory`, `VersionEntry`, caps), optional `App.version_history`/`version_history_omitted`, `"version_history"` in `NotProvidedField`, 15 unit tests (`npm test` 70 pass); focus run 46 done of 50
