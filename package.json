@@ -7,7 +7,8 @@
     "prebuild": "npx tsx scripts/snapshot-zealot-index.ts",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "npx tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "next": "^15.0.0",
