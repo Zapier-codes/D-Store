@@ -182,7 +182,11 @@ export function decideDownload(entry: VersionEntry): DownloadOffer {
 }
 
 export function diffPermissions(newPerms: string[] | undefined, oldPerms: string[] | undefined): string[] {
-  if (!Array.isArray(newPerms) || !Array.isArray(oldPerms)) return []; // Unknown if either is missing
+  // Unknown if either side is missing OR empty. An empty list is what Zealot publishes for a release
+  // whose manifest was never read (every release uploaded before its Task 29c), so it means "unknown",
+  // never "no permissions"; treating it as known would flag every permission of the newer version as added.
+  if (!Array.isArray(newPerms) || !Array.isArray(oldPerms)) return [];
+  if (newPerms.length === 0 || oldPerms.length === 0) return [];
   const oldSet = new Set(oldPerms);
   return newPerms.filter(p => !oldSet.has(p));
 }

@@ -7,6 +7,7 @@ import {
   MAX_VERSION_HISTORY,
   MAX_VERSION_NAME_LENGTH,
   decideDownload,
+  diffPermissions,
   readVersionHistory,
   type VersionEntry,
 } from "../lib/version-history";
@@ -312,4 +313,15 @@ test("permissions come from compatibility.permissions: strings only, prefix drop
   assert.deepEqual(read(null), []);
   assert.deepEqual(read("x"), []);
   assert.deepEqual(readVersionHistory([full]).entries[0].permissions, []);
+});
+
+test("diffPermissions: added permissions only; an empty or missing list on either side is unknown, so no alert", () => {
+  assert.deepEqual(diffPermissions(["CAMERA", "INTERNET"], ["INTERNET"]), ["CAMERA"]);
+  assert.deepEqual(diffPermissions(["INTERNET"], ["INTERNET", "CAMERA"]), []); // removed is not an alert
+  assert.deepEqual(diffPermissions(["INTERNET"], ["INTERNET"]), []);
+  assert.deepEqual(diffPermissions(["CAMERA", "INTERNET"], []), []); // older release never read: unknown, not "none"
+  assert.deepEqual(diffPermissions([], ["INTERNET"]), []);
+  assert.deepEqual(diffPermissions([], []), []);
+  assert.deepEqual(diffPermissions(undefined, ["INTERNET"]), []);
+  assert.deepEqual(diffPermissions(["CAMERA"], undefined), []);
 });
