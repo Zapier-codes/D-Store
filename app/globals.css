@@ -235,3 +235,21 @@ body {
 .skipLink:focus-visible {
   top: 0.75rem;
 }
+
+/*
+ * Page width — operator-directed responsive fix (2026-10-01). The header, footer and the
+ * grid pages (search, categories, charts, collections, saved) were capped at 1280px and
+ * centred, which left empty bands on each side of a wide desktop window. They now use this
+ * token, which is the full width of the window (each container keeps its own side padding).
+ * Prose pages keep their narrower reading widths (65ch to 960px) on purpose. To cap the
+ * layout again, set a length here, for example 1680px.
+ */
+:root {
+  --page-max: 100%;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}

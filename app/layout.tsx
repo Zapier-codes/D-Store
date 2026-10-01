@@ -172,7 +172,7 @@ export default async function RootLayout({
           Skip to main content
         </a>
         <RegionProvider region={region}>
-          <Header theme={theme} brandName={tenant.branding.display_name} />
+          <Header theme={theme} />
           {/*
             Every page under app/ already renders its own <main> (see
             e.g. app/page.tsx) — this div is only a focusable landing

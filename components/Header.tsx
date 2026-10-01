@@ -50,15 +50,17 @@ import styles from "./Header.module.css";
  *
  * `/saved` added by leaf `4.d.i.zo` ("Saved apps" view), same
  * once-the-page-exists convention.
+ *
+ * Operator-directed UI fix (2026-10-01): the store-name text link that used
+ * to sit before the search bar is removed (visitors already know the store's
+ * name), so the bar now starts with the search field. The `brandName` prop is
+ * gone with it; "Home" in the nav is the way back to `/`. The page `<title>`
+ * and PWA name still carry the tenant's display name.
  */
-export default function Header({ theme, brandName = "D-Store" }: { theme: Theme; brandName?: string }) {
+export default function Header({ theme }: { theme: Theme }) {
   return (
     <header className={styles.header}>
       <div className={styles.bar}>
-        <Link href="/" className={styles.brand}>
-          {brandName}
-        </Link>
-
         <SearchBar />
 
         <input
