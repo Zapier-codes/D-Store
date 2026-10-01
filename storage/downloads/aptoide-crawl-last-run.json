@@ -1,0 +1,22 @@
+{
+  "started_at": "2026-10-01T19:27:39.764Z",
+  "ended_at": "2026-10-01T19:28:41.130Z",
+  "runner_country": "US",
+  "http_requests": 52,
+  "status_counts": {
+    "200": 52
+  },
+  "pages_this_run": 52,
+  "new_candidates_this_run": 5000,
+  "candidates_total": 5000,
+  "skipped_total": 0,
+  "duplicates_total": 0,
+  "reported_total": 448623,
+  "offset": 13227,
+  "done": true,
+  "stop_reason": "target_reached",
+  "stop_detail": null,
+  "downloads_order_violations": 0,
+  "first_page": "first page: asked offset 0, Aptoide echoed 0, next 134, 100 items, total 448623",
+  "interrupted": false
+}

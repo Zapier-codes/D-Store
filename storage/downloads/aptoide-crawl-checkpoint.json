@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "sort": "downloads",
+  "limit": 100,
+  "offset": 13227,
+  "requests": 52,
+  "candidates": 5000,
+  "skipped": 0,
+  "duplicates": 0,
+  "total": 448623,
+  "started_at": "2026-10-01T19:27:39.764Z",
+  "updated_at": "2026-10-01T19:28:41.129Z",
+  "done": true,
+  "stop_reason": "target_reached"
+}

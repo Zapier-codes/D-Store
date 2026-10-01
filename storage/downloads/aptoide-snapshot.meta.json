@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-01T19:53:42.540Z",
+  "runner_country": "US",
+  "count": 1506,
+  "total_bytes": 11514805,
+  "limit_bytes": 8388608,
+  "shards": [
+    {
+      "file": "aptoide-snapshot.json",
+      "count": 1079,
+      "bytes": 8383761
+    },
+    {
+      "file": "aptoide-snapshot.2.json",
+      "count": 427,
+      "bytes": 3131044
+    }
+  ]
+}

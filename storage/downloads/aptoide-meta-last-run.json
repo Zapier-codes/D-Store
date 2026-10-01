@@ -1,0 +1,13 @@
+{
+  "started_at": "2026-10-01T19:53:41.558Z",
+  "index": 1500,
+  "accepted": 1500,
+  "rejected": 0,
+  "failed": 0,
+  "http_requests": 1500,
+  "status_counts": {
+    "200": 1500
+  },
+  "done": false,
+  "stop_reason": "request_cap"
+}
