@@ -30,6 +30,12 @@ import styles from "./VersionHistory.module.css";
  * nothing). No checksum or signing fingerprint is
  * shown for an older version.
  *
+ * `5.c.xi.zo` — the caution under the list appears once, only when at least one
+ * link is shown. Besides "may be missing fixes" it says Android may refuse an
+ * older version over a newer one, so the newer one may need uninstalling first,
+ * which can remove its data. It names no cause for any release. That Android
+ * behaviour is general knowledge and was not checked on a device.
+ *
  * Deliberately absent: a per-version date (the index carries `released_at`,
  * but whether to show it is an open operator call). Rollout state is written
  * out as text so it never depends on colour alone.
@@ -121,6 +127,8 @@ export default function VersionHistory({ app }: { app: App }) {
       {anyLink && (
         <p className={styles.caution}>
           Older versions may be missing fixes. Prefer the newest version unless you need one of these.
+          Android may refuse to install an older version over a newer one; if it does, the newer version may need
+          to be uninstalled first, which can remove its data.
         </p>
       )}
       {omitted > 0 && (
