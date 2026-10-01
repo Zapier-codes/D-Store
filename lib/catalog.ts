@@ -16,6 +16,7 @@
  * Supabase is wired in later.
  */
 
+import { incrementCounter, logSearch } from "./counter-store";
 import { apps, categories, developers, reviews, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type AppSponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
@@ -453,18 +454,21 @@ export async function getAppBySlug(slug: string): Promise<App | null> {
  * `slug` — the route handler maps that to a 404, the same "not found"
  * shape `getAppBySlug` already established for reads.
  */
-// NOTE (leaf 5.h.ii.zi, flagged not fixed): the three mutators below
-// (`incrementInstallCount`, `incrementViewCount`, and the rating
-// submission further down) still look up against the Zealot-origin
-// `apps` array only, not `getMergedApps()`'s combined result — so
-// clicking Install/viewing/rating an Aptoide-sourced app's detail page
-// returns "not found" (404 at the route-handler level) instead of
-// actually incrementing anything. Left as-is rather than silently
-// papered over: whether a third-party app should even have its own
-// store-native counters, versus deferring entirely to Aptoide's own
-// numbers, is a product call this leaf doesn't make. Surfaced for the
-// next session/leaf to decide.
+// Leaf 5.g.v.zo part (d): `incrementInstallCount` and `incrementViewCount` now
+// resolve the slug against the MERGED catalog (Zealot, Aptoide and the dummy
+// apps), so a real catalog app is counted instead of answering "not found", and,
+// when Supabase is configured, count in `app_counter` through
+// `lib/counter-store.ts`. Decision recorded for the operator to overrule: third-
+// party (Aptoide) apps DO get store-native counters, since the stats Zealot reads
+// are about this storefront's own traffic. When Supabase is not configured or
+// does not answer, the count falls back to the in-memory dummy `apps` array as
+// before (so a dummy app still moves, and any other app returns `null`, the
+// route's 404). The pages still show the index's own figures; `app_counter` is
+// read only by `store_stats()`.
 export async function incrementInstallCount(slug: string): Promise<number | null> {
+  if (!(await catalogHasSlug(slug))) return null;
+  const stored = await incrementCounter("install", slug);
+  if (stored.ok) return stored.count;
   const app = apps.find((a) => a.slug === slug);
   if (!app) {
     return resolveAfterDelay(null);
@@ -487,6 +491,9 @@ export async function incrementInstallCount(slug: string): Promise<number | null
  * unknown slug, same "not found" shape every other lookup here uses.
  */
 export async function incrementViewCount(slug: string): Promise<number | null> {
+  if (!(await catalogHasSlug(slug))) return null;
+  const stored = await incrementCounter("view", slug);
+  if (stored.ok) return stored.count;
   const app = apps.find((a) => a.slug === slug);
   if (!app) {
     return resolveAfterDelay(null);
@@ -845,6 +852,10 @@ export async function logSearchQuery(query: string): Promise<void> {
     query: trimmed,
     created_at: new Date().toISOString(),
   });
+  // 5.g.v.zo part (d): also record it in `search_log` when Supabase is configured. The in-memory
+  // row above stays for the admin search page. The result is ignored on purpose: a search must
+  // never fail or slow down because the log did (the store's own timeout bounds the wait).
+  await logSearch(trimmed);
 }
 
 /** Other apps in the same category, excluding the app itself — backs the "Similar apps" rail on the detail page. */

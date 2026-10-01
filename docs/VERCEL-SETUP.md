@@ -222,6 +222,8 @@ Delete their entry from `MODERATOR_TOKENS` and redeploy. There is nothing else t
 | `STATS_READ_TOKEN` | **server-only — never `NEXT_PUBLIC_`** | The bearer token Zealot sends. **At least 32 characters, no whitespace** (`openssl rand -base64 24` gives 32). Its own secret: not `PUSH_DISPATCH_SECRET`, not `ADMIN_PASSWORD`, so each can be rotated or leaked on its own. |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | **server-only** | Already used by the other routes; the route reads `store_stats()` with them. |
 
+**Counters and the search log.** With `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set (the same two the push and stats routes use) and the migrations applied, `POST /api/apps/<slug>/install` and `/view` count in `app_counter` and each search is recorded in `search_log` (normalized text only). Unset, or if the database does not answer, the routes fall back to the in-memory count and nothing breaks, but Zealot's stats page shows zeros.
+
 On the Zealot deployment set `DSTORE_STATS_URL` to `https://<this site>/api/stats` and `DSTORE_STATS_TOKEN` to the same value as `STATS_READ_TOKEN`.
 
 - **Why `/api/stats` and not `/api/admin/stats`.** Everything under `/api/admin/` is behind the shared-password Basic gate in `middleware.ts`, which would refuse Zealot's bearer token before the route ran. An earlier version of this route was at `/api/admin/stats` and could not have served Zealot.
