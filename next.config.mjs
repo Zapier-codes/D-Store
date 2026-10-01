@@ -19,8 +19,27 @@ const nextConfig = {
   // enough different pages (home, categories, app detail, developer,
   // search, charts) that enumerating them individually here would just
   // be a second, easier-to-forget copy of that call-site list.
+  //
+  // `5.h.x.zo` — this used to be "./storage/downloads/**", which also shipped
+  // the ingest scripts' WORKING files (the crawl's candidate list, the
+  // `getMeta` results, checkpoints, last-run reports) into every route's
+  // function. Those can grow without bound and nothing at runtime reads them,
+  // so only the files the storefront actually reads are listed:
+  //   - the Aptoide snapshot, its shards and its header
+  //     (`aptoide-snapshot.json`, `aptoide-snapshot.<n>.json`,
+  //     `aptoide-snapshot.meta.json`) — `lib/sources/aptoide.ts`;
+  //   - the Zealot index cache and state, including per-tenant copies
+  //     (`zealot-index-*.json`) — `lib/sources/zealot.ts`;
+  //   - the tenant registry cache and state (`tenant-registry-*.json`) —
+  //     `lib/tenant-registry.ts`.
+  // A NEW runtime file under storage/downloads must be added here or it will be
+  // missing from the deployed function while working locally.
   outputFileTracingIncludes: {
-    "/**": ["./storage/downloads/**"],
+    "/**": [
+      "./storage/downloads/aptoide-snapshot*.json",
+      "./storage/downloads/zealot-index-*.json",
+      "./storage/downloads/tenant-registry-*.json",
+    ],
   },
   // 3.d.ii.zi — the only real (non-placeholder) icon/screenshot images
   // in the catalog are third-party (Aptoide) entries, all served from

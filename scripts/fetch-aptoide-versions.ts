@@ -13,6 +13,7 @@
 
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { readSnapshotFiles, writeSnapshotFiles } from "../lib/aptoide-snapshot-io";
 import type { AptoideRawApp } from "../lib/sources/aptoide";
 import { loadIngestConfig } from "../lib/ingest-config";
 
@@ -198,12 +199,21 @@ async function main(): Promise<number> {
   const reportPath = path.join(dir, REPORT_FILE);
   await mkdir(dir, { recursive: true });
 
+  // 5.h.x.zo — the snapshot may be several shards plus a header; read them all
+  // and refuse to go on from a damaged set, since the write below replaces it.
   let apps: AptoideRawApp[];
+  let runnerCountry: string | null = null;
   try {
-    const text = await readFile(snapshotPath, "utf8");
-    apps = JSON.parse(text) as AptoideRawApp[];
+    const loaded = await readSnapshotFiles(dir);
+    if (loaded.problems.length > 0) {
+      console.error(`The snapshot has problems, so nothing was changed: ${loaded.problems.join(", ")}`);
+      return 1;
+    }
+    if (loaded.apps.length === 0 && loaded.meta === null) throw new Error("no snapshot");
+    apps = loaded.apps as unknown as AptoideRawApp[];
+    runnerCountry = loaded.meta?.runner_country ?? null;
   } catch {
-    console.error("Could not read aptoide-snapshot.json. Run the fetcher first.");
+    console.error("Could not read the Aptoide snapshot (aptoide-snapshot.json). Run the fetcher and merger first.");
     return 1;
   }
 
@@ -237,7 +247,7 @@ async function main(): Promise<number> {
     }
   }
 
-  await writeJsonAtomic(snapshotPath, apps);
+  await writeSnapshotFiles(dir, apps, { generatedAt: new Date().toISOString(), runnerCountry });
 
   const report = {
     apps_total: apps.length,

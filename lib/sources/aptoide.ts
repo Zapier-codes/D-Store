@@ -33,6 +33,7 @@ import { CATEGORY_RAW_MAX, toPlay, UNCATEGORIZED } from "../taxonomy";
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
 import { readVersionHistory } from "../version-history";
+import { loadSnapshotFrom } from "../aptoide-snapshot";
 
 const APTOIDE_ORIGIN: AppOrigin = "aptoide";
 const API_BASE = "https://ws75.aptoide.com/api/7";
@@ -518,9 +519,23 @@ async function loadSnapshot(): Promise<AptoideRawApp[]> {
     // server-side.
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
-    const file = path.join(process.cwd(), "storage", "downloads", "aptoide-snapshot.json");
-    const text = await fs.readFile(file, "utf-8");
-    cachedSnapshot = JSON.parse(text) as AptoideRawApp[];
+    const dir = path.join(process.cwd(), "storage", "downloads");
+    // `5.h.x.zo` — the snapshot may be several shards plus a header; see
+    // `lib/aptoide-snapshot.ts`. With no header this reads
+    // `aptoide-snapshot.json` alone, exactly as before.
+    const loaded = await loadSnapshotFrom(async (fileName) => {
+      try {
+        return await fs.readFile(path.join(dir, fileName), "utf-8");
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+        throw error;
+      }
+    });
+    if (loaded.problems.length > 0) {
+      // Counts and file names only — never app content.
+      console.warn(`[aptoide] snapshot loaded with problems: ${loaded.problems.slice(0, 5).join(", ")}${loaded.problems.length > 5 ? ", ..." : ""}`);
+    }
+    cachedSnapshot = loaded.apps as unknown as AptoideRawApp[];
   } catch {
     cachedSnapshot = []; // no snapshot yet — see function comment
   }

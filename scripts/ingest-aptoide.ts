@@ -32,7 +32,7 @@
  */
 
 import { aptoideTrustVerdict, fetchAptoideApp, fetchAptoideSearch, type AptoideRawApp } from "../lib/sources/aptoide";
-import { mkdir, writeFile } from "node:fs/promises";
+import { writeSnapshotFiles } from "../lib/aptoide-snapshot-io";
 import path from "node:path";
 
 interface Args {
@@ -96,11 +96,13 @@ async function main() {
 
   const snapshot = Array.from(byPackage.values());
   const outDir = path.join(process.cwd(), "storage", "downloads");
-  const outFile = path.join(outDir, "aptoide-snapshot.json");
-  await mkdir(outDir, { recursive: true });
-  await writeFile(outFile, JSON.stringify(snapshot, null, 2), "utf-8");
+  // 5.h.x.zo — written through the shared writer, so a snapshot that has grown
+  // past one file is replaced as a whole (shards and header) and no stale shard
+  // from an earlier run is left behind. This script still REPLACES the snapshot
+  // with exactly what it fetched; it does not merge (that is merge-aptoide-snapshot.ts).
+  const report = await writeSnapshotFiles(outDir, snapshot, { generatedAt: new Date().toISOString(), runnerCountry: null });
 
-  console.log(`Wrote ${snapshot.length} app(s) to ${outFile}`);
+  console.log(`Wrote ${snapshot.length} app(s) to ${path.join(outDir, report.written.join(", "))}`);
   if (skipped.length) {
     console.log(`${skipped.length} skipped by the trust gate (Aptoide's file.malware.rank is not "TRUSTED"):`);
     for (const e of skipped) console.log(`  - ${e}`);
