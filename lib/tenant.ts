@@ -11,12 +11,18 @@
 
 import { cache } from "react";
 import { headers } from "next/headers";
-import { findTenantForHost, normalizeHost, TENANT_HOST_HEADER, type TenantConfig } from "./tenant-config";
+import { findTenantForHost, normalizeHost, parseHostList, TENANT_HOST_HEADER, type TenantConfig } from "./tenant-config";
 import { getTenantRegistry } from "./tenant-registry";
 
-export const getCurrentTenant = cache(async (): Promise<TenantConfig> => {
+/** The normalized host of the current request (the one `getCurrentTenant` resolves), `null` when it is not a plain hostname. */
+export const getCurrentHost = cache(async (): Promise<string | null> => {
   const h = await headers();
-  const host = normalizeHost(h.get(TENANT_HOST_HEADER) ?? h.get("host"));
+  return normalizeHost(h.get(TENANT_HOST_HEADER) ?? h.get("host"));
+});
+
+export const getCurrentTenant = cache(async (): Promise<TenantConfig> => {
+  const host = await getCurrentHost();
   const tenants = await getTenantRegistry();
-  return findTenantForHost(host, tenants, process.env.TENANT_BASE_DOMAIN);
+  // f.vii: `TENANT_RESERVED_HOSTS` = the hosts no tenant record may claim (the operator's primary host(s)).
+  return findTenantForHost(host, tenants, process.env.TENANT_BASE_DOMAIN, parseHostList(process.env.TENANT_RESERVED_HOSTS));
 });

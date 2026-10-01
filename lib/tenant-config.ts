@@ -173,7 +173,47 @@ export function parseTenantRegistry(text: string, now: Date = new Date()): Tenan
 // --- Host -> tenant ---------------------------------------------------------
 
 /**
- * Resolves a normalized host to a tenant. Order: (1) exact match against a tenant's `domains`;
+ * Leaf `f.vii` (Storeapp Track f) — hosts that no tenant record may claim. A website-type request
+ * from `distr` arrives as an ordinary registry record whose `domains` the requester influences, and
+ * `findTenantForHost` hands a host claimed by exactly one record to that record. Without this guard
+ * a record listing the store's own primary host would take the primary site's branding and catalog
+ * over. Reserved: every host in `TENANT_RESERVED_HOSTS` (the operator's primary host(s)), the
+ * `TENANT_BASE_DOMAIN` apex and its `www.` form. A reserved host always resolves to the default tenant.
+ */
+export function isReservedHost(host: string, baseDomain?: string | null, reserved?: ReadonlySet<string>): boolean {
+  if (reserved?.has(host)) return true;
+  const base = normalizeHost(baseDomain ?? null);
+  return base !== null && (host === base || host === `www.${base}`);
+}
+
+/** Parses a comma- or space-separated host list (an env value) into a normalized set; entries that are not plain hostnames are dropped. */
+export function parseHostList(raw: string | null | undefined): Set<string> {
+  const out = new Set<string>();
+  for (const part of (raw ?? "").split(/[\s,]+/)) {
+    const h = normalizeHost(part);
+    if (h) out.add(h);
+  }
+  return out;
+}
+
+/**
+ * Leaf `f.vii` — the public host a non-default tenant's record maps to: its first claimable custom
+ * domain, else `<tenant_id>.<TENANT_BASE_DOMAIN>`, else `null` (no domain and no base domain set, so
+ * nothing can reach it). This is the "live URL" of a website request: there is no build and no
+ * artifact, the record being in the registry plus this host answering is the whole delivery. It does
+ * not check that another tenant has not claimed the same domain (that resolves to neither, see
+ * `findTenantForHost`), `/api/tenant-status` on the host is the check that says what is really live.
+ */
+export function tenantLiveHost(tenant: TenantConfig, baseDomain?: string | null, reserved?: ReadonlySet<string>): string | null {
+  if (tenant.tenant_id === DEFAULT_TENANT_ID) return null;
+  const custom = tenant.domains.find((d) => !isReservedHost(d, baseDomain, reserved));
+  if (custom) return custom;
+  const base = normalizeHost(baseDomain ?? null);
+  return base ? `${tenant.tenant_id}.${base}` : null;
+}
+
+/**
+ * Resolves a normalized host to a tenant. Order: (0) a reserved host is always the default tenant (`isReservedHost`); (1) exact match against a tenant's `domains`;
  * (2) if `baseDomain` is set, `<tenant_id>.<baseDomain>` (single label — the `tenant_id` rule
  * exists precisely so it's always usable as a subdomain); (3) the default tenant. Never returns
  * `null` and never 404s: an unknown host is served as the default tenant.
@@ -182,8 +222,14 @@ export function parseTenantRegistry(text: string, now: Date = new Date()): Tenan
  * to whichever record happens to be listed first — order in a registry must never decide who
  * gets a contested host.
  */
-export function findTenantForHost(host: string | null, tenants: readonly TenantConfig[], baseDomain?: string | null): TenantConfig {
+export function findTenantForHost(
+  host: string | null,
+  tenants: readonly TenantConfig[],
+  baseDomain?: string | null,
+  reserved?: ReadonlySet<string>,
+): TenantConfig {
   if (!host) return DEFAULT_TENANT;
+  if (isReservedHost(host, baseDomain, reserved)) return DEFAULT_TENANT; // f.vii: no record can claim these
   const owners = tenants.filter((t) => t.domains.includes(host));
   if (owners.length === 1) return owners[0];
   if (owners.length > 1) return DEFAULT_TENANT;
