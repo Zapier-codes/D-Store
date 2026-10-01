@@ -65,9 +65,15 @@ This is the process the code is being built toward. Steps marked *not built* hav
 5. **Record.** Move the report to a closed status and note the outcome. Keep the record of the decision, never a personal identifier.
 6. **Repeat problems.** A publisher or source that repeatedly ships listings that are removed is raised with the Console (first-party) or dropped from ingestion (third-party). The repeat-infringer commitment on `/dmca` applies to copyright specifically.
 
-## 6. Admin access
+## 6. Access
 
-The admin pages and `/api/admin/*` are protected by HTTP Basic auth against one shared secret in the environment (`ADMIN_PASSWORD`, at least 16 characters; `ADMIN_USERNAME`, default `admin`). With the password unset or too short, every admin route answers 503 to everyone (leaf `3.c.iv.zi`). There are no per-person admin accounts, so **the shared password is the whole access control**: rotate it when anyone who knew it leaves, and never put it in the repository. Editorial toggles (featured, Editor's Pick) and sponsored slots retire when the signed index becomes their source of truth (`5.g.v.zi`).
+There are two separate controls, with separate secrets, and neither opens the other.
+
+**The moderation queue (`/moderation`, `/api/moderation/*`) is per person.** Each moderator has their own generated token, sent as the Basic-auth password with their id as the username (leaf `3.c.vi.zo`; the check is `lib/moderator-auth.ts`). The server holds only a SHA-256 digest of each token, in the `MODERATOR_TOKENS` environment variable (a JSON array of `{ id, sha256 }`, at most 20 entries). With it unset or malformed, the queue answers `503` to everyone; it never opens. **Adding a moderator** is generating a token with `scripts/new-moderator-token.ts`, giving it to them privately, and adding the printed entry; **removing one** is deleting their entry and redeploying. There is no shared moderation password to rotate when someone leaves: only that person's entry goes. The full procedure and the rules are in `docs/VERCEL-SETUP.md`, "Moderation access". A good sign-in yields the moderator's id, so a later change can record who decided; **recording it on a closed report is not built and needs a decision** (step 5 above says to keep the decision and never a personal identifier; a staff id is a different thing from a reporter's, but it is still stored data and belongs in section 7 and the privacy page if it is added).
+
+**The admin pages (`/admin/*`, `/api/admin/*`) are still one shared secret.** They are protected by HTTP Basic auth against `ADMIN_PASSWORD` (at least 16 characters; `ADMIN_USERNAME`, default `admin`). With the password unset or too short, every admin route answers `503` to everyone (leaf `3.c.iv.zi`). There are no per-person admin accounts, so for those pages **the shared password is the whole access control**: rotate it when anyone who knew it leaves, and never put it in the repository. Editorial toggles (featured, Editor's Pick) and sponsored slots retire when the signed index becomes their source of truth (`5.g.v.zi`).
+
+**What is built and what is not.** The gate and `GET /api/moderation/ping` (returns the caller's id; a way for a moderator to confirm their token works) exist. **There is no queue yet**: no list, no detail page, no decision. Do not tell moderators there is one. Reports are also not saved for real catalog apps until `3.c.v.zi` and `3.c.v.zo` land (`HANDOVER.md`, the `3.c.iii.zi` part 2 split note); section 4.1 above is updated by `3.c.v.zo`.
 
 ## 7. Data handled while moderating
 

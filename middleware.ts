@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { lookupRegion } from "@/lib/ipapi";
 import { REGION_COOKIE_NAME, encodeRegion } from "@/lib/region";
 import { checkAdminAuth, adminDeniedResponse, isAdminPath } from "@/lib/admin-auth";
+import { checkModeratorAuth } from "@/lib/moderator-auth";
+import { applyModerationHeaders, isModerationPath, moderatorDeniedResponse } from "@/lib/moderator-gate";
 import { normalizeHost, TENANT_HOST_HEADER } from "@/lib/tenant-host";
 
 /**
@@ -42,6 +44,16 @@ export async function middleware(request: NextRequest) {
     response.headers.set("Cache-Control", "no-store");
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
     return response;
+  }
+
+  // 3.c.vi.zo — the moderation queue has its own prefix and its own secrets,
+  // checked here before the region lookup and outside `isAdminPath`: the shared
+  // ADMIN_PASSWORD never opens it and a moderator token never opens /admin.
+  // Handlers and pages re-check (lib/moderator-gate.ts).
+  if (isModerationPath(request.nextUrl.pathname)) {
+    const check = await checkModeratorAuth(request.headers, request.method);
+    if (!check.ok) return moderatorDeniedResponse(check);
+    return applyModerationHeaders(NextResponse.next());
   }
 
   // 6.b.ii.zi — forward the normalized Host for tenant resolution (lib/tenant.ts does the

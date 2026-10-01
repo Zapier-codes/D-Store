@@ -180,3 +180,35 @@ looking from sending.
   50 s the run can be cut off mid-way (safe — unrecorded baselines are simply
   planned again — but wasteful). Check your plan.
 - Runs on the Node.js runtime (`web-push` uses Node's `https` and `crypto`).
+
+---
+
+## Moderation access (leaf 3.c.vi.zo)
+
+The moderation queue lives under `/moderation` and `/api/moderation/*`, **outside** `/admin`. Moderators sign in **individually**, with a generated token each, not with the shared `ADMIN_PASSWORD`. The shared password never opens `/moderation`, and a moderator token never opens `/admin`. **Nothing here is required for the site to build or run**: with the variable unset, every `/moderation` and `/api/moderation` request answers `503` to everyone (fails closed) and the rest of the site is unchanged.
+
+| Variable | Scope | Purpose |
+|---|---|---|
+| `MODERATOR_TOKENS` | **server-only — never `NEXT_PUBLIC_`** | A JSON array of `{ "id": "...", "sha256": "..." }`, one entry per moderator. `sha256` is the lowercase hex SHA-256 of that moderator's token, so **the token itself is never in Vercel**. |
+
+Rules the gate enforces (`lib/moderator-auth.ts`): an `id` is 2 to 32 characters, lowercase letters, digits, `.`, `_` or `-`, starting with a letter or digit; at most **20** entries; `sha256` is exactly 64 lowercase hex characters; a token is **32 to 256 characters with no whitespace**. **One bad entry, a repeated id, a repeated digest, or JSON that does not parse makes the whole value unusable**: every moderator is then answered `503` until it is fixed, never "open". An extra key on an entry (for example `"note": "Alice, backup"`) is ignored, so you can label entries.
+
+### Add a moderator
+
+1. On your own machine (not in Vercel, not in a shared terminal), run `npx tsx scripts/new-moderator-token.ts <id>`. It prints a token **once** and the entry to paste.
+2. Give the token to the moderator **privately** (a password manager share, not chat history or email). It cannot be shown again; if it is lost, issue a new one.
+3. Add the printed `{ "id", "sha256" }` object to the `MODERATOR_TOKENS` array in Vercel → Project → Settings → Environment Variables (Production), then redeploy.
+4. Check the value before saving: `MODERATOR_TOKENS='<the whole value>' npx tsx scripts/new-moderator-token.ts --check` lists the ids it contains (never digests) or says what is wrong.
+5. The moderator signs in with their **id as the username** and the **token as the password**. `GET /api/moderation/ping` returns `{ "moderator": "<id>" }` and is the quickest way to confirm a token works.
+
+### Revoke a moderator
+
+Delete their entry from `MODERATOR_TOKENS` and redeploy. There is nothing else to rotate: the token is only ever checked against the digest in that list. To rotate a token, issue a new one with the same id and replace the entry.
+
+### Notes
+
+- **Why a generated token and a fast hash.** The gate hashes with SHA-256, which is only safe because a token is machine-generated and long (`openssl rand -base64 24` or the script give 32 characters). **If a person is ever allowed to choose their own password, this must change to a slow, salted hash first.**
+- **No throttling of failed sign-ins in the gate.** The shared limiter uses `node:crypto` and cannot run in the Edge middleware; with tokens this long guessing is not a practical attack. If noise control is wanted it belongs in the Node handler layer.
+- **A bad config says why in the server log**, once per distinct reason (`[moderation] disabled — MODERATOR_TOKENS is invalid: entry 1 has a missing or malformed id`). The message never contains an id, a digest or a token.
+- **Basic auth has no logout.** A browser keeps the credentials until it is closed; the admin pages are the same.
+- **Every response under these prefixes** carries `Cache-Control: no-store` and `X-Robots-Tag: noindex, nofollow`. A mutating request (`POST`, `PATCH`, `PUT`, `DELETE`) must also carry an `Origin` matching the host, or it is refused with `403`, because browsers re-send Basic credentials on cross-site requests.
