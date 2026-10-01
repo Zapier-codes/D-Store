@@ -240,6 +240,25 @@ export async function getDispatchCatalog(): Promise<DispatchCatalogApp[]> {
 
 
 
+/**
+ * Does the catalog this request is reading contain `slug`? — leaf `3.c.v.zo`.
+ * Used by the report intake route to refuse a report about an app that does
+ * not exist, now that `report_flag` is keyed by the catalog slug and no longer
+ * by a row in `application` (which nothing fills).
+ *
+ * Reads `getMergedApps()` — Zealot's index plus Aptoide — so a third-party app
+ * can be reported. No `resolveAfterDelay`, no region filter (a region filter
+ * would let a visitor in one region report only what they can see, and a
+ * report is about the app, not the shelf). Scope follows the request's tenant
+ * like every other read in this file: a visitor on a white-label host reports
+ * against the catalog they were looking at. Errors from the catalog read are
+ * NOT swallowed: "catalog unreadable" must not look like "no such app".
+ */
+export async function catalogHasSlug(slug: string): Promise<boolean> {
+  const merged = await getMergedApps();
+  return merged.some((app) => app.slug === slug);
+}
+
 export async function getCategories(): Promise<Category[]> {
   return resolveAfterDelay(categories);
 }

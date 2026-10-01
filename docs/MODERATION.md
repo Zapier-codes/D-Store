@@ -48,15 +48,17 @@ Regardless of source: malware, apps that facilitate illegal activity or harm, co
 - **Formal copyright notice.** A valid DMCA notice needs a signature and contact details that the anonymous form cannot carry, so it goes through the process on `/dmca` (notice, counter-notice, repeat-infringer note). The two channels are deliberately separate.
 - **Ratings.** Anonymous stars only (1 to 5, no text). Nothing is authored, so there is no written content to moderate. Written reviews would need moderation and throttling first (`5.d.ii.zo`).
 
-### 4.1 What the report form does today
+### 4.1 What the report form and the intake route do today
 
-The form is still the dummy from Phase 0: submitting logs the payload to the browser console and shows a confirmation. **Nothing is stored or sent to anyone.** The SQL table it is meant to feed exists as a migration (`report_flag`, with `status` defaulting to `open`) but no Supabase project is provisioned and no route writes to it. Until that is built, a report cannot reach a moderator; treat the form as a placeholder for the process below, not a working intake. The formal `/dmca` process is by written notice to the designated agent and does not depend on the form.
+**The form is still the dummy from Phase 0:** submitting logs the payload to the browser console and shows a confirmation (`components/ReportAppForm.tsx`). **It does not call the intake route, so a report made through the form is not stored or sent to anyone.** Wiring the form to the route is not built.
+
+**The intake route exists** (`POST /api/apps/[slug]/reports`, logic in `lib/report-intake.ts`). It accepts `{ reason, details? }`, checks that the slug is an app in the catalog this request is reading (Zealot's index plus Aptoide; an unknown slug is `404`, an unreadable catalog is `502`), and stores a `report_flag` row with `app_slug` set, `application_id` empty, `status = open` and no IP. It is throttled to 5 reports an hour per client address (a salted hash, kept in a separate table for the window, never on the report) and refuses to run, with `503`, when Supabase is not configured. **It needs migration `20261001010000_report_flag_app_slug.sql` applied to the Supabase project first**, and that migration has not been run against a real database (`HANDOVER.md`, `3.c.v.zi`). The slug is not tenant-checked in the database: a report records the slug only, so a moderator cannot tell which white-label host it came from. The formal `/dmca` process is by written notice to the designated agent and does not depend on the form or the route.
 
 ## 5. How a report is handled (target process)
 
 This is the process the code is being built toward. Steps marked *not built* have no implementation yet.
 
-1. **Intake.** A report is stored anonymously with `status = open` (*not built*, see 4.1). Reports carry no IP hash, by design (`Review` rate-limits by hashed IP; `ReportFlag` does not).
+1. **Intake.** A report is stored anonymously with `status = open`, keyed by the catalog slug (the route is built, the form does not call it yet and the migration it needs is not yet applied; see 4.1). Reports carry no IP hash, by design (`Review` rate-limits by hashed IP; `ReportFlag` does not).
 2. **Triage.** An operator reads open reports in the admin queue. The only queue that exists is the legacy Symfony one (`/admin/reports`) in `legacy-symfony/`, which no live traffic reaches. Its replacement against the live stack is *not built* (`HANDOVER.md`, the `2.b.iii.zo` audit: a rewrite, not a deletion).
 3. **Decide.** One of: **no action**; **relabel** (correct a wrong label or missing disclosure); **remove**; **escalate** (first-party: to the publisher through the Console; copyright: into the `/dmca` process).
 4. **Act.**
@@ -73,7 +75,7 @@ There are two separate controls, with separate secrets, and neither opens the ot
 
 **The admin pages (`/admin/*`, `/api/admin/*`) are still one shared secret.** They are protected by HTTP Basic auth against `ADMIN_PASSWORD` (at least 16 characters; `ADMIN_USERNAME`, default `admin`). With the password unset or too short, every admin route answers `503` to everyone (leaf `3.c.iv.zi`). There are no per-person admin accounts, so for those pages **the shared password is the whole access control**: rotate it when anyone who knew it leaves, and never put it in the repository. Editorial toggles (featured, Editor's Pick) and sponsored slots retire when the signed index becomes their source of truth (`5.g.v.zi`).
 
-**What is built and what is not.** The gate and `GET /api/moderation/ping` (returns the caller's id; a way for a moderator to confirm their token works) exist. **There is no queue yet**: no list, no detail page, no decision. Do not tell moderators there is one. Reports are also not saved for real catalog apps until `3.c.v.zi` and `3.c.v.zo` land (`HANDOVER.md`, the `3.c.iii.zi` part 2 split note); section 4.1 above is updated by `3.c.v.zo`.
+**What is built and what is not.** The gate and `GET /api/moderation/ping` (returns the caller's id; a way for a moderator to confirm their token works) exist. **There is no queue yet**: no list, no detail page, no decision. Do not tell moderators there is one. The intake route now stores reports against the catalog slug (`3.c.v.zo`; see 4.1), but nothing reads them back yet.
 
 ## 7. Data handled while moderating
 
