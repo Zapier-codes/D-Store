@@ -60,11 +60,11 @@ This is the process the code is being built toward. Steps marked *not built* hav
 
 1. **Intake.** A report is stored anonymously with `status = open`, keyed by the catalog slug (the route is built, the form does not call it yet and the migration it needs is not yet applied; see 4.1). Reports carry no IP hash, by design (`Review` rate-limits by hashed IP; `ReportFlag` does not).
 2. **Triage.** An operator reads open reports in the admin queue. The only queue that exists is the legacy Symfony one (`/admin/reports`) in `legacy-symfony/`, which no live traffic reaches. Its replacement against the live stack is *not built* (`HANDOVER.md`, the `2.b.iii.zo` audit: a rewrite, not a deletion).
-3. **Decide.** One of: **no action**; **relabel** (correct a wrong label or missing disclosure); **remove**; **escalate** (first-party: to the publisher through the Console; copyright: into the `/dmca` process).
+3. **Decide.** One of: **no action**; **relabel** (correct a wrong label or missing disclosure); **remove**; **escalate** (first-party: to the publisher through the Console; copyright: into the `/dmca` process). The decision is recorded through `POST /api/moderation/reports/<id>/decision` with body `{ "decision": "no_action" | "relabel" | "remove" | "escalate" }`, behind the per-moderator token (section 6). A decision made on an already-closed report is refused with `409` and the first decision stands.
 4. **Act.**
    - *Third-party app:* remove the package from the ingested set and re-run ingestion, so the snapshot no longer contains it. A removal that only hides the page is not enough, because the snapshot is what the catalog reads.
    - *First-party app:* ask for it to be unpublished in the Console. D-Store cannot remove a signed index entry itself.
-5. **Record.** Move the report to a closed status and note the outcome. Keep the record of the decision, never a personal identifier.
+5. **Record.** The decision route moves the report to a closed status and stores the decision and the time (`decision`, `decided_at`) in one conditional update, so two moderators cannot both close it. **No free-text note and no moderator id is stored**: the record is the decision and the time, never a personal identifier. The queue records a decision; it does not carry out step 4.
 6. **Repeat problems.** A publisher or source that repeatedly ships listings that are removed is raised with the Console (first-party) or dropped from ingestion (third-party). The repeat-infringer commitment on `/dmca` applies to copyright specifically.
 
 ## 6. Access
