@@ -237,12 +237,12 @@ body {
 }
 
 /*
- * Page width — operator-directed responsive fix (2026-10-01). The header, footer and the
- * grid pages (search, categories, charts, collections, saved) were capped at 1280px and
- * centred, which left empty bands on each side of a wide desktop window. They now use this
- * token, which is the full width of the window (each container keeps its own side padding).
- * Prose pages keep their narrower reading widths (65ch to 960px) on purpose. To cap the
- * layout again, set a length here, for example 1680px.
+ * Page width — operator-directed responsive fix (2026-10-01, widened the same day). Every
+ * page shell, the header and the footer (previously capped and centred at 1280px, 960px or
+ * 720px, which left empty bands on each side of a wide desktop window) use this token, which
+ * is the full width of the user's window (each container keeps its own side padding). Only
+ * the measure of individual paragraphs (for example the hero blurb, 60ch to 65ch) is still
+ * capped. To cap the whole layout again, set a length here, for example 1680px.
  */
 :root {
   --page-max: 100%;
@@ -252,4 +252,10 @@ html,
 body {
   max-width: 100%;
   overflow-x: clip;
+}
+
+/* Media never wider than the space it sits in, so no screen size forces a sideways scroll. */
+img,
+video {
+  max-width: 100%;
 }
