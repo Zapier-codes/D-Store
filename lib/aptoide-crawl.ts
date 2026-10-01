@@ -409,3 +409,48 @@ export function applyPage(
   }
   return { checkpoint: { ...moved, done: false, stop_reason: null }, accepted };
 }
+
+// ---------------------------------------------------------------------------
+// Reading one `app/getMeta` answer (operator-directed fix, 2026-10-01)
+// ---------------------------------------------------------------------------
+
+/**
+ * What one HTTP 200 answer from `app/getMeta/package_name=<pkg>` held.
+ *
+ * `app/get` wraps the app in `nodes.meta.data`; `app/getMeta` answers with the
+ * app directly in a top-level `data` (the 2026-10-01 CI run got HTTP 200 for
+ * all 1,500 packages while the fetcher, reading only `nodes.meta.data`, saw no
+ * app in any of them and reported every one as "404 / not found"). Both places
+ * are read, `data` first.
+ *
+ *   - `app`        an object with a non-empty string `package`.
+ *   - `not_found`  Aptoide's own refusal: `info.status` is `FAIL` (any case).
+ *   - `unreadable` anything else. The caller must not call this "not found": it
+ *                  is a body this code does not understand. `sample` is the
+ *                  first 300 characters, whitespace collapsed, for the log.
+ */
+export type MetaRead =
+  | { kind: "app"; app: Record<string, unknown> }
+  | { kind: "not_found"; sample: string }
+  | { kind: "unreadable"; sample: string };
+
+function hasPackage(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && typeof value.package === "string" && value.package.trim() !== "";
+}
+
+export function readMetaResponse(json: unknown, bodyText: string): MetaRead {
+  const sample = bodyText.replace(/\s+/g, " ").trim().slice(0, 300);
+  if (!isRecord(json)) return { kind: "unreadable", sample };
+
+  if (hasPackage(json.data)) return { kind: "app", app: json.data };
+  const nodes = json.nodes;
+  if (isRecord(nodes) && isRecord(nodes.meta) && hasPackage(nodes.meta.data)) {
+    return { kind: "app", app: nodes.meta.data };
+  }
+
+  const info = json.info;
+  if (isRecord(info) && typeof info.status === "string" && info.status.trim().toUpperCase() === "FAIL") {
+    return { kind: "not_found", sample };
+  }
+  return { kind: "unreadable", sample };
+}

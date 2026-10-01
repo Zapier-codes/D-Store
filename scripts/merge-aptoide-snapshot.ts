@@ -80,7 +80,9 @@ async function readResults(file: string): Promise<{ apps: unknown[]; malformedLi
     text = await readFile(file, "utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      console.error(`${RESULTS_FILE} not found in ${path.dirname(file)}. Run scripts/fetch-aptoide-meta.ts first.`);
+      // No results file means the fetch step trusted nothing (or never ran): nothing to merge, not a crash.
+      console.warn(`${RESULTS_FILE} not found in ${path.dirname(file)}; treating it as zero results.`);
+      return { apps: [], malformedLines: 0 };
     }
     throw error;
   }
@@ -129,6 +131,10 @@ async function main(): Promise<number> {
   console.log(`Reading new results from ${resultsPath}...`);
   const { apps: results, malformedLines } = await readResults(resultsPath);
   console.log(`Read ${results.length} results (${malformedLines} malformed line(s) skipped).`);
+  if (results.length === 0) {
+    console.log("Nothing to merge; the snapshot was left untouched.");
+    return 0;
+  }
 
   // Second trust check. Counted, and every refusal is logged with its reason.
   let untrusted = 0;

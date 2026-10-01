@@ -32,6 +32,7 @@
 import { mkdir, readFile, rename, unlink, writeFile, appendFile } from "node:fs/promises";
 import path from "node:path";
 import { aptoideTrustVerdict, type AptoideRawApp } from "../lib/sources/aptoide";
+import { readMetaResponse, type MetaRead } from "../lib/aptoide-crawl";
 
 const API_BASE = "https://ws75.aptoide.com/api/7";
 const USER_AGENT = "d-store-fetch-meta/0.1 (+https://github.com/Zapier-codes/D-Store)";
@@ -44,6 +45,8 @@ const BACKOFF_BASE_MS = 2000;
 const BACKOFF_CAP_MS = 60000;
 const RETRY_AFTER_CAP_MS = 120000;
 const BLOCK_STRIKES = 3;
+/** This many HTTP 200 answers in a row with no app in them stops the run: the answer shape changed or the runner is being served nothing. */
+const EMPTY_ANSWER_LIMIT = 25;
 
 import { loadIngestConfig } from "../lib/ingest-config";
 const ingestConfig = loadIngestConfig();
@@ -212,7 +215,7 @@ async function readMetaCheckpoint(file: string): Promise<MetaCheckpoint | null> 
 // ---------------------------------------------------------------------------
 
 type FetchOutcome =
-  | { ok: true; raw: AptoideRawApp | null } // null means 404 or valid JSON with no app data
+  | { ok: true; read: MetaRead; fromStatus404: boolean }
   | { ok: false; stop: "blocked" | "bad_app"; detail: string };
 
 interface RunState {
@@ -255,9 +258,8 @@ async function fetchMeta(pkg: string, args: Args, caps: { maxRequests: number },
         state.blockStrikes = 0;
         try {
           const json = JSON.parse(body);
-          // Aptoide wraps data in nodes.meta.data
-          const raw = (json?.nodes?.meta?.data ?? null) as AptoideRawApp | null;
-          return { ok: true, raw };
+          // `app/getMeta` puts the app in a top-level `data`; `app/get` puts it in `nodes.meta.data`. Both are read.
+          return { ok: true, read: readMetaResponse(json, body), fromStatus404: false };
         } catch {
           return { ok: false, stop: "bad_app", detail: `body for ${pkg} was not JSON` };
         }
@@ -268,7 +270,7 @@ async function fetchMeta(pkg: string, args: Args, caps: { maxRequests: number },
       if (res.status === 404) {
         // App doesn't exist, not a retryable error
         state.blockStrikes = 0; // 404 doesn't indicate a block
-        return { ok: true, raw: null }; 
+        return { ok: true, read: { kind: "not_found", sample: "HTTP 404" }, fromStatus404: true };
       }
       
       if (res.status === 403 || res.status === 429) {
@@ -355,9 +357,11 @@ async function main(): Promise<number> {
   if (cp === null) {
     // Check if results file exists without a checkpoint to avoid overwriting
     try {
-      await readFile(resultsPath, "utf8");
-      console.error(`${RESULTS_FILE} exists without ${CHECKPOINT_FILE}. Refusing to guess; pass --fresh to start over.`);
-      return 1;
+      const existingResults = await readFile(resultsPath, "utf8");
+      if (existingResults.trim() !== "") {
+        console.error(`${RESULTS_FILE} exists without ${CHECKPOINT_FILE}. Refusing to guess; pass --fresh to start over.`);
+        return 1;
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
@@ -371,7 +375,14 @@ async function main(): Promise<number> {
     }
   }
 
+  // Always leave a results file behind, even when no app is trusted this run: the merge step reads it,
+  // and "nothing trusted" is a result, not a missing file.
+  await appendFile(resultsPath, "", "utf8");
+
   const state: RunState = { httpRequests: 0, blockStrikes: 0, statusCounts: {}, lastRequestAt: 0 };
+  let emptyStreak = 0;
+  let emptyStreakStart = 0;
+  let sampleLogged = false;
   let stopping = false;
   process.on("SIGINT", () => {
     if (stopping) process.exit(130);
@@ -419,11 +430,10 @@ async function main(): Promise<number> {
       break;
     }
 
-    const raw = outcome.raw;
-    if (raw === null) {
-      log(`  ${i + 1}/${limit}: ${pkg} - 404 / not found`);
-      cp.rejected += 1;
-    } else {
+    const read = outcome.read;
+    if (read.kind === "app") {
+      emptyStreak = 0;
+      const raw = read.app as unknown as AptoideRawApp;
       const verdict = aptoideTrustVerdict(raw);
       if (verdict.trusted) {
         log(`  ${i + 1}/${limit}: ${pkg} - TRUSTED`);
@@ -433,8 +443,35 @@ async function main(): Promise<number> {
         log(`  ${i + 1}/${limit}: ${pkg} - REJECTED (${verdict.reason})`);
         cp.rejected += 1;
       }
+    } else if (outcome.fromStatus404) {
+      log(`  ${i + 1}/${limit}: ${pkg} - 404 / not found`);
+      cp.rejected += 1;
+    } else {
+      // HTTP 200 with no app in it. Not the same thing as a 404, and never reported as one.
+      if (emptyStreak === 0) emptyStreakStart = i;
+      emptyStreak += 1;
+      if (read.kind === "not_found") {
+        log(`  ${i + 1}/${limit}: ${pkg} - HTTP 200, Aptoide says FAIL (no such app)`);
+        cp.rejected += 1;
+      } else {
+        log(`  ${i + 1}/${limit}: ${pkg} - HTTP 200 but no app found in the body (UNREADABLE)`);
+        cp.failed += 1;
+      }
+      if (!sampleLogged) {
+        sampleLogged = true;
+        log(`    first body without an app, 300 chars: ${read.sample}`);
+      }
+      if (emptyStreak >= EMPTY_ANSWER_LIMIT) {
+        // Systemic, not one odd package. Rewind to where the streak began so the next run retries those packages.
+        cp.index = emptyStreakStart;
+        cp.stop_reason = "no_apps_in_answers";
+        cp.done = false;
+        await writeJsonAtomic(checkpointPath, cp);
+        log(`Stopped (no_apps_in_answers): ${emptyStreak} HTTP 200 answers in a row held no app. Read the body sample above; nothing from them was kept.`);
+        break;
+      }
     }
-    
+
     cp.index = i + 1;
     await writeJsonAtomic(checkpointPath, cp);
   }
@@ -469,6 +506,7 @@ async function main(): Promise<number> {
   log(`  Files: ${resultsPath}, ${checkpointPath}, ${reportPath}`);
 
   if (cp.stop_reason === "blocked") return 2;
+  if (cp.stop_reason === "no_apps_in_answers") return 3;
   return 0;
 }
 
