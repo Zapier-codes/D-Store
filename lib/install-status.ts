@@ -72,6 +72,22 @@ function writeRecord(appSlug: string, version: string) {
   }
 }
 
+/**
+ * The one exported writer of the device-local install record (`5.c.x.zo`).
+ * Anything outside this module that wants to say "this device now has version
+ * X of this app" calls this, so the storage key and the change event stay
+ * private here and cannot be copied (a copy is what left `RollbackInstallLink`
+ * writing a key nothing reads). A thin wrapper over `writeRecord`: a no-op
+ * without `window`, a no-op for a non-string or empty slug or version, and it
+ * never throws (storage can be disabled). Like the Install button's own
+ * simulated install, this records a click, not proof of an install.
+ */
+export function recordInstalledVersion(appSlug: string, version: string): void {
+  if (typeof appSlug !== "string" || appSlug === "") return;
+  if (typeof version !== "string" || version === "") return;
+  writeRecord(appSlug, version);
+}
+
 function clearRecord(appSlug: string) {
   if (typeof window === "undefined") return;
   try {
