@@ -4,6 +4,8 @@ import {
   REPORT_PAGE_DEFAULT,
   REPORT_PAGE_MAX,
   REPORT_STORE_MAX_BODY_BYTES,
+  REPORT_DECISIONS,
+  decideReport,
   decodeReportCursor,
   encodeReportCursor,
   isReportStoreConfigured,
@@ -12,7 +14,7 @@ import {
   type ReportStoreDeps,
 } from "../lib/report-store";
 
-// Leaf 3.c.vii.zo. Written without being run, at the operator's request.
+// Leaf 3.c.vii.zo (reads) and 3.c.viii.zi (decideReport).
 
 const ENV = { SUPABASE_URL: "https://x.supabase.invalid", SUPABASE_SERVICE_ROLE_KEY: "svc-key-secret" };
 const T = "2026-10-01T12:00:00.123456+00:00";
@@ -298,4 +300,215 @@ test("readReport: not_configured; more than one row; a different id back; bad de
   assert.deepEqual(await readReport("r-1", noDetailsKey.deps), { ok: false, reason: "unavailable" });
   const down = fake(() => json([], 503));
   assert.deepEqual(await readReport("r-1", down.deps), { ok: false, reason: "unavailable" });
+});
+
+// --- decideReport (leaf 3.c.viii.zi) ---------------------------------------
+
+const ID = "11111111-1111-4111-8111-111111111111";
+const NOW = new Date("2026-10-02T09:30:00.000Z");
+
+/**
+ * A one-row PostgREST stand-in. PATCH applies the update only to rows that match EVERY
+ * filter in the query string (here `id=eq.` and `status=eq.open`), exactly as PostgREST
+ * does, and answers the changed rows; GET answers the row by id. If the status filter is
+ * ever dropped from the request, a second PATCH would succeed and the tests below fail.
+ */
+function store(initial: Record<string, unknown> | null = row({ id: ID })) {
+  const state = { row: initial ? { ...initial } : null };
+  const seen: Seen[] = [];
+  const impl = (async (url: string, init: RequestInit) => {
+    seen.push({ url: String(url), init });
+    const q = new URL(String(url)).searchParams;
+    const eq = (k: string) => (q.get(k) ?? "").replace(/^eq\./, "");
+    const matches = state.row !== null && (!q.has("id") || state.row.id === eq("id")) && (!q.has("status") || state.row.status === eq("status"));
+    if (init.method === "PATCH") {
+      if (!matches || !state.row) return json([]);
+      state.row = { ...state.row, ...JSON.parse(String(init.body)) };
+      return json([state.row]);
+    }
+    return json(state.row && state.row.id === eq("id") ? [{ ...state.row, details: null }] : []);
+  }) as typeof fetch;
+  const deps: ReportStoreDeps = { env: ENV, fetch: impl, timeoutMs: 500, now: () => NOW };
+  return { seen, state, deps };
+}
+
+test("decideReport: closes an open report; one PATCH with the id AND status=open in the filter, and only three fields written", async () => {
+  const s = store();
+  const r = await decideReport(ID, "relabel", s.deps);
+  assert.equal(r.ok, true);
+  if (!r.ok) return;
+  assert.equal(r.report.id, ID);
+  assert.equal(r.report.status, "closed");
+  assert.equal(r.report.decision, "relabel");
+  assert.equal(r.report.decided_at, NOW.toISOString());
+  assert.equal(s.seen.length, 1);
+  const req = s.seen[0];
+  const u = new URL(req.url);
+  assert.equal(u.origin, "https://x.supabase.invalid");
+  assert.equal(u.pathname, "/rest/v1/report_flag");
+  assert.equal(req.init.method, "PATCH");
+  assert.equal(u.searchParams.get("id"), `eq.${ID}`);
+  assert.equal(u.searchParams.get("status"), "eq.open");
+  assert.equal(u.searchParams.get("select"), "id,app_slug,application_id,reason,status,decision,decided_at,created_at");
+  const h = req.init.headers as Record<string, string>;
+  assert.equal(h.Prefer, "return=representation");
+  assert.equal(h["Content-Type"], "application/json");
+  assert.equal(h.apikey, "svc-key-secret");
+  assert.equal(h.Authorization, "Bearer svc-key-secret");
+  assert.equal(req.init.redirect, "error");
+  // Exactly status, decision, decided_at: no note, no moderator id, nothing else.
+  assert.deepEqual(JSON.parse(String(req.init.body)), { status: "closed", decision: "relabel", decided_at: NOW.toISOString() });
+  assert.ok(!u.pathname.includes("application"), "no request goes to the application table");
+});
+
+test("decideReport: each of the four decisions is accepted and written as given", async () => {
+  assert.deepEqual([...REPORT_DECISIONS], ["no_action", "relabel", "remove", "escalate"]);
+  for (const d of REPORT_DECISIONS) {
+    const s = store();
+    const r = await decideReport(ID, d, s.deps);
+    assert.equal(r.ok, true, d);
+    assert.equal(JSON.parse(String(s.seen[0].init.body)).decision, d);
+  }
+});
+
+test("decideReport: a second call after a first closed is already_closed, via a follow-up read, and changes nothing", async () => {
+  const s = store();
+  assert.equal((await decideReport(ID, "no_action", s.deps)).ok, true);
+  const before = JSON.stringify(s.state.row);
+  const second = await decideReport(ID, "remove", s.deps);
+  assert.deepEqual(second, { ok: false, reason: "already_closed" });
+  assert.equal(JSON.stringify(s.state.row), before, "the first decision stands");
+  assert.deepEqual(s.seen.map((x) => x.init.method), ["PATCH", "PATCH", "GET"]);
+  const get = new URL(s.seen[2].url);
+  assert.equal(get.searchParams.get("id"), `eq.${ID}`);
+});
+
+test("decideReport: two concurrent decisions: exactly one closed, the other already_closed", async () => {
+  const s = store();
+  const [a, b] = await Promise.all([decideReport(ID, "remove", s.deps), decideReport(ID, "no_action", s.deps)]);
+  const outcomes = [a, b].map((x) => (x.ok ? "closed" : x.reason)).sort();
+  assert.deepEqual(outcomes, ["already_closed", "closed"]);
+  const winner = a.ok ? "remove" : "no_action";
+  assert.equal(s.state.row?.decision, winner);
+});
+
+test("decideReport: a legacy row that is not open (any other status) is already_closed", async () => {
+  const s = store(row({ id: ID, status: "reviewed" }));
+  assert.deepEqual(await decideReport(ID, "escalate", s.deps), { ok: false, reason: "already_closed" });
+  assert.equal(s.state.row?.status, "reviewed");
+});
+
+test("decideReport: no such report is not_found (empty update, then an empty read)", async () => {
+  const s = store(null);
+  assert.deepEqual(await decideReport(ID, "no_action", s.deps), { ok: false, reason: "not_found" });
+  assert.deepEqual(s.seen.map((x) => x.init.method), ["PATCH", "GET"]);
+});
+
+test("decideReport: an invalid decision is invalid, and a bad id is not_found, both before any request", async () => {
+  const s = store();
+  for (const d of ["", "delete", "NO_ACTION", " no_action", "no_action ", "remove\n", null, undefined, 5, {}, ["remove"], "open", "closed"]) {
+    assert.deepEqual(await decideReport(ID, d, s.deps), { ok: false, reason: "invalid" }, String(d));
+  }
+  for (const id of ["", "a b", "a/b", "x".repeat(129), undefined, 5, null, "a,b", "a&id=eq.b", "a&status=neq.open", "x?select=*"]) {
+    assert.deepEqual(await decideReport(id, "no_action", s.deps), { ok: false, reason: "not_found" }, String(id));
+  }
+  assert.deepEqual(await decideReport("a b", "nope", s.deps), { ok: false, reason: "invalid" }, "decision is checked first");
+  assert.equal(s.seen.length, 0);
+});
+
+test("decideReport: not_configured makes no request", async () => {
+  const s = store();
+  assert.deepEqual(await decideReport(ID, "no_action", { ...s.deps, env: {} }), { ok: false, reason: "not_configured" });
+  assert.deepEqual(await decideReport(ID, "no_action", { ...s.deps, env: { ...ENV, SUPABASE_URL: "http://example.com" } }), { ok: false, reason: "not_configured" });
+  assert.equal(s.seen.length, 0);
+});
+
+test("decideReport: non-2xx (including a missing decision column), redirect, network error and non-JSON are unavailable and write nothing more", async () => {
+  const bodies: Array<() => Response | Error> = [
+    () => json({ code: "42703", message: "column report_flag.decision does not exist" }, 400),
+    () => json([], 401),
+    () => json([], 500),
+    () => json([], 302),
+    () => new Error("connect https://x.supabase.invalid svc-key-secret"),
+    () => new Response("<html>", { status: 200 }),
+    () => json({ id: ID }), // 200 but an object, not an array
+  ];
+  for (const b of bodies) {
+    const f = fake(b);
+    assert.deepEqual(await decideReport(ID, "no_action", f.deps), { ok: false, reason: "unavailable" });
+    assert.equal(f.seen.length, 1, "no retry, no follow-up read after a failed write");
+  }
+});
+
+test("decideReport: a response that does not say what was asked is unavailable", async () => {
+  const closed = (over: Record<string, unknown> = {}) => row({ id: ID, status: "closed", decision: "remove", decided_at: NOW.toISOString(), ...over });
+  const cases: unknown[] = [
+    [closed(), closed()], // two rows for a primary key
+    [closed({ id: "other-id" })], // a different row
+    [closed({ status: "open" })], // not closed
+    [closed({ decision: "no_action" })], // a different decision
+    [closed({ decision: null })],
+    [closed({ decided_at: null })],
+    [closed({ decision: "bogus" })], // fails row validation
+    [closed({ app_slug: null, application_id: null })], // fails row validation
+    ["not a row"],
+  ];
+  for (const body of cases) {
+    const f = fake(() => json(body));
+    assert.deepEqual(await decideReport(ID, "remove", f.deps), { ok: false, reason: "unavailable" }, JSON.stringify(body).slice(0, 60));
+  }
+});
+
+test("decideReport: an empty update followed by a failed read is unavailable; a read that still says open is unavailable, never a claim", async () => {
+  const failedRead = fake((n) => (n === 1 ? json([]) : json([], 503)));
+  assert.deepEqual(await decideReport(ID, "no_action", failedRead.deps), { ok: false, reason: "unavailable" });
+  assert.equal(failedRead.seen.length, 2);
+  const stillOpen = fake((n) => (n === 1 ? json([]) : json([{ ...row({ id: ID }), details: null }])));
+  assert.deepEqual(await decideReport(ID, "no_action", stillOpen.deps), { ok: false, reason: "unavailable" });
+});
+
+test("decideReport: a hung request times out as unavailable", async () => {
+  const hang = ((_u: string, init: RequestInit) =>
+    new Promise((_res, rej) => init.signal?.addEventListener("abort", () => rej(new Error("aborted"))))) as unknown as typeof fetch;
+  const r = await decideReport(ID, "no_action", { env: ENV, fetch: hang, timeoutMs: 20 });
+  assert.deepEqual(r, { ok: false, reason: "unavailable" });
+});
+
+test("decideReport: a body over the cap is unavailable", async () => {
+  const declared = fake(() => new Response("[]", { status: 200, headers: { "content-length": String(REPORT_STORE_MAX_BODY_BYTES + 1) } }));
+  assert.deepEqual(await decideReport(ID, "no_action", declared.deps), { ok: false, reason: "unavailable" });
+  const streamed = fake(() => new Response(" ".repeat(REPORT_STORE_MAX_BODY_BYTES + 10) + "[]", { status: 200 }));
+  assert.deepEqual(await decideReport(ID, "no_action", streamed.deps), { ok: false, reason: "unavailable" });
+});
+
+test("decideReport: an invalid clock is unavailable before any request; the default clock yields a parseable ISO time", async () => {
+  const f = fake(() => json([]));
+  assert.deepEqual(await decideReport(ID, "no_action", { ...f.deps, now: () => new Date(Number.NaN) }), { ok: false, reason: "unavailable" });
+  assert.equal(f.seen.length, 0);
+  const s = store();
+  const { now: _now, ...noClock } = s.deps;
+  assert.equal((await decideReport(ID, "no_action", noClock)).ok, true);
+  const sent = JSON.parse(String(s.seen[0].init.body)).decided_at as string;
+  assert.ok(Number.isFinite(Date.parse(sent)) && Math.abs(Date.now() - Date.parse(sent)) < 60_000);
+});
+
+test("decideReport: failures log a fixed label and status only: no id, decision, key, URL or body", async () => {
+  const logged: string[] = [];
+  const saved = [console.error, console.log, console.warn];
+  console.error = (...a: unknown[]) => void logged.push(a.map(String).join(" "));
+  console.log = console.error;
+  console.warn = console.error;
+  try {
+    for (const b of [() => json({ message: `bad ${ID} remove` }, 500), () => new Error(`connect https://x.supabase.invalid svc-key-secret ${ID}`), () => new Response("<html>", { status: 200 })]) {
+      await decideReport(ID, "remove", fake(b).deps);
+    }
+    assert.ok(logged.length >= 3);
+    for (const line of logged) {
+      assert.match(line, /^report-store: decideReport failed, /);
+      for (const secret of ["svc-key-secret", "supabase.invalid", ID, "remove"]) assert.ok(!line.includes(secret), line);
+    }
+  } finally {
+    [console.error, console.log, console.warn] = saved;
+    console.error = () => undefined;
+  }
 });

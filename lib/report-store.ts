@@ -1,6 +1,6 @@
 /**
- * Report queue store, reads only — leaf `3.c.vii.zo`. (`decideReport`, the one
- * write, is `3.c.viii.zi` and is added to this file later.)
+ * Report queue store: the reads (leaf `3.c.vii.zo`) and the one write,
+ * `decideReport` (leaf `3.c.viii.zi`).
  *
  * SERVER-ONLY. Reads `report_flag` with the Supabase **service-role** key
  * (`SUPABASE_SERVICE_ROLE_KEY`, deliberately not `NEXT_PUBLIC_…`) at call time,
@@ -55,6 +55,36 @@
  * 5. **Row ids must match `^[A-Za-z0-9._:-]{1,128}$`.** Intake writes UUIDs; a
  *    legacy id outside that shape makes the read `unavailable` rather than
  *    being put into a URL or a cursor unchecked.
+ *
+ * `decideReport` (leaf `3.c.viii.zi`), the only write:
+ * - ONE conditional `PATCH` of `report_flag` with `id=eq.<id>` AND
+ *   `status=eq.open` in the filter, `Prefer: return=representation`, setting
+ *   `status = 'closed'`, `decision` and `decided_at` and nothing else: no
+ *   free-text note and no moderator id (docs/MODERATION.md section 5, step 5).
+ *   It is a single SQL `UPDATE ... WHERE id = $1 AND status = 'open'`, so two
+ *   concurrent decisions cannot both succeed: under READ COMMITTED the second
+ *   statement waits for the first, re-checks `status = 'open'` against the
+ *   committed row, matches nothing and returns `[]`.
+ * - Results: `{ ok: true, report }` when the row was closed by this call;
+ *   `already_closed`, `not_found`, `invalid`, `not_configured`, `unavailable`.
+ *   `invalid` is a decision that is not one of `REPORT_DECISIONS` (no
+ *   request); a bad id is `not_found` (no request), as in `readReport`.
+ * 6. **An empty `[]` from the update is told apart by a follow-up
+ *    `readReport(id)`:** no row -> `not_found`; a row whose status is not
+ *    `open` -> `already_closed`; a row that is STILL open (the update matched
+ *    nothing but the row says it should have) -> `unavailable`, never a
+ *    claim either way. This costs one extra read only on the losing path.
+ * 7. **`decided_at` is the server's clock** (`deps.now`, default `new Date()`),
+ *    sent as an ISO string. The column has no default and PostgREST cannot
+ *    call `now()` from a PATCH body; a few seconds of skew is acceptable for
+ *    an audit timestamp that is shown to moderators only.
+ * 8. **The response is trusted only if it says exactly what was asked:** one
+ *    row, the same id, `status = 'closed'`, the requested `decision`, a
+ *    `decided_at`. Anything else is `unavailable` (the write may have
+ *    happened; the caller should re-read, not retry blindly).
+ * 9. **No retry, no read of a PostgREST error body.** A timeout leaves the
+ *    outcome unknown, so it is `unavailable`; calling again is safe because
+ *    the `status = 'open'` filter makes a repeat answer `already_closed`.
  */
 
 import { REPORT_SLUG_PATTERN } from "./report-intake";
@@ -108,6 +138,8 @@ export interface ReportStoreDeps {
   env?: Record<string, string | undefined>;
   fetch?: typeof fetch;
   timeoutMs?: number;
+  /** The clock `decideReport` stamps `decided_at` with. */
+  now?: () => Date;
 }
 
 export interface ReadReportsOptions {
@@ -188,18 +220,32 @@ export function isReportStoreConfigured(env: Record<string, string | undefined> 
 
 type ReadJson = { ok: true; json: unknown } | { ok: false };
 
-async function readJson(cfg: Config, deps: ReportStoreDeps, path: string, label: string): Promise<ReadJson> {
+/** A write: the only one this module makes is a conditional `PATCH` that returns the changed rows. */
+interface WriteRequest {
+  method: "PATCH";
+  body: string;
+}
+
+async function requestJson(
+  cfg: Config,
+  deps: ReportStoreDeps,
+  path: string,
+  label: string,
+  write?: WriteRequest,
+): Promise<ReadJson> {
   const doFetch = deps.fetch ?? fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), deps.timeoutMs ?? REPORT_STORE_TIMEOUT_MS);
   try {
     const res = await doFetch(`${cfg.baseUrl}${path}`, {
-      method: "GET",
+      method: write ? write.method : "GET",
       headers: {
         apikey: cfg.key,
         Authorization: `Bearer ${cfg.key}`,
         Accept: "application/json",
+        ...(write ? { "Content-Type": "application/json", Prefer: "return=representation" } : {}),
       },
+      ...(write ? { body: write.body } : {}),
       redirect: "error",
       cache: "no-store",
       signal: controller.signal,
@@ -340,7 +386,7 @@ export async function readReports(options: ReadReportsOptions, deps: ReportStore
       params.set("or", `(created_at.lt.${t},and(created_at.eq.${t},id.lt.${i}))`);
     }
 
-    const res = await readJson(cfg, deps, `/rest/v1/report_flag?${params.toString()}`, "readReports");
+    const res = await requestJson(cfg, deps, `/rest/v1/report_flag?${params.toString()}`, "readReports");
     if (!res.ok) return { ok: false, reason: "unavailable" };
     if (!Array.isArray(res.json) || res.json.length > limit + 1) return { ok: false, reason: "unavailable" };
 
@@ -377,7 +423,7 @@ export async function readReport(id: unknown, deps: ReportStoreDeps = {}): Promi
     params.set("id", `eq.${id}`);
     params.set("limit", "2");
 
-    const res = await readJson(cfg, deps, `/rest/v1/report_flag?${params.toString()}`, "readReport");
+    const res = await requestJson(cfg, deps, `/rest/v1/report_flag?${params.toString()}`, "readReport");
     if (!res.ok) return { ok: false, reason: "unavailable" };
     if (!Array.isArray(res.json) || res.json.length > 1) return { ok: false, reason: "unavailable" }; // `id` is the primary key
     if (res.json.length === 0) return { ok: false, reason: "not_found" };
@@ -385,6 +431,65 @@ export async function readReport(id: unknown, deps: ReportStoreDeps = {}): Promi
     const report = parseDetail(res.json[0]);
     if (!report || report.id !== id) return { ok: false, reason: "unavailable" };
     return { ok: true, report };
+  } catch {
+    return { ok: false, reason: "unavailable" };
+  }
+}
+
+// --- The one write ---------------------------------------------------------
+
+export type DecideReportResult =
+  | { ok: true; report: ReportSummary }
+  | { ok: false; reason: "already_closed" | "not_found" | "invalid" | "not_configured" | "unavailable" };
+
+/**
+ * Close one open report with a decision. Never throws.
+ *
+ * `invalid` (decision not in `REPORT_DECISIONS`) and `not_found` (id not the
+ * expected shape) are decided before any request. `{ ok: true, report }` means
+ * THIS call moved the row from open to closed. `already_closed` means the row
+ * exists and was not open, which is also what the loser of two concurrent
+ * decisions sees. No note and no moderator id are written.
+ */
+export async function decideReport(id: unknown, decision: unknown, deps: ReportStoreDeps = {}): Promise<DecideReportResult> {
+  try {
+    if (typeof decision !== "string" || !(REPORT_DECISIONS as readonly string[]).includes(decision)) {
+      return { ok: false, reason: "invalid" };
+    }
+    if (!isId(id)) return { ok: false, reason: "not_found" };
+
+    const cfg = readConfig(deps.env ?? process.env);
+    if (!cfg) return { ok: false, reason: "not_configured" };
+
+    // Throws RangeError on an invalid Date, before any request; caught below.
+    const decidedAt = (deps.now ? deps.now() : new Date()).toISOString();
+
+    const params = new URLSearchParams();
+    params.set("select", SUMMARY_COLUMNS);
+    params.set("id", `eq.${id}`);
+    params.set("status", "eq.open");
+
+    const res = await requestJson(cfg, deps, `/rest/v1/report_flag?${params.toString()}`, "decideReport", {
+      method: "PATCH",
+      body: JSON.stringify({ status: "closed", decision, decided_at: decidedAt }),
+    });
+    if (!res.ok) return { ok: false, reason: "unavailable" };
+    if (!Array.isArray(res.json) || res.json.length > 1) return { ok: false, reason: "unavailable" }; // `id` is the primary key
+
+    if (res.json.length === 1) {
+      const report = parseSummary(res.json[0]);
+      if (!report || report.id !== id || report.status !== "closed" || report.decision !== decision || report.decided_at === null) {
+        return { ok: false, reason: "unavailable" };
+      }
+      return { ok: true, report };
+    }
+
+    // `[]`: the filter matched no row. Tell "no such report" from "not open" with one read.
+    const after = await readReport(id, deps);
+    if (after.ok) {
+      return after.report.status === "open" ? { ok: false, reason: "unavailable" } : { ok: false, reason: "already_closed" };
+    }
+    return { ok: false, reason: after.reason === "not_found" ? "not_found" : "unavailable" };
   } catch {
     return { ok: false, reason: "unavailable" };
   }
