@@ -80,3 +80,10 @@
   margin: 0;
   font-size: 0.9rem;
 }
+
+/* Real-outcome error line — leaf 3.c.x.zi. */
+.error {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-error, inherit);
+}

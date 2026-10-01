@@ -111,8 +111,11 @@ export default function PrivacyPolicyPage() {
         <p>
           When you report an app (a broken link, a security concern, and so on), we store only the
           reason you selected and any details you typed in. We don&rsquo;t store an IP address, a
-          hash of one, or any other identifier alongside a report — reports are fully anonymous,
-          with no rate-limiting tied to who sent them.
+          hash of one, or any other identifier alongside a report, so a stored report cannot be
+          traced back to you. To stop abuse, the report form is limited to a few reports an hour
+          from one connection: for that, a salted, one-way hash of your address is kept in a
+          separate table for the length of that window and then discarded. It is never written to
+          the report and is not linked to it.
         </p>
       </section>
 
