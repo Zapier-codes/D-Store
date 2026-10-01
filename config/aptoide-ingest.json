@@ -6,7 +6,7 @@
     "delayMs": 1000
   },
   "fetch": {
-    "maxRequests": 50,
+    "maxRequests": 1500,
     "delayMs": 1000
   }
 }

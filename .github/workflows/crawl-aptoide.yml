@@ -1,13 +1,29 @@
 name: Aptoide Crawl & Fetch
 
+# Grows the Aptoide half of the catalog. One run crawls up to 6,000 candidates (60 requests of 100),
+# fetches and trust-checks up to `fetch.maxRequests` of them (config/aptoide-ingest.json, 1,500 at
+# 1 request per second, about 30 to 40 minutes), merges the trusted ones into the snapshot, and opens
+# ONE pull request. The crawl and fetch checkpoints travel inside that pull request, so MERGE IT before the
+# next run: a run started from a master that does not have the previous checkpoints begins again at the top.
+# Run it by hand ("Run workflow") after each merge until the catalog reaches the size you want.
+
 on:
   schedule:
     - cron: "0 0 * * 0" # Weekly on Sunday at 00:00 UTC
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: aptoide-crawl
+  cancel-in-progress: false
+
 jobs:
   crawl-and-fetch:
     runs-on: ubuntu-latest
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,6 +43,10 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
+          # Only the pipeline's own files: the snapshot shards and header, plus the candidate list,
+          # results and checkpoints that must carry over to the next run. Nothing else is staged.
+          add-paths: |
+            storage/downloads/**
           commit-message: "chore: update aptoide snapshot via crawl & fetch"
           branch: aptoide-snapshot-update
           title: "Automated Aptoide Snapshot Update"
@@ -34,3 +54,5 @@ jobs:
             Automated crawl, fetch, and merge of Aptoide apps.
             - Runner country and counts are in `storage/downloads/aptoide-crawl-last-run.json`.
             - Fetch results are in `storage/downloads/aptoide-meta-last-run.json`.
+            - Merge counts and the new app total are in `storage/downloads/aptoide-merge-last-run.json`.
+            - Merge this pull request, then run the workflow again to continue from the saved checkpoints.
