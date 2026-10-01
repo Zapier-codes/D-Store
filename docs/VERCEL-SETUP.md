@@ -212,3 +212,20 @@ Delete their entry from `MODERATOR_TOKENS` and redeploy. There is nothing else t
 - **A bad config says why in the server log**, once per distinct reason (`[moderation] disabled — MODERATOR_TOKENS is invalid: entry 1 has a missing or malformed id`). The message never contains an id, a digest or a token.
 - **Basic auth has no logout.** A browser keeps the credentials until it is closed; the admin pages are the same.
 - **Every response under these prefixes** carries `Cache-Control: no-store` and `X-Robots-Tag: noindex, nofollow`. A mutating request (`POST`, `PATCH`, `PUT`, `DELETE`) must also carry an `Origin` matching the host, or it is refused with `403`, because browsers re-send Basic credentials on cross-site requests.
+
+## Stats for Zealot's admin (leaf 5.g.v.zo)
+
+`GET /api/stats` returns one JSON document of aggregates (traffic, top searches, report counts, review aggregates) for Zealot's admin page (Zealot Task 31b). **Nothing here is required for the site to build or run**: with the token unset the route answers `503` to everyone and the rest of the site is unchanged.
+
+| Variable | Scope | Purpose |
+|---|---|---|
+| `STATS_READ_TOKEN` | **server-only — never `NEXT_PUBLIC_`** | The bearer token Zealot sends. **At least 32 characters, no whitespace** (`openssl rand -base64 24` gives 32). Its own secret: not `PUSH_DISPATCH_SECRET`, not `ADMIN_PASSWORD`, so each can be rotated or leaked on its own. |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | **server-only** | Already used by the other routes; the route reads `store_stats()` with them. |
+
+On the Zealot deployment set `DSTORE_STATS_URL` to `https://<this site>/api/stats` and `DSTORE_STATS_TOKEN` to the same value as `STATS_READ_TOKEN`.
+
+- **Why `/api/stats` and not `/api/admin/stats`.** Everything under `/api/admin/` is behind the shared-password Basic gate in `middleware.ts`, which would refuse Zealot's bearer token before the route ran. An earlier version of this route was at `/api/admin/stats` and could not have served Zealot.
+- **Statuses.** `401` for a missing, malformed or wrong header (the three look the same); `503` when `STATS_READ_TOKEN` is unset, too short or has whitespace, or when Supabase is not configured; `502` when the database could not be read; `200` with the document otherwise. Every answer is `Cache-Control: no-store`. Only `GET` exists.
+- **What it returns, and what it never does.** Only the keys the contract names (see the header of `supabase/migrations/20260930100200_store_stats_fn.sql` and `lib/stats-store.ts`): no review text, no `ip_hash`, no report `details`, no per-search times. The document is validated and rebuilt, so a column added to the SQL function later cannot reach Zealot until `lib/stats-store.ts` and Zealot's `DstoreStats::Document` both change.
+- **Quick check.** `curl -H "Authorization: Bearer $STATS_READ_TOKEN" https://<this site>/api/stats` should print the document; without the header it prints `{"error":"Unauthorized"}`.
+- **Before it shows anything real,** the stats migrations (`20260930100000` to `20260930100300`) must be applied to the Supabase project (`scripts/apply-migrations.sh`) **together with `20260930100300_enable_rls_on_original_tables.sql`**, and the counters in `lib/catalog.ts` must be pointed at the database (the `(d)` part of leaf `5.g.v.zo`, still open); until then the figures are zeros.
