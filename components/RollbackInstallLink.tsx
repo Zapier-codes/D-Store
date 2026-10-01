@@ -1,35 +1,38 @@
 "use client";
 
-import React from "react";
+import type { ReactNode } from "react";
+import { recordInstalledVersion } from "@/lib/install-status";
 
 interface RollbackInstallLinkProps {
   href: string;
   slug: string;
   version: string;
-  children: React.ReactNode;
+  className?: string;
+  children: ReactNode;
 }
 
 /**
- * Intercepts clicks on older-version download links to update the local
- * install status, so the main InstallButton correctly shows "Update" after
- * a user downloads an older APK.
+ * Download link for an older version — leaf `5.c.xi.zi` (split out of
+ * `5.c.iii.zi`), rewritten onto `recordInstalledVersion`.
+ *
+ * On click it records the older version in the device-local install record
+ * through the one writer in `lib/install-status.ts`, which owns the key, the
+ * record shape and the change event; this component knows none of them. The
+ * Install button then shows "Update", the honest next step after a rollback.
+ * Recording on click is the same simulated convention `InstallButton` uses (a
+ * click is not proof of an install). Whether to record at all is an open
+ * operator call; to record nothing, delete the one `onClick` line below.
+ *
+ * The click is never prevented: the navigation is the download.
  */
-export default function RollbackInstallLink({ href, slug, version, children }: RollbackInstallLinkProps) {
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    try {
-      const key = `d-store-install-${slug}`;
-      const record = { version, installedAt: new Date().toISOString() };
-      localStorage.setItem(key, JSON.stringify(record));
-      // Dispatch a custom event so any mounted InstallButton instances update immediately
-      window.dispatchEvent(new CustomEvent("d-store-install-change", { detail: { slug, version } }));
-    } catch {
-      // Ignore localStorage errors (e.g. private browsing)
-    }
-    // Allow the default navigation to proceed (the actual APK download)
-  };
-
+export default function RollbackInstallLink({ href, slug, version, className, children }: RollbackInstallLinkProps) {
   return (
-    <a href={href} rel="noopener noreferrer" onClick={handleClick}>
+    <a
+      className={className}
+      href={href}
+      rel="noopener noreferrer"
+      onClick={() => recordInstalledVersion(slug, version)}
+    >
       {children}
     </a>
   );

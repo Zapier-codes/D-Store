@@ -1,6 +1,8 @@
 import type { App } from "@/lib/catalog";
 import { isNotProvided } from "@/lib/trust";
-import { decideDownload, type DownloadWithheldReason, type VersionEntry } from "@/lib/version-history";
+import { decideRollback, type RollbackWithheldReason } from "@/lib/rollback";
+import type { DownloadWithheldReason, VersionEntry } from "@/lib/version-history";
+import RollbackInstallLink from "./RollbackInstallLink";
 import styles from "./VersionHistory.module.css";
 
 /**
@@ -17,12 +19,15 @@ import styles from "./VersionHistory.module.css";
  *    an empty state.
  *  - entries: the list, plus a line when `version_history_omitted` is above 0.
  *
- * `5.c.ii.zo` — direct download links for older versions. Every entry after
- * the first gets either a link or a one-line reason there is none, decided by
- * `decideDownload` (a link only for a release that is neither halted nor
- * pulled and is fully rolled out). The first entry is the newest release: it
- * is offered by the Install button and covered by the advisory banner, so it
- * gets neither a link nor a reason here. No checksum or signing fingerprint is
+ * `5.c.ii.zo` / `5.c.xi.zi` — direct download links for older versions. Every
+ * entry after the first gets either a link or a one-line reason there is none,
+ * decided by `decideRollback` (which defers to `decideDownload`: a link only
+ * for a release that is neither halted nor pulled and is fully rolled out).
+ * The link is `RollbackInstallLink`, which records the older version in the
+ * device-local install record on click. The first entry is the newest release:
+ * it is offered by the Install button and covered by the advisory banner, so
+ * it gets neither a link nor a reason here (`newest`, and `invalid`, render
+ * nothing). No checksum or signing fingerprint is
  * shown for an older version.
  *
  * Deliberately absent: a per-version date (the index carries `released_at`,
@@ -39,6 +44,11 @@ const WITHHELD_TEXT: Record<DownloadWithheldReason, string> = {
   rolling_out: "This version is still rolling out, so it is not offered for download.",
   no_link: "No download link is provided for this version.",
 };
+
+// `newest` and `invalid` render nothing; only decideDownload's four reasons get a line.
+function isWithheldLine(reason: RollbackWithheldReason): reason is DownloadWithheldReason {
+  return Object.prototype.hasOwnProperty.call(WITHHELD_TEXT, reason);
+}
 
 function rolloutText(entry: VersionEntry): string {
   if (entry.rollout_status === "halted") return `Rollout paused at ${entry.rollout_percentage}%`;
@@ -74,8 +84,8 @@ export default function VersionHistory({ app }: { app: App }) {
   }
 
   // Index 0 is the newest release: the Install button offers it, so it gets no link here.
-  const offers = entries.map((entry, index) => (index === 0 ? null : decideDownload(entry)));
-  const anyLink = offers.some((offer) => offer !== null && offer.offered);
+  const offers = entries.map((_entry, index) => decideRollback(entries, index));
+  const anyLink = offers.some((offer) => offer.offered);
 
   return (
     <div className={styles.wrapper}>
@@ -92,14 +102,18 @@ export default function VersionHistory({ app }: { app: App }) {
                 <span className={styles.detail}>{rolloutText(entry)}</span>
               </div>
               <p className={styles.notes}>{entry.changelog ?? "No changelog provided."}</p>
-              {offer !== null &&
-                (offer.offered ? (
-                  <a className={styles.download} href={offer.url} rel="noopener noreferrer">
-                    Download version {entry.version_name}
-                  </a>
-                ) : (
-                  <p className={styles.withheld}>{WITHHELD_TEXT[offer.reason]}</p>
-                ))}
+              {offer.offered ? (
+                <RollbackInstallLink
+                  className={styles.download}
+                  href={offer.url}
+                  slug={app.slug}
+                  version={entry.version_name}
+                >
+                  Download version {entry.version_name}
+                </RollbackInstallLink>
+              ) : (
+                isWithheldLine(offer.reason) && <p className={styles.withheld}>{WITHHELD_TEXT[offer.reason]}</p>
+              )}
             </li>
           );
         })}
