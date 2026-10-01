@@ -42,7 +42,9 @@
  *
  * Not covered: throttling. A shared secret has no brute-force protection of
  * its own, which is what the length floor is for (a 32-character random value
- * is out of reach); request throttling is Held leaf `5.k.vi.zo`/`5.d.ii`.
+ * is out of reach). `lib/rate-limit.ts` (`5.k.vi.zo`) exists, but these two
+ * token-gated routes are deliberately not wired to it: the cost of a guess is
+ * a constant-time compare, and a limiter outage must never block the cron.
  */
 
 export const PUSH_DISPATCH_SECRET_MIN_LENGTH = 32;

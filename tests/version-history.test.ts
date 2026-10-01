@@ -16,7 +16,7 @@ const MB = 1024 * 1024;
 const full = {
   release_id: 7,
   version_name: "2.1.0",
-  download_url: "https://example.invalid/a.apk", permissions: [],
+  download_url: "https://example.invalid/a.apk",
   sha256: "ab",
   size_bytes: 5 * MB,
   signing_fingerprint: "cd",
@@ -39,12 +39,14 @@ test("a full entry is read field by field, and carries no checksum, fingerprint 
       rollout_percentage: 40,
       rollout_status: "active",
       status: "available",
-      download_url: "https://example.invalid/a.apk", permissions: [],
+      download_url: "https://example.invalid/a.apk",
+      permissions: [],
     },
   ]);
   assert.deepEqual(Object.keys(entries[0]).sort(), [
     "changelog",
     "download_url",
+    "permissions",
     "rollout_percentage",
     "rollout_status",
     "size_mb",
@@ -197,16 +199,16 @@ test("the lifecycle status and the rollout status do not affect each other", () 
 });
 
 // Leaf 5.c.ii.zo: each release's own download URL, kept only when it is a plain https URL.
-const url = (download_url: unknown) => readVersionHistory([{ version_name: "1", permissions: [], download_url }]).entries[0].download_url;
+const url = (download_url: unknown) => readVersionHistory([{ version_name: "1", download_url }]).entries[0].download_url;
 
-test("download_url: a plain https URL is kept, permissions: [], trimmed, as the parser writes it", () => {
+test("download_url: a plain https URL is kept, trimmed, as the parser writes it", () => {
   assert.equal(url("https://zealot.example/download/releases/456"), "https://zealot.example/download/releases/456");
   assert.equal(url("  https://zealot.example/a.apk \n"), "https://zealot.example/a.apk");
   assert.equal(url("https://zealot.example:8443/a.apk?x=1#f"), "https://zealot.example:8443/a.apk?x=1#f");
   assert.equal(url("https://Zealot.Example/a"), "https://zealot.example/a"); // host is lower-cased by the parser
 });
 
-test("download_url: anything that is not a plain https URL is null", permissions: [], () => {
+test("download_url: anything that is not a plain https URL is null", () => {
   const bad: unknown[] = [
     undefined, null, "", "   ", 5, {}, [], true, () => 1,
     "http://zealot.example/a.apk",
@@ -231,13 +233,13 @@ test("download_url: anything that is not a plain https URL is null", permissions
   for (const value of bad) assert.equal(url(value), null, String(value));
 });
 
-test("download_url: a length over the limit is null; the limit itself is kept", permissions: [], () => {
+test("download_url: a length over the limit is null; the limit itself is kept", () => {
   const base = "https://zealot.example/";
   assert.equal(url(base + "a".repeat(MAX_DOWNLOAD_URL_LENGTH - base.length)), base + "a".repeat(MAX_DOWNLOAD_URL_LENGTH - base.length));
   assert.equal(url(base + "a".repeat(MAX_DOWNLOAD_URL_LENGTH - base.length + 1)), null);
 });
 
-test("download_url: what is returned is what the parser reads, permissions: [], so a backslash cannot move the host", () => {
+test("download_url: what is returned is what the parser reads, so a backslash cannot move the host", () => {
   const out = url("https://good.example\\@evil.example/a.apk");
   if (out !== null) assert.equal(new URL(out).hostname, "good.example");
 });
@@ -256,7 +258,8 @@ const entry = (over: Partial<VersionEntry> = {}): VersionEntry => ({
   rollout_percentage: 100,
   rollout_status: "complete",
   status: "available",
-  download_url: "https://zealot.example/a.apk", permissions: [],
+  download_url: "https://zealot.example/a.apk",
+  permissions: [],
   ...over,
 });
 
@@ -267,7 +270,7 @@ test("decideDownload: an available, fully rolled-out release with a link is offe
 test("decideDownload: a pulled or halted release is never offered, whatever else is true", () => {
   assert.deepEqual(decideDownload(entry({ status: "pulled" })), { offered: false, reason: "pulled" });
   assert.deepEqual(decideDownload(entry({ status: "halted" })), { offered: false, reason: "halted" });
-  assert.deepEqual(decideDownload(entry({ status: "pulled", rollout_status: "active", rollout_percentage: 10, download_url: null })), permissions: [], {
+  assert.deepEqual(decideDownload(entry({ status: "pulled", rollout_status: "active", rollout_percentage: 10, download_url: null })), {
     offered: false,
     reason: "pulled",
   });
@@ -281,18 +284,32 @@ test("decideDownload: a release still rolling out (or paused mid-rollout, or und
 });
 
 test("decideDownload: an available, complete release with no usable link says so", () => {
-  assert.deepEqual(decideDownload(entry({ download_url: null })), permissions: [], { offered: false, reason: "no_link" });
+  assert.deepEqual(decideDownload(entry({ download_url: null })), { offered: false, reason: "no_link" });
 });
 
 test("decideDownload agrees with the reader end to end", () => {
   const { entries } = readVersionHistory([
-    { version_name: "3", download_url: "https://zealot.example/3" }, permissions: [],
-    { version_name: "2", download_url: "https://zealot.example/2", permissions: [], status: "pulled" },
-    { version_name: "1", download_url: "http://zealot.example/1" }, permissions: [],
+    { version_name: "3", download_url: "https://zealot.example/3" },
+    { version_name: "2", download_url: "https://zealot.example/2", status: "pulled" },
+    { version_name: "1", download_url: "http://zealot.example/1" },
   ]);
   assert.deepEqual(entries.map((e) => decideDownload(e)), [
     { offered: true, url: "https://zealot.example/3" },
     { offered: false, reason: "pulled" },
     { offered: false, reason: "no_link" },
   ]);
+});
+
+test("permissions come from compatibility.permissions: strings only, prefix dropped, else empty", () => {
+  const read = (compatibility: unknown) =>
+    readVersionHistory([{ ...full, compatibility }]).entries[0].permissions;
+  assert.deepEqual(
+    read({ permissions: ["android.permission.CAMERA", "INTERNET", 7, null, {}] }),
+    ["CAMERA", "INTERNET"],
+  );
+  assert.deepEqual(read({ permissions: "CAMERA" }), []);
+  assert.deepEqual(read({}), []);
+  assert.deepEqual(read(null), []);
+  assert.deepEqual(read("x"), []);
+  assert.deepEqual(readVersionHistory([full]).entries[0].permissions, []);
 });

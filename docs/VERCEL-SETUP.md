@@ -33,6 +33,7 @@ Vercel → Project → Settings → Environment Variables.
 | `SUPABASE_URL` | server-only | Project URL of D-Store's **own** Supabase project (never Zealot's). |
 | `SUPABASE_SERVICE_ROLE_KEY` | **server-only — never `NEXT_PUBLIC_`** | Service-role key used by `lib/push-store.ts` for the subscription tables. Bypasses RLS, so it must never reach the browser. |
 | `PUSH_DISPATCH_SECRET` | server-only | Shared secret for `POST /api/push/dispatch`. **At least 32 characters, no whitespace.** Unset or shorter answers `503` (fails closed). |
+| `RATE_LIMIT_SALT` | server-only | Long random string mixed into the hashed client address used as the rate-limit bucket key (`lib/rate-limit.ts`). No raw IP is stored; without the salt the hashes could be brute-forced. |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | public (inlined at build) | VAPID public key. While unset, the opt-in control renders nothing and nothing is collected. |
 | `VAPID_PUBLIC_KEY` | server-only | VAPID public key the sender signs with. **Must equal `NEXT_PUBLIC_VAPID_PUBLIC_KEY`**: browsers bind a subscription to the key it was created with, so a sender using a different key is refused by the push services. `POST /api/push/send` refuses to send (`503`) when both are set and differ. |
 | `VAPID_PRIVATE_KEY` | **server-only — never `NEXT_PUBLIC_`** | The matching private key. Never commit it, never log it. |
@@ -41,9 +42,13 @@ Vercel → Project → Settings → Environment Variables.
 
 **Two warnings that hold today — do not skip them:**
 
-1. **Keep `SUPABASE_SERVICE_ROLE_KEY` unset in production until `5.k.vi.zo`
-   (subscribe/unsubscribe throttling, currently Held) lands.** With it set,
-   the public subscribe/unsubscribe routes accept unthrottled writes.
+1. **Before setting `SUPABASE_SERVICE_ROLE_KEY` in production, apply the
+   `20261001000000_create_rate_limit.sql` migration and set `RATE_LIMIT_SALT`
+   to a long random string.** The subscribe/unsubscribe routes (and the
+   report, install, view and review routes) are throttled per hashed client
+   address through that table (`5.k.vi.zo`). The push routes fail *closed*: if
+   the migration is missing they answer `429` rather than accept unthrottled
+   writes. Without the salt the address hashes can be reversed by brute force.
 2. **Keep `NEXT_PUBLIC_VAPID_PUBLIC_KEY` unset until you have decided how
    the sender will be triggered.** The sender exists (`POST /api/push/send`,
    below) but **nothing calls it**: the trigger (`5.k.iv.zi`) is still Held.

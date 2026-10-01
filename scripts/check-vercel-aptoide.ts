@@ -13,6 +13,10 @@
  *   npx tsx scripts/check-vercel-aptoide.ts --url https://your-vercel-url.app --min-apps 50
  */
 
+// A module, not a global script: several scripts here define `main`.
+export {};
+
+
 interface Args {
   url: string;
   minApps: number;

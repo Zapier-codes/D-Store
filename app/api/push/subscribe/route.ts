@@ -1,3 +1,4 @@
+import { checkRateLimit, rateLimitKey, tooManyRequests } from "@/lib/rate-limit";
 import { isPushStoreConfigured, upsertSubscription } from "@/lib/push-store";
 import { validatePushSubscription, validateSlugs } from "@/lib/push-validate";
 import {
@@ -27,12 +28,18 @@ import {
  *        checked first, before the body is read
  * (405 for any other method is Next's own.)
  *
- * NOT throttled — `5.k.vi.zo` is Held. Until it lands,
- * `SUPABASE_SERVICE_ROLE_KEY` must stay unset in production, which makes this
- * route answer 503 and write nothing.
+ * Throttled (`5.k.vi.zo`): 30 requests per 10 minutes per hashed client
+ * address, checked after the 503 gate and before the body is read, and
+ * **fail-closed** — if the limiter cannot be reached the request is refused
+ * rather than allowed, because this route writes to a secret-bearing table.
+ *   429  throttled (or the limiter is unreachable)
  */
 export async function POST(request: Request): Promise<Response> {
   if (!isPushStoreConfigured()) return errorResponse(503, "Push notifications are not available");
+
+  if (!(await checkRateLimit(rateLimitKey("push-subscribe", request.headers), 30, 600, { failOpen: false }))) {
+    return tooManyRequests();
+  }
 
   const body = await readJsonBody(request, SUBSCRIBE_MAX_BODY_BYTES);
   if (!body.ok) return errorResponse(body.status, body.error);

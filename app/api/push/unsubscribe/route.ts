@@ -1,3 +1,4 @@
+import { checkRateLimit, rateLimitKey, tooManyRequests } from "@/lib/rate-limit";
 import { deleteSubscription, isPushStoreConfigured } from "@/lib/push-store";
 import { validateEndpoint } from "@/lib/push-validate";
 import {
@@ -24,10 +25,15 @@ import {
  * device and the push service hold, and the worst outcome is a device
  * silently losing alerts it can switch back on.
  *
- * NOT throttled — see `5.k.vi.zo` (Held) and the note in the subscribe route.
+ * Throttled like the subscribe route (`5.k.vi.zo`): 10 requests per 10
+ * minutes per hashed client address, fail-closed, `429` when over.
  */
 export async function POST(request: Request): Promise<Response> {
   if (!isPushStoreConfigured()) return errorResponse(503, "Push notifications are not available");
+
+  if (!(await checkRateLimit(rateLimitKey("push-unsubscribe", request.headers), 10, 600, { failOpen: false }))) {
+    return tooManyRequests();
+  }
 
   const body = await readJsonBody(request, UNSUBSCRIBE_MAX_BODY_BYTES);
   if (!body.ok) return errorResponse(body.status, body.error);

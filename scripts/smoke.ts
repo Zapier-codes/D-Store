@@ -27,6 +27,10 @@
  * Supabase project.
  */
 
+// A module, not a global script: several scripts here define `main`.
+export {};
+
+
 const BASE = (process.env.SMOKE_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 const READY_TIMEOUT_MS = 60_000;
 const REQUEST_TIMEOUT_MS = 30_000;

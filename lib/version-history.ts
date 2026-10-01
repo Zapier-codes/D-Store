@@ -111,6 +111,20 @@ function readDownloadUrl(value: unknown): string | null {
   return url.href;
 }
 
+/**
+ * Per-version permission names, from the index's `compatibility.permissions`
+ * (Zealot publishes them there; the list is reserved and empty until Zealot
+ * fills it from the APK manifest). Strings only, the `android.permission.`
+ * prefix dropped for display. Anything else reads as an empty list, which the
+ * permission diff treats as "unknown", never as "no permissions".
+ */
+function readPermissions(compatibility: unknown): string[] {
+  if (!isRecord(compatibility) || !Array.isArray(compatibility.permissions)) return [];
+  return compatibility.permissions
+    .filter((p: unknown): p is string => typeof p === "string")
+    .map((p) => p.replace(/^android\.permission\./, ""));
+}
+
 function readEntry(item: unknown): VersionEntry | null {
   if (!isRecord(item)) return null;
   const name = typeof item.version_name === "string" ? item.version_name.trim() : "";
@@ -123,7 +137,7 @@ function readEntry(item: unknown): VersionEntry | null {
     ...readRollout(item.rollout),
     status: readVersionStatus(item.status),
     download_url: readDownloadUrl(item.download_url),
-    permissions: Array.isArray(item.compatibility?.permissions) ? item.compatibility.permissions.filter((p: unknown) => typeof p === "string").map((p: string) => p.replace(/^android\.permission\./, "")) : [],
+    permissions: readPermissions(item.compatibility),
   };
 }
 

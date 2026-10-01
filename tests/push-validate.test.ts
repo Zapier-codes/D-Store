@@ -17,7 +17,7 @@ const AUTH = Buffer.from(Array.from({ length: 16 }, (_, i) => i + 1)).toString("
 const ENDPOINT = "https://fcm.googleapis.com/fcm/send/abc123";
 
 // `[]` is deliberately absent: an empty array is a valid (empty) slug list.
-const HOSTILE: unknown[] = [undefined, null, NaN, -1, 0, true, {}, () => 1, Symbol("x"), 10n];
+const HOSTILE: unknown[] = [undefined, null, NaN, -1, 0, true, {}, () => 1, Symbol("x"), BigInt(10)];
 
 test("the fixtures have the lengths the validators expect", () => {
   assert.equal(P256DH.length, 87);

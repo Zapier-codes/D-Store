@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkRateLimit } from "../../../../../../lib/rate-limit";
+import { checkRateLimit, rateLimitKey, tooManyRequests } from "@/lib/rate-limit";
 import { incrementViewCount } from "@/lib/catalog";
 
 /**
@@ -18,14 +18,18 @@ import { incrementViewCount } from "@/lib/catalog";
  *
  * Same anonymous, no-dedup posture as `3.b.i.zi`'s install counter:
  * no auth, and a repeat page load genuinely is another view (real
- * view counters don't dedupe per visitor either). Rate-limiting this
- * class of counter is the same already-separately-scoped leaf
- * (`5.d.ii.zi`) noted on the install-count endpoint.
+ * view counters don't dedupe per visitor either). Throttled per client
+ * like the install counter (`5.d.ii.zi`): 120 per 10 minutes per hashed
+ * client address, fail-open, no slug in the bucket key. Over: 429.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  if (!(await checkRateLimit(rateLimitKey("view", request.headers), 120, 600))) {
+    return tooManyRequests();
+  }
+
   const { slug } = await params;
   const newCount = await incrementViewCount(slug);
 

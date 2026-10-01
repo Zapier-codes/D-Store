@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkRateLimit } from "../../../../../../lib/rate-limit";
+import { checkRateLimit, rateLimitKey, tooManyRequests } from "@/lib/rate-limit";
 import { incrementInstallCount } from "@/lib/catalog";
 
 /**
@@ -21,14 +21,19 @@ import { incrementInstallCount } from "@/lib/catalog";
  * `ReportFlag`, `1.a.iii.zo`) already take: no auth, no dedup — a
  * user re-triggering their own already-simulated install would
  * double count, same as a real Play Store re-install bump would.
- * Fingerprint/rate-limit throttling for this exact class of counter
- * is already its own separate leaf (`5.d.ii.zi`) further down the
- * roadmap, not something to half-build here.
+ * Throttled per client (`5.d.ii.zi`): 20 installs per 10 minutes per
+ * hashed client address across all apps, fail-open (a limiter outage
+ * must not break installs). The bucket key carries no slug, so a caller
+ * cannot mint unlimited buckets by varying it. Over the limit: 429.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  if (!(await checkRateLimit(rateLimitKey("install", request.headers), 20, 600))) {
+    return tooManyRequests();
+  }
+
   const { slug } = await params;
   const newCount = await incrementInstallCount(slug);
 

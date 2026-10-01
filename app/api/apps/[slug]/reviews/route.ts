@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkRateLimit } from "../../../../lib/rate-limit";
+import { checkRateLimit, rateLimitKey, tooManyRequests } from "@/lib/rate-limit";
 import { submitReview } from "@/lib/catalog";
 
 /**
@@ -17,13 +17,18 @@ import { submitReview } from "@/lib/catalog";
  *
  * Anonymous, same posture as every other write path in this repo
  * (`Review`, `ReportFlag`, the two counters): no auth, nothing stops
- * a repeat submission in the same session. Rate-limiting is the same
- * already-separately-scoped `5.d.ii.zi` noted on the counters.
+ * a repeat submission in the same session. Throttled per client
+ * (`5.d.ii.zo`): 10 ratings per hour per hashed client address across
+ * all apps, fail-open, checked before the body is read. Over: 429.
  */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  if (!(await checkRateLimit(rateLimitKey("review", request.headers), 10, 3600))) {
+    return tooManyRequests();
+  }
+
   const { slug } = await params;
 
   let body: unknown;
