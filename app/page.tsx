@@ -141,7 +141,7 @@ export default async function Home() {
       getTrendingApps(),
       getEditorsPicks(),
       getNewAndUpdated(HOME_FETCH),
-      getTopFreeApps(),
+      getTopFreeApps(HOME_FETCH),
     ]);
 
   const heroApp =

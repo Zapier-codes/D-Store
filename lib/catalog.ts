@@ -21,6 +21,7 @@ import { apps, categories, developers, reviews, searchQueries, type App, type Ap
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
 import { createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
+import { readThirdPartyShelf, SHELF_MAX } from "./catalog-shelf";
 import {
   createZealotSource as createLiveZealotSource,
   getZealotCollections,
@@ -127,6 +128,39 @@ async function getMergedApps(): Promise<App[]> {
     pending.catch(() => mergedAppsByScope.delete(key));
   }
   return pending;
+}
+
+/**
+ * First-party (Zealot) apps alone, cached per tenant scope for the server lifetime like
+ * `getMergedApps` — leaf `5.l.iv.zi`. Only the table-backed shelf paths below use it, so a
+ * home shelf can be built from this small list plus a bounded database read instead of the
+ * whole merged catalog. Same source and same scope as the merged list's first source.
+ */
+const firstPartyByScope = new Map<string, Promise<App[]>>();
+
+async function getFirstPartyList(): Promise<App[]> {
+  const scope = await getCatalogScope();
+  const key = catalogScopeKey(scope);
+  let pending = firstPartyByScope.get(key);
+  if (!pending) {
+    pending = createZealotSource(scope).getApps();
+    firstPartyByScope.set(key, pending);
+    pending.catch(() => firstPartyByScope.delete(key));
+  }
+  return pending;
+}
+
+/**
+ * Bounded third-party read for a shelf, or `null` when the shelf must use the whole-catalog path:
+ * the table is not in use, the ask is not a bounded one (`Infinity` for a full chart), or the read
+ * failed. A failure logs one fixed line (no query, cursor or body) and the caller falls back,
+ * the same policy `getMergedApps` applies to a failed table read.
+ */
+async function readShelfFromTable(order: "top" | "new", want: number, firstParty: readonly App[]): Promise<App[] | null> {
+  if (!useCatalogTable() || !Number.isFinite(want) || want > SHELF_MAX) return null;
+  const apps = await readThirdPartyShelf(order, Math.max(0, Math.floor(want)), firstParty);
+  if (apps === null) console.error("catalog: bounded table read failed, using the whole-catalog path");
+  return apps;
 }
 
 // --- Public stats (4.c.i.zo) --------------------------------------------
@@ -612,8 +646,10 @@ export async function setAppFeaturing(
 // --- Home page shelves (0.d) -------------------------------------------
 
 export async function getFeaturedApps(limit = 6): Promise<App[]> {
-  const merged = await getMergedApps();
-  const result = merged.filter((app) => app.is_featured).slice(0, limit);
+  // Featured is editorial and first-party only (every third-party app is `is_featured: false`),
+  // so in table mode the small first-party list answers it without the whole catalog (5.l.iv.zi).
+  const pool = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  const result = pool.filter((app) => app.is_featured).slice(0, limit);
   return resolveAfterDelay(result);
 }
 
@@ -644,8 +680,9 @@ export async function getFeaturedApps(limit = 6): Promise<App[]> {
  * own version of that check.
  */
 export async function getFirstPartyApps(limit = 6): Promise<App[]> {
-  const merged = await getMergedApps();
-  const result = merged.filter((app) => app.origin === "zealot").slice(0, limit);
+  // Table mode reads the first-party list directly (5.l.iv.zi); same apps, same order.
+  const pool = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  const result = pool.filter((app) => app.origin === "zealot").slice(0, limit);
   return resolveAfterDelay(result);
 }
 
@@ -711,7 +748,9 @@ const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // "daily"
  * contained them) — always behind first-party ones, per the rule.
  */
 async function materializeTrendingCache(): Promise<TrendingCacheEntry> {
-  const merged = await getMergedApps();
+  // 5.l.iv.zi: in table mode only the first-party apps are ranked here (by `view_count`); the
+  // third-party part of Trending comes from a bounded database read in `getTrendingApps`.
+  const merged = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
   const originRank = (app: App) => (app.origin === "zealot" ? 0 : 1);
   const rankedSlugs = [...merged]
     .sort((a, b) => originRank(a) - originRank(b) || b.view_count - a.view_count)
@@ -732,7 +771,31 @@ async function getOrRefreshTrendingCache(): Promise<TrendingCacheEntry> {
 
 export async function getTrendingApps(limit = 12): Promise<App[]> {
   const cache = await getOrRefreshTrendingCache();
+
+  // 5.l.iv.zi — table mode. Third-party apps all have `view_count` 0, so after the first-party
+  // group (ranked by the cached order above) the whole-catalog path leaves them in the table's
+  // `top` order; this reads exactly that prefix from the database instead of the whole table.
+  if (useCatalogTable()) {
+    const firstParty = await getFirstPartyList();
+    const ranked = cache.rankedSlugs
+      .map((slug) => firstParty.find((app) => app.slug === slug))
+      .filter((app): app is App => app !== undefined)
+      .slice(0, limit);
+    const thirdParty = await readShelfFromTable("top", limit - ranked.length, firstParty);
+    if (thirdParty !== null) return resolveAfterDelay([...ranked, ...thirdParty].slice(0, limit));
+  }
+
   const merged = await getMergedApps();
+
+  // Table mode only reaches here after a failed bounded read. The cache above holds first-party
+  // slugs only in that mode, so rank the merged list directly (same order, just not frozen).
+  if (useCatalogTable()) {
+    const fallbackRank = (app: App) => (app.origin === "zealot" ? 0 : 1);
+    const ranked = [...merged]
+      .sort((a, b) => fallbackRank(a) - fallbackRank(b) || b.view_count - a.view_count)
+      .slice(0, limit);
+    return resolveAfterDelay(ranked);
+  }
 
   const result = cache.rankedSlugs
     .map((slug) => merged.find((app) => app.slug === slug))
@@ -742,8 +805,9 @@ export async function getTrendingApps(limit = 12): Promise<App[]> {
 }
 
 export async function getEditorsPicks(limit = 12): Promise<App[]> {
-  const merged = await getMergedApps();
-  const result = merged.filter((app) => app.is_editors_pick).slice(0, limit);
+  // Editorial and first-party only, like Featured (5.l.iv.zi).
+  const pool = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  const result = pool.filter((app) => app.is_editors_pick).slice(0, limit);
   return resolveAfterDelay(result);
 }
 
@@ -788,7 +852,21 @@ export async function getEditorsPicks(limit = 12): Promise<App[]> {
  * the Top Free page splits it back into two labelled sections with
  * `isThirdParty` and restarts the rank numbers in each.
  */
-export async function getTopFreeApps(): Promise<App[]> {
+export async function getTopFreeApps(limit = Infinity): Promise<App[]> {
+  // 5.l.iv.zi — table mode with a bounded `limit` (the home shelf): first-party group first, then
+  // the first rows of the database's `top` order, which is the same reported-downloads-then-slug
+  // order the whole-catalog sort below produces for third-party apps. A full chart (no limit)
+  // keeps the whole-catalog path until leaf 9 pages it.
+  if (useCatalogTable() && Number.isFinite(limit)) {
+    const firstPartyAll = await getFirstPartyList();
+    const firstPartyRanked = firstPartyAll
+      .filter((app) => !isThirdParty(app))
+      .sort((a, b) => b.install_count - a.install_count || a.slug.localeCompare(b.slug))
+      .slice(0, Math.max(0, limit));
+    const thirdParty = await readShelfFromTable("top", limit - firstPartyRanked.length, firstPartyAll);
+    if (thirdParty !== null) return resolveAfterDelay([...firstPartyRanked, ...thirdParty].slice(0, limit));
+  }
+
   const merged = await getMergedApps();
   const firstParty = merged
     .filter((app) => !isThirdParty(app))
@@ -800,11 +878,26 @@ export async function getTopFreeApps(): Promise<App[]> {
         (reportedStatsFor(b)?.downloads ?? -1) - (reportedStatsFor(a)?.downloads ?? -1) ||
         a.slug.localeCompare(b.slug)
     );
-  return resolveAfterDelay([...firstParty, ...thirdParty]);
+  const all = [...firstParty, ...thirdParty];
+  return resolveAfterDelay(Number.isFinite(limit) ? all.slice(0, Math.max(0, limit)) : all);
 }
 
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
 export async function getNewAndUpdated(limit = 12): Promise<App[]> {
+  // 5.l.iv.zi — table mode with a bounded `limit`: the first-party apps plus the first rows of the
+  // database's `new` order, merged by `updated_at` below exactly as the whole catalog would be.
+  // `getNewAndUpdated(Infinity)` (the full chart) keeps the whole-catalog path until leaf 9.
+  if (useCatalogTable() && Number.isFinite(limit)) {
+    const firstParty = await getFirstPartyList();
+    const thirdParty = await readShelfFromTable("new", limit, firstParty);
+    if (thirdParty !== null) {
+      const result = [...firstParty, ...thirdParty]
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        .slice(0, Math.max(0, limit));
+      return resolveAfterDelay(result);
+    }
+  }
+
   const merged = await getMergedApps();
   const result = [...merged]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
