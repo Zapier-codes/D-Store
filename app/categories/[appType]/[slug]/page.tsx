@@ -5,6 +5,7 @@ import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
+import type { App } from "@/lib/mock-data";
 import CategoryFilters from "@/components/CategoryFilters";
 import EmptyState from "@/components/EmptyState";
 import Pager from "@/components/Pager";
@@ -37,14 +38,17 @@ import styles from "./page.module.css";
  * (`5.i.v.zi` re-keyed the registry), so `finance` keeps "Vault" and
  * `books-and-reference` keeps "Sanctuary".
  *
- * Paged in table mode — leaf `5.l.xii.zi`. With `CATALOG_SOURCE=table` the category is read one
- * page at a time (`getCategoryPage`, 24 a page, order `top`): page 1 is the category's first-party
- * apps and then the first third-party rows; later pages are third-party only, reached by the "Next
- * page" link (`?after=<cursor>`). The catalog is read by keyset, so there are no page numbers and no
- * total, and going back is the browser's back button. **The license and size filters are hidden in
- * table mode** (and `license`/`maxSize` in the URL are ignored): the database function has no form
- * for them until `5.l.xii.zo`. With the table off, or when a page read fails, the page is exactly
- * the whole-category page it was, filters included, with no `after` and no pager.
+ * Paged in table mode — leaves `5.l.xii.zi` and `5.l.xii.zo`. With `CATALOG_SOURCE=table` the
+ * category is read one page at a time (`getCategoryPage`, 24 a page, order `top`): page 1 is the
+ * category's first-party apps and then the first third-party rows; later pages are third-party only,
+ * reached by the "Next page" link (`?after=<cursor>`). The catalog is read by keyset, so there are no
+ * page numbers and no total, and going back is the browser's back button. The license and size
+ * filters work in table mode too (`5.l.xii.zo`): they go to the database function, the "Next page"
+ * link keeps them (`license`, `maxSize`), and applying the form starts again from page 1 because a
+ * GET form drops `after`. The license list is the category's own, read from the table. If that list
+ * cannot be read (the `5.l.xii.zo` migration not applied, or the read failed) the filters are hidden
+ * and the page is paged and unfiltered. With the table off, or when the page read fails, the page is
+ * exactly the whole-category page it was, filters included, with no `after` and no pager.
  */
 export default async function TaxonomyCategoryPage({
   params,
@@ -71,18 +75,33 @@ export default async function TaxonomyCategoryPage({
   }
 
   const taxonomy = { appType, category: slug };
-  const page = await getCategoryPage(appType, slug, after);
+  const page = await getCategoryPage(appType, slug, {
+    after,
+    license: license || undefined,
+    maxSizeMb: maxSize ? Number(maxSize) : undefined,
+  });
 
-  // Table mode: one page, no filters. Otherwise: the whole category, as before (5.l.xii.zi).
-  const allApps = page ? page.apps : await getApps({ taxonomy });
-  const licenses = [...new Set(allApps.map((app) => app.license))].sort();
-  const apps = page
-    ? page.apps
-    : await getApps({
-        taxonomy,
-        license: license || undefined,
-        maxSizeMb: maxSize ? Number(maxSize) : undefined,
-      });
+  // Table mode: one page, filters applied by the database. Otherwise: the whole category, as before.
+  let apps: App[];
+  let licenses: string[];
+  let showFilters: boolean;
+  let emptyAtAll: boolean;
+  if (page) {
+    apps = page.apps;
+    licenses = page.licenses ?? [];
+    showFilters = page.licenses !== null;
+    emptyAtAll = apps.length === 0 && page.license === undefined && page.maxSizeMb === undefined;
+  } else {
+    const allApps = await getApps({ taxonomy });
+    licenses = [...new Set(allApps.map((app) => app.license))].sort();
+    apps = await getApps({
+      taxonomy,
+      license: license || undefined,
+      maxSizeMb: maxSize ? Number(maxSize) : undefined,
+    });
+    showFilters = allApps.length > 0;
+    emptyAtAll = allApps.length === 0;
+  }
   const mode = await getTheme();
 
   return (
@@ -90,7 +109,7 @@ export default async function TaxonomyCategoryPage({
       <main className={styles.main}>
         <h1 className={styles.heading}>{category.name}</h1>
 
-        {!page && allApps.length > 0 && (
+        {showFilters && (
           <CategoryFilters
             categorySlug={slug}
             basePath={`/categories/${appType}/${slug}`}
@@ -103,9 +122,9 @@ export default async function TaxonomyCategoryPage({
         {apps.length === 0 ? (
           <EmptyState
             kind="filter"
-            heading={allApps.length === 0 ? "No apps yet" : "No matches"}
+            heading={emptyAtAll ? "No apps yet" : "No matches"}
             message={
-              allApps.length === 0
+              emptyAtAll
                 ? `No ${appType === "game" ? "games" : "apps"} in this category yet.`
                 : "No apps in this category match the selected filters."
             }
@@ -118,7 +137,14 @@ export default async function TaxonomyCategoryPage({
           </ShelfGrid>
         )}
 
-        <Pager basePath={`/categories/${appType}/${slug}`} nextCursor={page ? page.nextCursor : null} />
+        <Pager
+          basePath={`/categories/${appType}/${slug}`}
+          nextCursor={page ? page.nextCursor : null}
+          params={{
+            license: page?.license,
+            maxSize: page?.maxSizeMb !== undefined ? String(page.maxSizeMb) : undefined,
+          }}
+        />
       </main>
     </CategoryThemeScope>
   );

@@ -23,6 +23,7 @@ import { createAptoideSource } from "./sources/aptoide";
 import { createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
 import { readThirdPartyShelf, SHELF_MAX } from "./catalog-shelf";
 import { readAppsPage, parseAfter } from "./apps-page";
+import { readCatalogLicenses, CATALOG_LICENSE_MAX_CHARS, CATALOG_SIZE_MAX_MB } from "./catalog-table";
 import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
 import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
 import {
@@ -974,48 +975,89 @@ export async function getAllAppsPage(after?: unknown, pageSize?: number): Promis
 }
 
 /**
- * One page of a category's apps — leaf `5.l.xii.zi`. Table mode only, same contract as
- * `getTopFreePage`: `null` silently when the table is not in use (the category page then loads the
- * whole category as before) and `null` with one fixed log line when the read failed. The category is
- * read by the `(appType, category)` pair, in `top` order: page 1 is the category's first-party apps
- * (ranked by D-Store installs, then slug) and then the first third-party rows; later pages are
- * third-party only. First-party apps are matched with `appInTaxonomyCategory`, the same read-time
- * shim `getApps({ taxonomy })` uses, so a first-party app still carrying a legacy slug appears under
- * its Play equivalent; third-party rows carry the Play slug in the table itself (the re-derive wrote
- * it). No license or size filter here: the database function has no form for them until
- * `5.l.xii.zo`, so the page hides the filters in table mode. The caller has already checked that
- * `appType`/`category` is a real pair; a slug the table cannot take is a refused read (`null`).
+ * One page of a category's apps — leaves `5.l.xii.zi` and `5.l.xii.zo`. Table mode only, same
+ * contract as `getTopFreePage`: `null` silently when the table is not in use (the category page then
+ * loads the whole category as before) and `null` with one fixed log line when the page read failed.
+ * The category is read by the `(appType, category)` pair, in `top` order: page 1 is the category's
+ * first-party apps (ranked by D-Store installs, then slug) and then the first third-party rows;
+ * later pages are third-party only. First-party apps are matched with `appInTaxonomyCategory`, the
+ * same read-time shim `getApps({ taxonomy })` uses, so a first-party app still carrying a legacy slug
+ * appears under its Play equivalent; third-party rows carry the Play slug in the table itself (the
+ * re-derive wrote it). The caller has already checked that `appType`/`category` is a real pair; a
+ * slug the table cannot take is a refused read (`null`).
+ *
+ * Filters (`5.l.xii.zo`): `license` (exact) and `maxSizeMb` go to the database for third-party rows
+ * and are applied here to first-party apps. A value that cannot be a filter (a blank or over-long
+ * license, a size that is not a finite number from 0 to `CATALOG_SIZE_MAX_MB`) is IGNORED rather than
+ * refused, so a garbled URL shows the unfiltered page instead of falling back to the whole catalog;
+ * the values actually applied come back as `license` and `maxSizeMb` so the pager can carry them.
+ * One difference from the whole-category page, on purpose: a non-numeric `maxSize` used to match
+ * nothing there and is ignored here.
+ *
+ * `licenses` is the license dropdown's list: the table's distinct licenses for the category
+ * (`readCatalogLicenses`, needs the `5.l.xii.zo` migration) joined with the first-party apps' own,
+ * sorted. It is read alongside the page, and `null` when that read failed, in which case the page
+ * still shows (filters hidden) rather than failing: until the operator applies the migration the
+ * category page is paged and unfiltered, exactly as `5.l.xii.zi` left it. A filter that is in the
+ * URL while the migration is missing makes the page read itself fail (the function has no such
+ * parameter), which is the `null` fallback above.
  */
 export interface CategoryPage {
   apps: App[];
   /** Opaque; pass back as `after` for the next page. `null` on the last page. */
   nextCursor: string | null;
+  /** The license filter actually applied, if any. */
+  license?: string;
+  /** The size filter (MB) actually applied, if any. */
+  maxSizeMb?: number;
+  /** Licenses to offer in the dropdown; `null` = could not be read, show no filters. */
+  licenses: string[] | null;
 }
 
 export async function getCategoryPage(
   appType: AppType,
   category: string,
-  after?: unknown,
-  pageSize?: number
+  options: { after?: unknown; license?: string; maxSizeMb?: number; pageSize?: number } = {}
 ): Promise<CategoryPage | null> {
   if (!useCatalogTable()) return null;
+
+  const rawLicense = options.license?.trim();
+  const license =
+    rawLicense && rawLicense.length <= CATALOG_LICENSE_MAX_CHARS && !rawLicense.includes("\u0000") ? rawLicense : undefined;
+  const size = options.maxSizeMb;
+  const maxSizeMb =
+    size !== undefined && Number.isFinite(size) && size >= 0 && size <= CATALOG_SIZE_MAX_MB ? size : undefined;
+
   const firstPartyAll = await getFirstPartyList();
   const ranked = [...firstPartyAll].sort(
     (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || b.install_count - a.install_count || a.slug.localeCompare(b.slug)
   );
-  const page = await readAppsPage({
-    scope: { appType, category },
-    order: "top",
-    after: parseAfter("top", after),
-    pageSize,
-    firstParty: ranked,
-    matchFirstParty: (app) => appInTaxonomyCategory(app, appType, category),
-  });
+  const matchFirstParty = (app: App) => appInTaxonomyCategory(app, appType, category);
+
+  const [page, licensesResult] = await Promise.all([
+    readAppsPage({
+      scope: { appType, category },
+      order: "top",
+      after: parseAfter("top", options.after),
+      pageSize: options.pageSize,
+      firstParty: ranked,
+      matchFirstParty,
+      filter: { license, maxSizeMb },
+    }),
+    readCatalogLicenses({ appType, category }),
+  ]);
   if (page === null) {
     console.error("catalog: paged table read failed, using the whole-catalog path");
     return null;
   }
-  return { apps: page.apps, nextCursor: page.nextCursor };
+
+  let licenses: string[] | null = null;
+  if (licensesResult.ok) {
+    const own = firstPartyAll.filter((app) => app.origin === "zealot" && matchFirstParty(app)).map((app) => app.license);
+    licenses = [...new Set([...licensesResult.licenses, ...own])].filter((value) => value !== "").sort();
+  }
+
+  return { apps: page.apps, nextCursor: page.nextCursor, license, maxSizeMb, licenses };
 }
 
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */

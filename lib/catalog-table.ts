@@ -81,6 +81,10 @@ export interface CatalogPageArgs {
   cursor?: string;
   /** 1 to 100; default 24. */
   limit?: number;
+  /** Leaf `5.l.xii.zo`: an exact license (1 to 100 characters), as `getApps` compares. */
+  license?: string;
+  /** Leaf `5.l.xii.zo`: a maximum size in MB, a finite number from 0 to `CATALOG_SIZE_MAX_MB`. */
+  maxSizeMb?: number;
 }
 
 export interface CatalogSearchArgs {
@@ -93,6 +97,10 @@ export interface CatalogSearchArgs {
 export const CATALOG_PAGE_DEFAULT = 24;
 export const CATALOG_PAGE_MAX = 100;
 export const CATALOG_SEARCH_MAX_CHARS = 100;
+/** Longest license a filter can name; `catalog_licenses` leaves longer ones out of its list. */
+export const CATALOG_LICENSE_MAX_CHARS = 100;
+/** Largest size filter accepted; far above any app, it only guards garbage. */
+export const CATALOG_SIZE_MAX_MB = 100000;
 /** Per-request ceiling: long enough for a cold pooled connection, short of a serverless limit. */
 export const CATALOG_TABLE_TIMEOUT_MS = 8000;
 /** 101 rows of ~0.5 KB is about 50 KB; anything past this is not a page. */
@@ -252,6 +260,24 @@ interface RpcArgs {
   p_after_value?: string;
   p_after_slug?: string;
   p_limit: number;
+  p_license?: string;
+  p_max_size_mb?: number;
+}
+
+function checkLicense(license: unknown): license is string | undefined {
+  if (license === undefined) return true;
+  return (
+    typeof license === "string" &&
+    license.length >= 1 &&
+    license.length <= CATALOG_LICENSE_MAX_CHARS &&
+    license.trim() !== "" &&
+    !license.includes("\u0000")
+  );
+}
+
+function checkMaxSize(size: unknown): size is number | undefined {
+  if (size === undefined) return true;
+  return typeof size === "number" && Number.isFinite(size) && size >= 0 && size <= CATALOG_SIZE_MAX_MB;
 }
 
 async function callCatalogPage(
@@ -345,6 +371,8 @@ export async function readCatalogPage(args: CatalogPageArgs, deps: CatalogTableD
   }
   const limit = checkLimit(args.limit);
   if (limit === null) return { ok: false, reason: "invalid_input" };
+  if (!checkLicense(args.license)) return { ok: false, reason: "invalid_input" };
+  if (!checkMaxSize(args.maxSizeMb)) return { ok: false, reason: "invalid_input" };
 
   let cursor: Cursor | null = null;
   if (args.cursor !== undefined) {
@@ -361,6 +389,10 @@ export async function readCatalogPage(args: CatalogPageArgs, deps: CatalogTableD
       p_after_value: cursor?.value,
       p_after_slug: cursor?.slug,
       p_limit: limit + 1,
+      // Sent only when asked for, so a call without filters is byte for byte what it was before the
+      // migration that added these two parameters, and works whether or not that migration ran.
+      p_license: args.license,
+      p_max_size_mb: args.maxSizeMb,
     },
     limit,
     deps,
@@ -401,4 +433,81 @@ export async function searchCatalogPage(args: CatalogSearchArgs, deps: CatalogTa
     deps,
     "search",
   );
+}
+
+// ---------------------------------------------------------------------------
+// Licenses of a category — leaf 5.l.xii.zo
+// ---------------------------------------------------------------------------
+
+export type CatalogLicensesResult =
+  | { ok: true; licenses: string[] }
+  | { ok: false; reason: "not_configured" | "unavailable" | "invalid_input" };
+
+/** The most licenses `catalog_licenses` returns; anything more is not the function's answer. */
+export const CATALOG_LICENSES_MAX = 100;
+
+/**
+ * The distinct licenses (1 to 100 characters) of one category, sorted, for the category page's
+ * license dropdown. Same contract as `readCatalogPage`: never throws, one fixed log line on failure,
+ * never a partial list (a malformed entry refuses the whole answer). Needs the migration that adds
+ * `catalog_licenses` (`20261002020000_catalog_page_filters.sql`); before it runs this is
+ * `unavailable` (the function does not exist), which the caller treats as "no filters to show".
+ */
+export async function readCatalogLicenses(
+  args: { appType: CatalogAppType; category: string },
+  deps: CatalogTableDeps = {}
+): Promise<CatalogLicensesResult> {
+  if (args?.appType !== "app" && args?.appType !== "game") return { ok: false, reason: "invalid_input" };
+  if (typeof args.category !== "string" || !CATEGORY_PATTERN.test(args.category)) return { ok: false, reason: "invalid_input" };
+
+  const cfg = readConfig(deps.env ?? process.env);
+  if (!cfg) return { ok: false, reason: "not_configured" };
+
+  const doFetch = deps.fetch ?? fetch;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), deps.timeoutMs ?? CATALOG_TABLE_TIMEOUT_MS);
+  try {
+    const res = await doFetch(`${cfg.baseUrl}/rest/v1/rpc/catalog_licenses`, {
+      method: "POST",
+      headers: {
+        apikey: cfg.key,
+        Authorization: `Bearer ${cfg.key}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ p_app_type: args.appType, p_category: args.category }),
+      redirect: "error",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (res.status < 200 || res.status >= 300) {
+      console.error(`catalog-table: read licenses failed, status ${res.status}`);
+      return { ok: false, reason: "unavailable" };
+    }
+    const text = await res.text();
+    if (text.length > CATALOG_MAX_BODY_BYTES) {
+      console.error("catalog-table: read licenses answer too large");
+      return { ok: false, reason: "unavailable" };
+    }
+    const body: unknown = JSON.parse(text);
+    if (!Array.isArray(body) || body.length > CATALOG_LICENSES_MAX) {
+      console.error("catalog-table: read licenses answer was not a list");
+      return { ok: false, reason: "unavailable" };
+    }
+    const licenses: string[] = [];
+    for (const item of body) {
+      const value = typeof item === "object" && item !== null ? (item as Record<string, unknown>).license : undefined;
+      if (!checkLicense(value) || value === undefined) {
+        console.error("catalog-table: read licenses returned a malformed entry");
+        return { ok: false, reason: "unavailable" };
+      }
+      licenses.push(value);
+    }
+    return { ok: true, licenses };
+  } catch {
+    console.error("catalog-table: read licenses failed, no response");
+    return { ok: false, reason: "unavailable" };
+  } finally {
+    clearTimeout(timer);
+  }
 }

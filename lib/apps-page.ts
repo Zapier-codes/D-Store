@@ -71,6 +71,13 @@ export interface AppsPageArgs {
    * `scope`. Absent, behaviour is exactly as before.
    */
   matchFirstParty?: (app: App) => boolean;
+  /**
+   * Leaf `5.l.xii.zo`: an exact license and/or a maximum size in MB. Passed to the database read for
+   * third-party rows and applied here to the first-party apps (they are not rows), with the same
+   * tests `getApps` uses: `license` equal, `size_mb` at most the limit. Values must already be
+   * valid (`readCatalogPage` refuses a bad one, which makes the whole page `null`).
+   */
+  filter?: { license?: string; maxSizeMb?: number };
 }
 
 export interface AppsPage {
@@ -114,9 +121,16 @@ function firstPartyForPage(
   firstParty: readonly App[],
   scope: AppsPageScope,
   order: CatalogOrder,
-  match?: (app: App) => boolean
+  match?: (app: App) => boolean,
+  filter?: { license?: string; maxSizeMb?: number }
 ): App[] {
-  const own = firstParty.filter((app) => app.origin === "zealot" && (match ? match(app) : inScope(app, scope)));
+  const own = firstParty.filter(
+    (app) =>
+      app.origin === "zealot" &&
+      (match ? match(app) : inScope(app, scope)) &&
+      (filter?.license === undefined || app.license === filter.license) &&
+      (filter?.maxSizeMb === undefined || app.size_mb <= filter.maxSizeMb)
+  );
   if (order === "top") return own;
   return [...own].sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at) || 0);
 }
@@ -130,7 +144,7 @@ export async function readAppsPage(args: AppsPageArgs, deps: CatalogTableDeps = 
 
     const after = parseAfter(args.order, args.after);
     const isFirstPage = after === undefined;
-    const own = isFirstPage ? firstPartyForPage(args.firstParty, scope, args.order, args.matchFirstParty) : [];
+    const own = isFirstPage ? firstPartyForPage(args.firstParty, scope, args.order, args.matchFirstParty, args.filter) : [];
 
     const taken = new Set<string>();
     for (const app of args.firstParty) if (app.package_name) taken.add(app.package_name);
@@ -146,7 +160,15 @@ export async function readAppsPage(args: AppsPageArgs, deps: CatalogTableDeps = 
 
     for (let read = 0; read < APPS_PAGE_MAX_READS; read += 1) {
       const result = await readCatalogPage(
-        { order: args.order, appType: scope.appType, category: scope.category, cursor, limit },
+        {
+          order: args.order,
+          appType: scope.appType,
+          category: scope.category,
+          cursor,
+          limit,
+          license: args.filter?.license,
+          maxSizeMb: args.filter?.maxSizeMb,
+        },
         deps
       );
       if (!result.ok) return null;
