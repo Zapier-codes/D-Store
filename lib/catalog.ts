@@ -27,6 +27,7 @@ import { readCatalogApp, readCatalogDeveloper, readCatalogSlugExists } from "./c
 import { readCatalogLicenses, CATALOG_LICENSE_MAX_CHARS, CATALOG_SIZE_MAX_MB, CATALOG_PAGE_MAX } from "./catalog-table";
 import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
 import { readCatalogSitemapChunk, readCatalogSitemapTotal } from "./catalog-sitemap";
+import { readCatalogCategoryCounts } from "./catalog-category-counts";
 import { COUNT_EXCLUDE_MAX, readCatalogPublishedCount } from "./catalog-count";
 import { appSitemapEntry, developerSitemapEntry, sitePageEntries, sitemapChunkCount, type SitemapEntry } from "./sitemap-xml";
 import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
@@ -417,8 +418,70 @@ export async function getTaxonomyCategory(appType: AppType, slug: string): Promi
   return resolveAfterDelay(findTaxonomyCategory(appType, slug));
 }
 
+/**
+ * Per-category app counts in table mode — leaf `5.l.xiii.zo`. One map keyed `"<app_type>:<category>"`:
+ * the table's grouped count of published rows (`catalog_category_counts`, rows owned by a first-party
+ * package or slug left out, the merged catalog's own rule) plus the first-party apps counted by the
+ * same stored-pair comparison `appInTaxonomyCategory` makes. The `/categories` index asks for 49
+ * counts at once, so the map is built once and shared: the in-flight read is cached (all 49 callers
+ * wait on one request) and a successful answer is kept for `TAXONOMY_COUNTS_TTL_MS` per catalog
+ * scope. `null` (not configured, the migration not applied, a failed read, more first-party apps than
+ * the count can exclude) is never cached and makes the caller use the whole-catalog path, with one
+ * fixed log line. Never throws.
+ */
+const TAXONOMY_COUNTS_TTL_MS = 5 * 60 * 1000;
+const taxonomyCountsByScope = new Map<string, { at: number; pending: Promise<Map<string, number> | null> }>();
+
+async function readTaxonomyCountsFromTable(): Promise<Map<string, number> | null> {
+  try {
+    const firstParty = await getFirstPartyList();
+    if (firstParty.length > COUNT_EXCLUDE_MAX) {
+      console.error("catalog: category counts not read from the table (too many first-party apps to exclude)");
+      return null;
+    }
+    const counted = await readCatalogCategoryCounts({
+      excludePackages: firstParty.map((app) => app.package_name).filter((name): name is string => typeof name === "string" && name !== ""),
+      excludeSlugs: firstParty.map((app) => app.slug),
+    });
+    if (!counted.ok) {
+      console.error("catalog: category counts read failed, using the whole catalog");
+      return null;
+    }
+    const counts = new Map<string, number>();
+    const add = (appType: string, category: string, n: number) => {
+      const key = `${appType}:${category}`;
+      counts.set(key, (counts.get(key) ?? 0) + n);
+    };
+    for (const row of counted.counts) add(row.appType, row.category, row.total);
+    for (const app of firstParty) add(app.app_type, app.category, 1);
+    return counts;
+  } catch {
+    console.error("catalog: category counts read failed, using the whole catalog");
+    return null;
+  }
+}
+
+async function getTaxonomyCountsFromTable(): Promise<Map<string, number> | null> {
+  const key = catalogScopeKey(await getCatalogScope());
+  const cached = taxonomyCountsByScope.get(key);
+  if (cached && Date.now() - cached.at < TAXONOMY_COUNTS_TTL_MS) return cached.pending;
+  const entry = { at: Date.now(), pending: readTaxonomyCountsFromTable() };
+  taxonomyCountsByScope.set(key, entry);
+  void entry.pending.then((value) => {
+    if (value === null && taxonomyCountsByScope.get(key) === entry) taxonomyCountsByScope.delete(key);
+  });
+  return entry.pending;
+}
+
 /** Apps stored in `(appType, slug)` — a direct comparison of the stored pair. */
 export async function getTaxonomyAppCount(appType: AppType, slug: string): Promise<number> {
+  // 5.l.xiii.zo — table mode: one grouped count shared by every category (cached for a few minutes)
+  // instead of one whole-catalog pass per category.
+  if (useCatalogTable()) {
+    const counts = await getTaxonomyCountsFromTable();
+    if (counts !== null) return resolveAfterDelay(counts.get(`${appType}:${slug}`) ?? 0);
+  }
+
   const merged = await getMergedApps();
   return resolveAfterDelay(merged.filter((app) => appInTaxonomyCategory(app, appType, slug)).length);
 }

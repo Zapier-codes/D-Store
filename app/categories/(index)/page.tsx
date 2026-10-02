@@ -24,6 +24,9 @@ import styles from "./page.module.css";
  * Counts are fetched once here (49 in parallel) and passed down to each
  * `CategoryCard` rather than each card fetching its own.
  *
+ * Leaf `5.l.xiii.zo`: in table mode the 49 calls share one grouped database count
+ * (`getTaxonomyAppCount`), not 49 whole-catalog passes; the page itself is unchanged.
+ *
  * Leaf `5.l.xi.zo`: a "Browse all apps" link under the heading to `/apps`, the paged list of every
  * app and game, so the categories index also leads to the whole catalog, not only to its shelves.
  */
