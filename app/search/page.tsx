@@ -1,7 +1,8 @@
-import { searchApps, logSearchQuery } from "@/lib/catalog";
+import { searchApps, logSearchQuery, getSearchPage } from "@/lib/catalog";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import EmptyState from "@/components/EmptyState";
+import Pager from "@/components/Pager";
 import styles from "./page.module.css";
 
 /**
@@ -29,18 +30,29 @@ import styles from "./page.module.css";
  * function's own comment in `lib/catalog.ts` for why this page load,
  * specifically, is where a search gets logged rather than inside
  * `searchApps` itself.
+ *
+ * Paged in table mode — leaf `5.l.v.zo`. With `CATALOG_SOURCE=table` the results are read one page at
+ * a time (`getSearchPage`, 24 a page): page 1 is the matching first-party apps and then the first
+ * third-party matches in `top` order; later pages are third-party only, reached by the "Next page"
+ * link (`?q=<query>&after=<cursor>`). The catalog is read by keyset, so there are no page numbers
+ * and no total, and going back is the browser's back button. **Only the first page is logged as a
+ * search** (`logSearchQuery`): a "Next page" click is the same search, and logging it again would
+ * inflate the top-searches dashboard. With the table off, or when a page read fails, the page is
+ * exactly the whole-result page it was: every match, no `after`, no pager, the query logged.
  */
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; after?: string | string[] }>;
 }) {
-  const { q } = await searchParams;
+  const { q, after } = await searchParams;
   const query = (q ?? "").trim();
-  if (query) {
+  const page = query ? await getSearchPage(query, after) : null;
+  // Table mode: log the first page only. Otherwise (as before): log every load of a non-blank query.
+  if (query && (page === null || page.isFirstPage)) {
     await logSearchQuery(query);
   }
-  const results = query ? await searchApps(query) : [];
+  const results = query ? (page ? page.apps : await searchApps(query)) : [];
 
   return (
     <main className={styles.main}>
@@ -77,6 +89,8 @@ export default async function SearchPage({
           ))}
         </ShelfGrid>
       )}
+
+      <Pager basePath="/search" nextCursor={page ? page.nextCursor : null} params={{ q: query }} />
     </main>
   );
 }

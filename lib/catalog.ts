@@ -1142,6 +1142,39 @@ export async function searchApps(query: string): Promise<App[]> {
 }
 
 /**
+ * One page of search results — leaf `5.l.v.zo`. Table mode only, same contract as
+ * `getTopFreePage`: `null` silently when the table is not in use (the caller then uses `searchApps`
+ * exactly as before) and `null` with one fixed log line when the read failed. The match rule is
+ * `searchApps`': case-insensitive substring over name or summary. Page 1 is the matching first-party
+ * apps (list order, the same "first-party leads" rule `6.a.iii.zi` set) and then the first
+ * third-party matches from the table in `top` order (reported downloads, then slug); later pages are
+ * third-party only. One difference from `searchApps`, on purpose: it pins only the FIRST first-party
+ * match to the front and leaves any others in merged order, while here every first-party match leads,
+ * which is what the merged order already gives (first-party apps come first in it). A blank query is
+ * an empty result. The query is cut to 100 characters, as the database search does. This function
+ * does NOT log the query (`logSearchQuery` is the page's, once per submitted search); `after` is the
+ * raw `after` URL value.
+ */
+export interface SearchPage {
+  apps: App[];
+  /** Opaque; pass back as `after` for the next page. `null` on the last page. */
+  nextCursor: string | null;
+  /** True for page 1 (no valid `after`), the only page that should be logged as a search. */
+  isFirstPage: boolean;
+}
+
+export async function getSearchPage(query: string, after?: unknown, pageSize?: number): Promise<SearchPage | null> {
+  if (!useCatalogTable()) return null;
+  const firstParty = await getFirstPartyList();
+  const page = await readAppsPage({ order: "top", query, after: parseAfter("top", after), pageSize, firstParty });
+  if (page === null) {
+    console.error("catalog: paged table read failed, using the whole-catalog path");
+    return null;
+  }
+  return { apps: page.apps, nextCursor: page.nextCursor, isFirstPage: page.isFirstPage };
+}
+
+/**
  * Records a search for the `3.c.ii.zo` top-searches dashboard.
  * Deliberately called from `app/search/page.tsx`'s call site, not from
  * `searchApps` itself: `searchApps` also backs `SearchBar`'s debounced

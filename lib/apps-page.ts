@@ -32,9 +32,11 @@
 import {
   CATALOG_PAGE_DEFAULT,
   CATALOG_PAGE_MAX,
+  CATALOG_SEARCH_MAX_CHARS,
   decodeCursor,
   encodeCursor,
   readCatalogPage,
+  searchCatalogPage,
   type CatalogAppType,
   type CatalogOrder,
   type CatalogRow,
@@ -78,6 +80,16 @@ export interface AppsPageArgs {
    * valid (`readCatalogPage` refuses a bad one, which makes the whole page `null`).
    */
   filter?: { license?: string; maxSizeMb?: number };
+  /**
+   * Leaf `5.l.v.zo`: search. A needle matched case-insensitively as a substring of name or summary,
+   * the rule `searchApps` applies. Third-party rows come from `searchCatalogPage` (`top` order, one
+   * app type at most); first-party apps are matched here with the same rule and lead page 1. A
+   * blank needle is an empty page with no request. It is not combinable with a category, a
+   * `matchFirstParty`, a `filter` or order `new`: those are `null`, because the database search has
+   * no form for them. The needle is trimmed and cut to `CATALOG_SEARCH_MAX_CHARS` characters on
+   * both sides, so first-party and database matching agree.
+   */
+  query?: string;
 }
 
 export interface AppsPage {
@@ -117,6 +129,11 @@ function inScope(app: App, scope: AppsPageScope): boolean {
   return true;
 }
 
+/** The needle both sides use: trimmed, cut to the search cap, trimmed again. Empty = match nothing. */
+export function normalizeNeedle(query: string): string {
+  return Array.from(query.trim()).slice(0, CATALOG_SEARCH_MAX_CHARS).join("").trim();
+}
+
 function firstPartyForPage(
   firstParty: readonly App[],
   scope: AppsPageScope,
@@ -144,7 +161,20 @@ export async function readAppsPage(args: AppsPageArgs, deps: CatalogTableDeps = 
 
     const after = parseAfter(args.order, args.after);
     const isFirstPage = after === undefined;
-    const own = isFirstPage ? firstPartyForPage(args.firstParty, scope, args.order, args.matchFirstParty, args.filter) : [];
+
+    // Search (5.l.v.zo): `needle` is undefined when this is not a search.
+    let needle: string | undefined;
+    let match = args.matchFirstParty;
+    if (args.query !== undefined) {
+      if (typeof args.query !== "string") return null;
+      if (args.order !== "top" || scope.category !== undefined || args.matchFirstParty || args.filter) return null;
+      needle = normalizeNeedle(args.query);
+      if (needle === "") return { apps: [], nextCursor: null, isFirstPage }; // blank: nothing, no request
+      const lower = needle.toLowerCase();
+      match = (app) => app.name.toLowerCase().includes(lower) || app.summary.toLowerCase().includes(lower);
+    }
+
+    const own = isFirstPage ? firstPartyForPage(args.firstParty, scope, args.order, match, args.filter) : [];
 
     const taken = new Set<string>();
     for (const app of args.firstParty) if (app.package_name) taken.add(app.package_name);
@@ -159,18 +189,21 @@ export async function readAppsPage(args: AppsPageArgs, deps: CatalogTableDeps = 
     let nextCursor: string | null = null;
 
     for (let read = 0; read < APPS_PAGE_MAX_READS; read += 1) {
-      const result = await readCatalogPage(
-        {
-          order: args.order,
-          appType: scope.appType,
-          category: scope.category,
-          cursor,
-          limit,
-          license: args.filter?.license,
-          maxSizeMb: args.filter?.maxSizeMb,
-        },
-        deps
-      );
+      const result =
+        needle !== undefined
+          ? await searchCatalogPage({ query: needle, appType: scope.appType, cursor, limit }, deps)
+          : await readCatalogPage(
+              {
+                order: args.order,
+                appType: scope.appType,
+                category: scope.category,
+                cursor,
+                limit,
+                license: args.filter?.license,
+                maxSizeMb: args.filter?.maxSizeMb,
+              },
+              deps
+            );
       if (!result.ok) return null;
 
       for (let i = 0; i < result.rows.length; i += 1) {
