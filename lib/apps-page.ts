@@ -63,6 +63,14 @@ export interface AppsPageArgs {
   pageSize?: number;
   /** The caller's first-party list (`getFirstPartyList`), used on page 1 and for the package rule. */
   firstParty: readonly App[];
+  /**
+   * Leaf `5.l.xii.zi`: replaces the built-in first-party scope test (a direct comparison of the
+   * stored `app_type` and `category`) when the caller's own rule is wider, as the category page's
+   * read-time shim is (a first-party app still carrying a legacy category slug belongs to its Play
+   * equivalent). It only chooses which first-party apps lead page 1; the database read still uses
+   * `scope`. Absent, behaviour is exactly as before.
+   */
+  matchFirstParty?: (app: App) => boolean;
 }
 
 export interface AppsPage {
@@ -102,8 +110,13 @@ function inScope(app: App, scope: AppsPageScope): boolean {
   return true;
 }
 
-function firstPartyForPage(firstParty: readonly App[], scope: AppsPageScope, order: CatalogOrder): App[] {
-  const own = firstParty.filter((app) => app.origin === "zealot" && inScope(app, scope));
+function firstPartyForPage(
+  firstParty: readonly App[],
+  scope: AppsPageScope,
+  order: CatalogOrder,
+  match?: (app: App) => boolean
+): App[] {
+  const own = firstParty.filter((app) => app.origin === "zealot" && (match ? match(app) : inScope(app, scope)));
   if (order === "top") return own;
   return [...own].sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at) || 0);
 }
@@ -117,7 +130,7 @@ export async function readAppsPage(args: AppsPageArgs, deps: CatalogTableDeps = 
 
     const after = parseAfter(args.order, args.after);
     const isFirstPage = after === undefined;
-    const own = isFirstPage ? firstPartyForPage(args.firstParty, scope, args.order) : [];
+    const own = isFirstPage ? firstPartyForPage(args.firstParty, scope, args.order, args.matchFirstParty) : [];
 
     const taken = new Set<string>();
     for (const app of args.firstParty) if (app.package_name) taken.add(app.package_name);

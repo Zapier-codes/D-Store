@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getTaxonomyCategory, getApps } from "@/lib/catalog";
+import { getTaxonomyCategory, getApps, getCategoryPage } from "@/lib/catalog";
 import { UNCATEGORIZED, isAppType } from "@/lib/taxonomy";
 import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
@@ -7,6 +7,7 @@ import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import CategoryFilters from "@/components/CategoryFilters";
 import EmptyState from "@/components/EmptyState";
+import Pager from "@/components/Pager";
 import styles from "./page.module.css";
 
 /**
@@ -35,16 +36,25 @@ import styles from "./page.module.css";
  * `basePath`). The theme skin is looked up by `(appType, slug)` directly
  * (`5.i.v.zi` re-keyed the registry), so `finance` keeps "Vault" and
  * `books-and-reference` keeps "Sanctuary".
+ *
+ * Paged in table mode — leaf `5.l.xii.zi`. With `CATALOG_SOURCE=table` the category is read one
+ * page at a time (`getCategoryPage`, 24 a page, order `top`): page 1 is the category's first-party
+ * apps and then the first third-party rows; later pages are third-party only, reached by the "Next
+ * page" link (`?after=<cursor>`). The catalog is read by keyset, so there are no page numbers and no
+ * total, and going back is the browser's back button. **The license and size filters are hidden in
+ * table mode** (and `license`/`maxSize` in the URL are ignored): the database function has no form
+ * for them until `5.l.xii.zo`. With the table off, or when a page read fails, the page is exactly
+ * the whole-category page it was, filters included, with no `after` and no pager.
  */
 export default async function TaxonomyCategoryPage({
   params,
   searchParams,
 }: {
   params: Promise<{ appType: string; slug: string }>;
-  searchParams: Promise<{ license?: string; maxSize?: string }>;
+  searchParams: Promise<{ license?: string; maxSize?: string; after?: string | string[] }>;
 }) {
   const { appType, slug } = await params;
-  const { license = "", maxSize = "" } = await searchParams;
+  const { license = "", maxSize = "", after } = await searchParams;
 
   if (!isAppType(appType)) {
     notFound();
@@ -61,14 +71,18 @@ export default async function TaxonomyCategoryPage({
   }
 
   const taxonomy = { appType, category: slug };
-  const allApps = await getApps({ taxonomy });
-  const licenses = [...new Set(allApps.map((app) => app.license))].sort();
+  const page = await getCategoryPage(appType, slug, after);
 
-  const apps = await getApps({
-    taxonomy,
-    license: license || undefined,
-    maxSizeMb: maxSize ? Number(maxSize) : undefined,
-  });
+  // Table mode: one page, no filters. Otherwise: the whole category, as before (5.l.xii.zi).
+  const allApps = page ? page.apps : await getApps({ taxonomy });
+  const licenses = [...new Set(allApps.map((app) => app.license))].sort();
+  const apps = page
+    ? page.apps
+    : await getApps({
+        taxonomy,
+        license: license || undefined,
+        maxSizeMb: maxSize ? Number(maxSize) : undefined,
+      });
   const mode = await getTheme();
 
   return (
@@ -76,7 +90,7 @@ export default async function TaxonomyCategoryPage({
       <main className={styles.main}>
         <h1 className={styles.heading}>{category.name}</h1>
 
-        {allApps.length > 0 && (
+        {!page && allApps.length > 0 && (
           <CategoryFilters
             categorySlug={slug}
             basePath={`/categories/${appType}/${slug}`}
@@ -103,6 +117,8 @@ export default async function TaxonomyCategoryPage({
             ))}
           </ShelfGrid>
         )}
+
+        <Pager basePath={`/categories/${appType}/${slug}`} nextCursor={page ? page.nextCursor : null} />
       </main>
     </CategoryThemeScope>
   );

@@ -186,3 +186,32 @@ test("parseRankOffset: whole numbers on a later page, 0 for everything else, alw
   }
   assert.equal(parseRankOffset("24", true), 0);
 });
+
+// Leaf 5.l.xii.zi (written, not run): the caller's own first-party rule replaces the built-in scope test.
+test("matchFirstParty chooses the first-party apps on page 1; the database read still uses scope", async () => {
+  const seen: any[] = [];
+  const legacy = fp("legacy.one", { app_type: "app", category: "old-slug" });
+  const other = fp("other.one", { app_type: "app", category: "weather" });
+  const out = await readAppsPage(
+    {
+      order: "top",
+      scope: { appType: "app", category: "tools" },
+      pageSize: 4,
+      firstParty: [legacy, other],
+      matchFirstParty: (app) => app.package_name === "legacy.one",
+    },
+    { env: ENV, fetch: fake(rows(10), seen) }
+  );
+  assert.ok(out);
+  assert.equal(out.apps[0].package_name, "legacy.one");
+  assert.ok(!pkgs(out.apps).includes("other.one"));
+  assert.equal(seen[0].p_category, "tools");
+  // Without it, the built-in test compares the stored pair and drops the legacy-slug app.
+  const plain = await readAppsPage(
+    { order: "top", scope: { appType: "app", category: "tools" }, pageSize: 4, firstParty: [legacy, other] },
+    { env: ENV, fetch: fake(rows(10)) }
+  );
+  assert.ok(plain);
+  assert.ok(!pkgs(plain.apps).includes("legacy.one"));
+});
+

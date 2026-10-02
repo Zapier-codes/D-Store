@@ -973,6 +973,51 @@ export async function getAllAppsPage(after?: unknown, pageSize?: number): Promis
   return { apps: [...page.firstParty, ...page.thirdParty], nextCursor: page.nextCursor };
 }
 
+/**
+ * One page of a category's apps — leaf `5.l.xii.zi`. Table mode only, same contract as
+ * `getTopFreePage`: `null` silently when the table is not in use (the category page then loads the
+ * whole category as before) and `null` with one fixed log line when the read failed. The category is
+ * read by the `(appType, category)` pair, in `top` order: page 1 is the category's first-party apps
+ * (ranked by D-Store installs, then slug) and then the first third-party rows; later pages are
+ * third-party only. First-party apps are matched with `appInTaxonomyCategory`, the same read-time
+ * shim `getApps({ taxonomy })` uses, so a first-party app still carrying a legacy slug appears under
+ * its Play equivalent; third-party rows carry the Play slug in the table itself (the re-derive wrote
+ * it). No license or size filter here: the database function has no form for them until
+ * `5.l.xii.zo`, so the page hides the filters in table mode. The caller has already checked that
+ * `appType`/`category` is a real pair; a slug the table cannot take is a refused read (`null`).
+ */
+export interface CategoryPage {
+  apps: App[];
+  /** Opaque; pass back as `after` for the next page. `null` on the last page. */
+  nextCursor: string | null;
+}
+
+export async function getCategoryPage(
+  appType: AppType,
+  category: string,
+  after?: unknown,
+  pageSize?: number
+): Promise<CategoryPage | null> {
+  if (!useCatalogTable()) return null;
+  const firstPartyAll = await getFirstPartyList();
+  const ranked = [...firstPartyAll].sort(
+    (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || b.install_count - a.install_count || a.slug.localeCompare(b.slug)
+  );
+  const page = await readAppsPage({
+    scope: { appType, category },
+    order: "top",
+    after: parseAfter("top", after),
+    pageSize,
+    firstParty: ranked,
+    matchFirstParty: (app) => appInTaxonomyCategory(app, appType, category),
+  });
+  if (page === null) {
+    console.error("catalog: paged table read failed, using the whole-catalog path");
+    return null;
+  }
+  return { apps: page.apps, nextCursor: page.nextCursor };
+}
+
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
 export async function getNewAndUpdated(limit = 12): Promise<App[]> {
   // 5.l.iv.zi — table mode with a bounded `limit`: the first-party apps plus the first rows of the
