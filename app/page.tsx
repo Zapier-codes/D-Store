@@ -1,4 +1,11 @@
-import { getFeaturedApps, getTrendingApps, getEditorsPicks, getFirstPartyApps } from "@/lib/catalog";
+import {
+  getFeaturedApps,
+  getTrendingApps,
+  getEditorsPicks,
+  getFirstPartyApps,
+  getNewAndUpdated,
+  getTopFreeApps,
+} from "@/lib/catalog";
 import Hero from "@/components/Hero";
 import Shelf from "@/components/Shelf";
 import SponsoredCard from "@/components/SponsoredCard";
@@ -121,13 +128,21 @@ import ForYouShelf from "@/components/ForYouShelf";
  * itself data-dependent (today: Trending; once real first-party apps
  * exist: First-party).
  */
+const HOME_SHELF_SIZE = 18;
+// Fetch deeper than the shelf size so de-duplicating against the shelves
+// above still leaves a full row.
+const HOME_FETCH = 60;
+
 export default async function Home() {
-  const [firstParty, featured, trending, editorsPicks] = await Promise.all([
-    getFirstPartyApps(),
-    getFeaturedApps(),
-    getTrendingApps(),
-    getEditorsPicks(),
-  ]);
+  const [firstParty, featured, trending, editorsPicks, newAndUpdatedAll, topFreeAll] =
+    await Promise.all([
+      getFirstPartyApps(),
+      getFeaturedApps(),
+      getTrendingApps(),
+      getEditorsPicks(),
+      getNewAndUpdated(HOME_FETCH),
+      getTopFreeApps(),
+    ]);
 
   const heroApp =
     featured.find((app) => app.origin === "zealot") ??
@@ -137,6 +152,30 @@ export default async function Home() {
 
   const restFirstParty = firstParty.filter((app) => app.slug !== heroApp?.slug);
   const restFeatured = featured.filter((app) => app.slug !== heroApp?.slug);
+
+  // Two shelves added because the catalog is now ~1,500 apps and the
+  // only shelf that fills from third-party data is Trending (12): the
+  // editorial flags (`is_featured`, `is_editors_pick`) are first-party
+  // only by construction, so a store with no live Zealot apps showed 12
+  // apps on its home page. Each new shelf skips apps already on the page
+  // so the extra rows are new apps, not repeats.
+  const shown = new Set<string>(
+    [heroApp, ...restFirstParty, ...restFeatured, ...trending, ...editorsPicks]
+      .filter((app): app is NonNullable<typeof app> => Boolean(app))
+      .map((app) => app.slug)
+  );
+  const takeUnseen = (list: typeof trending) => {
+    const out: typeof trending = [];
+    for (const app of list) {
+      if (shown.has(app.slug)) continue;
+      shown.add(app.slug);
+      out.push(app);
+      if (out.length >= HOME_SHELF_SIZE) break;
+    }
+    return out;
+  };
+  const newAndUpdated = takeUnseen(newAndUpdatedAll);
+  const topFree = takeUnseen(topFreeAll);
 
   // `3.d.ii.zo` (LCP budget pass): whichever shelf below actually
   // renders first (Shelf itself renders nothing for an empty `apps`
@@ -190,6 +229,12 @@ export default async function Home() {
           extraSlot={<SponsoredCard />}
           priorityCount={firstNonEmptyShelf === "editorsPicks" ? 2 : 0}
         />
+      </ScrollReveal>
+      <ScrollReveal>
+        <Shelf title="New & Updated" apps={newAndUpdated} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <Shelf title="Top Free" apps={topFree} />
       </ScrollReveal>
       <ScrollReveal>
         <ForYouShelf />
