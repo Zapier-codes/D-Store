@@ -1,4 +1,4 @@
-import { getApps } from "@/lib/catalog";
+import { getFeaturingList } from "@/lib/catalog";
 import FeaturingTable from "./FeaturingTable";
 import { requireAdminPage } from "@/lib/admin-auth";
 import styles from "./page.module.css";
@@ -12,8 +12,10 @@ import styles from "./page.module.css";
  * does — same reasoning `2.b.iii.zo`'s standalone admin Twig template
  * gave for skipping `base.html.twig` on the legacy Symfony side.
  *
- * Fetches the full catalog once on the server via `getApps()` (no
- * options — every app, unfiltered) and hands it to `FeaturingTable`,
+ * Fetches the apps once on the server via `getFeaturingList()` (leaf
+ * `5.l.xvi.zi`: in table mode only first-party apps can carry the flags, so
+ * only they are listed and the rest are counted; otherwise every app, as
+ * `getApps()` returned) and hands them to `FeaturingTable`,
  * now a plain server-rendered display: featured/Editors' Pick are
  * sourced from the Console's signed index (`lib/sources/zealot.ts`),
  * not a local toggle, per `5.g.v.zi`'s "this repo stays write-free on
@@ -21,7 +23,7 @@ import styles from "./page.module.css";
  */
 export default async function AdminFeaturingPage() {
   await requireAdminPage(); // 3.c.iv.zi — defence in depth behind middleware.ts
-  const apps = await getApps();
+  const { apps, unlistedThirdParty } = await getFeaturingList();
 
   return (
     <main className={styles.main}>
@@ -33,6 +35,13 @@ export default async function AdminFeaturingPage() {
       </p>
 
       <FeaturingTable apps={apps} />
+
+      {unlistedThirdParty > 0 ? (
+        <p className={styles.subheading}>
+          {unlistedThirdParty.toLocaleString("en-US")} third-party apps are not listed: they are never featured
+          or an Editors&rsquo; Pick.
+        </p>
+      ) : null}
     </main>
   );
 }

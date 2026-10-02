@@ -1906,7 +1906,11 @@ export async function getDeveloperApps(developerSlug: string): Promise<Developer
 
 /** Every app carrying at least one sponsored-placement window, most recently updated first — backs the read-only listing at `/admin/sponsored`. */
 export async function getSponsoredApps(): Promise<App[]> {
-  const merged = await getMergedApps();
+  // 5.l.xvi.zi — a third-party row never carries a sponsored window (`appFromCatalogRow` and
+  // `normalizeAptoideApp` both set `sponsored_slots: []`; windows are authored in the Console and
+  // read off its index), so in table mode the first-party list is ALL the data this holds and the
+  // whole merged catalog is not loaded. Table mode off keeps the merged catalog.
+  const merged = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
   const result = merged
     .filter((app) => app.sponsored_slots.length > 0)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
@@ -1955,6 +1959,12 @@ export interface TrafficSummary {
   totalInstalls: number;
   totalViews: number;
   appCount: number;
+  /**
+   * Third-party apps counted in `appCount` but not listed in `perApp` (table mode only, `5.l.xvi.zi`):
+   * every one of them carries `install_count` 0 and `view_count` 0, so a row each would only add
+   * zeros. `0` in the whole-catalog path, which lists every app as before.
+   */
+  unlistedThirdParty: number;
   /** Every app, `view_count` descending — the dashboard's own ranking, independent of `getTopFreeApps`' `install_count` ranking or `getTrendingApps`' cached one. */
   perApp: TrafficSummaryRow[];
 }
@@ -1977,7 +1987,48 @@ export interface TrafficSummary {
  * "a dashboard's whole point is the full list" reasoning
  * `getTopFreeApps` already established for chart pages.
  */
+/**
+ * Third-party published rows that are not a first-party app's package or slug — the merged catalog's
+ * own rule, counted by the database in one request (`5.l.xvi.zi`). `null` when the table cannot
+ * answer (not configured, a failed read, more first-party apps than the count can exclude); the
+ * caller then uses the whole-catalog path. One fixed log line on failure. Never throws.
+ */
+async function countThirdPartyRows(firstParty: readonly App[]): Promise<number | null> {
+  try {
+    if (firstParty.length > COUNT_EXCLUDE_MAX) return null;
+    const counted = await readCatalogPublishedCount({
+      excludePackages: firstParty.map((app) => app.package_name).filter((name): name is string => typeof name === "string" && name !== ""),
+      excludeSlugs: firstParty.map((app) => app.slug),
+    });
+    return counted.ok ? counted.total : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getTrafficSummary(): Promise<TrafficSummary> {
+  // 5.l.xvi.zi — in table mode every third-party app has `install_count` 0 and `view_count` 0
+  // (`appFromCatalogRow`; the dashboard reads these `App` fields, not `app_counter`), so the two totals
+  // and every non-zero row come from the small first-party list alone. `appCount` is that list plus one
+  // database count of the other published rows. The zero rows are not listed (`unlistedThirdParty`).
+  // Any failed count, or table mode off, uses the whole merged catalog exactly as before.
+  if (useCatalogTable()) {
+    const firstParty = await getFirstPartyList();
+    const others = await countThirdPartyRows(firstParty);
+    if (others !== null) {
+      return resolveAfterDelay({
+        totalInstalls: firstParty.reduce((sum, app) => sum + app.install_count, 0),
+        totalViews: firstParty.reduce((sum, app) => sum + app.view_count, 0),
+        appCount: firstParty.length + others,
+        unlistedThirdParty: others,
+        perApp: firstParty
+          .map((app) => ({ slug: app.slug, name: app.name, install_count: app.install_count, view_count: app.view_count }))
+          .sort((a, b) => b.view_count - a.view_count),
+      });
+    }
+    console.error("catalog: traffic summary count failed, using the whole catalog");
+  }
+
   const merged = await getMergedApps();
   const totalInstalls = merged.reduce((sum, app) => sum + app.install_count, 0);
   const totalViews = merged.reduce((sum, app) => sum + app.view_count, 0);
@@ -1994,8 +2045,31 @@ export async function getTrafficSummary(): Promise<TrafficSummary> {
     totalInstalls,
     totalViews,
     appCount: merged.length,
+    unlistedThirdParty: 0,
     perApp,
   });
+}
+
+/**
+ * The apps the read-only featuring page lists — leaf `5.l.xvi.zi`. `featured` and `editors_pick` come
+ * from the Console's index, and a third-party row always has both `false` (`appFromCatalogRow`), so in
+ * table mode only the first-party list can be on the page; `unlistedThirdParty` counts the other
+ * published rows (one database count) so the page can say they exist and are never featured. A failed
+ * count, or table mode off, returns every app as `getApps()` did, with `unlistedThirdParty` 0.
+ */
+export interface FeaturingList {
+  apps: App[];
+  unlistedThirdParty: number;
+}
+
+export async function getFeaturingList(): Promise<FeaturingList> {
+  if (useCatalogTable()) {
+    const firstParty = await getFirstPartyList();
+    const others = await countThirdPartyRows(firstParty);
+    if (others !== null) return resolveAfterDelay({ apps: [...firstParty], unlistedThirdParty: others });
+    console.error("catalog: featuring list count failed, using the whole catalog");
+  }
+  return { apps: await getApps(), unlistedThirdParty: 0 };
 }
 
 // --- Top-searches dashboard (3.c.ii.zo) --------------------------------------

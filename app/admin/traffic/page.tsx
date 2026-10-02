@@ -26,7 +26,7 @@ import styles from "./page.module.css";
  */
 export default async function AdminTrafficPage() {
   await requireAdminPage(); // 3.c.iv.zi — defence in depth behind middleware.ts
-  const { totalInstalls, totalViews, appCount, perApp } = await getTrafficSummary();
+  const { totalInstalls, totalViews, appCount, perApp, unlistedThirdParty } = await getTrafficSummary();
   const maxViewCount = Math.max(1, ...perApp.map((row) => row.view_count));
   const numberFormat = new Intl.NumberFormat("en-US");
 
@@ -97,6 +97,12 @@ export default async function AdminTrafficPage() {
             ))}
           </tbody>
         </table>
+        {unlistedThirdParty > 0 ? (
+          <p className={styles.subheading}>
+            {numberFormat.format(unlistedThirdParty)} third-party apps are counted in &ldquo;Apps tracked&rdquo; but
+            not listed: none of them has any installs or views here.
+          </p>
+        ) : null}
       </section>
     </main>
   );
