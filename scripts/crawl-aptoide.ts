@@ -426,6 +426,14 @@ async function main(): Promise<number> {
     }
     cp = existing;
     log(`Resuming: offset ${cp.offset}, ${cp.candidates} candidates so far, ${cp.requests} pages fetched (sort=${cp.sort}, limit=${cp.limit} from the checkpoint).`);
+    // 5.l.iii.zi: a crawl that stopped only because it reached an EARLIER, smaller candidate cap is reopened when
+    // the cap has been raised (config 5,000 -> 10,000), and continues from the saved offset. Any other finished
+    // crawl (the catalog is exhausted, or the cap was not raised) stays finished.
+    if (cp.done && cp.stop_reason === "target_reached" && cp.candidates < caps.maxCandidates) {
+      cp = { ...cp, done: false, stop_reason: null, updated_at: new Date().toISOString() };
+      await writeJsonAtomic(checkpointPath, cp);
+      log(`Reopened: the earlier cap was reached at ${cp.candidates} candidates and this run's cap is ${caps.maxCandidates}.`);
+    }
     if (cp.done) {
       log(`This crawl is already finished (${cp.stop_reason}). Pass --fresh to start over.`);
       return 0;

@@ -1,16 +1,20 @@
 name: Aptoide Crawl & Fetch
 
-# Grows the Aptoide half of the catalog. One run crawls up to 6,000 candidates (60 requests of 100),
-# fetches and trust-checks up to `fetch.maxRequests` of them (config/aptoide-ingest.json, 1,500 at
-# 1 request per second, about 30 to 40 minutes), merges the trusted ones into the snapshot, and opens
-# ONE pull request. The crawl and fetch checkpoints travel inside that pull request, so MERGE IT before the
-# next run: a run started from a master that does not have the previous checkpoints begins again at the top.
-# Run it by hand ("Run workflow") after each merge until the catalog reaches the size you want.
+# Grows the Aptoide half of the catalog, straight into Supabase (leaf 5.l.iii.zi; was: a pull request of
+# snapshot files). One run crawls up to `crawl.maxCandidates` candidates (config/aptoide-ingest.json, 10,000
+# in at most 120 requests of 100), fetches and trust-checks up to `fetch.maxRequests` of them (1,500 at 1
+# request per second, about 30 to 40 minutes), and WRITES the trusted ones to the `catalog_app` table
+# (scripts/write-catalog-table.ts). Run it by hand ("Run workflow") until the table holds the target (leaf
+# 5.l.iii.zo: about six more runs of 1,500 if the trust gate rejects nothing).
 #
-# PREREQUISITE (confirmed by the first run's log): Settings -> Actions -> General -> Workflow permissions ->
-# "Allow GitHub Actions to create and approve pull requests" must be ON. The `permissions:` block below does
-# not override it; with it off, the last step fails with "GitHub Actions is not permitted to create or approve
-# pull requests" AFTER the crawl succeeded (the branch is still pushed; open the PR from it by hand).
+# Resume state: the crawl and fetch checkpoints and the candidate list are kept in the GitHub Actions cache
+# (no pull request, nothing committed). A cache entry that is evicted (unused for 7 days) or missing means the
+# next run crawls again from the top and refetches from the first candidate; it costs requests, not data,
+# because the write is an upsert on `id`.
+#
+# PREREQUISITE: repo secrets SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, for the D-STORE project (never
+# Zealot's). Without them the write step fails with a clear message AFTER the crawl and fetch; the cached
+# results are kept and the next run writes them.
 
 on:
   schedule:
@@ -18,8 +22,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: aptoide-crawl
@@ -36,28 +39,36 @@ jobs:
           node-version: "20"
       - run: npm ci
 
+      - name: Restore resume state
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            storage/downloads/aptoide-crawl-candidates.jsonl
+            storage/downloads/aptoide-crawl-checkpoint.json
+            storage/downloads/aptoide-meta-checkpoint.json
+            storage/downloads/aptoide-meta-results.jsonl
+          key: aptoide-state-${{ github.run_id }}
+          restore-keys: aptoide-state-
+
       - name: Run Crawl (bounded chunks)
         run: npx tsx scripts/crawl-aptoide.ts
 
       - name: Run Fetch (getMeta)
         run: npx tsx scripts/fetch-aptoide-meta.ts
 
-      - name: Run Merge
-        run: npx tsx scripts/merge-aptoide-snapshot.ts
+      - name: Write to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npx tsx scripts/write-catalog-table.ts
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+      - name: Save resume state
+        if: always()
+        uses: actions/cache/save@v4
         with:
-          # Only the pipeline's own files: the snapshot shards and header, plus the candidate list,
-          # results and checkpoints that must carry over to the next run. Nothing else is staged.
-          add-paths: |
-            storage/downloads/**
-          commit-message: "chore: update aptoide snapshot via crawl & fetch"
-          branch: aptoide-snapshot-update
-          title: "Automated Aptoide Snapshot Update"
-          body: |
-            Automated crawl, fetch, and merge of Aptoide apps.
-            - Runner country and counts are in `storage/downloads/aptoide-crawl-last-run.json`.
-            - Fetch results are in `storage/downloads/aptoide-meta-last-run.json`.
-            - Merge counts and the new app total are in `storage/downloads/aptoide-merge-last-run.json`.
-            - Merge this pull request, then run the workflow again to continue from the saved checkpoints.
+          path: |
+            storage/downloads/aptoide-crawl-candidates.jsonl
+            storage/downloads/aptoide-crawl-checkpoint.json
+            storage/downloads/aptoide-meta-checkpoint.json
+            storage/downloads/aptoide-meta-results.jsonl
+          key: aptoide-state-${{ github.run_id }}

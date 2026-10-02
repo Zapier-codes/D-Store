@@ -24,8 +24,8 @@ export interface IngestConfig {
 
 const DEFAULT_CONFIG: IngestConfig = {
   crawl: {
-    maxRequests: 60,
-    maxCandidates: 5000,
+    maxRequests: 120,
+    maxCandidates: 10000,
     limit: 100,
     delayMs: 1000,
   },
