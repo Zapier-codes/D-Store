@@ -42,6 +42,17 @@ import { getNewAndUpdated } from "@/lib/catalog";
  * sitemap entry).
  */
 
+/**
+ * Leaf `5.l.vi.zo` — the feed was already short in table mode, and stays so. `getNewAndUpdated(50)`
+ * with a finite limit reads the first-party apps plus the first rows of the database's `new` order
+ * (leaf `5.l.iv.zi`), never the whole catalog; only a failed table read falls back to the whole-catalog
+ * sort. This leaf changed two things here and nothing else: `force-dynamic`, so a build (which has no
+ * Supabase env) cannot freeze a copy of the feed, and a short CDN cache (fifteen minutes fresh, an
+ * hour stale-while-revalidate) so a feed reader polling every minute is one request in fifteen to the
+ * database, not every one.
+ */
+export const dynamic = "force-dynamic";
+
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://d-store-nu.vercel.app";
 const FEED_TITLE = "D-Store — New & Updated Apps";
 const FEED_DESCRIPTION = "Recently added and updated apps on D-Store.";
@@ -106,6 +117,7 @@ ${items}
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
     },
   });
 }

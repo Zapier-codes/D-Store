@@ -26,6 +26,8 @@ import { readAppsPage, parseAfter } from "./apps-page";
 import { readCatalogApp, readCatalogDeveloper, readCatalogSlugExists } from "./catalog-detail";
 import { readCatalogLicenses, CATALOG_LICENSE_MAX_CHARS, CATALOG_SIZE_MAX_MB, CATALOG_PAGE_MAX } from "./catalog-table";
 import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
+import { readCatalogSitemapChunk, readCatalogSitemapTotal } from "./catalog-sitemap";
+import { appSitemapEntry, developerSitemapEntry, sitePageEntries, sitemapChunkCount, type SitemapEntry } from "./sitemap-xml";
 import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
 import {
   createZealotSource as createLiveZealotSource,
@@ -1138,6 +1140,89 @@ export async function getNewAndUpdated(limit = 12): Promise<App[]> {
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, limit);
   return resolveAfterDelay(result);
+}
+
+/**
+ * How many chunk documents the sitemap index lists — leaf `5.l.vi.zo`. Table mode only: `null` when
+ * the table is not in use or the count could not be read (one fixed log line); the caller then serves
+ * the whole-catalog sitemap, as before. One request, one row asked for, only the count used.
+ */
+export async function getSitemapChunkCount(): Promise<number | null> {
+  if (!useCatalogTable()) return null;
+  try {
+    const read = await readCatalogSitemapTotal();
+    if (!read.ok) {
+      console.error("catalog: sitemap count failed");
+      return null;
+    }
+    return sitemapChunkCount(read.total);
+  } catch {
+    console.error("catalog: sitemap count failed");
+    return null;
+  }
+}
+
+/**
+ * One document of the chunked sitemap — leaf `5.l.vi.zo`. Table mode only: `null` when the table is
+ * not in use (the caller serves the whole-catalog sitemap, as before) and `null` with one fixed log
+ * line when a read failed (the caller answers 503; a failed read is never an empty or a short
+ * sitemap). Never throws.
+ *
+ * Chunk `index` is rows `index * 1000` to `index * 1000 + 999` of the published rows by slug
+ * (`lib/catalog-sitemap.ts`). Chunk 0 also carries what is not a row: the site's own pages, one page
+ * per taxonomy category, the first-party (Zealot) apps and their developers. A row whose package name
+ * or slug belongs to a first-party app is left out (first-party wins, as in the merged catalog), so no
+ * URL is listed twice and none that the app page would answer "not found" for. `chunkCount` comes from
+ * the table's own count in the same read; an `index` at or past it comes back with no entries and the
+ * caller answers 404.
+ *
+ * Decided here, for the operator to overrule: developer pages are listed for first-party developers
+ * only. A third-party developer page still loads the whole catalog for its app list
+ * (`getAppsByDeveloper`, which `5.l.vii.zi` or a new leaf has to replace), so listing thousands of
+ * them would invite a crawler to trigger that load thousands of times.
+ */
+export interface SitemapChunk {
+  entries: SitemapEntry[];
+  chunkCount: number;
+}
+
+export async function getSitemapChunk(index: number, baseUrl: string): Promise<SitemapChunk | null> {
+  if (!useCatalogTable()) return null;
+  try {
+    const read = await readCatalogSitemapChunk(index);
+    if (!read.ok) {
+      console.error("catalog: sitemap read failed");
+      return null;
+    }
+    const chunkCount = sitemapChunkCount(read.total);
+    if (index >= chunkCount) return { entries: [], chunkCount };
+
+    const entries: SitemapEntry[] = [];
+    const firstParty = await getFirstPartyList();
+    const ownPackages = new Set<string>();
+    const ownSlugs = new Set<string>();
+    for (const app of firstParty) {
+      if (app.package_name) ownPackages.add(app.package_name);
+      ownSlugs.add(app.slug);
+    }
+
+    if (index === 0) {
+      const categories = await getTaxonomyCategories();
+      entries.push(...sitePageEntries(baseUrl, categories));
+      for (const app of firstParty) entries.push(appSitemapEntry(baseUrl, app.slug, app.updated_at));
+      for (const slug of new Set(firstParty.map((app) => app.developer_slug))) {
+        entries.push(developerSitemapEntry(baseUrl, slug));
+      }
+    }
+    for (const row of read.rows) {
+      if (ownPackages.has(row.package_name) || ownSlugs.has(row.slug)) continue;
+      entries.push(appSitemapEntry(baseUrl, row.slug, row.updated_at));
+    }
+    return { entries, chunkCount };
+  } catch {
+    console.error("catalog: sitemap read failed");
+    return null;
+  }
 }
 
 /**

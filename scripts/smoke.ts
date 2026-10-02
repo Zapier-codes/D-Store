@@ -104,7 +104,15 @@ async function main(): Promise<void> {
   // --- Browse -------------------------------------------------------------
   await page("browse: home page", "/", ["<html"]);
   await page("browse: categories index", "/categories");
-  const sitemap = await page("browse: sitemap", "/sitemap.xml", ["<urlset"]);
+  let sitemap = await page("browse: sitemap", "/sitemap.xml");
+  if (sitemap.includes("<sitemapindex")) {
+    // Table mode (5.l.vi.zo): /sitemap.xml is an index; the first chunk holds the first-party apps.
+    const firstChunk = /<loc>https?:\/\/[^<]*?(\/sitemap-chunks\/0\.xml)<\/loc>/.exec(sitemap);
+    if (!firstChunk) fail("browse: sitemap index lists chunk 0", "no /sitemap-chunks/0.xml entry in the index");
+    sitemap = await page("browse: sitemap chunk 0", firstChunk![1], ["<urlset"]);
+  } else if (!sitemap.includes("<urlset")) {
+    fail("browse: sitemap", "GET /sitemap.xml is neither a <urlset> nor a <sitemapindex>");
+  }
 
   const slugs = [...new Set([...sitemap.matchAll(/\/app\/([a-z0-9]+(?:-[a-z0-9]+)*)<\/loc>/g)].map((m) => m[1]))];
   if (slugs.length === 0) fail("browse: sitemap lists apps", "no /app/<slug> entries found in the sitemap");
