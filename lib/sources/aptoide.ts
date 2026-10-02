@@ -83,7 +83,8 @@ export interface AptoideRawApp {
   uname: string;
   icon: string;
   graphic?: string | null;
-  developer: { id: number; name: string; website?: string | null };
+  // `name` is null for some real entries (7 of the first 1,506 crawled), so it is typed as it actually arrives.
+  developer: { id: number; name: string | null; website?: string | null };
   file: AptoideFile;
   media: {
     description?: string;
@@ -350,6 +351,7 @@ function mapPermissions(used: string[] | undefined): string[] | null {
 
 export function normalizeAptoideApp(raw: AptoideRawApp): App {
   const slug = raw.uname || slugify(raw.name);
+  const developerName = raw.developer?.name?.trim() || null;
   const sizeMb = Math.round((raw.file.filesize / (1024 * 1024)) * 10) / 10;
   const description = raw.media.description?.trim() || raw.media.summary?.trim() || "No description provided.";
   const summary = raw.media.summary?.trim() || description.split("\n")[0].slice(0, 160);
@@ -442,9 +444,12 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
     screenshots: (raw.media.screenshots ?? []).map((s) => s.url),
     changelog: raw.media.news?.trim() || "No changelog provided.",
 
-    developer_slug: slugify(raw.developer.name),
-    developer_name: raw.developer.name, // 5.h.iii.zi — no static Developer row exists for third-party publishers
-    developer_website: raw.developer.website ?? null, // 5.h.iv.zi — feeds the derived Developer.profile_url (lib/catalog.ts getDeveloperBySlug)
+    // A null/blank (or non-Latin, so slug-less) developer name must not throw: one bad entry took every page down.
+    // Such apps get an honest "Unknown developer" label and a slug of their own, never a shared bucket that would
+    // present unrelated apps as one publisher.
+    developer_slug: (developerName && slugify(developerName)) || `unknown-${slug}`,
+    developer_name: developerName ?? "Unknown developer", // 5.h.iii.zi — no static Developer row exists for third-party publishers
+    developer_website: raw.developer?.website ?? null, // 5.h.iv.zi — feeds the derived Developer.profile_url (lib/catalog.ts getDeveloperBySlug)
 
     available_regions: [...ALL_REGIONS], // Aptoide's response carries no per-country availability; conservative default, same as most first-party dummy entries
 
@@ -503,7 +508,18 @@ export function createAptoideSource(): CatalogSource {
     origin: APTOIDE_ORIGIN,
     async getApps(): Promise<App[]> {
       const raw = await loadSnapshot();
-      return raw.map(normalizeAptoideApp);
+      // One malformed snapshot entry must never take the whole catalog (and every page) down: skip it and say so.
+      const apps: App[] = [];
+      let skipped = 0;
+      for (const entry of raw) {
+        try {
+          apps.push(normalizeAptoideApp(entry));
+        } catch {
+          skipped += 1;
+        }
+      }
+      if (skipped > 0) console.error(`aptoide: skipped ${skipped} of ${raw.length} snapshot entries that could not be normalized`);
+      return apps;
     },
   };
 }
