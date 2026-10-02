@@ -529,10 +529,21 @@ export async function getCollectionBySlug(slug: string): Promise<Collection | nu
  * first-party-only Console field), so a collection can only ever
  * surface Zealot-origin apps today — a real consequence of moving
  * membership onto the app, not something this function works around.
+ *
+ * Leaf `5.l.xiv.zo` — in table mode this reads the small first-party list
+ * (`getFirstPartyList`) instead of the whole merged catalog, and makes NO
+ * database read. That is deliberate, not an omission: a table row never
+ * carries a collection (`appFromCatalogRow` sets `collections: []`, as
+ * `normalizeAptoideApp` does), and a third-party row is dropped from the
+ * merged catalog when it shares a first-party package or slug, so the
+ * filter below can only ever match a first-party app. Adding a request
+ * for rows that cannot match would cost a round trip and return nothing.
+ * If a third-party source ever carries `collections`, this is the place
+ * to add a bounded table read. Table mode off keeps the merged catalog.
  */
 export async function getCollectionApps(slug: string): Promise<App[]> {
-  const merged = await getMergedApps();
-  const result = merged
+  const pool = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  const result = pool
     .filter((app) => app.collections.includes(slug))
     .sort((a, b) => b.install_count - a.install_count);
   return resolveAfterDelay(result);
