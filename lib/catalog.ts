@@ -20,6 +20,7 @@ import { incrementCounter, logSearch } from "./counter-store";
 import { apps, categories, developers, reviews, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type AppSponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
+import { createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
 import {
   createZealotSource as createLiveZealotSource,
   getZealotCollections,
@@ -105,7 +106,23 @@ async function getMergedApps(): Promise<App[]> {
   const key = catalogScopeKey(scope);
   let pending = mergedAppsByScope.get(key);
   if (!pending) {
-    pending = mergeCatalogSources([createZealotSource(scope), createAptoideSource()]);
+    // 5.l.ii.zi — the Aptoide side reads the `catalog_app` table when the operator opts in
+    // (`CATALOG_SOURCE=table` plus the Supabase env); otherwise the snapshot files, as before.
+    // A failed table read falls back to the snapshot for this lifetime's catalog rather than 500ing every page.
+    const thirdParty: CatalogSource = useCatalogTable()
+      ? {
+          origin: "aptoide",
+          async getApps() {
+            try {
+              return await createCatalogTableSource().getApps();
+            } catch (error) {
+              console.error(`catalog: table read failed, using the snapshot (${error instanceof Error ? error.message : "unknown"})`);
+              return createAptoideSource().getApps();
+            }
+          },
+        }
+      : createAptoideSource();
+    pending = mergeCatalogSources([createZealotSource(scope), thirdParty]);
     mergedAppsByScope.set(key, pending);
     pending.catch(() => mergedAppsByScope.delete(key));
   }
