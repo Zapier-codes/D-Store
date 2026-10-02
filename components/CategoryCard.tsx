@@ -1,16 +1,17 @@
 import Link from "next/link";
-import AppIcon from "./AppIcon";
+import CategoryIcon from "./CategoryIcon";
 import styles from "./CategoryCard.module.css";
 
 /**
  * Category card — leaf 0.g.ii.zi (Search & Category Browse → Category
  * browse). The per-category unit populating the `/categories` grid,
  * mirroring `AppCard` (0.c.ii.zo) closely: same `ShelfGrid`-compatible
- * card shape, same colored-initial-tile icon convention.
+ * card shape.
  *
  * `Category.icon` (lib/mock-data.ts) is a Material icon *name* string
- * (e.g. "settings"), not an asset — same "no real icon assets exist
- * yet" gap `AppCard` already documents for `App.icon`. Categories also
+ * (e.g. "settings"), not an asset. It is drawn as an inline SVG by
+ * `CategoryIcon` (the card used to show the name's initial instead, which
+ * is what an app with no icon image gets). Categories also
  * have no per-category color fields the way apps do (`primary_color`/
  * `secondary_color`), so every tile uses the shared `--color-accent`
  * token rather than inventing colors the data doesn't have — honest
@@ -28,8 +29,8 @@ export default function CategoryCard({
   href,
   noun = "app",
 }: {
-  /** Only `slug` and `name` are read, so both the legacy `Category` and a two-axis `TaxonomyCategory` fit. */
-  category: { slug: string; name: string };
+  /** `slug` and `name` are read, and `icon` (a Material Symbols name) when present, so both the legacy `Category` and a two-axis `TaxonomyCategory` fit. */
+  category: { slug: string; name: string; icon?: string };
   appCount: number;
   /** `5.i.iv.zi` — defaults to the legacy `/categories/<slug>`; the two-axis pages pass `/categories/<appType>/<slug>`. */
   href?: string;
@@ -39,15 +40,11 @@ export default function CategoryCard({
   return (
     <Link href={href ?? `/categories/${category.slug}`} className={styles.card}>
       <div className={styles.icon}>
-        {/* Categories have no per-category color fields (see file-header
-            comment), so every tile uses the shared accent token in place
-            of app-specific primary/secondary/tertiary colors. */}
-        <AppIcon
-          name={category.name}
-          primaryColor="var(--color-accent)"
-          secondaryColor="var(--color-accent-strong)"
-          tertiaryColor="var(--color-surface)"
-        />
+        {/* Categories have no per-category color fields, so every tile uses the
+            shared accent token. The glyph is the category's own icon, drawn
+            inline (components/CategoryIcon.tsx); a category with no icon name
+            gets the generic one, never an initial. */}
+        <CategoryIcon icon={category.icon ?? ""} className={styles.glyph} />
       </div>
       <div className={styles.info}>
         <p className={styles.name}>{category.name}</p>

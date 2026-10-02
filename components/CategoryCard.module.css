@@ -54,6 +54,12 @@
   color: var(--color-bg);
 }
 
+/* The category glyph: about half the tile, centred by the tile's flex layout. */
+.glyph {
+  width: 52%;
+  height: 52%;
+}
+
 .info {
   display: flex;
   flex-direction: column;

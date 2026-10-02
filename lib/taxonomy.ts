@@ -285,7 +285,7 @@ export function affinityCategory(category: unknown, appType?: AppType): string |
  */
 export interface TaxonomyCategory extends TaxonomyEntry {
   app_type: AppType;
-  /** Material Symbols name, as `Category.icon` is. Not rendered as a glyph yet (`AppIcon` draws an initial tile) — data for when it is. */
+  /** Material Symbols name, as `Category.icon` is. Drawn by `components/CategoryIcon.tsx` (`lib/category-icons.ts`). */
   icon: string;
 }
 
