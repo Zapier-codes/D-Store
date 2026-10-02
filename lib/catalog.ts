@@ -23,7 +23,8 @@ import { createAptoideSource } from "./sources/aptoide";
 import { createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
 import { readThirdPartyShelf, SHELF_MAX } from "./catalog-shelf";
 import { readAppsPage, parseAfter } from "./apps-page";
-import { readCatalogLicenses, CATALOG_LICENSE_MAX_CHARS, CATALOG_SIZE_MAX_MB } from "./catalog-table";
+import { readCatalogApp, readCatalogDeveloper, readCatalogSlugExists } from "./catalog-detail";
+import { readCatalogLicenses, CATALOG_LICENSE_MAX_CHARS, CATALOG_SIZE_MAX_MB, CATALOG_PAGE_MAX } from "./catalog-table";
 import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
 import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
 import {
@@ -311,6 +312,23 @@ export async function getDispatchCatalog(): Promise<DispatchCatalogApp[]> {
  * NOT swallowed: "catalog unreadable" must not look like "no such app".
  */
 export async function catalogHasSlug(slug: string): Promise<boolean> {
+  // 5.l.vi.zi — table mode asks the table about this one slug (no `raw`, a few bytes) instead of
+  // loading every app. A failed read is NOT "no such app": it falls through to the whole-catalog
+  // path below, which throws if the catalog really is unreadable.
+  if (useCatalogTable()) {
+    try {
+      const firstParty = await getFirstPartyList();
+      if (firstParty.some((app) => app.slug === slug)) return true;
+      const looked = await readCatalogSlugExists(slug);
+      if (looked.ok) {
+        // A first-party app owns its package name (`mergeCatalogSources`), so a row that shares one is not in the catalog.
+        return looked.found !== null && !firstParty.some((app) => app.package_name === looked.found!.package_name);
+      }
+      console.error("catalog: slug check failed, using the whole catalog");
+    } catch {
+      console.error("catalog: slug check failed, using the whole catalog");
+    }
+  }
   const merged = await getMergedApps();
   return merged.some((app) => app.slug === slug);
 }
@@ -488,7 +506,46 @@ export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
   return resolveAfterDelay(result);
 }
 
+/**
+ * One app by slug from the table — leaf `5.l.vi.zi`. Table mode only. First-party apps are found
+ * first in the small cached list (as `getMergedApps` puts them first); anything else is ONE row of
+ * `catalog_app` read with its `raw` payload (`readCatalogApp`), so the page has the full description,
+ * screenshots, permissions, changelog, rating and version history without any other app being
+ * loaded. A row whose package name belongs to a first-party app is not in the merged catalog, so it
+ * is not found here either.
+ *
+ * Returns the app, `null` for "no such app", or `undefined` when the read failed or the table is not
+ * usable, which tells the caller to use the whole-catalog path (and is never read as "not found").
+ * One fixed log line on failure (no slug, body or error text). Never throws.
+ */
+async function getAppBySlugFromTable(slug: string): Promise<App | null | undefined> {
+  try {
+    const firstParty = await getFirstPartyList();
+    const own = firstParty.find((a) => a.slug === slug);
+    if (own) return own;
+
+    const looked = await readCatalogApp(slug);
+    if (!looked.ok) {
+      console.error("catalog: app lookup failed, using the whole catalog");
+      return undefined;
+    }
+    const app = looked.app;
+    if (app === null) return null;
+    if (app.package_name && firstParty.some((a) => a.package_name === app.package_name)) return null;
+    return app;
+  } catch {
+    console.error("catalog: app lookup failed, using the whole catalog");
+    return undefined;
+  }
+}
+
 export async function getAppBySlug(slug: string): Promise<App | null> {
+  // 5.l.vi.zi — table mode reads one row instead of the whole catalog; the whole-catalog path below
+  // is the fallback when the table is off or the read failed.
+  if (useCatalogTable()) {
+    const found = await getAppBySlugFromTable(slug);
+    if (found !== undefined) return resolveAfterDelay(found);
+  }
   const merged = await getMergedApps();
   const app = merged.find((a) => a.slug === slug) ?? null;
   return resolveAfterDelay(app);
@@ -1203,7 +1260,36 @@ export async function logSearchQuery(query: string): Promise<void> {
 }
 
 /** Other apps in the same category, excluding the app itself — backs the "Similar apps" rail on the detail page. */
-export async function getSimilarApps(appSlug: string, limit = 6): Promise<App[]> {
+export async function getSimilarApps(
+  appSlug: string,
+  limit = 6,
+  /** 5.l.vi.zi — the app's own `(app_type, category)` when the caller already has the app, so table mode does not look it up again. */
+  known?: Pick<App, "app_type" | "category">
+): Promise<App[]> {
+  // 5.l.vi.zi — table mode: the first-party apps of the category, then one bounded `top`-order page of
+  // its third-party rows (`readAppsPage`, the same read the category page uses), minus the app itself.
+  // The same order the whole-catalog path gives (first-party first, then by reported downloads).
+  if (useCatalogTable()) {
+    try {
+      const firstParty = await getFirstPartyList();
+      const source = known ?? (await getAppBySlugFromTable(appSlug));
+      if (source === null) return resolveAfterDelay([]);
+      if (source !== undefined) {
+        const page = await readAppsPage({
+          scope: { appType: source.app_type, category: source.category },
+          order: "top",
+          pageSize: Math.min(Math.max(limit, 1) + 1, CATALOG_PAGE_MAX),
+          firstParty,
+        });
+        if (page !== null) {
+          return resolveAfterDelay(page.apps.filter((app) => app.slug !== appSlug).slice(0, limit));
+        }
+      }
+    } catch {
+      // fall through to the whole-catalog path
+    }
+    console.error("catalog: similar apps read failed, using the whole catalog");
+  }
   const merged = await getMergedApps();
   const source = merged.find((a) => a.slug === appSlug);
   if (!source) return resolveAfterDelay([]);
@@ -1342,17 +1428,42 @@ export async function getDeveloperBySlug(slug: string): Promise<Developer | null
   // (Aptoide: publisher name + website); bio and joined date stay null
   // rather than being invented. Website is only carried through when it
   // is an http(s) URL, since it is rendered as a link.
+  // 5.l.vi.zi — table mode: a first-party app by this developer answers from the small cached list;
+  // otherwise one row of the table (name and website only). `undefined` = the read failed.
+  if (useCatalogTable()) {
+    try {
+      const own = (await getFirstPartyList()).find((app) => app.developer_slug === slug);
+      if (own) return resolveAfterDelay(developerFromApp(slug, own));
+      const looked = await readCatalogDeveloper(slug);
+      if (looked.ok) {
+        return resolveAfterDelay(
+          looked.developer === null
+            ? null
+            : { slug, name: looked.developer.name, bio: null, profile_url: looked.developer.website, joined_at: null }
+        );
+      }
+    } catch {
+      // fall through to the whole-catalog path
+    }
+    console.error("catalog: developer lookup failed, using the whole catalog");
+  }
+
   const merged = await getMergedApps();
   const match = merged.find((app) => app.developer_slug === slug);
   if (!match) return resolveAfterDelay(null);
+  return resolveAfterDelay(developerFromApp(slug, match));
+}
+
+/** The derived `Developer` for an app that has no static row: only what the source supplied; bio and joined date stay null. */
+function developerFromApp(slug: string, match: App): Developer {
   const website = match.developer_website && /^https?:\/\//i.test(match.developer_website) ? match.developer_website : null;
-  return resolveAfterDelay({
+  return {
     slug,
     name: match.developer_name ?? slug,
     bio: null,
     profile_url: website,
     joined_at: null,
-  });
+  };
 }
 
 /** Every published app by a given developer, most recently updated first — the profile page's app list. */

@@ -107,7 +107,8 @@ export default async function AppDetailPage({
     notFound();
   }
 
-  const similarApps = await getSimilarApps(app.slug);
+  // 5.l.vi.zi — pass the app's own (app_type, category) so table mode does not look the app up a second time.
+  const similarApps = await getSimilarApps(app.slug, undefined, app);
   const developer = await getDeveloperBySlug(app.developer_slug);
   // 5.i.vii.zo — the display name comes from the app's stored (app_type,
   // category) pair, which every source now emits as a Play slug. `uncategorized`

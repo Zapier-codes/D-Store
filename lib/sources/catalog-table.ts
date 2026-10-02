@@ -21,9 +21,11 @@
  *   long description, screenshots, permissions, changelog, rating, content
  *   rating, min Android version, version history, scan rank. They get the same
  *   neutral placeholders `normalizeAptoideApp` uses, and `not_provided` says
- *   so for the fields that have a "Not provided" path. The app detail page needs
- *   `raw` for one slug; that is leaf 11 (`5.l.vi.zi`), so do not turn this on for
- *   a deployment that serves detail pages until then.
+ *   so for the fields that have a "Not provided" path. The app detail page does
+ *   NOT use this list-grade app: since leaf 11 (`5.l.vi.zi`) `getAppBySlug` reads
+ *   that one row WITH its `raw` (`lib/catalog-detail.ts`) and shows the full app.
+ *   This list-grade shape is what lists, shelves and charts show, and what the
+ *   detail page falls back to for a row whose `raw` cannot be read.
  *
  * Reads the whole table by following `nextCursor` (100 a page, sequential),
  * capped at `MAX_TABLE_APPS`, once per server lifetime (cached by

@@ -511,3 +511,14 @@ export async function readCatalogLicenses(
     clearTimeout(timer);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Shared with lib/catalog-detail.ts — leaf 5.l.vi.zi
+// ---------------------------------------------------------------------------
+
+/**
+ * The row validator, the config reader and the slug pattern, exported so the single-row reads in
+ * `lib/catalog-detail.ts` use exactly the rules the paged reads use (one definition of a valid row,
+ * of a usable `SUPABASE_URL`, and of a slug the table can hold).
+ */
+export { parseRow as parseCatalogRow, readConfig as readCatalogTableConfig, SLUG_PATTERN as CATALOG_SLUG_PATTERN };
