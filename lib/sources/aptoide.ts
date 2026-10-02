@@ -29,7 +29,8 @@
  */
 
 import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField, ThirdPartyRating, ThirdPartyStats } from "../mock-data";
-import { CATEGORY_RAW_MAX, toPlay, UNCATEGORIZED } from "../taxonomy";
+import { CATEGORY_RAW_MAX, toPlay, UNCATEGORIZED, type AppType } from "../taxonomy";
+import { categoryFromKeywords } from "../taxonomy-keywords";
 import { ALL_REGIONS } from "../mock-data";
 import type { CatalogSource } from "./types";
 import { readVersionHistory } from "../version-history";
@@ -91,6 +92,11 @@ export interface AptoideRawApp {
     summary?: string;
     news?: string; // changelog-shaped free text
     screenshots?: { url: string }[];
+    /**
+     * `5.l.viii.zo` — a list of lower-case words that includes Play-style category words. Typed `unknown`
+     * because it is untrusted input: it is read only through `categoryFromKeywords`, which never throws.
+     */
+    keywords?: unknown;
   };
   age?: AptoideAge;
   appcoins?: AptoideAppcoins;
@@ -271,6 +277,42 @@ function categoryForPackage(packageName: string): string | null {
   return Object.prototype.hasOwnProperty.call(CATEGORY_BY_PACKAGE, packageName) ? CATEGORY_BY_PACKAGE[packageName] : null;
 }
 
+/** Where an Aptoide app is shelved, and how that was decided. `via` is `package`, `keywords` or `none`. */
+export interface AptoidePlacement {
+  app_type: AppType;
+  category: string;
+  /** The curated table's own string, kept when `toPlay` did not recognize it; otherwise `null`. */
+  category_raw: string | null;
+  via: "package" | "keywords" | "none";
+}
+
+/**
+ * `5.l.viii.zo` — the one place an Aptoide app's `{ app_type, category }` is decided, used by
+ * `normalizeAptoideApp` and by the re-derive script (`lib/catalog-rederive.ts`), so a stored row and a freshly
+ * normalized app cannot disagree. Order, first answer wins:
+ *  1. `CATEGORY_BY_PACKAGE` (the operator's hand-picked packages), through `toPlay`. A curated value `toPlay`
+ *     does not know stays `uncategorized` with the string kept in `category_raw`; it does NOT fall through to
+ *     the keywords, because the operator picked that package by hand.
+ *  2. `categoryFromKeywords(raw.media.keywords)` (exact word match, fixed priority, a game needs a genre).
+ *  3. `uncategorized`, `app_type` `app` (a wrong shelf is worse than none, `5.i.vi.zo`).
+ * Never throws, whatever `raw` is.
+ */
+export function placeAptoideApp(raw: AptoideRawApp): AptoidePlacement {
+  const packageName = typeof raw?.package === "string" ? raw.package : "";
+  const mappedCategory = categoryForPackage(packageName);
+  if (mappedCategory !== null) {
+    const placed = toPlay(mappedCategory);
+    const categoryRaw =
+      placed.via === "unknown" && mappedCategory.length > 0 ? mappedCategory.slice(0, CATEGORY_RAW_MAX) : null;
+    return { app_type: placed.app_type, category: placed.category, category_raw: categoryRaw, via: "package" };
+  }
+  const fromKeywords = categoryFromKeywords(raw?.media?.keywords);
+  if (fromKeywords !== null) {
+    return { app_type: fromKeywords.app_type, category: fromKeywords.category, category_raw: null, via: "keywords" };
+  }
+  return { app_type: "app", category: UNCATEGORIZED.slug, category_raw: null, via: "none" };
+}
+
 /**
  * Aptoide's `age.title` is already an English label ("Everyone", "Teen",
  * etc.) for most entries, so this maps by PEGI rating number where
@@ -382,18 +424,13 @@ export function normalizeAptoideApp(raw: AptoideRawApp): App {
   if (!raw.file.hardware?.sdk) notProvided.push("min_android_version");
   if (!hasUsableAge(raw.age)) notProvided.push("content_rating"); // the conservative "Adults only 18+" fallback stays as the stored value but is never displayed as if Aptoide had rated it
 
-  // 5.i.vi.zo — Play slugs and a real `app_type`, both from `toPlay`. A package
-  // outside the curated table is `uncategorized` (see `categoryForPackage`); a
-  // table value `toPlay` does not know (a typo added to the table) is also
-  // `uncategorized`, and the string is kept in `category_raw` rather than lost.
-  const mappedCategory = categoryForPackage(raw.package);
-  const placed = mappedCategory === null ? null : toPlay(mappedCategory);
-  const appType = placed?.app_type ?? "app";
-  const categorySlug = placed?.category ?? UNCATEGORIZED.slug;
-  const categoryRaw =
-    mappedCategory !== null && placed !== null && placed.via === "unknown" && mappedCategory.length > 0
-      ? mappedCategory.slice(0, CATEGORY_RAW_MAX)
-      : null;
+  // 5.l.viii.zo — `{ app_type, category }` from `placeAptoideApp`: the curated package table (through
+  // `toPlay`, as `5.i.vi.zo` set up), then `media.keywords`, then `uncategorized`. A curated value `toPlay`
+  // does not know (a typo added to the table) is `uncategorized` and the string is kept in `category_raw`.
+  const placement = placeAptoideApp(raw);
+  const appType = placement.app_type;
+  const categorySlug = placement.category;
+  const categoryRaw = placement.category_raw;
 
   const thirdPartyStats = readAptoideStats(raw);
 

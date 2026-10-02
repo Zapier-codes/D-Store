@@ -211,7 +211,8 @@ export type WriteResult =
   | { ok: true; report: WriteReport }
   | { ok: false; reason: "not_configured" | "unavailable"; report: WriteReport };
 
-function readConfig(env: Record<string, string | undefined>): { baseUrl: string; key: string } | null {
+/** The Supabase base URL and service-role key from `env`, or `null` when unset or unsafe (not https, not loopback http, or with credentials in the URL). Also used by `lib/catalog-rederive.ts`. */
+export function readConfig(env: Record<string, string | undefined>): { baseUrl: string; key: string } | null {
   const rawUrl = env.SUPABASE_URL?.trim();
   const key = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!rawUrl || !key) return null;
