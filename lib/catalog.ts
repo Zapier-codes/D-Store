@@ -27,6 +27,7 @@ import { readCatalogApp, readCatalogDeveloper, readCatalogSlugExists } from "./c
 import { readCatalogLicenses, CATALOG_LICENSE_MAX_CHARS, CATALOG_SIZE_MAX_MB, CATALOG_PAGE_MAX } from "./catalog-table";
 import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
 import { readCatalogSitemapChunk, readCatalogSitemapTotal } from "./catalog-sitemap";
+import { COUNT_EXCLUDE_MAX, readCatalogPublishedCount } from "./catalog-count";
 import { appSitemapEntry, developerSitemapEntry, sitePageEntries, sitemapChunkCount, type SitemapEntry } from "./sitemap-xml";
 import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
 import {
@@ -158,6 +159,55 @@ async function getFirstPartyList(): Promise<App[]> {
 }
 
 /**
+ * The footer's totals in table mode — leaf `5.l.xiii.zi`. `totalApps` is the first-party apps plus the
+ * published rows that are not a first-party app's package or slug (the merged catalog's own rule),
+ * counted by the database with one request. `totalDownloads` is the first-party apps' `install_count`
+ * sum: a third-party row's `install_count` is always 0 (`appFromCatalogRow`, as `normalizeAptoideApp`
+ * documents), so the rows add nothing to it. If a third-party app ever carries a non-zero
+ * `install_count`, this sum must become a database aggregate (a SQL function) and this note is the
+ * place to change.
+ *
+ * The footer is on every page, so the answer is cached in memory for `PUBLIC_STATS_TTL_MS` per
+ * catalog scope, and only a successful answer is cached. `null` (not configured, a failed read, more
+ * first-party packages than the count can exclude) makes the caller use the whole-catalog path, with
+ * one fixed log line, as every other table-mode read here does. Never throws.
+ */
+const PUBLIC_STATS_TTL_MS = 5 * 60 * 1000;
+const publicStatsByScope = new Map<string, { at: number; value: PublicStats }>();
+
+async function getPublicStatsFromTable(): Promise<PublicStats | null> {
+  try {
+    const scope = await getCatalogScope();
+    const key = catalogScopeKey(scope);
+    const cached = publicStatsByScope.get(key);
+    if (cached && Date.now() - cached.at < PUBLIC_STATS_TTL_MS) return cached.value;
+
+    const firstParty = await getFirstPartyList();
+    if (firstParty.length > COUNT_EXCLUDE_MAX) {
+      console.error("catalog: footer totals not read from the table (too many first-party apps to exclude)");
+      return null;
+    }
+    const counted = await readCatalogPublishedCount({
+      excludePackages: firstParty.map((app) => app.package_name).filter((name): name is string => typeof name === "string" && name !== ""),
+      excludeSlugs: firstParty.map((app) => app.slug),
+    });
+    if (!counted.ok) {
+      console.error("catalog: footer totals read failed, using the whole catalog");
+      return null;
+    }
+    const value: PublicStats = {
+      totalApps: firstParty.length + counted.total,
+      totalDownloads: firstParty.reduce((sum, app) => sum + app.install_count, 0),
+    };
+    publicStatsByScope.set(key, { at: Date.now(), value });
+    return value;
+  } catch {
+    console.error("catalog: footer totals read failed, using the whole catalog");
+    return null;
+  }
+}
+
+/**
  * Bounded third-party read for a shelf, or `null` when the shelf must use the whole-catalog path:
  * the table is not in use, the ask is not a bounded one (`Infinity` for a full chart), or the read
  * failed. A failure logs one fixed line (no query, cursor or body) and the caller falls back,
@@ -207,6 +257,12 @@ export interface PublicStats {
  * so this call is effectively free after the first page render anyway.
  */
 export async function getPublicStats(): Promise<PublicStats> {
+  // 5.l.xiii.zi — table mode: one count request (cached for a few minutes) instead of every app.
+  if (useCatalogTable()) {
+    const fromTable = await getPublicStatsFromTable();
+    if (fromTable !== null) return fromTable;
+  }
+
   const merged = await getMergedApps();
   return {
     totalApps: merged.length,
