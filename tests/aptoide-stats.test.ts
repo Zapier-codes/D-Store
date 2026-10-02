@@ -6,12 +6,12 @@ import { readAptoideStats } from "../lib/sources/aptoide";
 
 // Leaf 5.d.iv.zi — the reader check `5.h.vii.zi` left owed. Run from the repo root (`npm test`).
 type Raw = { stats?: unknown };
-const snapshot: Raw[] = JSON.parse(readFileSync(join(process.cwd(), "storage/downloads/aptoide-snapshot.json"), "utf8"));
+const snapshot: Raw[] = JSON.parse(readFileSync(join(process.cwd(), "tests/fixtures/aptoide-snapshot-12.json"), "utf8"));
 
 const votes = (counts: [number, number, number, number, number]) =>
   [5, 4, 3, 2, 1].map((value, i) => ({ value, count: counts[i] }));
 
-test("the committed snapshot: every one of the 12 apps reads to a rating and a download figure", () => {
+test("the 12-app fixture (frozen copy of the first real snapshot): every app reads to a rating and a download figure", () => {
   assert.equal(snapshot.length, 12);
   let totalRatings = 0;
   let noRatings = 0;

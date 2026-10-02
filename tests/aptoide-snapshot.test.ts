@@ -26,7 +26,7 @@ import {
 import { fsReadText, readSnapshotFiles, writeSnapshotFiles } from "../lib/aptoide-snapshot-io";
 
 // Leaf 5.h.x.zo.
-const real: Record<string, unknown>[] = JSON.parse(readFileSync(join(process.cwd(), "storage/downloads/aptoide-snapshot.json"), "utf8"));
+const real: Record<string, unknown>[] = JSON.parse(readFileSync(join(process.cwd(), "tests/fixtures/aptoide-snapshot-12.json"), "utf8"));
 const app = (pkg: string, updated: string | null, extra: Record<string, unknown> = {}) => ({
   package: pkg,
   name: pkg,
@@ -230,7 +230,7 @@ test("planShards: refuses a bad limit and a snapshot that would need more than M
   assert.equal(planShards(lines.slice(0, MAX_SHARDS), 16).shards.length, MAX_SHARDS);
 });
 
-test("the default limit is 8 MiB and the real snapshot is a small fraction of it", () => {
+test("the default limit is 8 MiB and the 12-app fixture is a small fraction of it", () => {
   assert.equal(SNAPSHOT_SHARD_LIMIT_BYTES, 8 * 1024 * 1024);
   const p = planShards(real.map(serializeApp));
   assert.equal(p.shards.length, 1);
