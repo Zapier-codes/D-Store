@@ -5,9 +5,12 @@ import {
   getFirstPartyApps,
   getNewAndUpdated,
   getTopFreeApps,
+  getHomeCategoryRows,
 } from "@/lib/catalog";
+import { toHomeCategoryRows } from "@/lib/home-categories";
 import Hero from "@/components/Hero";
 import Shelf from "@/components/Shelf";
+import CategoryBar from "@/components/CategoryBar";
 import SponsoredCard from "@/components/SponsoredCard";
 import ScrollReveal from "@/components/ScrollReveal";
 import ForYouShelf from "@/components/ForYouShelf";
@@ -127,6 +130,18 @@ import ForYouShelf from "@/components/ForYouShelf";
  * than hardcoded to any one shelf name, since which shelf is first is
  * itself data-dependent (today: Trending; once real first-party apps
  * exist: First-party).
+ *
+ * Leaf `5.l.ix.zo` adds the category bar and one shelf per non-empty
+ * category (`getHomeCategoryRows`, `lib/home-categories.ts`) below Top
+ * Free and above the client-side "For You" row. They come from bounded
+ * database reads in table mode only; with the table off, a failed read,
+ * or no app yet placed in any listed category, there are no rows and the
+ * page is exactly what it was. The category rows are not de-duplicated
+ * against the shelves above (an app can sit in Top Free and in its
+ * category row): a category row is that category's own top list, and
+ * thinning it by what happens to be above would make it differ from the
+ * category page it links to. They never take `priority` icons: they sit
+ * below the fold.
  */
 const HOME_SHELF_SIZE = 18;
 // Fetch deeper than the shelf size so de-duplicating against the shelves
@@ -134,7 +149,7 @@ const HOME_SHELF_SIZE = 18;
 const HOME_FETCH = 60;
 
 export default async function Home() {
-  const [firstParty, featured, trending, editorsPicks, newAndUpdatedAll, topFreeAll] =
+  const [firstParty, featured, trending, editorsPicks, newAndUpdatedAll, topFreeAll, categoryRowData] =
     await Promise.all([
       getFirstPartyApps(),
       getFeaturedApps(),
@@ -142,7 +157,9 @@ export default async function Home() {
       getEditorsPicks(),
       getNewAndUpdated(HOME_FETCH),
       getTopFreeApps(HOME_FETCH),
+      getHomeCategoryRows(),
     ]);
+  const categoryRows = toHomeCategoryRows(categoryRowData);
 
   const heroApp =
     featured.find((app) => app.origin === "zealot") ??
@@ -236,6 +253,14 @@ export default async function Home() {
       <ScrollReveal>
         <Shelf title="Top Free" apps={topFree} />
       </ScrollReveal>
+      <ScrollReveal>
+        <CategoryBar items={categoryRows} />
+      </ScrollReveal>
+      {categoryRows.map((row) => (
+        <ScrollReveal key={`${row.appType}/${row.category}`}>
+          <Shelf title={row.title} apps={row.apps} seeAllHref={row.href} />
+        </ScrollReveal>
+      ))}
       <ScrollReveal>
         <ForYouShelf />
       </ScrollReveal>

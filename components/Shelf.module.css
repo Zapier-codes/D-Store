@@ -15,3 +15,27 @@
   font-weight: 700;
   color: var(--color-accent);
 }
+
+/* Leaf 5.l.ix.zo: heading with a "See all" link (category rows on the home page). */
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.85rem;
+}
+
+.header .title {
+  margin: 0;
+}
+
+.seeAll {
+  color: var(--color-accent);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.seeAll:hover,
+.seeAll:focus-visible {
+  text-decoration: underline;
+}

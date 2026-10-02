@@ -1,4 +1,5 @@
 import type { App } from "@/lib/catalog";
+import Link from "next/link";
 import ShelfGrid from "./ShelfGrid";
 import AppCard from "./AppCard";
 import styles from "./Shelf.module.css";
@@ -26,6 +27,10 @@ import styles from "./Shelf.module.css";
  * Generic on purpose (not `sponsored?: boolean`) so this stays a plain
  * layout component with no knowledge of what a sponsored card is.
  *
+ * Optional `seeAllHref` (leaf `5.l.ix.zo`) adds a "See all" link beside the
+ * heading, used by the home page's category rows to reach the full
+ * category page. Absent, the heading renders exactly as before.
+ *
  * Optional `priorityCount` — leaf `3.d.ii.zo` (LCP budget pass). Marks
  * the first `priorityCount` cards' icons `priority` (eager, no
  * lazy-load delay) instead of every card in every shelf, which would
@@ -41,19 +46,32 @@ export default function Shelf({
   apps,
   extraSlot,
   priorityCount = 0,
+  seeAllHref,
 }: {
   title: string;
   apps: App[];
   extraSlot?: React.ReactNode;
   priorityCount?: number;
+  seeAllHref?: string;
 }) {
   if (apps.length === 0) return null;
 
   return (
     <section className={styles.shelf} aria-labelledby={`shelf-${slugify(title)}`}>
-      <h2 id={`shelf-${slugify(title)}`} className={styles.title}>
-        {title}
-      </h2>
+      {seeAllHref ? (
+        <div className={styles.header}>
+          <h2 id={`shelf-${slugify(title)}`} className={styles.title}>
+            {title}
+          </h2>
+          <Link href={seeAllHref} className={styles.seeAll} aria-label={`See all ${title}`}>
+            See all
+          </Link>
+        </div>
+      ) : (
+        <h2 id={`shelf-${slugify(title)}`} className={styles.title}>
+          {title}
+        </h2>
+      )}
       <ShelfGrid>
         {apps.map((app, index) => (
           <AppCard key={app.slug} app={app} priority={index < priorityCount} />

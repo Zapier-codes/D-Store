@@ -22,6 +22,8 @@ import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
 import { createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
 import { readThirdPartyShelf, SHELF_MAX } from "./catalog-shelf";
+import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
+import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
 import {
   createZealotSource as createLiveZealotSource,
   getZealotCollections,
@@ -903,6 +905,29 @@ export async function getNewAndUpdated(limit = 12): Promise<App[]> {
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, limit);
   return resolveAfterDelay(result);
+}
+
+/**
+ * Category rows for the home page — leaf `5.l.ix.zo`. Table mode only: the rows come from bounded
+ * `catalog_page` reads (`readCategoryRows`), one per pair in `HOME_CATEGORY_ROWS`. With the table
+ * off, or when any read fails, the answer is no rows (never the whole-catalog path, which would
+ * load every app to draw a row), so the home page simply shows what it showed before. A failure
+ * logs one fixed line (no slug, cursor or body). Never throws.
+ */
+export async function getHomeCategoryRows(): Promise<CategoryRowData[]> {
+  if (!useCatalogTable()) return [];
+  try {
+    const firstParty = await getFirstPartyList();
+    const rows = await readCategoryRows(HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE, firstParty);
+    if (rows === null) {
+      console.error("catalog: category rows read failed, showing none");
+      return [];
+    }
+    return rows;
+  } catch {
+    console.error("catalog: category rows read failed, showing none");
+    return [];
+  }
 }
 
 // --- Search & related content (0.g) -------------------------------------------

@@ -1,0 +1,44 @@
+/*
+ * Category-bar styles — leaf 5.l.ix.zo. Design tokens only, like Shelf and CategoryCard.
+ */
+
+.bar {
+  padding: 1rem 1rem 0.25rem;
+}
+
+.list {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0 0 0.5rem;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: border-color 150ms ease;
+}
+
+.chip:hover,
+.chip:focus-visible {
+  border-color: var(--color-accent);
+}
+
+.glyph {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--color-accent);
+}
