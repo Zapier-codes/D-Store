@@ -1,0 +1,23 @@
+/*
+ * Pager styles — leaf 5.l.x.zi. Design tokens only, like CategoryBar.
+ */
+
+.pager {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem 2rem;
+}
+
+.next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
