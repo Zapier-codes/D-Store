@@ -114,8 +114,15 @@ export async function generateMetadata(): Promise<Metadata> {
 // applies to the browser chrome — e.g. Android's status bar — even
 // before install) — see app/manifest.ts's own header comment for why
 // dark theme's value was chosen over a per-theme swap.
+// `width` / `initialScale` / `minimumScale`: the page is laid out at the device width and a mobile browser
+// may not zoom it out below 1. Without `minimumScale`, one element wider than the screen made the browser
+// shrink the whole page to fit it (tiny text and a blank band on one side, seen on the app detail page);
+// the global `overflow-x: clip` hides the overflow but does not stop that zoom-out. Zooming IN stays allowed.
 export const viewport: Viewport = {
   themeColor: "#0a0908",
+  width: "device-width",
+  initialScale: 1,
+  minimumScale: 1,
 };
 
 export default async function RootLayout({

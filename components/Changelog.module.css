@@ -29,6 +29,7 @@
 }
 
 .notes {
+  overflow-wrap: anywhere; /* long words and URLs in release notes wrap instead of widening the page */
   margin: 0;
   line-height: 1.5;
 }

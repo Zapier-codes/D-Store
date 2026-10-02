@@ -31,10 +31,22 @@
 
 .item {
   margin: 0;
+  /* A flex item defaults to min-width:auto, i.e. its longest unbroken word. Let it shrink to the row. */
+  min-width: 0;
+  max-width: 100%;
 }
 
+/*
+ * A chip is one unbroken token (a permission such as
+ * `com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE` is about 70 characters), wider
+ * than a phone's content column. Without a break rule it overflowed the page, and a mobile browser zoomed
+ * the whole page out to fit it, leaving a blank band down the side. It now wraps inside its own box.
+ */
 .code {
   display: inline-block;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   background: var(--color-bg);

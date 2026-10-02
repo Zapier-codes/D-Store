@@ -10,6 +10,7 @@
 
 .clamped {
   margin: 0;
+  overflow-wrap: anywhere; /* a long URL in a description must wrap, not widen the page */
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 4;
@@ -25,11 +26,13 @@
 
 .paragraph {
   margin: 0;
+  overflow-wrap: anywhere; /* a long URL in a description must wrap, not widen the page */
   line-height: 1.5;
 }
 
 .list {
   margin: 0;
+  overflow-wrap: anywhere; /* a long URL in a description must wrap, not widen the page */
   padding-left: 1.25rem;
   line-height: 1.5;
   display: flex;
