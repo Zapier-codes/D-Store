@@ -108,14 +108,14 @@ export default function Hero({ app }: { app: App }) {
             )}
             <span className={styles.metaMuted}>{app.license}</span>
           </div>
-
-          {/* /app/[slug] doesn't exist yet — lands in 0.e (App Detail Page).
-              Same forward-reference convention already used by Header's
-              /search and /categories links. */}
-          <Link href={`/app/${app.slug}`} className={styles.cta}>
-            View app
-          </Link>
         </div>
+
+        {/* The View button sits on the right of the card, outside the text column, as a transparent
+            outlined pill built from the theme tokens (so it follows the dark/light theme and a category's
+            contextual skin). On a narrow card it drops under the text and stays right-aligned. */}
+        <Link href={`/app/${app.slug}`} className={styles.cta} aria-label={`View ${app.name}`}>
+          View
+        </Link>
       </div>
     </section>
   );

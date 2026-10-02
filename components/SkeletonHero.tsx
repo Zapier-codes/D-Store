@@ -18,8 +18,9 @@ export default function SkeletonHero() {
         <SkeletonBlock width="55%" height="1.75rem" className={styles.gapTop} />
         <SkeletonBlock width="85%" height="1rem" className={styles.gapTop} />
         <SkeletonBlock width="40%" height="0.9rem" className={styles.gapTop} />
-        <SkeletonBlock width="140px" height="2.5rem" radius="999px" className={styles.gapTop} />
       </div>
+      {/* The View button now sits at the right of the card (Hero.tsx), outside the text column. */}
+      <SkeletonBlock width="5rem" height="2.5rem" radius="999px" className={styles.cta} />
     </div>
   );
 }

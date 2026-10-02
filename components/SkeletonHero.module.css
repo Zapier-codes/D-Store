@@ -37,3 +37,9 @@
 .gapTop {
   margin-top: 0.6rem;
 }
+
+/* Right-hand button placeholder, matching Hero's View button. */
+.cta {
+  flex-shrink: 0;
+  margin-left: auto;
+}

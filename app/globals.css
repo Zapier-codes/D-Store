@@ -259,3 +259,51 @@ img,
 video {
   max-width: 100%;
 }
+
+/*
+ * Fluid-layout safety net — operator request (2026-10-02), after one unbreakable permission name made the
+ * app detail page overflow and a phone browser zoom the whole page out. These are the defaults every
+ * page inherits, so a long word, URL, hash or package name, a wide embed or a long code block can never
+ * push a page wider than the screen, whatever the device, window size or text-size setting.
+ * Every rule sits in `:where()` (specificity zero) or is a plain element rule, so any component's own
+ * class still overrides it.
+ */
+html {
+  /* A phone must not inflate or shrink text on its own after a rotation. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Embedded and replaced content never wider than the space it sits in. */
+img,
+video,
+svg,
+canvas,
+iframe,
+embed,
+object,
+picture {
+  max-width: 100%;
+}
+
+/*
+ * Text wraps anywhere when a single token is wider than its box. `overflow-wrap` is inherited, so inline
+ * links, spans and inline-block chips inside these elements wrap too. `anywhere` (not `break-word`) also
+ * lowers the element's minimum width, which is what lets a flex or grid item shrink instead of overflowing.
+ * Buttons and form controls are left out on purpose: squeezing a button's label to one letter is worse.
+ */
+:where(p, li, dd, dt, h1, h2, h3, h4, h5, h6, blockquote, figcaption, summary, legend, caption, label, code, kbd, samp) {
+  overflow-wrap: anywhere;
+}
+
+/* A long line of code scrolls inside its own box; it never widens the page. */
+:where(pre) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Everything directly inside a page's <main> may shrink below its content width (flex and grid items default to `min-width: auto`). */
+:where(main) > * {
+  min-width: 0;
+  max-width: 100%;
+}

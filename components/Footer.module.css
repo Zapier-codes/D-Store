@@ -25,12 +25,13 @@
   color: var(--color-border);
 }
 
+/* No `nowrap` on either line: on a narrow phone a long line must wrap, not widen the page. */
 .copy {
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .stats {
-  white-space: nowrap;
+  min-width: 0;
   color: var(--color-border);
 }
 
