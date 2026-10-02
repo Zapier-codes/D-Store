@@ -18,13 +18,26 @@
   transition: border-color 150ms ease;
 }
 
+/* Dynamic colouration: --cat-hue is set inline per category (lib/category-colors.ts). */
+.card {
+  --tile-bg: hsl(var(--cat-hue, 200) 62% 38%);
+  --tile-fg: hsl(var(--cat-hue, 200) 100% 96%);
+  --tile-edge: hsl(var(--cat-hue, 200) 62% 38%);
+}
+
+:global([data-theme="dark"]) .card {
+  --tile-bg: hsl(var(--cat-hue, 200) 58% 62%);
+  --tile-fg: hsl(var(--cat-hue, 200) 60% 10%);
+  --tile-edge: hsl(var(--cat-hue, 200) 58% 62%);
+}
+
 .card:hover,
 .card:focus-visible {
-  border-color: var(--color-accent);
+  border-color: var(--tile-edge);
 }
 
 .card:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--tile-edge);
   outline-offset: 2px;
 }
 
@@ -50,8 +63,8 @@
   font-weight: 700;
   line-height: 1;
   user-select: none;
-  background-color: var(--color-accent);
-  color: var(--color-bg);
+  background-color: var(--tile-bg);
+  color: var(--tile-fg);
 }
 
 /* The category glyph: about half the tile, centred by the tile's flex layout. */
