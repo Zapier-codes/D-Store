@@ -40,8 +40,8 @@ export interface CatalogCountArgs {
   excludeSlugs?: readonly string[];
 }
 
-/** One PostgREST `not.in.(...)` list: each value quoted, `\` and `"` escaped, the whole thing URL-encoded. */
-function notIn(column: string, values: readonly string[]): string | null {
+/** One PostgREST `not.in.(...)` list (exported for `lib/catalog-developer-apps.ts`, leaf `5.l.xiv.zi`): each value quoted, `\` and `"` escaped, the whole thing URL-encoded. */
+export function notIn(column: string, values: readonly string[]): string | null {
   const unique = [...new Set(values)].filter((value) => typeof value === "string" && value !== "");
   if (unique.length === 0) return "";
   if (unique.length > COUNT_EXCLUDE_MAX) return null;

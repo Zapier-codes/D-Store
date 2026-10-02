@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getDeveloperBySlug, getAppsByDeveloper } from "@/lib/catalog";
+import { getDeveloperBySlug, getDeveloperApps } from "@/lib/catalog";
 import Shelf from "@/components/Shelf";
 import styles from "./page.module.css";
 
@@ -32,6 +32,10 @@ import styles from "./page.module.css";
  * return never actually fires, but reusing it keeps this consistent
  * with how the rest of the catalog renders an app grid rather than
  * re-deriving a second grid layout for a case that can't occur.
+ *
+ * Leaf `5.l.xiv.zi`: in table mode the list is one bounded read (the newest-updated apps, at most
+ * `DEVELOPER_APPS_LIMIT`) with the developer's true total; when the developer has more apps than are
+ * shown, a line under the heading says so. With the table off every app is shown and nothing is cut.
  */
 export default async function DeveloperPage({
   params,
@@ -45,7 +49,7 @@ export default async function DeveloperPage({
     notFound();
   }
 
-  const apps = await getAppsByDeveloper(slug);
+  const { apps, total, cut } = await getDeveloperApps(slug);
   const initial = developer.name.trim().charAt(0).toUpperCase();
   // 5.h.iv.zi — `joined_at`, `bio` and `profile_url` are null when the source
   // (Aptoide) doesn't supply them; each line below is simply omitted then,
@@ -61,7 +65,7 @@ export default async function DeveloperPage({
         <div>
           <h1 className={styles.name}>{developer.name}</h1>
           <p className={styles.meta}>
-            {apps.length} {apps.length === 1 ? "app" : "apps"}
+            {total} {total === 1 ? "app" : "apps"}
             {joinedYear !== null && <> · Joined {joinedYear}</>}
           </p>
         </div>
@@ -73,6 +77,12 @@ export default async function DeveloperPage({
         <a href={developer.profile_url} className={styles.profileLink} target="_blank" rel="noopener noreferrer">
           View profile ↗
         </a>
+      )}
+
+      {cut && (
+        <p className={styles.cutNote}>
+          Showing the {apps.length} most recently updated of {total} apps.
+        </p>
       )}
 
       <Shelf title={`Apps by ${developer.name}`} apps={apps} />

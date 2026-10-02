@@ -65,3 +65,9 @@
 .profileLink:focus-visible {
   text-decoration: underline;
 }
+
+/* 5.l.xiv.zi — shown only when the developer has more apps than the page lists. */
+.cutNote {
+  margin: 0;
+  font-size: 0.9rem;
+}

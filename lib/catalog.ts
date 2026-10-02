@@ -20,7 +20,7 @@ import { incrementCounter, logSearch } from "./counter-store";
 import { apps, categories, developers, reviews, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type AppSponsoredSlot, type SearchQueryLog } from "./mock-data";
 import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
-import { createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
+import { appFromCatalogRow, createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
 import { readThirdPartyShelf, SHELF_MAX } from "./catalog-shelf";
 import { readAppsPage, parseAfter } from "./apps-page";
 import { readCatalogApp, readCatalogDeveloper, readCatalogSlugExists } from "./catalog-detail";
@@ -28,6 +28,7 @@ import { readCatalogLicenses, CATALOG_LICENSE_MAX_CHARS, CATALOG_SIZE_MAX_MB, CA
 import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
 import { readCatalogSitemapChunk, readCatalogSitemapTotal } from "./catalog-sitemap";
 import { readCatalogCategoryCounts } from "./catalog-category-counts";
+import { DEVELOPER_APPS_LIMIT, readCatalogDeveloperApps } from "./catalog-developer-apps";
 import { COUNT_EXCLUDE_MAX, readCatalogPublishedCount } from "./catalog-count";
 import { appSitemapEntry, developerSitemapEntry, sitePageEntries, sitemapChunkCount, type SitemapEntry } from "./sitemap-xml";
 import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
@@ -1677,6 +1678,56 @@ export async function getAppsByDeveloper(developerSlug: string): Promise<App[]> 
     .filter((app) => app.developer_slug === developerSlug)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   return resolveAfterDelay(result);
+}
+
+/** One developer's page of apps: the apps shown (newest-updated first), the developer's true total, and whether the list is cut. */
+export interface DeveloperApps {
+  apps: App[];
+  total: number;
+  cut: boolean;
+}
+
+/**
+ * The developer profile page's app list — leaf `5.l.xiv.zi`. Table mode: the developer's first-party
+ * apps (from the small cached list) plus at most `DEVELOPER_APPS_LIMIT` published rows read by
+ * `developer_slug` (one request that also returns the developer's row total, rows owned by a
+ * first-party package or slug left out, the merged catalog's own rule), merged newest-updated first
+ * and cut to `DEVELOPER_APPS_LIMIT`. `total` is the first-party count plus the table's count, so the
+ * page can say "showing N of M" when `cut` is true. Nothing is paged: a developer with more apps than
+ * the limit sees the newest ones. A failed read, an unconfigured table, the table off, or more
+ * first-party apps than the count can exclude falls back to `getAppsByDeveloper` (every app, never
+ * cut), with one fixed log line. Never throws.
+ */
+export async function getDeveloperApps(developerSlug: string): Promise<DeveloperApps> {
+  if (useCatalogTable()) {
+    try {
+      const firstParty = await getFirstPartyList();
+      if (firstParty.length > COUNT_EXCLUDE_MAX) {
+        console.error("catalog: developer apps not read from the table (too many first-party apps to exclude)");
+      } else {
+        const read = await readCatalogDeveloperApps({
+          developerSlug,
+          excludePackages: firstParty.map((app) => app.package_name).filter((name): name is string => typeof name === "string" && name !== ""),
+          excludeSlugs: firstParty.map((app) => app.slug),
+        });
+        if (read.ok) {
+          const own = firstParty.filter((app) => app.developer_slug === developerSlug);
+          const all = [...own, ...read.rows.map((row) => appFromCatalogRow(row))].sort(
+            (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
+          const apps = all.slice(0, DEVELOPER_APPS_LIMIT);
+          const total = own.length + read.total;
+          return resolveAfterDelay({ apps, total, cut: total > apps.length });
+        }
+        console.error("catalog: developer apps read failed, using the whole catalog");
+      }
+    } catch {
+      console.error("catalog: developer apps read failed, using the whole catalog");
+    }
+  }
+
+  const apps = await getAppsByDeveloper(developerSlug);
+  return { apps, total: apps.length, cut: false };
 }
 
 // --- Sponsored placement, read-only (5.j.ii.zi) -------------------------------------------
