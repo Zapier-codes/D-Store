@@ -1,0 +1,8 @@
+{
+  "index": 1500,
+  "accepted": 1500,
+  "rejected": 0,
+  "failed": 0,
+  "done": false,
+  "stop_reason": "request_cap"
+}

@@ -1,0 +1,21 @@
+{
+  "run_at": "2026-10-01T19:53:42.540Z",
+  "runner_country": "US",
+  "limit_bytes": 8388608,
+  "shards": 2,
+  "total_bytes": 11514805,
+  "total_apps": 1506,
+  "removed_shards": [],
+  "counts": {
+    "added": 1494,
+    "refreshed": 4,
+    "unchanged": 1,
+    "stale": 1,
+    "incomparable": 0,
+    "invalid": 0,
+    "duplicates_in_batch": 0,
+    "existing_dropped": 0,
+    "untrusted": 0,
+    "malformed_lines": 0
+  }
+}
