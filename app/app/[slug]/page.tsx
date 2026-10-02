@@ -142,10 +142,10 @@ export default async function AppDetailPage({
               secondaryColor={app.secondary_color}
               tertiaryColor={app.tertiary_color}
               iconUrl={app.icon}
-              sizes="72px"
+              sizes="96px"
             />
           </div>
-          <div>
+          <div className={styles.headerText}>
             <h1 className={styles.name}>{app.name}</h1>
             <p className={styles.summary}>{app.summary}</p>
             {developer ? (

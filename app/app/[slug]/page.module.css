@@ -5,18 +5,36 @@
  */
 
 .main {
+  box-sizing: border-box;
+  width: 100%;
   max-width: var(--page-max);
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  /* Bottom padding clears the fixed StickyInstallBar (and the iOS home indicator) so the last section is never hidden behind it. */
+  padding: 1.5rem 1rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+/* A flex/grid child defaults to min-width:auto, so one long word or wide child
+   stretches the whole page; every direct child of the page may shrink instead. */
+.main > * {
+  min-width: 0;
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
+}
+
+/* The text column must be allowed to shrink below its content width, otherwise a
+   long name, summary or button row overflows (and is clipped by the global
+   overflow-x: clip) instead of wrapping. */
+.headerText {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .icon {
@@ -34,14 +52,17 @@
 
 .name {
   margin: 0 0 0.25rem;
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
   font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .summary {
   margin: 0;
   color: var(--color-border);
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 /* 0.g.iii.zo — links out to the new /developer/[slug] profile route. */
@@ -109,10 +130,60 @@
 .installMeta {
   font-size: 0.8rem;
   color: var(--color-border);
+  overflow-wrap: anywhere;
 }
 
 .sectionTitle {
   margin: 0 0 0.75rem;
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+/* Phones: stack the icon above the text so the name, stats and the
+   Install / Share / Save row get the full width instead of sharing it with a 72px icon. */
+@media (max-width: 480px) {
+  .main {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    gap: 1.5rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .headerText {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  /* Install stays the full-width primary action; Share / Save and the size line wrap beneath it. */
+  .installRow > :first-child {
+    flex: 1 1 100%;
+  }
+}
+
+/* Tablet and up: more breathing room, larger icon. */
+@media (min-width: 768px) {
+  .main {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .header {
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .icon {
+    width: 96px;
+    height: 96px;
+  }
 }
