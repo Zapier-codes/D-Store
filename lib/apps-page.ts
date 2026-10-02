@@ -79,6 +79,23 @@ export function parseAfter(order: CatalogOrder, value: unknown): string | undefi
   return decodeCursor(order, one) ? (one as string) : undefined;
 }
 
+/** Largest rank offset a URL can carry; far above the table's size, so it only guards garbage. */
+export const RANK_OFFSET_MAX = 1_000_000;
+
+/**
+ * The `n` of a ranked page's URL: how many ranked rows came before this page. DISPLAY ONLY. It
+ * numbers the cards and is never used to read data, so a wrong or hostile value can only show a
+ * wrong number. Anything that is not a whole number from 0 to `RANK_OFFSET_MAX` is 0, and the
+ * first page (no valid `after`) is always 0, whatever `n` says.
+ */
+export function parseRankOffset(value: unknown, isFirstPage: boolean): number {
+  if (isFirstPage) return 0;
+  const one = Array.isArray(value) ? value[0] : value;
+  if (typeof one !== "string" || !/^\d{1,7}$/.test(one)) return 0;
+  const n = Number(one);
+  return n <= RANK_OFFSET_MAX ? n : 0;
+}
+
 function inScope(app: App, scope: AppsPageScope): boolean {
   if (scope.appType && app.app_type !== scope.appType) return false;
   if (scope.category && app.category !== scope.category) return false;

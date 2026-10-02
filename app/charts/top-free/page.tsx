@@ -1,7 +1,9 @@
-import { getTopFreeApps } from "@/lib/catalog";
+import { getTopFreeApps, getTopFreePage } from "@/lib/catalog";
+import { parseRankOffset } from "@/lib/apps-page";
 import { isThirdParty, sourceName } from "@/lib/trust";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
+import Pager from "@/components/Pager";
 import styles from "./page.module.css";
 
 /**
@@ -21,11 +23,10 @@ import styles from "./page.module.css";
  * single category to scope to, unlike `/app/[slug]` or
  * `/categories/[slug]`.
  *
- * `getTopFreeApps` (`lib/catalog.ts`) returns the whole catalog
- * (there's no pagination leaf yet, and 15 apps doesn't need one) —
- * see that function's own doc comment for why "Top Free" here is
- * honestly just install-count order over the whole catalog rather
- * than a real free-vs-paid split this catalog has no concept of.
+ * `getTopFreeApps` (`lib/catalog.ts`) returns the whole catalog when the
+ * table is off — see that function's own doc comment for why "Top Free"
+ * here is honestly just install-count order over the whole catalog
+ * rather than a real free-vs-paid split this catalog has no concept of.
  *
  * Two ranked sections — leaf `5.h.viii.zo`. `getTopFreeApps` returns the
  * first-party group (ranked by D-Store installs) followed by the
@@ -35,11 +36,42 @@ import styles from "./page.module.css";
  * rank numbers in each section, so "1" in the second section is the top
  * third-party app, not a rank below every first-party one. The section
  * is omitted when it is empty.
+ *
+ * Paged in table mode — leaf `5.l.x.zo`. With `CATALOG_SOURCE=table`
+ * the chart is read one page at a time (`getTopFreePage`, 24 a page):
+ * page 1 is the first-party section and the first third-party rows;
+ * later pages are third-party only, reached by the "Next page" link
+ * (`?after=<cursor>`). The catalog is read by keyset, so there are no
+ * page numbers and no total, and going back is the browser's back
+ * button. Third-party ranks carry on across pages through `?n=<rows so
+ * far>`, which is DISPLAY ONLY (`parseRankOffset`; never used to read
+ * data, and ignored on page 1), so page 2 starts at 25, not 1. With the
+ * table off, or when a page read fails, the page is exactly the
+ * whole-list page it was: no `after`, no `n`, no pager.
  */
-export default async function TopFreeChartPage() {
-  const apps = await getTopFreeApps();
-  const firstParty = apps.filter((app) => !isThirdParty(app));
-  const thirdParty = apps.filter((app) => isThirdParty(app));
+export default async function TopFreeChartPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const query = await searchParams;
+  const page = await getTopFreePage(query.after);
+
+  let firstParty;
+  let thirdParty;
+  let thirdPartyOffset = 0;
+  let nextCursor: string | null = null;
+
+  if (page) {
+    firstParty = page.firstParty;
+    thirdParty = page.thirdParty;
+    thirdPartyOffset = parseRankOffset(query.n, page.isFirstPage);
+    nextCursor = page.nextCursor;
+  } else {
+    const apps = await getTopFreeApps();
+    firstParty = apps.filter((app) => !isThirdParty(app));
+    thirdParty = apps.filter((app) => isThirdParty(app));
+  }
   const thirdPartySource = thirdParty[0] ? sourceName(thirdParty[0]) : "";
 
   return (
@@ -64,11 +96,17 @@ export default async function TopFreeChartPage() {
           </p>
           <ShelfGrid>
             {thirdParty.map((app, index) => (
-              <AppCard key={app.slug} app={app} rank={index + 1} />
+              <AppCard key={app.slug} app={app} rank={thirdPartyOffset + index + 1} />
             ))}
           </ShelfGrid>
         </>
       )}
+
+      <Pager
+        basePath="/charts/top-free"
+        nextCursor={nextCursor}
+        params={{ n: String(thirdPartyOffset + thirdParty.length) }}
+      />
     </main>
   );
 }

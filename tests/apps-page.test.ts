@@ -171,3 +171,18 @@ test("a throwing fetch is null, not an exception", async () => {
   }) as unknown as typeof fetch;
   assert.equal(await readAppsPage({ order: "top", firstParty: [] }, { env: ENV, fetch: f }), null);
 });
+
+// Leaf 5.l.x.zo: the rank offset in the URL is display only.
+import { parseRankOffset, RANK_OFFSET_MAX } from "../lib/apps-page";
+
+test("parseRankOffset: whole numbers on a later page, 0 for everything else, always 0 on page 1", () => {
+  assert.equal(parseRankOffset("24", false), 24);
+  assert.equal(parseRankOffset(["48", "7"], false), 48);
+  assert.equal(parseRankOffset("0", false), 0);
+  assert.equal(parseRankOffset(String(RANK_OFFSET_MAX), false), RANK_OFFSET_MAX);
+  assert.equal(parseRankOffset(String(RANK_OFFSET_MAX + 1), false), 0);
+  for (const bad of [undefined, "", "-5", "1.5", "1e3", "abc", "99999999", " 4", "0x10", 24, null]) {
+    assert.equal(parseRankOffset(bad, false), 0, String(bad));
+  }
+  assert.equal(parseRankOffset("24", true), 0);
+});

@@ -22,6 +22,7 @@ import { mergeCatalogSources, type CatalogSource } from "./sources/types";
 import { createAptoideSource } from "./sources/aptoide";
 import { createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
 import { readThirdPartyShelf, SHELF_MAX } from "./catalog-shelf";
+import { readAppsPage, parseAfter } from "./apps-page";
 import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
 import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
 import {
@@ -882,6 +883,44 @@ export async function getTopFreeApps(limit = Infinity): Promise<App[]> {
     );
   const all = [...firstParty, ...thirdParty];
   return resolveAfterDelay(Number.isFinite(limit) ? all.slice(0, Math.max(0, limit)) : all);
+}
+
+/**
+ * One page of the Top Free chart — leaf `5.l.x.zo`. Table mode only: `null` when the table is not in
+ * use (silently, the page then shows the whole list exactly as before) or when the read failed (one
+ * fixed log line, no query, cursor or body; the page then falls back to the whole-catalog path, the
+ * same policy as `readShelfFromTable`).
+ *
+ * Same two groups as `getTopFreeApps`, split here so the page need not: page 1 is the first-party
+ * group (ranked by D-Store installs, then slug, passed to `readAppsPage` already sorted because
+ * `top` keeps list order) and then the first third-party rows; every later page is third-party only,
+ * in the database's `top` order (reported downloads, then slug). `after` is the raw `after` URL value.
+ */
+export interface TopFreePage {
+  firstParty: App[];
+  thirdParty: App[];
+  /** Opaque; pass back as `after` for the next page. `null` on the last page. */
+  nextCursor: string | null;
+  isFirstPage: boolean;
+}
+
+export async function getTopFreePage(after?: unknown, pageSize?: number): Promise<TopFreePage | null> {
+  if (!useCatalogTable()) return null;
+  const firstPartyAll = await getFirstPartyList();
+  const ranked = [...firstPartyAll].sort(
+    (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || b.install_count - a.install_count || a.slug.localeCompare(b.slug)
+  );
+  const page = await readAppsPage({ order: "top", after: parseAfter("top", after), pageSize, firstParty: ranked });
+  if (page === null) {
+    console.error("catalog: paged table read failed, using the whole-catalog path");
+    return null;
+  }
+  return {
+    firstParty: page.apps.filter((app) => !isThirdParty(app)),
+    thirdParty: page.apps.filter((app) => isThirdParty(app)),
+    nextCursor: page.nextCursor,
+    isFirstPage: page.isFirstPage,
+  };
 }
 
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
