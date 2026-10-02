@@ -923,6 +923,36 @@ export async function getTopFreePage(after?: unknown, pageSize?: number): Promis
   };
 }
 
+/**
+ * One page of the New & Updated chart — leaf `5.l.xi.zi`. Table mode only, same contract as
+ * `getTopFreePage`: `null` silently when the table is not in use (the page then shows the whole list
+ * exactly as before) and `null` with one fixed log line, no query, cursor or body, when the read
+ * failed (the page falls back to `getNewAndUpdated(Infinity)`).
+ *
+ * One list, no sections and no ranks. Page 1 is the first-party apps (newest `updated_at` first)
+ * and then the first third-party rows in the database's `new` order; later pages are third-party
+ * only. This differs from the whole-catalog path in one place on purpose: that path interleaves
+ * first-party and third-party apps by `updated_at`, while a keyset page cannot, so first-party
+ * apps lead page 1 (decision (c) of the `5.l.v.zi` split: first-party apps on page 1 only, never
+ * repeated). `after` is the raw `after` URL value.
+ */
+export interface NewPage {
+  apps: App[];
+  /** Opaque; pass back as `after` for the next page. `null` on the last page. */
+  nextCursor: string | null;
+}
+
+export async function getNewPage(after?: unknown, pageSize?: number): Promise<NewPage | null> {
+  if (!useCatalogTable()) return null;
+  const firstParty = await getFirstPartyList();
+  const page = await readAppsPage({ order: "new", after: parseAfter("new", after), pageSize, firstParty });
+  if (page === null) {
+    console.error("catalog: paged table read failed, using the whole-catalog path");
+    return null;
+  }
+  return { apps: page.apps, nextCursor: page.nextCursor };
+}
+
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
 export async function getNewAndUpdated(limit = 12): Promise<App[]> {
   // 5.l.iv.zi — table mode with a bounded `limit`: the first-party apps plus the first rows of the
