@@ -25,7 +25,7 @@ import { readThirdPartyShelf, SHELF_MAX } from "./catalog-shelf";
 import { readAppsPage, parseAfter } from "./apps-page";
 import { readCatalogApp, readCatalogDeveloper, readCatalogSlugExists } from "./catalog-detail";
 import { readCatalogLicenses, CATALOG_LICENSE_MAX_CHARS, CATALOG_SIZE_MAX_MB, CATALOG_PAGE_MAX } from "./catalog-table";
-import { readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
+import { CATEGORY_ROWS_MAX, readCategoryRows, type CategoryRowData } from "./catalog-category-rows";
 import { readCatalogSitemapChunk, readCatalogSitemapTotal } from "./catalog-sitemap";
 import { readCatalogCategoryCounts } from "./catalog-category-counts";
 import { DEVELOPER_APPS_LIMIT, readCatalogDeveloperApps } from "./catalog-developer-apps";
@@ -44,6 +44,7 @@ import {
   appInTaxonomyCategory,
   findTaxonomyCategory,
   listTaxonomyCategories,
+  vocabularyFor,
   type AppType,
   type TaxonomyCategory,
 } from "./taxonomy";
@@ -1572,16 +1573,16 @@ export async function getSimilarApps(
 const FAVORITE_WEIGHT = 3;
 const VIEW_WEIGHT = 1;
 
-export async function getCategoryAffinityApps(
-  favoritedSlugs: string[],
-  viewedCategories: string[] = [],
-  limit = 12
-): Promise<App[]> {
-  if (favoritedSlugs.length === 0 && viewedCategories.length === 0) return resolveAfterDelay([]);
-
-  const merged = await getMergedApps();
-  const bySlug = new Map(merged.map((app) => [app.slug, app]));
-
+/**
+ * Rank the categories a visitor is interested in — the scoring half of `getCategoryAffinityApps`,
+ * pulled out in leaf `5.l.xv.zi` so the whole-catalog path and the table path rank identically.
+ * `lookup` resolves a favorited slug to its app (or `undefined` when unknown). Pure.
+ */
+function rankAffinityCategories(
+  favoritedSlugs: readonly string[],
+  viewedCategories: readonly string[],
+  lookup: (slug: string) => App | undefined
+): string[] {
   const categoryScores = new Map<string, number>();
   const firstSeen = new Map<string, number>(); // lower = more recent
   let cursor = 0;
@@ -1590,7 +1591,7 @@ export async function getCategoryAffinityApps(
     // 5.i.vi.zi — compare on the Play slug, not the stored one, so a legacy-slug
     // app and a viewed Play slug for the same interest agree; an app with no
     // known category is not an interest (`affinityCategory` -> null).
-    const favApp = bySlug.get(slug);
+    const favApp = lookup(slug);
     const category = favApp ? affinityCategory(favApp.category, favApp.app_type) : null;
     if (!category) continue;
     categoryScores.set(category, (categoryScores.get(category) ?? 0) + FAVORITE_WEIGHT);
@@ -1607,11 +1608,119 @@ export async function getCategoryAffinityApps(
     cursor += 1;
   }
 
-  const rankedCategories = [...categoryScores.keys()].sort((a, b) => {
+  return [...categoryScores.keys()].sort((a, b) => {
     const scoreDiff = (categoryScores.get(b) ?? 0) - (categoryScores.get(a) ?? 0);
     if (scoreDiff !== 0) return scoreDiff;
     return (firstSeen.get(a) ?? Infinity) - (firstSeen.get(b) ?? Infinity);
   });
+}
+
+/** Most favorited slugs the table path will look up (one row read each); more falls back to the whole catalog. */
+const AFFINITY_FAVORITES_MAX = 50;
+
+/**
+ * The table-mode path of `getCategoryAffinityApps` — leaf `5.l.xv.zi`. Table mode only.
+ *
+ * The inputs come from the visitor's browser through a server action, so they are bounded here:
+ * more than `AFFINITY_FAVORITES_MAX` distinct favorited slugs, a bad `limit`, or `limit` plus the
+ * favorites exceeding `SHELF_MAX` is refused (`null`, the caller falls back). Each favorited slug
+ * not in the small first-party list is ONE `catalog_app` row read (`getAppBySlugFromTable`); an app
+ * that is not found is skipped exactly as the whole-catalog path skips it, and a failed read refuses
+ * the whole answer. Categories are ranked by `rankAffinityCategories`, then each ranked category is
+ * read once per `app_type` its slug exists in (`sports` is both an app category and a game genre,
+ * as the whole-catalog path's slug-only match also treats it) through `readCategoryRows`, newest
+ * ranking first. Within a category the first-party apps lead, `install_count` descending, then the
+ * table's rows in `top` order (a third-party `install_count` is always 0, so the whole-catalog
+ * sort leaves them in catalog order too). Favorited and repeated apps are left out.
+ *
+ * Known difference: a row not yet re-derived into the two-axis taxonomy has no Play category in the
+ * table, so it cannot appear here; the whole-catalog path would match it through the legacy slug.
+ * Returns `null` for any refusal or failed read, one fixed log line, never a partial shelf. Never throws.
+ */
+async function getCategoryAffinityAppsFromTable(
+  favoritedSlugs: readonly string[],
+  viewedCategories: readonly string[],
+  limit: number
+): Promise<App[] | null> {
+  try {
+    if (!Number.isInteger(limit) || limit < 1 || limit > SHELF_MAX) return null;
+    const favoritedSet = new Set(favoritedSlugs);
+    if (favoritedSet.size > AFFINITY_FAVORITES_MAX) return null;
+    if (limit + favoritedSet.size > SHELF_MAX) return null;
+    for (const slug of favoritedSet) if (typeof slug !== "string" || slug === "") return null;
+
+    const firstParty = await getFirstPartyList();
+    const resolved = new Map<string, App | null>();
+    const unknown: string[] = [];
+    for (const slug of favoritedSet) {
+      const own = firstParty.find((a) => a.slug === slug);
+      if (own) resolved.set(slug, own);
+      else unknown.push(slug);
+    }
+    // One row read per favorited slug that is not first-party, a few at a time.
+    for (let i = 0; i < unknown.length; i += 4) {
+      const batch = unknown.slice(i, i + 4);
+      const found = await Promise.all(batch.map((slug) => getAppBySlugFromTable(slug)));
+      for (let j = 0; j < batch.length; j += 1) {
+        const app = found[j];
+        if (app === undefined) return null; // a failed read is not "no such app"
+        resolved.set(batch[j], app);
+      }
+    }
+
+    const ranked = rankAffinityCategories(favoritedSlugs, viewedCategories, (slug) => resolved.get(slug) ?? undefined);
+    if (ranked.length === 0) return [];
+
+    const specs: { appType: AppType; category: string }[] = [];
+    for (const category of ranked) {
+      for (const appType of ["app", "game"] as const) {
+        if (vocabularyFor(appType).some((entry) => entry.slug === category)) specs.push({ appType, category });
+      }
+    }
+    if (specs.length > CATEGORY_ROWS_MAX) return null;
+
+    const rows = await readCategoryRows(specs, Math.min(SHELF_MAX, limit + favoritedSet.size), firstParty);
+    if (rows === null) return null;
+
+    const seen = new Set<string>();
+    const result: App[] = [];
+    for (const category of ranked) {
+      const own = firstParty
+        .filter((app) => affinityCategory(app.category, app.app_type) === category)
+        .sort((a, b) => b.install_count - a.install_count);
+      const fromTable = rows.filter((row) => row.category === category).flatMap((row) => row.apps);
+      for (const app of [...own, ...fromTable]) {
+        if (result.length >= limit) break;
+        if (favoritedSet.has(app.slug) || seen.has(app.slug)) continue;
+        seen.add(app.slug);
+        result.push(app);
+      }
+      if (result.length >= limit) break;
+    }
+    return result;
+  } catch {
+    console.error("catalog: For You read failed, using the whole catalog");
+    return null;
+  }
+}
+
+export async function getCategoryAffinityApps(
+  favoritedSlugs: string[],
+  viewedCategories: string[] = [],
+  limit = 12
+): Promise<App[]> {
+  if (favoritedSlugs.length === 0 && viewedCategories.length === 0) return resolveAfterDelay([]);
+
+  // 5.l.xv.zi — table mode ranks, then reads a bounded page per ranked category instead of loading the
+  // whole catalog; the whole-catalog path below is the fallback for table off or any refusal or failed read.
+  if (useCatalogTable()) {
+    const fromTable = await getCategoryAffinityAppsFromTable(favoritedSlugs, viewedCategories, limit);
+    if (fromTable !== null) return resolveAfterDelay(fromTable);
+  }
+
+  const merged = await getMergedApps();
+  const bySlug = new Map(merged.map((app) => [app.slug, app]));
+  const rankedCategories = rankAffinityCategories(favoritedSlugs, viewedCategories, (slug) => bySlug.get(slug));
 
   const favoritedSet = new Set(favoritedSlugs);
   const seen = new Set<string>();
