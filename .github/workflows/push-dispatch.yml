@@ -1,22 +1,67 @@
 name: Dispatch Push Notifications
 
+# Calls the two Web Push routes every hour (5.k track).
+#
+# Needs two repo secrets (Settings -> Secrets and variables -> Actions -> Secrets):
+#   D_STORE_URL            the site origin with no trailing slash, e.g. https://d-store-nu.vercel.app
+#   PUSH_DISPATCH_SECRET   the same value as the site's PUSH_DISPATCH_SECRET env var (32+ characters)
+#
+# Behaviour, so a green run means something:
+#   - a secret is unset            -> notice and skip (green). Run 36938564476 failed hourly with
+#                                     "curl: (3) URL rejected: No host part in the URL" for this reason.
+#   - the route answers 503        -> notice and skip (green). The site has not enabled push yet
+#                                     (Supabase / VAPID / PUSH_SEND_ENABLED unset); that is a state, not a fault.
+#   - any other non-2xx (401, 5xx) -> FAIL, with the status and body in the log. A wrong secret is no longer invisible.
+#   - curl cannot connect / times out -> FAIL.
+
 on:
   schedule:
     - cron: "0 * * * *" # Hourly
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   dispatch:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      D_STORE_URL: ${{ secrets.D_STORE_URL }}
+      PUSH_DISPATCH_SECRET: ${{ secrets.PUSH_DISPATCH_SECRET }}
     steps:
-      - name: Trigger Push Dispatch
+      - name: Check secrets
+        id: cfg
         run: |
-          curl -X POST "${{ secrets.D_STORE_URL }}/api/push/dispatch" \
-            -H "Authorization: Bearer ${{ secrets.PUSH_DISPATCH_SECRET }}" \
-            -H "Content-Type: application/json"
-      
-      - name: Trigger Push Send
+          if [ -z "$D_STORE_URL" ] || [ -z "$PUSH_DISPATCH_SECRET" ]; then
+            echo "::notice::D_STORE_URL and/or PUSH_DISPATCH_SECRET repo secret is unset; skipping. Set both to enable push dispatch."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger Push Dispatch and Send
+        if: steps.cfg.outputs.ready == 'true'
         run: |
-          curl -X POST "${{ secrets.D_STORE_URL }}/api/push/send" \
-            -H "Authorization: Bearer ${{ secrets.PUSH_DISPATCH_SECRET }}" \
-            -H "Content-Type: application/json"
+          set -u
+          BASE="${D_STORE_URL%/}"
+          call() {
+            local name="$1"
+            local code
+            code=$(curl -sS -X POST "$BASE/api/push/$name" \
+              -H "Authorization: Bearer $PUSH_DISPATCH_SECRET" \
+              -H "Content-Type: application/json" \
+              --max-time 60 -o /tmp/body.txt -w '%{http_code}') || { echo "::error::curl failed calling /api/push/$name"; return 1; }
+            if [ "$code" = "503" ]; then
+              echo "::notice::/api/push/$name answered 503: push is not enabled on the site yet (store, VAPID or opt-in unset). Skipping."
+            elif [ "${code#2}" != "$code" ]; then
+              echo "/api/push/$name -> $code"; head -c 500 /tmp/body.txt; echo
+            else
+              echo "::error::/api/push/$name -> HTTP $code"; head -c 500 /tmp/body.txt; echo
+              return 1
+            fi
+          }
+          rc=0
+          call dispatch || rc=1
+          call send || rc=1
+          exit $rc
