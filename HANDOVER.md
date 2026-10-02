@@ -4,6 +4,8 @@
 
 > **STANDING OPERATOR INSTRUCTION (2026-10-02) — ALL SESSIONS: STOP RUNNING TESTS AND BUILDS.** Do not run `npm ci`, `npm test`, `tsc`, `next build`, `next start` or any other build/test step. Make the change, commit it, and hand over the single patch file. Say plainly in the commit message and reply that nothing was run. This overrides every "run tsc/npm test/next build" line in the leaves below until the operator lifts it.
 
+> **STANDING OPERATOR INSTRUCTION (2026-10-02) — THIS IS A CROSS-REPO RUN.** Clone Zealot, Storeapp (and `distr` where relevant) every session, check each for its half of the leaf, do that half there as that repo's own patch, one leaf at a time, and combine patches when the previous one is not yet applied. Full rules: Section 0, "Cross-repo run — standing rules".
+
 ---
 
 ## 0. How this file works
@@ -38,6 +40,17 @@ Any leaf below tagged `(Zealot-repo leaf)` or `(Storeapp-repo leaf)` is tracked 
 2. Do the Zealot half **there**, as the Zealot leaf named in this file's leaf text, following Zealot's own task-splitting rule, and hand it over as Zealot's own patch. Do not edit Zealot files from a D-Store commit or the reverse.
 3. Come back to this repo and complete the D-Store half of the same leaf, against what step 2 built, and hand over D-Store's patch. If the Zealot half could not be finished in the session, say so plainly, mark this leaf `[~]`, and record what the Zealot half still needs.
 Two patches, two repos, applied separately (Zealot's first). The leaf's Done note names both patches. The usual one-leaf rule still applies to each repo's half.
+
+### Cross-repo run — standing rules for every session *(operator directive, 2026-10-02; read before touching a leaf)*
+
+This is a **cross-repo priority run**: D-Store, Zealot, Storeapp (and `distr` for Part 2 / `7.c`) are worked as one program, one leaf at a time. Earlier sessions took leaves as D-Store-only without looking at the other repos; that is the mistake these rules prevent.
+
+1. **Clone the other repos at the start of every session, before choosing what to do:** `github.com/Zapier-codes/zealot`, `github.com/Zapier-codes/Storeapp`, and `github.com/Zapier-codes/distr` when the leaf is in `7.c` or touches tenants or payment. Read each one's own handover file (`handover.md` in Zealot, `HANDOVER.md` in Storeapp).
+2. **For the leaf you take, check each repo for its half**, even when the leaf text names only one repo: search the other handovers for the leaf path and for the feature (a read on the signed index, a route, a field). The answer goes in the leaf's Done note in one line, for example "checked Zealot and Storeapp: no matching half" or "Zealot half needed: done, see its patch". "I did not look" is never an acceptable state.
+3. **If a half is needed, do it in that repo**, following that repo's own handoff process and task-splitting rule (Section 0, "two-repo sessions"). Do not edit another repo's files from a D-Store commit or the reverse. Each repo gets its own patch, applied separately, **Zealot's first**.
+4. **One leaf per session.** A cross-repo leaf is still one leaf: its halves in different repos are handed over together, but a second leaf is never started in the same session.
+5. **Before building the patch, check whether the previous patch was applied:** `git fetch origin` and compare `git log origin/master` with the commits the last session handed over (the leaf paths in the `HANDOVER.md` Done notes and `CHANGELOG.md`). If origin has them, hand over a single-commit patch. If origin does **not** have them, hand over **one combined patch** of every commit since `origin/master` (`git format-patch origin/master --stdout`), and say so plainly in the reply, naming the leaves it carries. Never hand over a patch that only applies on top of one the operator has not applied.
+6. **Report it in the reply:** which repos were cloned, what each handover said about this leaf, which patch to apply first, and the exact `git am` and `git push` commands per repo. Then the focus-run count (`N done ✅ of M`).
 
 ### Status markers
 Every leaf carries one of:
@@ -1601,7 +1614,7 @@ This is the same process used to hand off the D-Store documentation itself — i
 
 **Key location — cache files:** the storefront reads catalog/asset data from local cache files only, never live per-request calls to Supabase or the Console (Zealot) — this keeps the app populated and responsive even if either upstream is briefly unreachable. Cached/downloaded files live at **`storage/downloads`**. Any leaf that touches caching, downloads, or catalog population must read from and write to this location; note it explicitly in the commit body when a leaf adds or changes what's cached there.
 
-0. **Check upstream first, before doing anything else:** `git fetch origin` and compare against `origin/master`. If origin has moved since the local clone/session was last synced (earlier patches already applied and pushed, for instance), rebase local work onto the current `origin/master` (`git rebase origin/master`) before starting the leaf and before generating any patch. A patch built against a stale base will fail to apply with `git am` even when the content it wants is logically identical to what's already there — this step is what prevents that.
+0. **Cross-repo run:** clone the other repos and read their handovers first (see "Cross-repo run — standing rules" in Section 0), then **check upstream:** `git fetch origin` and compare against `origin/master`. If origin has moved since the local clone/session was last synced (earlier patches already applied and pushed, for instance), rebase local work onto the current `origin/master` (`git rebase origin/master`) before starting the leaf and before generating any patch. A patch built against a stale base will fail to apply with `git am` even when the content it wants is logically identical to what's already there — this step is what prevents that.
 1. **Do the one assigned leaf task** (Section 1 — nothing more).
 2. **Update this file**: flip the completed leaf's `[ ]` to `[x]`, append one line for the leaf to `CHANGELOG.md` (`leaf path — short title`, no hash: a commit cannot know its own; see that file's header), and move the "Current position" line (Section 0) to the next open leaf in path order (`zi` before `zo`; within a milestone before moving to the next `i/ii/iii`; within a track before the next `a/b/c/d`; within a phase before the next `1/2/3/4`).
 3. **Commit** the code change and the `HANDOVER.md` update **together**, in one commit, with a message that starts with the leaf path:
