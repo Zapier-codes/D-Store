@@ -203,9 +203,12 @@ function nonNegative(value: number | undefined, fallback: number): number {
 
 /**
  * Runs one sending pass over `catalog` (the value `getDispatchCatalog()`
- * returns). Never throws; see the file header for every decision.
+ * returns, or a loader `(subscribedSlugs) => catalog` that reads only those apps, leaf `5.l.xv.zo`). Never throws; see the file header for every decision.
  */
-export async function runPush(catalog: readonly PlanApp[], deps: RunDeps = {}): Promise<RunResult> {
+export async function runPush(
+  catalog: readonly PlanApp[] | ((subscribedSlugs: string[]) => Promise<readonly PlanApp[]>),
+  deps: RunDeps = {},
+): Promise<RunResult> {
   try {
     const clock = deps.now ?? Date.now;
     const started = clock();
@@ -226,7 +229,19 @@ export async function runPush(catalog: readonly PlanApp[], deps: RunDeps = {}): 
     if (!state.ok) {
       return { ok: false, reason: state.reason === "not_configured" ? "not_configured" : "unavailable" };
     }
-    const plan: DispatchPlan = buildPlan(catalog, state.baselines, state.subscribedSlugs);
+    // 5.l.xv.zo — a loader receives the subscribed slugs, so the route can read only those apps. A loader that
+    // throws (a catalog read failure) is `unavailable`: nothing is planned, sent or recorded.
+    let apps: readonly PlanApp[];
+    if (typeof catalog === "function") {
+      try {
+        apps = await catalog(state.subscribedSlugs);
+      } catch {
+        return { ok: false, reason: "unavailable" };
+      }
+    } else {
+      apps = catalog;
+    }
+    const plan: DispatchPlan = buildPlan(apps, state.baselines, state.subscribedSlugs);
 
     const counts = emptyCounts();
     counts.notify = plan.notify.length;

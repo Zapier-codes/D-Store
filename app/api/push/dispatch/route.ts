@@ -66,7 +66,7 @@ export async function POST(request: Request): Promise<Response> {
 
   let catalog;
   try {
-    catalog = await getDispatchCatalog();
+    catalog = await getDispatchCatalog(state.subscribedSlugs);
   } catch (error) {
     if (error instanceof DispatchTenantError) {
       return errorResponse(421, "Dispatch is only available on the primary host");

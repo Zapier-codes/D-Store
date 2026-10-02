@@ -29,6 +29,7 @@ import { CATEGORY_ROWS_MAX, readCategoryRows, type CategoryRowData } from "./cat
 import { readCatalogSitemapChunk, readCatalogSitemapTotal } from "./catalog-sitemap";
 import { readCatalogCategoryCounts } from "./catalog-category-counts";
 import { DEVELOPER_APPS_LIMIT, readCatalogDeveloperApps } from "./catalog-developer-apps";
+import { readCatalogDispatchApps } from "./catalog-dispatch";
 import { COUNT_EXCLUDE_MAX, readCatalogPublishedCount } from "./catalog-count";
 import { appSitemapEntry, developerSitemapEntry, sitePageEntries, sitemapChunkCount, type SitemapEntry } from "./sitemap-xml";
 import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
@@ -343,9 +344,48 @@ export class DispatchTenantError extends Error {
  * deliberately not swallowed — an empty catalog here would be
  * indistinguishable from "nothing to notify".
  */
-export async function getDispatchCatalog(): Promise<DispatchCatalogApp[]> {
+export async function assertDispatchTenant(): Promise<void> {
   const tenant = await getCurrentTenant();
   if (tenant.tenant_id !== DEFAULT_TENANT_ID) throw new DispatchTenantError();
+}
+
+export async function getDispatchCatalog(subscribedSlugs?: Iterable<string>): Promise<DispatchCatalogApp[]> {
+  await assertDispatchTenant();
+
+  // 5.l.xv.zo — the plan only looks at subscribed apps, so when the caller names them and the table is
+  // on, read just those (first-party from the small list, the rest by slug in bounded chunks) instead of
+  // every app. A refusal or failed read falls through to the whole-catalog path below, with one fixed log
+  // line; it is never answered with a partial list. Without `subscribedSlugs` nothing changes.
+  if (subscribedSlugs !== undefined && useCatalogTable()) {
+    try {
+      const wanted = [...new Set([...subscribedSlugs].filter((slug): slug is string => typeof slug === "string" && slug !== ""))];
+      const firstParty = await getFirstPartyList();
+      const ownBySlug = new Map(firstParty.map((app) => [app.slug, app]));
+      const firstPartyPackages = new Set(firstParty.map((app) => app.package_name).filter((name): name is string => typeof name === "string" && name !== ""));
+      const rest = wanted.filter((slug) => !ownBySlug.has(slug));
+      const read = rest.length > 0 ? await readCatalogDispatchApps(rest) : ({ ok: true, rows: [] } as const);
+      if (read.ok) {
+        const out: DispatchCatalogApp[] = [];
+        for (const slug of wanted) {
+          const own = ownBySlug.get(slug);
+          if (own) {
+            out.push({ slug: own.slug, name: own.name, version: own.version, rollout_percentage: own.rollout_percentage, rollout_status: own.rollout_status });
+          }
+        }
+        for (const row of read.rows) {
+          // A row that shares a first-party package is not in the merged catalog.
+          if (firstPartyPackages.has(row.package_name)) continue;
+          // A third-party row always carries 100 / "complete" (`appFromCatalogRow`), so rollout never holds it back.
+          out.push({ slug: row.slug, name: row.name, version: row.version, rollout_percentage: 100, rollout_status: "complete" });
+        }
+        return out;
+      }
+      console.error("catalog: dispatch apps read failed, using the whole catalog");
+    } catch {
+      console.error("catalog: dispatch apps read failed, using the whole catalog");
+    }
+  }
+
   const merged = await getMergedApps();
   return merged.map((app) => ({
     slug: app.slug,

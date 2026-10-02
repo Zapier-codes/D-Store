@@ -1,4 +1,4 @@
-import { DispatchTenantError, getDispatchCatalog } from "@/lib/catalog";
+import { DispatchTenantError, assertDispatchTenant, getDispatchCatalog } from "@/lib/catalog";
 import { checkDispatchAuth } from "@/lib/push-dispatch-auth";
 import { runPush } from "@/lib/push-run";
 import { errorResponse } from "@/lib/push-request";
@@ -20,9 +20,11 @@ import { isPushStoreConfigured } from "@/lib/push-store";
  *   1. `checkDispatchAuth` — `401` or `503`, before anything else is read.
  *   2. opt-in (`PUSH_SEND_ENABLED === "true"`) — `503`.
  *   3. `isPushStoreConfigured` — `503`.
- *   4. `getDispatchCatalog` — `421` for a non-default tenant, `502` otherwise.
- *      The catalog is read here because it is bound to the current request.
- *   5. `runPush` — `200` with counts only, or a mapped failure.
+ *   4. `assertDispatchTenant` — `421` for a non-default tenant, `502` otherwise. The tenant
+ *      is bound to the current request, so it is checked here.
+ *   5. `runPush` — `200` with counts only, or a mapped failure. It reads the apps itself through
+ *      `getDispatchCatalog(subscribedSlugs)` (`5.l.xv.zo`): only the subscribed apps, not the
+ *      whole catalog; a failed catalog read there is a `502`.
  *
  * Statuses, for the operator:
  *   200  a run happened; body is `{ counts, stopped_early, anomaly,
@@ -66,9 +68,11 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse(503, "Push sending is not available");
   }
 
-  let catalog;
+  // The tenant check is made here, before anything is read, so a non-default host still answers 421. The
+  // apps themselves are read inside `runPush` through the loader, once it knows the subscribed slugs
+  // (`5.l.xv.zo`); a loader failure there is a `502`, as a failed catalog read was.
   try {
-    catalog = await getDispatchCatalog();
+    await assertDispatchTenant();
   } catch (error) {
     if (error instanceof DispatchTenantError) {
       return errorResponse(421, "Sending is only available on the primary host");
@@ -76,7 +80,7 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse(502, "Could not read the catalog");
   }
 
-  const result = await runPush(catalog);
+  const result = await runPush((slugs) => getDispatchCatalog(slugs));
   if (!result.ok) {
     switch (result.reason) {
       case "not_configured":
