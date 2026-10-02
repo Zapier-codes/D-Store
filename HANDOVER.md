@@ -703,6 +703,8 @@ So Part 1 has happened once, by hand. What is left is making it happen from CI.
 
 > **Resolved this session (2026-10-02) — `5.l.i.zo` (the paged read and search function over `catalog_app`: `catalog_page` migration plus `lib/catalog-table.ts`) done; this is `2 done ✅ of 26` of Focus run 3.** See that leaf's Done note. **Current position moves to `5.l.ii.zi`** (the reader behind `lib/catalog.ts`, first-party apps still ranked ahead). The operator action stands: apply both new migrations to the live project before `5.l.ii.zo`.
 
+> **Resolved this session (2026-10-02) — `5.l.ii.zi` (the reader behind `lib/catalog.ts`, opt-in `CATALOG_SOURCE=table`) and `5.l.ii.zo` (the one-time loader, `lib/catalog-load.ts` and `scripts/load-catalog-table.ts`) done; this is `4 done ✅ of 26` of Focus run 3.** See each leaf's Done note. **Current position moves to `5.l.iii.zi`** (the ingest job writes straight to Supabase, plus the 10,000 settings; reuse `buildCatalogRows`/`writeCatalogRows`). Nothing in either leaf was run (standing instruction: no tests or builds). **Operator first:** apply both `5.l.i` migrations, then `npx tsx scripts/load-catalog-table.ts --dry-run`, then the real load, then `npx tsx scripts/check-catalog-table.ts` to cross-check the table against the snapshot, and send back the counts.
+
 
 ---
 
