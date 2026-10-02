@@ -30,3 +30,9 @@
   font-size: 1.15rem;
   font-weight: 600;
 }
+
+/* 5.l.xi.zo — the "Browse all apps" link under the heading. Sits close to the heading it belongs to. */
+.allApps {
+  margin: -1rem 0 0;
+  font-size: 0.95rem;
+}

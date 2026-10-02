@@ -1,0 +1,25 @@
+/*
+ * All apps page layout — leaf 5.l.xi.zo. Identical shell to /charts/new/page.module.css — same page
+ * shape, no new layout decisions needed.
+ */
+
+.main {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subheading {
+  margin: -1rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-border);
+}

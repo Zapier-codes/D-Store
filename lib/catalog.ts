@@ -953,6 +953,26 @@ export async function getNewPage(after?: unknown, pageSize?: number): Promise<Ne
   return { apps: page.apps, nextCursor: page.nextCursor };
 }
 
+/**
+ * One page of "All apps" — leaf `5.l.xi.zo`: every app and game, one flat list, in `top` order.
+ * Table mode only, same contract as `getTopFreePage` (of which this is the flat form: same
+ * read, same order, same first-party rule): `null` silently when the table is not in use, `null`
+ * with one fixed log line when the read failed. Page 1 is the first-party apps (ranked by D-Store
+ * installs, then slug) and then the first third-party rows (reported downloads, then slug); later
+ * pages are third-party only. `after` is the raw `after` URL value.
+ */
+export interface AllAppsPage {
+  apps: App[];
+  /** Opaque; pass back as `after` for the next page. `null` on the last page. */
+  nextCursor: string | null;
+}
+
+export async function getAllAppsPage(after?: unknown, pageSize?: number): Promise<AllAppsPage | null> {
+  const page = await getTopFreePage(after, pageSize);
+  if (page === null) return null;
+  return { apps: [...page.firstParty, ...page.thirdParty], nextCursor: page.nextCursor };
+}
+
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
 export async function getNewAndUpdated(limit = 12): Promise<App[]> {
   // 5.l.iv.zi — table mode with a bounded `limit`: the first-party apps plus the first rows of the

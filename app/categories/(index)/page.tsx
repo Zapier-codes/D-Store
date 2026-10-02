@@ -1,4 +1,5 @@
 import { getTaxonomyCategories, getTaxonomyAppCount } from "@/lib/catalog";
+import Link from "next/link";
 import ShelfGrid from "@/components/ShelfGrid";
 import CategoryCard from "@/components/CategoryCard";
 import styles from "./page.module.css";
@@ -22,6 +23,9 @@ import styles from "./page.module.css";
  *
  * Counts are fetched once here (49 in parallel) and passed down to each
  * `CategoryCard` rather than each card fetching its own.
+ *
+ * Leaf `5.l.xi.zo`: a "Browse all apps" link under the heading to `/apps`, the paged list of every
+ * app and game, so the categories index also leads to the whole catalog, not only to its shelves.
  */
 export default async function CategoriesPage() {
   const all = await getTaxonomyCategories();
@@ -35,6 +39,9 @@ export default async function CategoriesPage() {
   return (
     <main className={styles.main}>
       <h1 className={styles.heading}>Categories</h1>
+      <p className={styles.allApps}>
+        <Link href="/apps">Browse all apps</Link>
+      </p>
       {sections.map((section) => (
         <section key={section.appType} className={styles.section} aria-labelledby={`categories-${section.appType}`}>
           <h2 id={`categories-${section.appType}`} className={styles.sectionHeading}>
