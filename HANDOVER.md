@@ -1,12 +1,45 @@
 # D-Store — HANDOVER.md
 *Read this file first, every session. It tells you exactly what to work on and how to hand off when you're done.*
 
+---
+
+## ▶ START HERE — where the program stands *(refreshed 2026-10-03, about 07:30 Lagos; this block is the source of truth: where an older note below disagrees, this block wins)*
+
+**How to read this file without rediscovering anything.** Read this block, then the three STANDING OPERATOR INSTRUCTIONS under it, then go straight to the work. **Do not read Section 0's "Current position" from top to bottom to find the latest state:** its notes were inserted over many sessions and are *not* in date order, so the newest is not the first. They are history; this block is the index. Every session ends by **rewriting** this block to the state after its own work (Section 3, step 2a), not by appending to it.
+
+**Program count: `43 done ✅ of 63`** (the ticks in "Focus run 3" are the record). **Repo heads at this refresh:** D-Store `origin/master` `09404d5`, Zealot `origin/develop` `3e024faf`, Storeapp `origin/main` `4cb5a0b`. `distr` was not cloned this session. **Nothing is pending application except the patch of the session that wrote this block.** Zealot: no patch pending.
+
+**Where we are: leaf 16, `7.a.ii.zi` (Zealot), `[~]`.** Its code half (an unreadable `.aab` is refused with a 422) is applied. What is left is the first real upload, and it is the operator's, in this order:
+
+| # | Step | State |
+|---|---|---|
+| 1 | Zealot's boot-crash fix live on Render | **Done.** Fix `3e024faf` is on `develop`; image `ghcr.io/zapier-codes/zealot:deploy-3e024fa` went `live` at 05:58 UTC (deploy `dep-db09h0favr4c73engrq0`). |
+| 2 | `ENABLE_ASSET_PACK_DELIVERY=true` on `zealot-web` | **Set** (Render API, `200`, 06:18 UTC). **Deploying:** `dep-db09vnm0tbcc73eug8e0`, image `deploy-3e024fa`, triggered 06:25 UTC, `update_in_progress` at the last sighting; **its final status was not seen when this block was written, so confirm it first** with the command below. Unchecked: whether compiling a bundle fits the 512Mi free instance. |
+| 3 | An org signing key exists (`AndroidSigningKey.current`) | Not checked. Operator, in Zealot. |
+| 4 | The Storeapp app and an Android channel exist in Zealot (note its `channel_key`); the per-app token is made on the 34a-7 screen (shown once) and stored as Storeapp's secret `ZEALOT_APP_TOKEN`, with variables `ZEALOT_URL` and `ZEALOT_CHANNEL_KEY` | Not done. Operator. |
+| 5 | One run of Storeapp's `release-aab.yml` (Actions tab, or a `v*` tag) | Not done; it has never run and may fail on its own. Leaf 34 is applied on Storeapp `main`, so the first run gets versionCode = run number + 100. On a failure: `bash ~/D-Store/scripts/fetch-ci-log.sh gh Zapier-codes/Storeapp`, upload the file. |
+| 6 | `curl` upload of that bundle, held (`-F hold=true`), response sent back | Not done. The exact command is in the "Worked this session … leaf 16" note below (search for `-F hold=true`). Report the response and what the release page shows: name, version, whether APKs were produced. |
+
+**First command of the next session** (Termux, not Ubuntu; shows which build each deploy ran, which is what matters, since `commit` is `null` for image deploys):
+```
+curl -s -H "Authorization: Bearer $RENDER_API_KEY" \
+  "https://api.render.com/v1/services/srv-dalsvf942hec73dk2vg0/deploys?limit=4" \
+  | jq -r '.[] | (.deploy // .) | [.id, .status, (.image.ref // "-")] | @tsv'
+```
+Healthy is a top row `live` on `…:deploy-3e024fa`. `update_failed` means run `scripts/fetch-ci-log.sh render srv-dalsvf942hec73dk2vg0` and read the uploaded file (Section 0, "CI and deploy debugging"). **Never redeploy without `imageUrl`** (item 6 of that rule explains the rollback it caused on 2026-10-03).
+
+**Do not redo (done and proven):** the debug run of the failed deploys (cause: a misplaced `message:` in `ListingEdit`, fixed); the 34a migration (applied on the live database, and Zealot migrates on boot); leaf 34 (applied: D-Store `09404d5`, Storeapp `4cb5a0b`); every Render API call in item 6 of the debug rule.
+
+**If leaf 16's steps 3 to 6 are still waiting on the operator, take the next buildable leaf out of order and say so in the commit:** leaf 27 (`5.l.xxii.zi`, D-Store: a workflow that applies `supabase/migrations/**`; needs no live service). Then the Zealot leaves 29 to 33 (these close the other three AAB-publishing gaps; a push to Zealot redeploys it through the deploy hook, so do them only once step 2's deploy is `live`). Storeapp leaf 17a is no longer blocked by leaf 34; 17b to 17d wait on Zealot leaves 30 to 33. **One leaf per session, one patch per repo** (Section 0, "Cross-repo run"; Section 3).
+
+**Standing rules, one line each (the full text is in Section 0):** no tests or builds, nothing is run, say so in the commit and the reply; clone Zealot and Storeapp every session and check each for its half of the leaf; a failed CI run or deploy is debugged from the log file the operator uploads, never from its status; hand over the patch as `git format-patch` and `git am` commands with real paths.
+
 
 > **STANDING OPERATOR INSTRUCTION (2026-10-02) — ALL SESSIONS: STOP RUNNING TESTS AND BUILDS.** Do not run `npm ci`, `npm test`, `tsc`, `next build`, `next start` or any other build/test step. Make the change, commit it, and hand over the single patch file. Say plainly in the commit message and reply that nothing was run. This overrides every "run tsc/npm test/next build" line in the leaves below until the operator lifts it.
 
 > **STANDING OPERATOR INSTRUCTION (2026-10-02) — THIS IS A CROSS-REPO RUN.** Clone Zealot, Storeapp (and `distr` where relevant) every session, check each for its half of the leaf, do that half there as that repo's own patch, one leaf at a time, and combine patches when the previous one is not yet applied. Full rules: Section 0, "Cross-repo run — standing rules".
 
-> **STANDING OPERATOR INSTRUCTION (2026-10-03) — ANY FAILED CI RUN OR DEPLOY: GIVE THE OPERATOR THE LOG COMMAND, THEN READ THE FILE THEY UPLOAD.** When a GitHub Actions run or a Render deploy fails, do not guess from its status and do not ask for pasted lines: hand over one command, run in Termux, that saves the failure log under `~/storage/downloads`, and read the file the operator uploads. The commands and the rules are in Section 0, "CI and deploy debugging — standing rule". **The debug run is done (2026-10-03): the cause is one line in Zealot, fixed in Zealot's own patch.** The next task is the operator applying it and confirming a Render deploy goes `live` (see the newest note under "Current position").
+> **STANDING OPERATOR INSTRUCTION (2026-10-03) — ANY FAILED CI RUN OR DEPLOY: GIVE THE OPERATOR THE LOG COMMAND, THEN READ THE FILE THEY UPLOAD.** When a GitHub Actions run or a Render deploy fails, do not guess from its status and do not ask for pasted lines: hand over one command, run in Termux, that saves the failure log under `~/storage/downloads`, and read the file the operator uploads. The commands and the rules are in Section 0, "CI and deploy debugging — standing rule". **The debug run is done (2026-10-03): the cause was one line in Zealot, fixed and deployed.** Where the program stands now, and what to do first, is in the START HERE block above.
 
 ---
 
@@ -63,6 +96,7 @@ This is a **cross-repo priority run**: D-Store, Zealot, Storeapp (and `distr` fo
 3. The script replaces bearer tokens and `zpa_` / `rnd_` strings with `[redacted]`. The operator still skims the file before uploading it.
 4. **Where the fix goes:** in the repo the log belongs to, as an operator-directed fix with no leaf and the focus-run count unchanged (the same shape as the debug notes already in this file); the leaf that was interrupted resumes next.
 5. **If the command itself fails,** report the HTTP status or message it printed and give the dashboard fallback (Render: the service, Events, the deploy, Logs, copied to a file; GitHub: the run page, the gear menu, "Download log archive"). Never reconstruct a log from memory.
+6. **Render API calls proven in the operator's Termux (2026-10-03, Zealot's service `srv-dalsvf942hec73dk2vg0`, `zealot-web`), so nobody re-derives them.** (a) `GET /v1/services/<id>/deploys?limit=N` works; `jq -r '.[] | (.deploy // .) | [.id, .status, (.image.ref // "-")] | @tsv'` reads it. `commit` is `null` for image deploys, so **the image ref is how you tell which build a deploy ran**; the tag is `deploy-<first 7 characters of the commit>`. (b) `PUT /v1/services/<id>/env-vars/<KEY>` with `{"value":"true"}` sets one variable (`200`, answer `{"key","value"}`); no deploy appeared from the `PUT` alone, so a deploy has to be triggered separately; the route without a key is believed to replace every variable and was never used. (c) `POST /v1/services/<id>/deploys` answers `201`. **Without `imageUrl` it redeploys the service's *stored* image, which was the old `deploy-6731354`: on 2026-10-03 at 06:18 UTC this rolled Zealot back from the fixed `deploy-3e024fa` (the assistant's mistake; undone at 06:25 UTC).** Always send `{"clearCache":"do_not_clear","imageUrl":"ghcr.io/zapier-codes/zealot:deploy-<sha7>"}` and check that the answer's `image.ref` is the image asked for (confirmed at 06:25 UTC). A deploy that is replaced by a newer one shows as `deactivated`.
 
 ### Status markers
 Every leaf carries one of:
@@ -1767,6 +1801,7 @@ This is the same process used to hand off the D-Store documentation itself — i
 0. **Cross-repo run:** clone the other repos and read their handovers first (see "Cross-repo run — standing rules" in Section 0), then **check upstream:** `git fetch origin` and compare against `origin/master`. If origin has moved since the local clone/session was last synced (earlier patches already applied and pushed, for instance), rebase local work onto the current `origin/master` (`git rebase origin/master`) before starting the leaf and before generating any patch. A patch built against a stale base will fail to apply with `git am` even when the content it wants is logically identical to what's already there — this step is what prevents that.
 1. **Do the one assigned leaf task** (Section 1 — nothing more).
 2. **Update this file**: flip the completed leaf's `[ ]` to `[x]`, append one line for the leaf to `CHANGELOG.md` (`leaf path — short title`, no hash: a commit cannot know its own; see that file's header), and move the "Current position" line (Section 0) to the next open leaf in path order (`zi` before `zo`; within a milestone before moving to the next `i/ii/iii`; within a track before the next `a/b/c/d`; within a phase before the next `1/2/3/4`).
+2a. **Refresh the "START HERE" block at the top of this file** (rewrite it, do not append): the leaf the program is on and its state, the `N done ✅ of M` count, what is done, pending or blocked and **on whom**, the repo head commits and any patch not yet applied, and the exact first command or step for the next session. A session that leaves it stale has not finished, because the block is the only part of this file a new session is told to trust without reading further. Lasting facts do not stay in it: move them to the section they belong to (a Render or CI fact to "CI and deploy debugging", a decision to the leaf's Done note).
 3. **Commit** the code change and the `HANDOVER.md` update **together**, in one commit, with a message that starts with the leaf path:
    ```
    git add -A
