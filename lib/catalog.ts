@@ -1308,30 +1308,33 @@ export async function getNewAndUpdated(limit = 12): Promise<App[]> {
 }
 
 /**
- * How many chunk documents the sitemap index lists — leaf `5.l.vi.zo`. Table mode only: `null` when
- * the table is not in use or the count could not be read (one fixed log line); the caller then serves
- * the whole-catalog sitemap, as before. One request, one row asked for, only the count used.
+ * How many chunk documents the sitemap index lists — leaf `5.l.vi.zo`. One request, one row asked for,
+ * only the count used.
+ *
+ * Leaf `5.l.xx.zi`: returns the count or throws `CatalogUnavailableError` after one fixed log line,
+ * when the Supabase env is not usable or the count could not be read. It used to return `null` (the
+ * table off, or a failed read) so the route could build a whole-catalog sitemap; that sitemap is gone,
+ * and `/sitemap.xml` answers `503` instead, because a short or empty sitemap makes a crawler drop the
+ * URLs it already knows.
  */
-export async function getSitemapChunkCount(): Promise<number | null> {
-  if (!useCatalogTable()) return null;
+export async function getSitemapChunkCount(): Promise<number> {
+  if (!useCatalogTable()) throw unavailableError("catalog: sitemap count failed (the catalog table is not configured)");
   try {
     const read = await readCatalogSitemapTotal();
-    if (!read.ok) {
-      console.error("catalog: sitemap count failed");
-      return null;
-    }
-    return sitemapChunkCount(read.total);
+    if (read.ok) return sitemapChunkCount(read.total);
   } catch {
-    console.error("catalog: sitemap count failed");
-    return null;
+    // fall through to the one error below
   }
+  throw unavailableError("catalog: sitemap count failed");
 }
 
 /**
- * One document of the chunked sitemap — leaf `5.l.vi.zo`. Table mode only: `null` when the table is
- * not in use (the caller serves the whole-catalog sitemap, as before) and `null` with one fixed log
- * line when a read failed (the caller answers 503; a failed read is never an empty or a short
- * sitemap). Never throws.
+ * One document of the chunked sitemap — leaf `5.l.vi.zo`.
+ *
+ * Leaf `5.l.xx.zi`: returns the document or throws `CatalogUnavailableError` after one fixed log line,
+ * when the Supabase env is not usable or a read failed (it used to return `null`, for both); the route
+ * answers `503`, and a failed read is never an empty or a short sitemap. A chunk index at or past the
+ * table's chunk count is NOT an outage: it comes back with no entries and the caller answers `404`.
  *
  * Chunk `index` is rows `index * 1000` to `index * 1000 + 999` of the published rows by slug
  * (`lib/catalog-sitemap.ts`). Chunk 0 also carries what is not a row: the site's own pages, one page
@@ -1341,24 +1344,21 @@ export async function getSitemapChunkCount(): Promise<number | null> {
  * the table's own count in the same read; an `index` at or past it comes back with no entries and the
  * caller answers 404.
  *
- * Decided here, for the operator to overrule: developer pages are listed for first-party developers
- * only. A third-party developer page still loads the whole catalog for its app list
- * (`getAppsByDeveloper`, which `5.l.vii.zi` or a new leaf has to replace), so listing thousands of
- * them would invite a crawler to trigger that load thousands of times.
+ * Decided here (`5.l.vi.zo`), for the operator to overrule: developer pages are listed for first-party
+ * developers only. Its reason has weakened: a developer page no longer loads the whole catalog (it is
+ * one bounded read, `getDeveloperApps`, `5.l.xiv.zi`), so listing third-party developers is possible
+ * now; it would need a distinct-developers read the table does not have yet, so it is left as it was.
  */
 export interface SitemapChunk {
   entries: SitemapEntry[];
   chunkCount: number;
 }
 
-export async function getSitemapChunk(index: number, baseUrl: string): Promise<SitemapChunk | null> {
-  if (!useCatalogTable()) return null;
+export async function getSitemapChunk(index: number, baseUrl: string): Promise<SitemapChunk> {
+  if (!useCatalogTable()) throw unavailableError("catalog: sitemap read failed (the catalog table is not configured)");
   try {
     const read = await readCatalogSitemapChunk(index);
-    if (!read.ok) {
-      console.error("catalog: sitemap read failed");
-      return null;
-    }
+    if (!read.ok) throw unavailableError("catalog: sitemap read failed");
     const chunkCount = sitemapChunkCount(read.total);
     if (index >= chunkCount) return { entries: [], chunkCount };
 
@@ -1384,9 +1384,10 @@ export async function getSitemapChunk(index: number, baseUrl: string): Promise<S
       entries.push(appSitemapEntry(baseUrl, row.slug, row.updated_at));
     }
     return { entries, chunkCount };
-  } catch {
-    console.error("catalog: sitemap read failed");
-    return null;
+  } catch (error) {
+    // The error thrown above has already logged its one line; anything else is logged here.
+    if (error instanceof CatalogUnavailableError) throw error;
+    throw unavailableError("catalog: sitemap read failed");
   }
 }
 

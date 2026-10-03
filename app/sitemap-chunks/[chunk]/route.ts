@@ -1,5 +1,4 @@
-import { getSitemapChunk } from "@/lib/catalog";
-import { useCatalogTable } from "@/lib/sources/catalog-table";
+import { CatalogUnavailableError, getSitemapChunk } from "@/lib/catalog";
 import { buildUrlset, parseSitemapChunk } from "@/lib/sitemap-xml";
 
 /**
@@ -11,11 +10,13 @@ import { buildUrlset, parseSitemapChunk } from "@/lib/sitemap-xml";
  *
  * Answers:
  * - 200 with a `<urlset>`.
- * - 404 for a segment that is not `<whole number>.xml`, for any chunk when the table is not in use
- *   (there is no chunked sitemap then, `/sitemap.xml` is a single document), and for an index at or
- *   past the table's chunk count.
- * - 503 with `no-store` when the table could not be read. Never an empty or a short document: a
- *   crawler that is told "no apps" may drop what it already knows, and a CDN must not keep it.
+ * - 404 for a segment that is not `<whole number>.xml` and for an index at or past the table's chunk
+ *   count.
+ * - 503 with `Retry-After: 300` and `no-store` when the table could not be read, or when the Supabase
+ *   env is not usable (leaf `5.l.xx.zi`: before it, an unusable env was a `404`, because `/sitemap.xml`
+ *   was then a single document; there is no such document any more, and `/sitemap.xml` answers `503`
+ *   too). Never an empty or a short document: a crawler that is told "no apps" may drop what it already
+ *   knows, and a CDN must not keep it. Any other error is not caught and is a `500`.
  *
  * `force-dynamic` and the same one-hour CDN cache as `/sitemap.xml`; see that file for the reasons.
  */
@@ -27,11 +28,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://d-store-nu.vercel.
 export async function GET(_request: Request, { params }: { params: Promise<{ chunk: string }> }): Promise<Response> {
   const index = parseSitemapChunk((await params).chunk);
   if (index === null) return new Response("Not found", { status: 404 });
-  // No chunked sitemap exists with the table off, so there is nothing to find; this is not an outage.
-  if (!useCatalogTable()) return new Response("Not found", { status: 404 });
 
-  const chunk = await getSitemapChunk(index, BASE_URL);
-  if (chunk === null) return failureResponse(); // table in use, read failed
+  let chunk;
+  try {
+    chunk = await getSitemapChunk(index, BASE_URL);
+  } catch (error) {
+    if (error instanceof CatalogUnavailableError) return failureResponse();
+    throw error;
+  }
   if (index >= chunk.chunkCount) return new Response("Not found", { status: 404 });
 
   return new Response(buildUrlset(chunk.entries), {
