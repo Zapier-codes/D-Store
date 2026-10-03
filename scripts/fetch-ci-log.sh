@@ -89,6 +89,10 @@ render)
   end=$(jq -r --arg d "$did" '[.[].deploy | select(.id == $d)][0].finishedAt // empty' "$tmp/deploys.json")
   [ -n "$start" ] || { echo "deploy $did is not among the last 20 deploys" >&2; exit 1; }
   [ -n "$end" ] || end=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  # A deploy that is still live has a finishedAt (the moment it went live), but its logs go on: every request
+  # after that belongs to it. Cut at finishedAt, the window missed the operator's sign-in attempt (2026-10-03).
+  [ "$(jq -r --arg d "$did" '[.[].deploy | select(.id == $d)][0].status // empty' "$tmp/deploys.json")" != "live" ] ||
+    end=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
   f="$OUT/render-deploy-$did.log"
   {
