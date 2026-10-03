@@ -56,6 +56,11 @@ export async function middleware(request: NextRequest) {
     return applyModerationHeaders(NextResponse.next());
   }
 
+  // 7.b.i.zi — `/api/catalog` is a public, cacheable JSON API for Storeapp. It has no region or tenant
+  // (it reads the one global `catalog_app` table), and the region lookup below would cost an ipapi call
+  // per cookie-less native request and attach a `Set-Cookie`, which stops a CDN from caching the page.
+  if (request.nextUrl.pathname === "/api/catalog") return NextResponse.next();
+
   // 6.b.ii.zi — forward the normalized Host for tenant resolution (lib/tenant.ts does the
   // verified lookup on the Node side; see that file for why not here). Any client-supplied
   // copy of this header is deleted first: a visitor must never be able to pick their tenant
