@@ -3,11 +3,11 @@
 
 ---
 
-## ▶ START HERE — where the program stands *(refreshed 2026-10-03, after Zealot's Task 34d was recorded here; this block is the source of truth: where an older note below disagrees, this block wins)*
+## ▶ START HERE — where the program stands *(refreshed 2026-10-03, after the first dry run of the bootstrap script failed to parse; this block is the source of truth: where an older note below disagrees, this block wins)*
 
 **How to read this file without rediscovering anything.** Read this block, then the three STANDING OPERATOR INSTRUCTIONS under it, then go straight to the work. **Do not read Section 0's "Current position" from top to bottom to find the latest state:** its notes were inserted over many sessions and are *not* in date order, so the newest is not the first. They are history; this block is the index. Every session ends by **rewriting** this block to the state after its own work (Section 3, step 2a), not by appending to it.
 
-**Program count: `46 done ✅ of 66`** (the ticks in "Focus run 3" are the record; leaves 35 to 37 were added and ticked in this refresh). **Repo heads at this refresh:** D-Store `origin/master` `7d35640`, Zealot `origin/develop` `493b4ecb`, Storeapp `origin/main` `4cb5a0b`. `distr` was not cloned. **Nothing is pending application except the patch of the session that wrote this block (docs only, D-Store).** Zealot and Storeapp: no patch pending.
+**Program count: `46 done ✅ of 66`** (the ticks in "Focus run 3" are the record; leaves 35 to 37 were added and ticked in this refresh). **Repo heads at this refresh:** D-Store `origin/master` `b2574cb`, Zealot `origin/develop` `493b4ecb`, Storeapp `origin/main` `4cb5a0b`. `distr` was not cloned. **Nothing is pending application except the patch of the session that wrote this block (docs only, D-Store).** **Zealot: one patch pending, `zealot-bootstrap-publishing-quote-fix.patch` (one commit on `develop` `493b4ecb`).** Storeapp: no patch pending.
 
 **Where we are: leaf 16, `7.a.ii.zi` (Zealot), `[~]`.** Its code half (an unreadable `.aab` is refused with a 422) is applied. **Steps 3 and 4 are now done by code, not by hand (Zealot Task 34d, leaves 35 to 37, built on `develop` as `493b4ecb`, written, NOT run):** an admin-only signing-key API (`/api/android_signing_key`), per-app token minting (`/api/apps/:app_id/api_tokens`) and `bin/bootstrap-publishing`, which does steps 3 and 4 in one idempotent run. What is left is the first real upload, in this order:
 
@@ -15,8 +15,8 @@
 |---|---|---|
 | 1 | Zealot's boot-crash fix live on Render | **Done** (image `deploy-3e024fa`, `live` 05:58 UTC). |
 | 2 | `ENABLE_ASSET_PACK_DELIVERY=true` on `zealot-web` | **Done** (variable set 06:18 UTC, deploy `dep-db09vnm0tbcc73eug8e0` `live`). **Not yet exercised:** the first bundle compile, so whether it fits the 512Mi instance is unchecked; if the service dies on the first upload, look there first. |
-| 2b | **The deploy of `493b4ecb` (the 34d code) is `live`** | **Not checked.** The push of `493b4ecb` redeploys Zealot through the deploy hook after the check that produced step 2's `live`, so the first command below must show a `live` top row on `…:deploy-493b4ec` before step 3. If it ends `update_failed`: `bash ~/D-Store/scripts/fetch-ci-log.sh render srv-dalsvf942hec73dk2vg0`, upload the file. |
-| 3 + 4 | Org signing key, Storeapp app, scheme, Android channel, per-app token stored as Storeapp's secret `ZEALOT_APP_TOKEN` and variables `ZEALOT_URL`, `ZEALOT_CHANNEL_KEY` | **Not run. Operator, one command, dry run first** (below). Needs: a platform admin's Zealot user token (`ZEALOT_ADMIN_TOKEN`, or `--admin-token-file`, or a hidden prompt), the keystore file with its alias and both passwords **only if Zealot has no signing key yet** (the dry run says), `gh` logged in with access to Storeapp's Actions secrets and variables. If `AndroidSigningKey.current` already exists, the script leaves it alone and tells you if the file you gave differs. |
+| 2b | The deploy of `493b4ecb` (the 34d code) is `live` | **Done**, seen 2026-10-03: `dep-db0ahg7avr4c73ere5rg` is `live` on `ghcr.io/zapier-codes/zealot:deploy-493b4ec`. |
+| 3 + 4 | Org signing key, Storeapp app, scheme, Android channel, per-app token stored as Storeapp's secret `ZEALOT_APP_TOKEN` and variables `ZEALOT_URL`, `ZEALOT_CHANNEL_KEY` | **Not run. The first `--dry-run` stopped at a bash parse error in the script (one apostrophe, see the debug note below); the fix is Zealot's own patch `zealot-bootstrap-publishing-quote-fix.patch`, to apply first. Operator, then the same dry run again** (below). Needs: a platform admin's Zealot user token (`ZEALOT_ADMIN_TOKEN`, or `--admin-token-file`, or a hidden prompt), the keystore file with its alias and both passwords **only if Zealot has no signing key yet** (the dry run says), `gh` logged in with access to Storeapp's Actions secrets and variables. If `AndroidSigningKey.current` already exists, the script leaves it alone and tells you if the file you gave differs. |
 | 5 | One run of Storeapp's `release-aab.yml` (Actions tab, or a `v*` tag) | Not done; it has never run and may fail on its own. Leaf 34 is applied on Storeapp `main`, so the first run gets versionCode = run number + 100. On a failure: `bash ~/D-Store/scripts/fetch-ci-log.sh gh Zapier-codes/Storeapp`, upload the file. |
 | 6 | `curl` upload of that bundle, held (`-F hold=true`), response sent back | Not done. The script prints this exact command at its end when `--secret-out` was given; the older copy is in the "Worked this session … leaf 16" note below (search for `-F hold=true`). Report the response and what the release page shows: name, version, whether APKs were produced. |
 
@@ -24,7 +24,7 @@
 ```
 export ZEALOT_URL=https://zealot-deploy-latest.onrender.com
 export ZEALOT_ADMIN_TOKEN=...            # or leave unset and answer the hidden prompt
-cd ~/zealot && git pull origin develop    # the script is in 493b4ecb
+cd ~/zealot && git am ~/storage/downloads/zealot-bootstrap-publishing-quote-fix.patch && git push   # the fix; the push redeploys Zealot, fine here (before step 5)
 bash bin/bootstrap-publishing --dry-run \
   --app-name Storeapp --bundle-id com.vythera.vyxelapps \
   --github-repo Zapier-codes/Storeapp --secret-out ~/storeapp-zealot.token
@@ -35,6 +35,8 @@ bash bin/bootstrap-publishing --dry-run \
 Send back the output (it holds no secret). **Back up the keystore before it is uploaded: losing it breaks updates for every installed app.**
 
 **What can still go wrong, all named in Zealot's Task 34d note:** nothing in Task 34d was run, not even `ruby -c` or `bash -n`, so a first-run error is possible, read the line the script prints; `keytool` may be missing in Render's image (the API answers `503`); two simultaneous key creates could both pass (no unique index); no rate limit yet (Task 34c). The two lookups of `GET /api/apps` still put the user token in the query string, because that endpoint reads nothing else.
+
+**Debug run (2026-10-03, operator-directed, no leaf, count unchanged at 46 of 66).** The operator ran `bin/bootstrap-publishing --dry-run`; bash answered `line 349: unexpected EOF while looking for matching '` before any call to Zealot, so nothing was changed anywhere. Cause, read from the file and not run: a log line inside `step_token` had an apostrophe inside a double-quoted `${GITHUB_REPO:+ as $GITHUB_REPO's secret ...}`, which bash 5 reads as an opening single quote. The other apostrophes in the script are in safe places. Fixed in Zealot's own patch (the line now builds a plain string). **Not verified:** no `bash -n` was run (no-testing instruction), so a second error could show on the next run; send the line it prints.
 
 **First command of the next session** (Termux, not Ubuntu; shows which build each deploy ran, which is what matters, since `commit` is `null` for image deploys):
 ```
