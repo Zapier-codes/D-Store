@@ -9,7 +9,7 @@ import styles from "./page.module.css";
  * with no ranks and no sections; the route is `/apps` and the link to it is on the `/categories`
  * index. (Not `/app`, which is the detail route's prefix, `/app/<slug>`.)
  *
- * Paged in table mode. With `CATALOG_SOURCE=table` the list is read one page at a time
+ * Paged in table mode. With the Supabase env set the list is read one page at a time
  * (`getAllAppsPage`, 24 a page, order `top`): page 1 is the first-party apps (ranked by D-Store
  * installs) and then the first third-party rows (reported downloads, then slug); later pages are
  * third-party only, reached by the "Next page" link (`?after=<cursor>`). The catalog is read by
@@ -19,7 +19,7 @@ import styles from "./page.module.css";
  * the whole merged list (`getTopFreeApps()`, the same order the table path produces) with no
  * `after` and no pager, as the two chart pages do. That fallback is the whole catalog in memory,
  * which is what the table mode exists to avoid, so a deployment with a large catalog should set
- * `CATALOG_SOURCE=table`.
+ * the Supabase env (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`).
  */
 export default async function AllAppsPage({
   searchParams,

@@ -18,7 +18,7 @@ import {
  * document).
  *
  * Two shapes at the same URL:
- * - Table mode (`CATALOG_SOURCE=table`, the Supabase env set): a `<sitemapindex>` listing
+ * - Table mode (the Supabase env set): a `<sitemapindex>` listing
  *   `/sitemap-chunks/<n>.xml`, one document per 1,000 published rows (`app/sitemap-chunks/[chunk]`).
  *   Only a count is read here. The documents are read when a crawler asks for them.
  * - Otherwise, or when the count could not be read: the single `<urlset>` this route always was,

@@ -183,6 +183,21 @@ looking from sending.
 
 ---
 
+## Catalog source (leaf 5.l.xvii.zi)
+
+The third-party (Aptoide-origin) catalog is read from the `catalog_app` table in D-Store's own
+Supabase project whenever `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set. There is nothing
+else to switch on.
+
+**`CATALOG_SOURCE` is no longer needed and is no longer read.** It used to have to be `table`; any
+value, or none, is now ignored. You can delete it from Vercel. Before the Supabase variables are set
+on a deployment, or if they are removed, the site falls back to the bundled snapshot files in
+`storage/downloads` until leaf `5.l.xix.zo` removes that path, after which a deployment without them
+shows first-party apps only.
+
+Check it is working after a deploy: `npx tsx scripts/check-catalog-table.ts` compares the table with
+the snapshot and prints counts, and the footer total should match the table's published row count.
+
 ## Moderation access (leaf 3.c.vi.zo)
 
 The moderation queue lives under `/moderation` and `/api/moderation/*`, **outside** `/admin`. Moderators sign in **individually**, with a generated token each, not with the shared `ADMIN_PASSWORD`. The shared password never opens `/moderation`, and a moderator token never opens `/admin`. **Nothing here is required for the site to build or run**: with the variable unset, every `/moderation` and `/api/moderation` request answers `503` to everyone (fails closed) and the rest of the site is unchanged.

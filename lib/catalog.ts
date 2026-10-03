@@ -119,8 +119,8 @@ async function getMergedApps(): Promise<App[]> {
   const key = catalogScopeKey(scope);
   let pending = mergedAppsByScope.get(key);
   if (!pending) {
-    // 5.l.ii.zi — the Aptoide side reads the `catalog_app` table when the operator opts in
-    // (`CATALOG_SOURCE=table` plus the Supabase env); otherwise the snapshot files, as before.
+    // 5.l.ii.zi — the Aptoide side reads the `catalog_app` table whenever the Supabase env is set
+    // (5.l.xvii.zi: the `CATALOG_SOURCE=table` opt-in is gone); otherwise the snapshot files, as before.
     // A failed table read falls back to the snapshot for this lifetime's catalog rather than 500ing every page.
     const thirdParty: CatalogSource = useCatalogTable()
       ? {

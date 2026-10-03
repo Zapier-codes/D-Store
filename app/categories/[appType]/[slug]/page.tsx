@@ -38,7 +38,7 @@ import styles from "./page.module.css";
  * (`5.i.v.zi` re-keyed the registry), so `finance` keeps "Vault" and
  * `books-and-reference` keeps "Sanctuary".
  *
- * Paged in table mode — leaves `5.l.xii.zi` and `5.l.xii.zo`. With `CATALOG_SOURCE=table` the
+ * Paged in table mode — leaves `5.l.xii.zi` and `5.l.xii.zo`. With the Supabase env set the
  * category is read one page at a time (`getCategoryPage`, 24 a page, order `top`): page 1 is the
  * category's first-party apps and then the first third-party rows; later pages are third-party only,
  * reached by the "Next page" link (`?after=<cursor>`). The catalog is read by keyset, so there are no

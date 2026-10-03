@@ -31,7 +31,7 @@ import styles from "./page.module.css";
  * specifically, is where a search gets logged rather than inside
  * `searchApps` itself.
  *
- * Paged in table mode — leaf `5.l.v.zo`. With `CATALOG_SOURCE=table` the results are read one page at
+ * Paged in table mode — leaf `5.l.v.zo`. With the Supabase env set the results are read one page at
  * a time (`getSearchPage`, 24 a page): page 1 is the matching first-party apps and then the first
  * third-party matches in `top` order; later pages are third-party only, reached by the "Next page"
  * link (`?q=<query>&after=<cursor>`). The catalog is read by keyset, so there are no page numbers

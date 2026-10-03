@@ -37,7 +37,7 @@ import styles from "./page.module.css";
  * third-party app, not a rank below every first-party one. The section
  * is omitted when it is empty.
  *
- * Paged in table mode — leaf `5.l.x.zo`. With `CATALOG_SOURCE=table`
+ * Paged in table mode — leaf `5.l.x.zo`. With the Supabase env set
  * the chart is read one page at a time (`getTopFreePage`, 24 a page):
  * page 1 is the first-party section and the first third-party rows;
  * later pages are third-party only, reached by the "Next page" link

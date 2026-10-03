@@ -2,7 +2,7 @@
  * The shared paged read for list pages — leaf `5.l.x.zi`.
  *
  * SERVER-ONLY (it calls `lib/catalog-table.ts`). Table mode only: `lib/catalog.ts` uses it when
- * the operator opted in to the table (`CATALOG_SOURCE=table`). No page uses it yet; the Top Free
+ * the Supabase env is set (`useCatalogTable`, leaf `5.l.xvii.zi`). No page uses it yet; the Top Free
  * chart (`5.l.x.zo`), New & Updated (`5.l.xi.zi`), All apps (`5.l.xi.zo`) and the category page
  * (`5.l.xii.zi`) each become one call to `readAppsPage`.
  *

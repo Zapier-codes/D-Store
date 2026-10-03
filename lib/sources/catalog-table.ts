@@ -8,10 +8,10 @@
  * first and this source second, so first-party apps still rank ahead and the
  * "first one wins on package_name" merge is unchanged.
  *
- * OPT-IN: `lib/catalog.ts` uses this source only when `CATALOG_SOURCE=table`
- * AND the Supabase env is set (`useCatalogTable`). Otherwise the snapshot source
- * is used exactly as before. Reason: the table is not applied or loaded yet
- * (leaves 4 to 6), and a list row has no `raw`.
+ * Since leaf `5.l.xvii.zi` `lib/catalog.ts` uses this source whenever the Supabase env is set
+ * (`catalogTableConfigured`); the `CATALOG_SOURCE=table` opt-in is gone. Without the Supabase
+ * env the snapshot source is used exactly as before, until leaf `5.l.xix.zo` removes it.
+ * A list row has no `raw`.
  *
  * What a row can and cannot fill (list-grade `App`, honest about the rest):
  * - From the row: id, slug, name, summary, icon, version, app_type, category,
@@ -44,10 +44,18 @@ import type { CatalogSource } from "./types";
 /** Safety ceiling: the target is 10,000 apps; stop well past it rather than loop. */
 export const MAX_TABLE_APPS = 12_000;
 
-/** True only when the operator opted in and the Supabase env is usable. */
-export function useCatalogTable(env: Record<string, string | undefined> = process.env): boolean {
-  return env.CATALOG_SOURCE?.trim() === "table" && isCatalogTableConfigured(env);
+/**
+ * True when the Supabase env is usable, which is the only thing that switches table mode on
+ * (leaf `5.l.xvii.zi`). The `CATALOG_SOURCE` variable this used to require is no longer read:
+ * whatever it is set to, including `snapshot`, is ignored, so a deployment that has the Supabase
+ * env gets the table and one that does not gets the old snapshot path until `5.l.xix.zo` removes it.
+ */
+export function catalogTableConfigured(env: Record<string, string | undefined> = process.env): boolean {
+  return isCatalogTableConfigured(env);
 }
+
+/** The old name, kept so no caller changes in this leaf; `5.l.xix.zi` removes it. */
+export const useCatalogTable = catalogTableConfigured;
 
 /** One list row to a list-grade `App`. Never throws on a valid row. */
 export function appFromCatalogRow(row: CatalogRow): App {

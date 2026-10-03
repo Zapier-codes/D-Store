@@ -32,7 +32,7 @@ import styles from "./page.module.css";
  * No `CategoryThemeScope` here either, same reasoning as Top Free — a
  * cross-category chart has no single category to scope to.
  *
- * Paged in table mode — leaf `5.l.xi.zi`. With `CATALOG_SOURCE=table` the chart is read one page
+ * Paged in table mode — leaf `5.l.xi.zi`. With the Supabase env set the chart is read one page
  * at a time (`getNewPage`, 24 a page, order `new`): page 1 is the first-party apps (newest
  * first) and then the first third-party rows; later pages are third-party only, reached by the
  * "Next page" link (`?after=<cursor>`). One list, no ranks, so no rank offset is carried. The
