@@ -18,9 +18,8 @@
 
 import { incrementCounter, logSearch } from "./counter-store";
 import { apps, categories, developers, reviews, searchQueries, type App, type AppOrigin, type Category, type Collection, type Developer, type Review, type AppSponsoredSlot, type SearchQueryLog } from "./mock-data";
-import { mergeCatalogSources, type CatalogSource } from "./sources/types";
-import { createAptoideSource } from "./sources/aptoide";
-import { appFromCatalogRow, createCatalogTableSource, useCatalogTable } from "./sources/catalog-table";
+import type { CatalogSource } from "./sources/types";
+import { appFromCatalogRow, catalogTableConfigured } from "./sources/catalog-table";
 import { readThirdPartyShelf, SHELF_MAX } from "./catalog-shelf";
 import { readAppsPage, parseAfter } from "./apps-page";
 import { readCatalogApp, readCatalogDeveloper, readCatalogSlugExists } from "./catalog-detail";
@@ -105,56 +104,12 @@ async function getCatalogScope(): Promise<CatalogScope> {
 }
 
 /**
- * Merged catalog — Zealot first (so it wins any `package_name`
- * collision per `mergeCatalogSources`), then Aptoide's ingested
- * snapshot. Computed once per server lifetime *per tenant scope* and
- * cached (`6.b.ii.zo`: was one process-wide value): the Aptoide side
- * already reads from a cached snapshot file (`lib/sources/aptoide.ts`),
- * so nothing here needs to be recomputed on every call — mirrors
- * `loadSnapshot`'s own caching in that file.
- *
- * Flagged, not changed by this leaf: the Aptoide snapshot is a single
- * third-party catalog with no tenant concept, so every tenant still
- * merges the same Aptoide apps in behind its own Zealot index. This
- * leaf scopes the *Zealot* index (the only tenant-owned catalog);
- * whether a white-label tenant should also carry Aptoide is a product
- * call, not a string swap.
- */
-const mergedAppsByScope = new Map<string, Promise<App[]>>();
-
-async function getMergedApps(): Promise<App[]> {
-  const scope = await getCatalogScope();
-  const key = catalogScopeKey(scope);
-  let pending = mergedAppsByScope.get(key);
-  if (!pending) {
-    // 5.l.ii.zi — the Aptoide side reads the `catalog_app` table whenever the Supabase env is set
-    // (5.l.xvii.zi: the `CATALOG_SOURCE=table` opt-in is gone); otherwise the snapshot files, as before.
-    // A failed table read falls back to the snapshot for this lifetime's catalog rather than 500ing every page.
-    const thirdParty: CatalogSource = useCatalogTable()
-      ? {
-          origin: "aptoide",
-          async getApps() {
-            try {
-              return await createCatalogTableSource().getApps();
-            } catch (error) {
-              console.error(`catalog: table read failed, using the snapshot (${error instanceof Error ? error.message : "unknown"})`);
-              return createAptoideSource().getApps();
-            }
-          },
-        }
-      : createAptoideSource();
-    pending = mergeCatalogSources([createZealotSource(scope), thirdParty]);
-    mergedAppsByScope.set(key, pending);
-    pending.catch(() => mergedAppsByScope.delete(key));
-  }
-  return pending;
-}
-
-/**
- * First-party (Zealot) apps alone, cached per tenant scope for the server lifetime like
- * `getMergedApps` — leaf `5.l.iv.zi`. Every list and shelf below (`5.l.xvii.zo`) is built from
- * this small list plus a bounded database read instead of the whole merged catalog. Same source
- * and same scope as the merged list's first source.
+ * First-party (Zealot) apps alone, cached per tenant scope for the server lifetime — leaf
+ * `5.l.iv.zi`. Every list and shelf below (`5.l.xvii.zo`) is built from this small list plus a
+ * bounded database read. Leaf `5.l.xix.zi` deleted the merged catalog (`getMergedApps`) this was
+ * once the first source of: there is no whole-catalog read left, and a tenant's catalog is this list
+ * plus the rows of the one `catalog_app` table (which has no tenant concept: every tenant still shows
+ * the same third-party rows behind its own Zealot index, a product call this leaf did not change).
  */
 const firstPartyByScope = new Map<string, Promise<App[]>>();
 
@@ -230,7 +185,7 @@ async function getPublicStatsFromTable(): Promise<PublicStats | null> {
  *   shelf shows the first-party apps alone. The bundled snapshot is never read as a fallback.
  */
 async function readShelfFromTable(order: "top" | "new", want: number, firstParty: readonly App[]): Promise<App[]> {
-  if (!useCatalogTable() || !Number.isFinite(want) || want > SHELF_MAX) return [];
+  if (!catalogTableConfigured() || !Number.isFinite(want) || want > SHELF_MAX) return [];
   const apps = await readThirdPartyShelf(order, Math.max(0, Math.floor(want)), firstParty);
   if (apps === null) {
     console.error("catalog: bounded table read failed, showing first-party apps only");
@@ -278,7 +233,7 @@ export interface PublicStats {
  */
 export async function getPublicStats(): Promise<PublicStats> {
   // 5.l.xiii.zi — one count request (cached for a few minutes) instead of every app.
-  if (useCatalogTable()) {
+  if (catalogTableConfigured()) {
     const fromTable = await getPublicStatsFromTable();
     if (fromTable !== null) return fromTable;
   }
@@ -328,8 +283,8 @@ export class DispatchTenantError extends Error {
  * only, and only meaningful inside a request (it resolves the tenant from
  * `Host`, like every other function in this file).
  *
- * **Decision 1 — tenant scope: default tenant only.** `getMergedApps()`
- * follows the request's `Host`, but a push subscription records no
+ * **Decision 1 — tenant scope: default tenant only.** The catalog follows the request's `Host`
+ * (it was the removed `getMergedApps()`, `5.l.xix.zi`, that did), but a push subscription records no
  * tenant, and `push_notified_version` is keyed by slug alone. Planning
  * one tenant's catalog against subscriptions and baselines that may
  * belong to another would notify people about versions of apps they
@@ -443,7 +398,7 @@ export async function catalogHasSlug(slug: string): Promise<boolean> {
   try {
     const firstParty = await getFirstPartyList();
     if (firstParty.some((app) => app.slug === slug)) return true;
-    if (useCatalogTable()) {
+    if (catalogTableConfigured()) {
       const looked = await readCatalogSlugExists(slug);
       if (looked.ok) {
         // A first-party app owns its package name (`mergeCatalogSources`), so a row that shares one is not in the catalog.
@@ -541,7 +496,7 @@ async function getTaxonomyCountsFromTable(): Promise<Map<string, number> | null>
 export async function getTaxonomyAppCount(appType: AppType, slug: string): Promise<number> {
   // 5.l.xiii.zo — one grouped count shared by every category (cached for a few minutes) instead of one
   // whole-catalog pass per category.
-  if (useCatalogTable()) {
+  if (catalogTableConfigured()) {
     const counts = await getTaxonomyCountsFromTable();
     if (counts !== null) return resolveAfterDelay(counts.get(`${appType}:${slug}`) ?? 0);
   }
@@ -573,7 +528,7 @@ export async function getCategoryAppCount(slug: string): Promise<number> {
  * "this repo stays write-free, sourced from Zealot" move `setAppFeaturing`
  * (`5.g.v.zi`) and the sponsored-placement functions below already made.
  * `getZealotCollections()` (`lib/sources/zealot.ts`) reads the same
- * cached/live index `getMergedApps()` already resolves apps from — no
+ * cached/live index the first-party list (`getFirstPartyList`) resolves apps from — no
  * separate fetch path, no local seed array left to fall out of sync.
  */
 export async function getCollections(): Promise<Collection[]> {
@@ -629,36 +584,11 @@ export async function getCollectionAppCount(slug: string): Promise<number> {
 
 // --- Apps: listing & lookup -------------------------------------------
 
-export interface GetAppsOptions {
-  category?: string;
-  /** `5.i.i.zi` — restrict to apps or games. Combine with `category`, which is only unambiguous alongside it. */
-  appType?: AppType;
-  /**
-   * `5.i.iii.zo` — restrict to one category on the two-axis model
-   * (`appInTaxonomyCategory`, a direct comparison of the stored pair since
-   * `5.i.vii.zo`). Unlike `category` (a bare stored-slug comparison), this
-   * needs the `app_type` because `sports` is on both axes. ANDs with every
-   * other option.
-   */
-  taxonomy?: { appType: AppType; category: string };
-  limit?: number;
-  license?: string;
-  maxSizeMb?: number;
-  /** ISO 3166-1 alpha-2 code, e.g. from `lib/region.ts`'s `getRegion().country_code`. See `filterAppsByRegion` below. */
-  region?: string;
-  /**
-   * Restrict to one catalog source — leaf `5.h.i.zi`. The seam
-   * `5.h.i.zo` (home page: first-party first) and `5.h.iii` (third-party
-   * labelling) build on; nothing calls it yet.
-   */
-  origin?: AppOrigin;
-}
-
 /**
  * Region-filter helper — leaf 0.h.ii.zo, closing out `0.h` and Phase 0
  * as a whole. Narrows a list of apps to those whose
  * `App.available_regions` (0.h.ii.zi) includes the given region code.
- * Exported standalone, not just inlined into `getApps` below, so a
+ * Exported standalone, not inlined into `getApps` (deleted by `5.l.xix.zi`), so a
  * future region-aware shelf function (`getFeaturedApps`,
  * `getTrendingApps`, etc.) can reuse the exact same check rather than
  * re-deriving its own `.includes()` — none of those are wired to
@@ -670,50 +600,8 @@ export function filterAppsByRegion(source: App[], regionCode: string): App[] {
 }
 
 /**
- * `getApps` is the only fetch function this leaf actually wires
- * `region` into — deliberately not every shelf/search/similar-apps
- * function above and below it. `0.h` is named "Geo-Regionalization
- * *Foundation*," not "...Feature": per the `0.h` heading note and the
- * "Scope addition" note at the top of this handover, turning region
- * detection into catalog-wide filtering everywhere is real backend
- * work for whoever picks up region-aware queries once Supabase
- * (`5.f.i`) lands, not something to half-wire across a dozen call
- * sites on dummy data now. `filterAppsByRegion` + this one option are
- * the complete seam; nothing calls `getApps({ region: ... })` yet.
- */
-export async function getApps(options: GetAppsOptions = {}): Promise<App[]> {
-  let result = await getMergedApps();
-  if (options.appType) {
-    result = result.filter((app) => app.app_type === options.appType);
-  }
-  if (options.category) {
-    result = result.filter((app) => app.category === options.category);
-  }
-  if (options.taxonomy) {
-    const { appType, category } = options.taxonomy;
-    result = result.filter((app) => appInTaxonomyCategory(app, appType, category));
-  }
-  if (options.license) {
-    result = result.filter((app) => app.license === options.license);
-  }
-  if (options.maxSizeMb !== undefined) {
-    result = result.filter((app) => app.size_mb <= options.maxSizeMb!);
-  }
-  if (options.region) {
-    result = filterAppsByRegion(result, options.region);
-  }
-  if (options.origin) {
-    result = result.filter((app) => app.origin === options.origin);
-  }
-  if (options.limit) {
-    result = result.slice(0, options.limit);
-  }
-  return resolveAfterDelay(result);
-}
-
-/**
  * One app by slug from the table — leaf `5.l.vi.zi`. Table mode only. First-party apps are found
- * first in the small cached list (as `getMergedApps` puts them first); anything else is ONE row of
+ * first in the small cached list (as the removed merged catalog put them first); anything else is ONE row of
  * `catalog_app` read with its `raw` payload (`readCatalogApp`), so the page has the full description,
  * screenshots, permissions, changelog, rating and version history without any other app being
  * loaded. A row whose package name belongs to a first-party app is not in the merged catalog, so it
@@ -755,7 +643,7 @@ async function getAppBySlugFromTable(slug: string): Promise<App | null | undefin
  * throws too, because "no such app" cannot be told from "no catalog". The whole-catalog fallback is gone.
  */
 export async function getAppBySlug(slug: string): Promise<App | null> {
-  if (!useCatalogTable()) {
+  if (!catalogTableConfigured()) {
     const own = (await getFirstPartyList()).find((a) => a.slug === slug);
     if (own) return resolveAfterDelay(own);
     throw unavailableError("catalog: app lookup failed (the catalog table is not configured)");
@@ -1149,7 +1037,7 @@ async function readTopOrderPage(
   after?: unknown,
   pageSize?: number
 ): Promise<TopFreePage> {
-  if (!useCatalogTable()) throw unavailableError(`catalog: ${what} failed (the catalog table is not configured)`);
+  if (!catalogTableConfigured()) throw unavailableError(`catalog: ${what} failed (the catalog table is not configured)`);
   const firstPartyAll = await getFirstPartyList();
   const ranked = [...firstPartyAll].sort(
     (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || b.install_count - a.install_count || a.slug.localeCompare(b.slug)
@@ -1187,7 +1075,7 @@ export interface NewPage {
 }
 
 export async function getNewPage(after?: unknown, pageSize?: number): Promise<NewPage> {
-  if (!useCatalogTable()) throw unavailableError("catalog: new page failed (the catalog table is not configured)");
+  if (!catalogTableConfigured()) throw unavailableError("catalog: new page failed (the catalog table is not configured)");
   const firstParty = await getFirstPartyList();
   const page = await readAppsPage({ order: "new", after: parseAfter("new", after), pageSize, firstParty });
   if (page === null) throw unavailableError("catalog: new page read failed");
@@ -1223,7 +1111,7 @@ export async function getAllAppsPage(after?: unknown, pageSize?: number): Promis
  * The category is read by the `(appType, category)` pair, in `top` order: page 1 is the category's
  * first-party apps (ranked by D-Store installs, then slug) and then the first third-party rows;
  * later pages are third-party only. First-party apps are matched with `appInTaxonomyCategory`, the
- * same read-time shim `getApps({ taxonomy })` uses, so a first-party app still carrying a legacy slug
+ * same read-time shim the removed `getApps({ taxonomy })` used, so a first-party app still carrying a legacy slug
  * appears under its Play equivalent; third-party rows carry the Play slug in the table itself (the
  * re-derive wrote it). The caller has already checked that `appType`/`category` is a real pair; a
  * slug the table cannot take is a refused read (`null`).
@@ -1261,7 +1149,7 @@ export async function getCategoryPage(
   category: string,
   options: { after?: unknown; license?: string; maxSizeMb?: number; pageSize?: number } = {}
 ): Promise<CategoryPage> {
-  if (!useCatalogTable()) throw unavailableError("catalog: category page failed (the catalog table is not configured)");
+  if (!catalogTableConfigured()) throw unavailableError("catalog: category page failed (the catalog table is not configured)");
 
   const rawLicense = options.license?.trim();
   const license =
@@ -1339,7 +1227,7 @@ export async function getNewAndUpdated(limit = 12): Promise<App[]> {
  * URLs it already knows.
  */
 export async function getSitemapChunkCount(): Promise<number> {
-  if (!useCatalogTable()) throw unavailableError("catalog: sitemap count failed (the catalog table is not configured)");
+  if (!catalogTableConfigured()) throw unavailableError("catalog: sitemap count failed (the catalog table is not configured)");
   try {
     const read = await readCatalogSitemapTotal();
     if (read.ok) return sitemapChunkCount(read.total);
@@ -1376,7 +1264,7 @@ export interface SitemapChunk {
 }
 
 export async function getSitemapChunk(index: number, baseUrl: string): Promise<SitemapChunk> {
-  if (!useCatalogTable()) throw unavailableError("catalog: sitemap read failed (the catalog table is not configured)");
+  if (!catalogTableConfigured()) throw unavailableError("catalog: sitemap read failed (the catalog table is not configured)");
   try {
     const read = await readCatalogSitemapChunk(index);
     if (!read.ok) throw unavailableError("catalog: sitemap read failed");
@@ -1420,7 +1308,7 @@ export async function getSitemapChunk(index: number, baseUrl: string): Promise<S
  * logs one fixed line (no slug, cursor or body). Never throws.
  */
 export async function getHomeCategoryRows(): Promise<CategoryRowData[]> {
-  if (!useCatalogTable()) return [];
+  if (!catalogTableConfigured()) return [];
   try {
     const firstParty = await getFirstPartyList();
     const rows = await readCategoryRows(HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE, firstParty);
@@ -1497,7 +1385,7 @@ export interface SearchPage {
 }
 
 export async function getSearchPage(query: string, after?: unknown, pageSize?: number): Promise<SearchPage> {
-  if (!useCatalogTable()) throw unavailableError("catalog: search page failed (the catalog table is not configured)");
+  if (!catalogTableConfigured()) throw unavailableError("catalog: search page failed (the catalog table is not configured)");
   const firstParty = await getFirstPartyList();
   const page = await readAppsPage({ order: "top", query, after: parseAfter("top", after), pageSize, firstParty });
   if (page === null) throw unavailableError("catalog: search page read failed");
@@ -1553,7 +1441,7 @@ export async function getSimilarApps(
   } catch {
     throw unavailableError("catalog: similar apps read failed");
   }
-  if (!useCatalogTable()) {
+  if (!catalogTableConfigured()) {
     const own = known ?? firstParty.find((a) => a.slug === appSlug);
     if (!own) throw unavailableError("catalog: similar apps read failed (the catalog table is not configured)");
     return resolveAfterDelay(
@@ -1779,7 +1667,7 @@ export async function getCategoryAffinityApps(
   // Leaf `5.l.xviii.zi`: for a refusal, a failed read or no usable table the shelf is built from the
   // first-party apps alone, same ranking (a For You row must not take the page down); the bundled
   // snapshot and the whole merged catalog are never read.
-  if (useCatalogTable()) {
+  if (catalogTableConfigured()) {
     const fromTable = await getCategoryAffinityAppsFromTable(favoritedSlugs, viewedCategories, limit);
     if (fromTable !== null) return resolveAfterDelay(fromTable);
   }
@@ -1828,7 +1716,7 @@ export async function getDeveloperBySlug(slug: string): Promise<Developer | null
   try {
     const own = (await getFirstPartyList()).find((app) => app.developer_slug === slug);
     if (own) return resolveAfterDelay(developerFromApp(slug, own));
-    if (useCatalogTable()) {
+    if (catalogTableConfigured()) {
       const looked = await readCatalogDeveloper(slug);
       if (looked.ok) {
         return resolveAfterDelay(
@@ -1899,7 +1787,7 @@ export async function getDeveloperApps(developerSlug: string): Promise<Developer
   const own = firstParty.filter((app) => app.developer_slug === developerSlug);
   const newestFirst = (a: App, b: App) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
 
-  if (!useCatalogTable()) {
+  if (!catalogTableConfigured()) {
     const apps = [...own].sort(newestFirst);
     return resolveAfterDelay({ apps, total: apps.length, cut: false });
   }
@@ -1944,9 +1832,9 @@ export async function getSponsoredApps(): Promise<App[]> {
   // 5.l.xvi.zi — a third-party row never carries a sponsored window (`appFromCatalogRow` and
   // `normalizeAptoideApp` both set `sponsored_slots: []`; windows are authored in the Console and
   // read off its index), so in table mode the first-party list is ALL the data this holds and the
-  // whole merged catalog is not loaded. Table mode off keeps the merged catalog.
-  const merged = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
-  const result = merged
+  // whole merged catalog is not loaded. Leaf `5.l.xix.zi`: that holds with table mode off too (the
+  // snapshot's apps carry `sponsored_slots: []` as well), so the first-party list is read either way.
+  const result = (await getFirstPartyList())
     .filter((app) => app.sponsored_slots.length > 0)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   return resolveAfterDelay(result);
@@ -2046,42 +1934,27 @@ export async function getTrafficSummary(): Promise<TrafficSummary> {
   // (`appFromCatalogRow`; the dashboard reads these `App` fields, not `app_counter`), so the two totals
   // and every non-zero row come from the small first-party list alone. `appCount` is that list plus one
   // database count of the other published rows. The zero rows are not listed (`unlistedThirdParty`).
-  // Any failed count, or table mode off, uses the whole merged catalog exactly as before.
-  if (useCatalogTable()) {
-    const firstParty = await getFirstPartyList();
-    const others = await countThirdPartyRows(firstParty);
-    if (others !== null) {
-      return resolveAfterDelay({
-        totalInstalls: firstParty.reduce((sum, app) => sum + app.install_count, 0),
-        totalViews: firstParty.reduce((sum, app) => sum + app.view_count, 0),
-        appCount: firstParty.length + others,
-        unlistedThirdParty: others,
-        perApp: firstParty
-          .map((app) => ({ slug: app.slug, name: app.name, install_count: app.install_count, view_count: app.view_count }))
-          .sort((a, b) => b.view_count - a.view_count),
-      });
-    }
-    console.error("catalog: traffic summary count failed, using the whole catalog");
+  // Leaf `5.l.xix.zi`: a failed count, or table mode off, no longer loads the whole merged catalog (it
+  // is gone): the summary is the first-party list alone, `appCount` is its length and
+  // `unlistedThirdParty` is 0, after one fixed log line. Every total and row is still right (the
+  // third-party apps add zero to both); only "Apps tracked" is short by the third-party count, and the
+  // dashboard cannot say so while `unlistedThirdParty` is 0.
+  const firstParty = await getFirstPartyList();
+  let others = 0;
+  const counted = catalogTableConfigured() ? await countThirdPartyRows(firstParty) : null;
+  if (counted === null) {
+    console.error("catalog: traffic summary count failed, showing first-party apps only");
+  } else {
+    others = counted;
   }
-
-  const merged = await getMergedApps();
-  const totalInstalls = merged.reduce((sum, app) => sum + app.install_count, 0);
-  const totalViews = merged.reduce((sum, app) => sum + app.view_count, 0);
-  const perApp = [...merged]
-    .map((app) => ({
-      slug: app.slug,
-      name: app.name,
-      install_count: app.install_count,
-      view_count: app.view_count,
-    }))
-    .sort((a, b) => b.view_count - a.view_count);
-
   return resolveAfterDelay({
-    totalInstalls,
-    totalViews,
-    appCount: merged.length,
-    unlistedThirdParty: 0,
-    perApp,
+    totalInstalls: firstParty.reduce((sum, app) => sum + app.install_count, 0),
+    totalViews: firstParty.reduce((sum, app) => sum + app.view_count, 0),
+    appCount: firstParty.length + others,
+    unlistedThirdParty: others,
+    perApp: firstParty
+      .map((app) => ({ slug: app.slug, name: app.name, install_count: app.install_count, view_count: app.view_count }))
+      .sort((a, b) => b.view_count - a.view_count),
   });
 }
 
@@ -2089,8 +1962,10 @@ export async function getTrafficSummary(): Promise<TrafficSummary> {
  * The apps the read-only featuring page lists — leaf `5.l.xvi.zi`. `featured` and `editors_pick` come
  * from the Console's index, and a third-party row always has both `false` (`appFromCatalogRow`), so in
  * table mode only the first-party list can be on the page; `unlistedThirdParty` counts the other
- * published rows (one database count) so the page can say they exist and are never featured. A failed
- * count, or table mode off, returns every app as `getApps()` did, with `unlistedThirdParty` 0.
+ * published rows (one database count) so the page can say they exist and are never featured. Leaf
+ * `5.l.xix.zi`: a failed count, or table mode off, returns the same first-party list with
+ * `unlistedThirdParty` 0 after one fixed log line (it used to return every app through `getApps()`,
+ * which is gone); the page then simply does not mention the other rows.
  */
 export interface FeaturingList {
   apps: App[];
@@ -2098,13 +1973,13 @@ export interface FeaturingList {
 }
 
 export async function getFeaturingList(): Promise<FeaturingList> {
-  if (useCatalogTable()) {
-    const firstParty = await getFirstPartyList();
-    const others = await countThirdPartyRows(firstParty);
-    if (others !== null) return resolveAfterDelay({ apps: [...firstParty], unlistedThirdParty: others });
-    console.error("catalog: featuring list count failed, using the whole catalog");
+  const firstParty = await getFirstPartyList();
+  const others = catalogTableConfigured() ? await countThirdPartyRows(firstParty) : null;
+  if (others === null) {
+    console.error("catalog: featuring list count failed, showing first-party apps only");
+    return resolveAfterDelay({ apps: [...firstParty], unlistedThirdParty: 0 });
   }
-  return { apps: await getApps(), unlistedThirdParty: 0 };
+  return resolveAfterDelay({ apps: [...firstParty], unlistedThirdParty: others });
 }
 
 // --- Top-searches dashboard (3.c.ii.zo) --------------------------------------

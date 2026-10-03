@@ -2,7 +2,7 @@
  * Bounded third-party reads for the home shelves and the chart lists — leaf `5.l.iv.zi`.
  *
  * SERVER-ONLY (it calls `lib/catalog-table.ts`). Used by `lib/catalog.ts` only when the
- * Supabase env is set (`useCatalogTable`, leaf `5.l.xvii.zi`).
+ * Supabase env is set (`catalogTableConfigured`, leaf `5.l.xvii.zi`).
  *
  * What it does: returns the first `want` Aptoide-origin apps of one order (`top` or `new`)
  * straight from `catalog_page`, so a home shelf no longer needs the whole catalog in memory.

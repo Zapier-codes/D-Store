@@ -1,61 +1,39 @@
 /**
- * Catalog-table source — leaf `5.l.ii.zi`.
+ * Catalog-table row mapping — leaf `5.l.ii.zi`, reduced by leaf `5.l.xix.zi`.
  *
- * A `CatalogSource` that reads the Aptoide-origin catalog from the Supabase
- * `catalog_app` table (via `lib/catalog-table.ts`'s paged `catalog_page` read)
- * instead of the snapshot files in `storage/downloads`. It sits behind the same
- * `lib/catalog.ts` interface: `getMergedApps()` still puts the Zealot source
- * first and this source second, so first-party apps still rank ahead and the
- * "first one wins on package_name" merge is unchanged.
- *
- * Since leaf `5.l.xvii.zi` `lib/catalog.ts` uses this source whenever the Supabase env is set
- * (`catalogTableConfigured`); the `CATALOG_SOURCE=table` opt-in is gone. Without the Supabase
- * env the snapshot source is used exactly as before, until leaf `5.l.xix.zo` removes it.
- * A list row has no `raw`.
+ * `appFromCatalogRow` turns one `catalog_app` list row into a list-grade `App`, and
+ * `catalogTableConfigured` says whether table mode is on. The `CatalogSource` that used to read the
+ * whole table by following `nextCursor` (`createCatalogTableSource`, capped by `MAX_TABLE_APPS`) is
+ * gone: every list, shelf, count, lookup and sitemap reads a bounded page instead.
  *
  * What a row can and cannot fill (list-grade `App`, honest about the rest):
- * - From the row: id, slug, name, summary, icon, version, app_type, category,
- *   developer, license, size, download link, created/updated, and Aptoide's
- *   reported downloads (as `third_party_stats.downloads`).
- * - NOT in a list row (needs `raw`, which `catalog_page` never returns): the
- *   long description, screenshots, permissions, changelog, rating, content
- *   rating, min Android version, version history, scan rank. They get the same
- *   neutral placeholders `normalizeAptoideApp` uses, and `not_provided` says
- *   so for the fields that have a "Not provided" path. The app detail page does
- *   NOT use this list-grade app: since leaf 11 (`5.l.vi.zi`) `getAppBySlug` reads
- *   that one row WITH its `raw` (`lib/catalog-detail.ts`) and shows the full app.
- *   This list-grade shape is what lists, shelves and charts show, and what the
- *   detail page falls back to for a row whose `raw` cannot be read.
- *
- * Reads the whole table by following `nextCursor` (100 a page, sequential),
- * capped at `MAX_TABLE_APPS`, once per server lifetime (cached by
- * `getMergedApps`). This is a bridge so every existing caller keeps working;
- * leaves 7 to 11 replace the callers with paged reads and then leaf 13 removes
- * this whole-catalog path. If any page fails the source throws; `getMergedApps`
- * catches that and uses the snapshot source instead.
+ * - From the row: id, slug, name, summary, icon, version, app_type, category, developer, license,
+ *   size, download link, created/updated, and Aptoide's reported downloads (as
+ *   `third_party_stats.downloads`).
+ * - NOT in a list row (needs `raw`, which `catalog_page` never returns): the long description,
+ *   screenshots, permissions, changelog, rating, content rating, min Android version, version
+ *   history, scan rank. They get the same neutral placeholders `normalizeAptoideApp` uses, and
+ *   `not_provided` says so for the fields that have a "Not provided" path. The app detail page does
+ *   NOT use this list-grade app: since leaf 11 (`5.l.vi.zi`) `getAppBySlug` reads that one row WITH
+ *   its `raw` (`lib/catalog-detail.ts`) and shows the full app. This list-grade shape is what lists,
+ *   shelves and charts show, and what the detail page falls back to for a row whose `raw` cannot be
+ *   read.
  */
 
 import type { App, NotProvidedField } from "../mock-data";
 import { ALL_REGIONS } from "../mock-data";
-import { readCatalogPage, CATALOG_PAGE_MAX, type CatalogRow, type CatalogTableDeps } from "../catalog-table";
-import { isCatalogTableConfigured } from "../catalog-table";
-import type { CatalogSource } from "./types";
-
-/** Safety ceiling: the target is 10,000 apps; stop well past it rather than loop. */
-export const MAX_TABLE_APPS = 12_000;
+import { isCatalogTableConfigured, type CatalogRow } from "../catalog-table";
 
 /**
  * True when the Supabase env is usable, which is the only thing that switches table mode on
  * (leaf `5.l.xvii.zi`). The `CATALOG_SOURCE` variable this used to require is no longer read:
- * whatever it is set to, including `snapshot`, is ignored, so a deployment that has the Supabase
- * env gets the table and one that does not gets the old snapshot path until `5.l.xix.zo` removes it.
+ * whatever it is set to, including `snapshot`, is ignored. Without the env the catalog pages show
+ * first-party apps and the unavailable notice (`5.l.xx.zo` to `5.l.xxi.zo`). Leaf `5.l.xix.zi`
+ * removed the old name `useCatalogTable`.
  */
 export function catalogTableConfigured(env: Record<string, string | undefined> = process.env): boolean {
   return isCatalogTableConfigured(env);
 }
-
-/** The old name, kept so no caller changes in this leaf; `5.l.xix.zi` removes it. */
-export const useCatalogTable = catalogTableConfigured;
 
 /** One list row to a list-grade `App`. Never throws on a valid row. */
 export function appFromCatalogRow(row: CatalogRow): App {
@@ -134,23 +112,5 @@ export function appFromCatalogRow(row: CatalogRow): App {
     origin: "aptoide",
     package_name: row.package_name,
     not_provided: notProvided,
-  };
-}
-
-/** Reads every published row, newest-downloads first, one page at a time. */
-export function createCatalogTableSource(deps: CatalogTableDeps = {}): CatalogSource {
-  return {
-    origin: "aptoide",
-    async getApps(): Promise<App[]> {
-      const apps: App[] = [];
-      let cursor: string | undefined;
-      do {
-        const page = await readCatalogPage({ order: "top", cursor, limit: CATALOG_PAGE_MAX }, deps);
-        if (!page.ok) throw new Error(`catalog table unavailable (${page.reason})`);
-        for (const row of page.rows) apps.push(appFromCatalogRow(row));
-        cursor = page.nextCursor ?? undefined;
-      } while (cursor && apps.length < MAX_TABLE_APPS);
-      return apps;
-    },
   };
 }
