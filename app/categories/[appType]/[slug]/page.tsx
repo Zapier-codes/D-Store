@@ -1,5 +1,11 @@
 import { notFound } from "next/navigation";
-import { getTaxonomyCategory, getApps, getCategoryPage } from "@/lib/catalog";
+import {
+  CatalogUnavailableError,
+  getCategoryFirstPartyApps,
+  getCategoryPage,
+  getTaxonomyCategory,
+  type CategoryPage,
+} from "@/lib/catalog";
 import { UNCATEGORIZED, isAppType } from "@/lib/taxonomy";
 import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
@@ -9,6 +15,7 @@ import type { App } from "@/lib/mock-data";
 import CategoryFilters from "@/components/CategoryFilters";
 import EmptyState from "@/components/EmptyState";
 import Pager from "@/components/Pager";
+import CatalogUnavailable from "@/components/CatalogUnavailable";
 import styles from "./page.module.css";
 
 /**
@@ -47,8 +54,16 @@ import styles from "./page.module.css";
  * link keeps them (`license`, `maxSize`), and applying the form starts again from page 1 because a
  * GET form drops `after`. The license list is the category's own, read from the table. If that list
  * cannot be read (the `5.l.xii.zo` migration not applied, or the read failed) the filters are hidden
- * and the page is paged and unfiltered. With the table off, or when the page read fails, the page is
- * exactly the whole-category page it was, filters included, with no `after` and no pager.
+ * and the page is paged and unfiltered. (`licenses === null` is a missing migration, not an outage.)
+ *
+ * When the catalog cannot be read — leaf `5.l.xxi.zi`. `getCategoryPage` throws
+ * `CatalogUnavailableError` (an unusable Supabase env counts) and this page catches only that error:
+ * it shows the category's first-party apps (`getCategoryFirstPartyApps`) above the shared
+ * "temporarily unavailable" notice, with the filters and the pager hidden, and no "No apps yet" empty
+ * state (an empty list during an outage is not a fact about the category). The whole-category branch
+ * (`getApps({ taxonomy })`) is gone. Any other error is not caught and reaches `app/error.tsx`. HTTP
+ * status: the route sits under the root `app/loading.tsx`, so streaming sends `200` before the read is
+ * known and the notice is what marks the list as partial; a `503` cannot be set from here.
  */
 export default async function TaxonomyCategoryPage({
   params,
@@ -74,33 +89,30 @@ export default async function TaxonomyCategoryPage({
     notFound();
   }
 
-  const taxonomy = { appType, category: slug };
-  const page = await getCategoryPage(appType, slug, {
-    after,
-    license: license || undefined,
-    maxSizeMb: maxSize ? Number(maxSize) : undefined,
-  });
+  let page: CategoryPage | null = null;
+  try {
+    page = await getCategoryPage(appType, slug, {
+      after,
+      license: license || undefined,
+      maxSizeMb: maxSize ? Number(maxSize) : undefined,
+    });
+  } catch (error) {
+    if (!(error instanceof CatalogUnavailableError)) throw error;
+  }
 
-  // Table mode: one page, filters applied by the database. Otherwise: the whole category, as before.
+  // One page, filters applied by the database. On an outage (`page === null`): the category's
+  // first-party apps alone, no filters, no pager, and the notice below.
   let apps: App[];
-  let licenses: string[];
-  let showFilters: boolean;
-  let emptyAtAll: boolean;
+  let licenses: string[] = [];
+  let showFilters = false;
+  let emptyAtAll = false;
   if (page) {
     apps = page.apps;
     licenses = page.licenses ?? [];
     showFilters = page.licenses !== null;
     emptyAtAll = apps.length === 0 && page.license === undefined && page.maxSizeMb === undefined;
   } else {
-    const allApps = await getApps({ taxonomy });
-    licenses = [...new Set(allApps.map((app) => app.license))].sort();
-    apps = await getApps({
-      taxonomy,
-      license: license || undefined,
-      maxSizeMb: maxSize ? Number(maxSize) : undefined,
-    });
-    showFilters = allApps.length > 0;
-    emptyAtAll = allApps.length === 0;
+    apps = await getCategoryFirstPartyApps(appType, slug);
   }
   const mode = await getTheme();
 
@@ -119,7 +131,7 @@ export default async function TaxonomyCategoryPage({
           />
         )}
 
-        {apps.length === 0 ? (
+        {apps.length === 0 && page !== null && (
           <EmptyState
             kind="filter"
             heading={emptyAtAll ? "No apps yet" : "No matches"}
@@ -129,12 +141,21 @@ export default async function TaxonomyCategoryPage({
                 : "No apps in this category match the selected filters."
             }
           />
-        ) : (
+        )}
+
+        {apps.length > 0 && (
           <ShelfGrid>
             {apps.map((app) => (
               <AppCard key={app.slug} app={app} />
             ))}
           </ShelfGrid>
+        )}
+
+        {page === null && (
+          <CatalogUnavailable
+            heading="The rest of this category is temporarily unavailable"
+            message="We could not load every app in this category just now. Please try again in a few minutes."
+          />
         )}
 
         <Pager

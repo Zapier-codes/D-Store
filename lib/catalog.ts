@@ -1215,10 +1215,11 @@ export async function getAllAppsPage(after?: unknown, pageSize?: number): Promis
 }
 
 /**
- * One page of a category's apps — leaves `5.l.xii.zi` and `5.l.xii.zo`. Table mode only. Still the
- * old contract, until leaf `5.l.xxi.zi` changes it to a page-or-throw like `getTopFreePage`'s:
- * `null` silently when the table is not in use (the category page then loads the whole category as
- * before) and `null` with one fixed log line when the page read failed.
+ * One page of a category's apps — leaves `5.l.xii.zi`, `5.l.xii.zo` and `5.l.xxi.zi`. Same contract
+ * as `getTopFreePage`: a page, or `CatalogUnavailableError` after one fixed log line (an unusable
+ * Supabase env and a failed or refused page read are the same outage; the category page then shows
+ * `getCategoryFirstPartyApps` above the shared notice, with the filters and the pager hidden). The
+ * old `null` and the whole-category fallback through `getApps({ taxonomy })` are gone.
  * The category is read by the `(appType, category)` pair, in `top` order: page 1 is the category's
  * first-party apps (ranked by D-Store installs, then slug) and then the first third-party rows;
  * later pages are third-party only. First-party apps are matched with `appInTaxonomyCategory`, the
@@ -1259,8 +1260,8 @@ export async function getCategoryPage(
   appType: AppType,
   category: string,
   options: { after?: unknown; license?: string; maxSizeMb?: number; pageSize?: number } = {}
-): Promise<CategoryPage | null> {
-  if (!useCatalogTable()) return null;
+): Promise<CategoryPage> {
+  if (!useCatalogTable()) throw unavailableError("catalog: category page failed (the catalog table is not configured)");
 
   const rawLicense = options.license?.trim();
   const license =
@@ -1287,10 +1288,7 @@ export async function getCategoryPage(
     }),
     readCatalogLicenses({ appType, category }),
   ]);
-  if (page === null) {
-    console.error("catalog: paged table read failed, using the whole-catalog path");
-    return null;
-  }
+  if (page === null) throw unavailableError("catalog: category page read failed");
 
   let licenses: string[] | null = null;
   if (licensesResult.ok) {
@@ -1299,6 +1297,21 @@ export async function getCategoryPage(
   }
 
   return { apps: page.apps, nextCursor: page.nextCursor, license, maxSizeMb, licenses };
+}
+
+/**
+ * A category's first-party apps alone — leaf `5.l.xxi.zi`. What the category page shows above the
+ * "temporarily unavailable" notice when `getCategoryPage` throws: the same apps, in the same order,
+ * that page 1 leads with (D-Store installs, then slug), matched with `appInTaxonomyCategory`, the
+ * read-time shim, so a first-party app still carrying a legacy slug appears under its Play
+ * equivalent. No filter and no paging: filters need the database. Reads the first-party list only
+ * (no table), so it cannot raise `CatalogUnavailableError` itself.
+ */
+export async function getCategoryFirstPartyApps(appType: AppType, category: string): Promise<App[]> {
+  const firstPartyAll = await getFirstPartyList();
+  return firstPartyAll
+    .filter((app) => app.origin === "zealot" && appInTaxonomyCategory(app, appType, category))
+    .sort((a, b) => b.install_count - a.install_count || a.slug.localeCompare(b.slug));
 }
 
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
