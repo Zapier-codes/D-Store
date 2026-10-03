@@ -1456,8 +1456,8 @@ export async function getHomeCategoryRows(): Promise<CategoryRowData[]> {
  * moves.
  *
  * Leaf `5.l.xviii.zi`: this is now the first-party-only search. The real search over the whole catalog
- * is `getSearchPage` (a database read); callers use this only when that returned `null` (the table
- * is not usable or its read failed), and a search must not take the page or the header dropdown down,
+ * is `getSearchPage` (a database read); callers use this only when that threw `CatalogUnavailableError`
+ * (`5.l.xxi.zo`; the table is not usable or its read failed), and a search must not take the page or the header dropdown down,
  * so it matches the first-party apps alone and logs one fixed line. The bundled snapshot is never
  * read. Every match is first-party, so the "first match to the front" pin above is a no-op and is gone.
  */
@@ -1473,10 +1473,11 @@ export async function searchApps(query: string): Promise<App[]> {
 }
 
 /**
- * One page of search results — leaf `5.l.v.zo`. Table mode only. Still the old contract, until leaf
- * `5.l.xxi.zo` changes it to a page-or-throw like `getTopFreePage`'s: `null` silently when the table
- * is not in use (the caller then uses `searchApps` exactly as before) and `null` with one fixed log
- * line when the read failed. The match rule is
+ * One page of search results — leaves `5.l.v.zo` and `5.l.xxi.zo`. Same contract as `getTopFreePage`:
+ * a page, or `CatalogUnavailableError` after one fixed log line (an unusable Supabase env and a failed
+ * or refused read are the same outage). Both callers catch it and answer from `searchApps`, the
+ * first-party matches: `/search` above the shared notice, the header dropdown with no notice. The old
+ * `null` is gone. The match rule is
  * `searchApps`': case-insensitive substring over name or summary. Page 1 is the matching first-party
  * apps (list order, the same "first-party leads" rule `6.a.iii.zi` set) and then the first
  * third-party matches from the table in `top` order (reported downloads, then slug); later pages are
@@ -1495,14 +1496,11 @@ export interface SearchPage {
   isFirstPage: boolean;
 }
 
-export async function getSearchPage(query: string, after?: unknown, pageSize?: number): Promise<SearchPage | null> {
-  if (!useCatalogTable()) return null;
+export async function getSearchPage(query: string, after?: unknown, pageSize?: number): Promise<SearchPage> {
+  if (!useCatalogTable()) throw unavailableError("catalog: search page failed (the catalog table is not configured)");
   const firstParty = await getFirstPartyList();
   const page = await readAppsPage({ order: "top", query, after: parseAfter("top", after), pageSize, firstParty });
-  if (page === null) {
-    console.error("catalog: paged table read failed, using the whole-catalog path");
-    return null;
-  }
+  if (page === null) throw unavailableError("catalog: search page read failed");
   return { apps: page.apps, nextCursor: page.nextCursor, isFirstPage: page.isFirstPage };
 }
 

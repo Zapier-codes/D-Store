@@ -15,15 +15,22 @@
  *
  * Leaf `5.l.v.zo`: in table mode the dropdown asks for one small page (`getSearchPage`, 6 apps, the
  * number `SearchBar` shows) instead of every match, so a keystroke no longer serializes thousands of
- * apps to the browser; `null` (table off, or a failed read) falls back to `searchApps` as before.
- * Never logs the query: only `/search` does.
+ * apps to the browser. Leaf `5.l.xxi.zo`: `getSearchPage` now throws `CatalogUnavailableError` when the
+ * catalog cannot be read (an unusable Supabase env counts); this action catches only that error and
+ * answers the first-party matches (`searchApps`, first-party only) cut to the same six, with no notice:
+ * a dropdown has no room for one, and a short list of suggestions is not wrong. Any other error is not
+ * caught. Never logs the query: only `/search` does.
  */
 
-import { searchApps, getSearchPage, type App } from "@/lib/catalog";
+import { CatalogUnavailableError, searchApps, getSearchPage, type App } from "@/lib/catalog";
 
 const SUGGESTION_COUNT = 6;
 
 export async function searchAppsAction(query: string): Promise<App[]> {
-  const page = await getSearchPage(query, undefined, SUGGESTION_COUNT);
-  return page ? page.apps : searchApps(query);
+  try {
+    return (await getSearchPage(query, undefined, SUGGESTION_COUNT)).apps;
+  } catch (error) {
+    if (!(error instanceof CatalogUnavailableError)) throw error;
+    return (await searchApps(query)).slice(0, SUGGESTION_COUNT);
+  }
 }

@@ -1,8 +1,9 @@
-import { searchApps, logSearchQuery, getSearchPage } from "@/lib/catalog";
+import { CatalogUnavailableError, searchApps, logSearchQuery, getSearchPage, type SearchPage as SearchPageData } from "@/lib/catalog";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import EmptyState from "@/components/EmptyState";
 import Pager from "@/components/Pager";
+import CatalogUnavailable from "@/components/CatalogUnavailable";
 import styles from "./page.module.css";
 
 /**
@@ -37,8 +38,16 @@ import styles from "./page.module.css";
  * link (`?q=<query>&after=<cursor>`). The catalog is read by keyset, so there are no page numbers
  * and no total, and going back is the browser's back button. **Only the first page is logged as a
  * search** (`logSearchQuery`): a "Next page" click is the same search, and logging it again would
- * inflate the top-searches dashboard. With the table off, or when a page read fails, the page is
- * exactly the whole-result page it was: every match, no `after`, no pager, the query logged.
+ * inflate the top-searches dashboard.
+ *
+ * When the catalog cannot be read — leaf `5.l.xxi.zo`. `getSearchPage` throws `CatalogUnavailableError`
+ * (an unusable Supabase env counts) and this page catches only that error: it shows the first-party
+ * matches (`searchApps`, first-party only) above the shared "temporarily unavailable" notice, with no
+ * pager, and logs the query once, as the whole-result page did. A search with no first-party match
+ * shows the notice alone, not "No results" (an outage says nothing about the query). The
+ * `page === null` whole-result branch is gone. Any other error is not caught and reaches
+ * `app/error.tsx`. HTTP status: `app/search/loading.tsx` makes Next stream before the read is known,
+ * so the response is `200` and the notice marks the list as partial; a `503` cannot be set from here.
  */
 export default async function SearchPage({
   searchParams,
@@ -47,12 +56,21 @@ export default async function SearchPage({
 }) {
   const { q, after } = await searchParams;
   const query = (q ?? "").trim();
-  const page = query ? await getSearchPage(query, after) : null;
-  // Table mode: log the first page only. Otherwise (as before): log every load of a non-blank query.
-  if (query && (page === null || page.isFirstPage)) {
+  let page: SearchPageData | null = null;
+  let unavailable = false;
+  if (query) {
+    try {
+      page = await getSearchPage(query, after);
+    } catch (error) {
+      if (!(error instanceof CatalogUnavailableError)) throw error;
+      unavailable = true;
+    }
+  }
+  // Log the first page only; on an outage there is no page, so the load is logged once, as before.
+  if (query && (unavailable || page?.isFirstPage)) {
     await logSearchQuery(query);
   }
-  const results = query ? (page ? page.apps : await searchApps(query)) : [];
+  const results = query ? (page ? page.apps : unavailable ? await searchApps(query) : []) : [];
 
   return (
     <main className={styles.main}>
@@ -74,7 +92,7 @@ export default async function SearchPage({
         />
       )}
 
-      {query && results.length === 0 && (
+      {query && !unavailable && results.length === 0 && (
         <EmptyState
           kind="search"
           heading="No results"
@@ -88,6 +106,13 @@ export default async function SearchPage({
             <AppCard key={app.slug} app={app} />
           ))}
         </ShelfGrid>
+      )}
+
+      {unavailable && (
+        <CatalogUnavailable
+          heading="Search is temporarily limited"
+          message="We could not search the whole catalog just now, so only some matches are shown. Please try again in a few minutes."
+        />
       )}
 
       <Pager basePath="/search" nextCursor={page ? page.nextCursor : null} params={{ q: query }} />
