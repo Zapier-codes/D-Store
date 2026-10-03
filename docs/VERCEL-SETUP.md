@@ -191,9 +191,11 @@ else to switch on.
 
 **`CATALOG_SOURCE` is no longer needed and is no longer read.** It used to have to be `table`; any
 value, or none, is now ignored. You can delete it from Vercel. Before the Supabase variables are set
-on a deployment, or if they are removed, the site falls back to the bundled snapshot files in
-`storage/downloads` until leaf `5.l.xix.zo` removes that path, after which a deployment without them
-shows first-party apps only.
+on a deployment, or if they are removed, the site shows first-party apps only. **The bundled Aptoide
+snapshot (`storage/downloads/aptoide-snapshot*.json`) is no longer read at request time and is no longer
+shipped inside the serverless functions (leaf `5.l.xix.zo`).** The files stay in the repo only as import
+data for `scripts/load-catalog-table.ts`, `check-catalog-table.ts`, `rederive-catalog-categories.ts` and the
+crawl workflow.
 
 Check it is working after a deploy: `npx tsx scripts/check-catalog-table.ts` compares the table with
 the snapshot and prints counts, and the footer total should match the table's published row count.

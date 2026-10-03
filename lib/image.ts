@@ -6,7 +6,8 @@
  * catalog entries — `lib/sources/aptoide.ts`'s `normalizeAptoideApp`
  * maps `raw.icon` and `media.screenshots[].url` straight through, both
  * real `https://pool.img.aptoide.com/...` URLs (confirmed against the
- * ingested snapshot, `storage/downloads/aptoide-snapshot.json`).
+ * ingested snapshot, `storage/downloads/aptoide-snapshot.json`, which is import
+ * data for the catalog table and no longer read by the storefront).
  * First-party (Zealot) dummy entries still carry dummy filename-shaped
  * strings in those same `App.icon`/`App.screenshots` fields —
  * `lib/mock-data.ts`'s own header comment: no real icon/screenshot

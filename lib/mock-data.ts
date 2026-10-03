@@ -576,11 +576,10 @@ export const categories: Category[] = [
  * third-party data until real ingestion existed. Leaf `5.h.ii.zo`
  * (cont.), operator priority override: all 13 were removed once real
  * Aptoide data was available to replace them — they no longer need a
- * stand-in. Real third-party apps now come exclusively through
- * `createAptoideSource()` (`lib/sources/aptoide.ts`), reading
- * `storage/downloads/aptoide-snapshot.json`, and are merged in at
- * request time by `lib/catalog.ts`'s `getMergedApps()` — nothing
- * "aptoide"-origin is hardcoded here anymore.
+ * stand-in. Real third-party apps now come from the `catalog_app` table
+ * (`lib/catalog-table.ts`), loaded from `storage/downloads/aptoide-snapshot*.json`
+ * by `scripts/load-catalog-table.ts` — nothing "aptoide"-origin is hardcoded
+ * here anymore.
  *
  * Leaf `5.h.iv.zi`, operator request ("remove all dummy data"): the last
  * two entries, `ledger-vault` and `quiet-verse` (the invented first-party

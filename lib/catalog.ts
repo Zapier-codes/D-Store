@@ -298,8 +298,8 @@ export class DispatchTenantError extends Error {
  * tenant column, which is its own leaf.
  *
  * **Decision 2 — origin: Aptoide-origin apps are included.** A visitor
- * can save them, and their snapshot (`storage/downloads/`) is refreshed
- * on a schedule, so their versions do change. **Flagged: those version
+ * can save them, and their `catalog_app` rows are refreshed by the scheduled crawl,
+ * so their versions do change. **Flagged: those version
  * strings are third-party data** — this store neither signs nor vets them
  * (Zealot-origin versions come from the verified signed index) — and a
  * change in Aptoide's own numbering scheme would notify subscribers.

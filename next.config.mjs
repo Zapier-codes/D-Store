@@ -1,42 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // `lib/sources/aptoide.ts`'s loadSnapshot() reads
-  // storage/downloads/aptoide-snapshot.json via fs.readFile with a
-  // path built at runtime (path.join(process.cwd(), ...)), not a
-  // static import — Next's output file tracing (what decides which
-  // files ship in each route's Vercel serverless function bundle)
-  // works by statically analyzing imports/requires, so it does not
-  // reliably pick up a file only ever reached this way. Without this,
-  // the snapshot can be present and correct in the repo and in local
-  // `next build`/`next start` (which read straight off disk, no
-  // tracing involved) while still being silently absent from the
-  // deployed function on Vercel — every route that calls
-  // `getMergedApps()` would then fall back to `loadSnapshot`'s
-  // empty-array catch path and quietly show only the two Zealot-origin
-  // apps. Declared for '/**' (every route) rather than just the
-  // specific catalog routes, since `getMergedApps()` is called from
-  // enough different pages (home, categories, app detail, developer,
-  // search, charts) that enumerating them individually here would just
-  // be a second, easier-to-forget copy of that call-site list.
-  //
-  // `5.h.x.zo` — this used to be "./storage/downloads/**", which also shipped
-  // the ingest scripts' WORKING files (the crawl's candidate list, the
-  // `getMeta` results, checkpoints, last-run reports) into every route's
-  // function. Those can grow without bound and nothing at runtime reads them,
-  // so only the files the storefront actually reads are listed:
-  //   - the Aptoide snapshot, its shards and its header
-  //     (`aptoide-snapshot.json`, `aptoide-snapshot.<n>.json`,
-  //     `aptoide-snapshot.meta.json`) — `lib/sources/aptoide.ts`;
+  // Output file tracing decides which files ship in each route's Vercel serverless function. Files read
+  // through a path built at runtime (path.join(process.cwd(), ...)) are not picked up by static analysis,
+  // so the ones the storefront really reads at runtime are listed here:
   //   - the Zealot index cache and state, including per-tenant copies
   //     (`zealot-index-*.json`) — `lib/sources/zealot.ts`;
   //   - the tenant registry cache and state (`tenant-registry-*.json`) —
   //     `lib/tenant-registry.ts`.
-  // A NEW runtime file under storage/downloads must be added here or it will be
-  // missing from the deployed function while working locally.
+  // `5.l.xix.zo` — the Aptoide snapshot (`aptoide-snapshot*.json`, about 11.5 MB) is no longer listed: the
+  // storefront reads third-party apps from the `catalog_app` table, never from those files, and shipping
+  // them put the whole snapshot inside every function. The files stay in the repo as import data for the
+  // scripts. A NEW runtime file under storage/downloads must be added here or it will be missing from the
+  // deployed function while working locally.
   outputFileTracingIncludes: {
     "/**": [
-      "./storage/downloads/aptoide-snapshot*.json",
       "./storage/downloads/zealot-index-*.json",
       "./storage/downloads/tenant-registry-*.json",
     ],

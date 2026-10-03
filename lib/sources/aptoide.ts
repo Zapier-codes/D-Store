@@ -32,9 +32,7 @@ import type { App, AppOrigin, ContentRating, DataSafetyInfo, NotProvidedField, T
 import { CATEGORY_RAW_MAX, toPlay, UNCATEGORIZED, type AppType } from "../taxonomy";
 import { categoryFromKeywords } from "../taxonomy-keywords";
 import { ALL_REGIONS } from "../mock-data";
-import type { CatalogSource } from "./types";
 import { readVersionHistory } from "../version-history";
-import { loadSnapshotFrom } from "../aptoide-snapshot";
 
 const APTOIDE_ORIGIN: AppOrigin = "aptoide";
 const API_BASE = "https://ws75.aptoide.com/api/7";
@@ -530,67 +528,11 @@ export async function fetchAptoideSearch(query: string, limit = 10): Promise<Apt
   return json.datalist?.list ?? [];
 }
 
-// --- CatalogSource: reads the ingestion snapshot, never calls the API live ---
-
-/**
- * Loads `storage/downloads/aptoide-snapshot.json` (written by
- * `scripts/ingest-aptoide.ts`) and normalizes every entry. Missing
- * snapshot file → empty catalog, not an error — matches
- * `getActiveSponsoredSlot`'s "empty is a valid state" pattern
- * elsewhere in this codebase, and lets the app run before an ingest
- * has ever been run.
- */
-export function createAptoideSource(): CatalogSource {
-  return {
-    origin: APTOIDE_ORIGIN,
-    async getApps(): Promise<App[]> {
-      const raw = await loadSnapshot();
-      // One malformed snapshot entry must never take the whole catalog (and every page) down: skip it and say so.
-      const apps: App[] = [];
-      let skipped = 0;
-      for (const entry of raw) {
-        try {
-          apps.push(normalizeAptoideApp(entry));
-        } catch {
-          skipped += 1;
-        }
-      }
-      if (skipped > 0) console.error(`aptoide: skipped ${skipped} of ${raw.length} snapshot entries that could not be normalized`);
-      return apps;
-    },
-  };
-}
-
-let cachedSnapshot: AptoideRawApp[] | null = null;
-
-async function loadSnapshot(): Promise<AptoideRawApp[]> {
-  if (cachedSnapshot) return cachedSnapshot;
-  try {
-    // Dynamic import so this module still loads fine in environments
-    // (e.g. `next build`'s edge/client graph analysis) where `fs` and
-    // `path` aren't available — the snapshot is only ever read
-    // server-side.
-    const fs = await import("node:fs/promises");
-    const path = await import("node:path");
-    const dir = path.join(process.cwd(), "storage", "downloads");
-    // `5.h.x.zo` — the snapshot may be several shards plus a header; see
-    // `lib/aptoide-snapshot.ts`. With no header this reads
-    // `aptoide-snapshot.json` alone, exactly as before.
-    const loaded = await loadSnapshotFrom(async (fileName) => {
-      try {
-        return await fs.readFile(path.join(dir, fileName), "utf-8");
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
-        throw error;
-      }
-    });
-    if (loaded.problems.length > 0) {
-      // Counts and file names only — never app content.
-      console.warn(`[aptoide] snapshot loaded with problems: ${loaded.problems.slice(0, 5).join(", ")}${loaded.problems.length > 5 ? ", ..." : ""}`);
-    }
-    cachedSnapshot = loaded.apps as unknown as AptoideRawApp[];
-  } catch {
-    cachedSnapshot = []; // no snapshot yet — see function comment
-  }
-  return cachedSnapshot;
-}
+// --- No request-time reader (leaf 5.l.xix.zo) ---
+//
+// This file used to end with `createAptoideSource()` and a `loadSnapshot()` that read
+// `storage/downloads/aptoide-snapshot*.json` on every cold start. The storefront no longer reads the
+// snapshot at all: third-party apps come from the `catalog_app` table (`lib/sources/catalog-table.ts`,
+// `lib/catalog-table.ts`). The snapshot files stay in the repo as import data for the scripts
+// (`scripts/load-catalog-table.ts`, `check-catalog-table.ts`, `rederive-catalog-categories.ts`, the crawl
+// workflow), which read them through `lib/aptoide-snapshot-io.ts`.

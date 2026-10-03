@@ -3,9 +3,9 @@
  *
  * Calls Aptoide's real API for a list of package names and/or search
  * queries, and writes the raw results to
- * `storage/downloads/aptoide-snapshot.json` — the file
- * `lib/sources/aptoide.ts`'s `createAptoideSource()` reads at request
- * time. This is a manual/cron-able script, not the scheduled server-side
+ * `storage/downloads/aptoide-snapshot.json` — import data for the
+ * `catalog_app` table (the storefront stopped reading this file at request
+ * time in leaf `5.l.xix.zo`). This is a manual/cron-able script, not the scheduled server-side
  * job `5.h.ii.zo` ultimately calls for (HANDOVER.md: "server-side and
  * scheduled... never a per-request call") — no scheduler infra exists
  * in this repo yet, so this is the piece that job would call, run by

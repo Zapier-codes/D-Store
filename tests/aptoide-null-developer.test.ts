@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { normalizeAptoideApp, createAptoideSource } from "../lib/sources/aptoide";
+import { normalizeAptoideApp } from "../lib/sources/aptoide";
+import { readSnapshotFiles } from "../lib/aptoide-snapshot-io";
 
 const fixture: any[] = JSON.parse(readFileSync(path.join(__dirname, "fixtures", "aptoide-snapshot-12.json"), "utf8"));
 const base = fixture[0];
@@ -58,8 +59,8 @@ test("every app in the REAL committed snapshot normalizes (grows with each crawl
   assert.deepEqual(failures.slice(0, 5), []);
 });
 
-test("the committed snapshot loads through getApps (the per-entry skip path itself is not exercised here)", async () => {
-  // Through the real loader: the committed snapshot must yield apps, not throw.
-  const apps = await createAptoideSource().getApps();
-  assert.ok(apps.length > 0);
+test("the committed snapshot still loads through the script-side reader (the storefront no longer reads it)", async () => {
+  const dir = path.join(__dirname, "..", "storage", "downloads");
+  const loaded = await readSnapshotFiles(dir);
+  assert.ok(loaded.apps.length > 0);
 });

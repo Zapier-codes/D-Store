@@ -2,10 +2,9 @@
  * Filesystem side of the Aptoide snapshot — leaf `5.h.x.zo`.
  *
  * Imported by SCRIPTS ONLY (`scripts/merge-aptoide-snapshot.ts`,
- * `scripts/fetch-aptoide-versions.ts`, `scripts/ingest-aptoide.ts`). The
- * storefront never imports this file: it has a static `node:fs` import, and
- * `lib/sources/aptoide.ts` reads the snapshot through the pure
- * `loadSnapshotFrom` with its own dynamically imported reader instead.
+ * `scripts/fetch-aptoide-versions.ts`, `scripts/ingest-aptoide.ts`, the catalog
+ * table scripts). The storefront never imports this file (a static `node:fs`
+ * import) and, since leaf `5.l.xix.zo`, never reads the snapshot at all.
  *
  * Writing order, so an interrupted run never leaves a header that promises
  * shards that are not there: every new shard goes to a `.tmp` file first, the

@@ -18,7 +18,7 @@
 
 | | First-party | Third-party |
 |---|---|---|
-| Source | Zealot's signed catalog index (the Console) | Aptoide's public web API, snapshotted into `storage/downloads/aptoide-snapshot.json` |
+| Source | Zealot's signed catalog index (the Console) | Aptoide's public web API, crawled into `storage/downloads/aptoide-snapshot*.json` and loaded into the `catalog_app` table the storefront reads |
 | Who accepts an app | The Console's publisher flow: the app is uploaded, organisation-signed and published there. D-Store does not build, sign or store binaries. | Nobody reviews individual apps. An app is in the catalog only if it passes the automatic gate below and someone chose to ingest its package. |
 | What D-Store checks | The index signature (pinned Ed25519 key, expiry, anti-rollback) and the SHA-256 of referenced files, before anything is shown. | Aptoide's own scan verdict, and only that. |
 | Labels | "Verified developer" when the index says so; org signing fingerprint and checksum under "Verify this APK". | "Third-party (via Aptoide)". No Verified badge, no Zealot fingerprint or checksum. |

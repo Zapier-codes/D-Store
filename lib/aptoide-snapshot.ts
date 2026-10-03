@@ -3,8 +3,8 @@
  *
  * PURE: no imports, no filesystem, no clock, nothing runs at import. The
  * network-free script `scripts/merge-aptoide-snapshot.ts` does the I/O and
- * `lib/aptoide-snapshot-io.ts` writes the files; the storefront's loader
- * (`lib/sources/aptoide.ts`) calls `loadSnapshotFrom` with its own reader.
+ * `lib/aptoide-snapshot-io.ts` writes and reads the files. Only scripts read the
+ * snapshot now (leaf `5.l.xix.zo`); the storefront reads the `catalog_app` table.
  *
  * Decisions recorded by this leaf (see its Done note in HANDOVER.md):
  *
