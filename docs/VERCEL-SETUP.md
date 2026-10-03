@@ -248,3 +248,17 @@ On the Zealot deployment set `DSTORE_STATS_URL` to `https://<this site>/api/stat
 - **What it returns, and what it never does.** Only the keys the contract names (see the header of `supabase/migrations/20260930100200_store_stats_fn.sql` and `lib/stats-store.ts`): no review text, no `ip_hash`, no report `details`, no per-search times. The document is validated and rebuilt, so a column added to the SQL function later cannot reach Zealot until `lib/stats-store.ts` and Zealot's `DstoreStats::Document` both change.
 - **Quick check.** `curl -H "Authorization: Bearer $STATS_READ_TOKEN" https://<this site>/api/stats` should print the document; without the header it prints `{"error":"Unauthorized"}`.
 - **Before it shows anything real,** the stats migrations (`20260930100000` to `20260930100300`) must be applied to the Supabase project (`scripts/apply-migrations.sh`) **together with `20260930100300_enable_rls_on_original_tables.sql`**, and the counters in `lib/catalog.ts` must be pointed at the database (the `(d)` part of leaf `5.g.v.zo`, still open); until then the figures are zeros.
+
+## Database migrations (leaf 5.l.xxii.zi)
+
+Vercel builds the Next.js app only; it never touches the database. The files in `supabase/migrations/` are applied by the GitHub Actions workflow `.github/workflows/apply-migrations.yml`, which runs `scripts/apply-migrations.sh` (psql, each file in its own transaction, recorded in `supabase_migrations.schema_migrations`, safe to re-run).
+
+| Secret (GitHub → Settings → Secrets and variables → Actions) | Purpose |
+|---|---|
+| `SUPABASE_DB_URL` | The **D-Store** Supabase project's **session pooler** connection string (Supabase dashboard → Connect → Session pooler), `postgresql://postgres.<ref>:<password>@<pooler-host>:5432/postgres?sslmode=require`. Not the "Direct connection" (IPv6-only on many plans). **Never Zealot's database.** |
+
+- **When it runs.** On a push to `master` that touches `supabase/migrations/**` or `scripts/apply-migrations.sh`, and by hand (Actions → Apply Supabase migrations → Run workflow). A manual run asks for `dry_run`; the default `true` only lists what would be applied, choose `false` to apply.
+- **Secret unset:** the run is green with a notice and does nothing. **Secret not a postgres URL:** the run fails and never prints the value.
+- **A migration that fails** turns the run red and leaves the earlier files applied; fix the file and push again, or re-run by hand.
+- **Ordering with the code deploy.** A push to `master` also makes Vercel deploy the code, so new code can be live about a minute before its migration. The read paths fail honestly meanwhile (`CatalogUnavailableError`), and the migrations so far are additive, so this is a short window, not a break. A migration that drops or renames something needs its code change split over two pushes.
+- **First use:** run it by hand once with `dry_run` = `true` and read the list. If it lists files you already applied by hand with another tool (the Supabase CLI keeps its own record), stop and check `supabase_migrations.schema_migrations` first.

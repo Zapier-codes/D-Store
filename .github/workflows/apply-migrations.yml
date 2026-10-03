@@ -1,0 +1,89 @@
+name: Apply Supabase migrations
+
+# Leaf 5.l.xxii.zi: D-Store's database migrations run on their own.
+# Vercel builds the Next.js app only; nothing else applied supabase/migrations/*.sql,
+# so each migration waited for the operator at a terminal. This workflow runs
+# scripts/apply-migrations.sh (psql over a plain Postgres connection, each file in its
+# own transaction, recorded in supabase_migrations.schema_migrations, safe to re-run).
+#
+# Needs ONE repo secret (Settings -> Secrets and variables -> Actions -> Secrets):
+#   SUPABASE_DB_URL   the D-Store project's SESSION POOLER connection string
+#                     (Supabase dashboard > Connect > Session pooler), e.g.
+#                     postgresql://postgres.<ref>:<password>@<pooler-host>:5432/postgres?sslmode=require
+#                     NEVER Zealot's database: D-Store's Supabase is not, and must never be, Zealot's.
+#                     Not the "Direct connection" either: that host is IPv6-only on many plans.
+#
+# Behaviour, so a green run means something:
+#   - the secret is unset            -> notice and skip (green), as push-dispatch.yml does.
+#   - the secret is not a postgres URL -> FAIL (the value is never printed).
+#   - a push to master touching supabase/migrations/** or the script -> applies what is missing.
+#   - a manual run (Actions tab -> Run workflow) asks for dry_run; the default is "true",
+#     which only lists what WOULD be applied. Choose "false" to apply.
+#   - a migration that fails stops the run (red) and leaves earlier files applied.
+#   - one concurrency group, never cancelled midway: two pushes never migrate at once.
+#
+# Written, NOT run (no-testing instruction).
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/apply-migrations.sh"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "true = only list the migrations that would be applied; false = apply them"
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apply-migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check secret
+        id: cfg
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::notice::SUPABASE_DB_URL repo secret is unset; skipping. Set it to the D-Store Supabase session-pooler connection string to enable automatic migrations."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          case "$DATABASE_URL" in
+            postgres://*|postgresql://*) ;;
+            *) echo "::error::SUPABASE_DB_URL is set but does not start with postgresql:// or postgres:// (value not shown)."; exit 1;;
+          esac
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Install psql
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Apply migrations
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run: nothing will change."
+            bash scripts/apply-migrations.sh --dry-run
+          else
+            bash scripts/apply-migrations.sh
+          fi
