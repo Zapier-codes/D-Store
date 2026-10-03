@@ -3,18 +3,18 @@
 
 ---
 
-## ▶ START HERE — where the program stands *(refreshed 2026-10-03, about 07:30 Lagos; this block is the source of truth: where an older note below disagrees, this block wins)*
+## ▶ START HERE — where the program stands *(refreshed 2026-10-03, about 07:35 Lagos; this block is the source of truth: where an older note below disagrees, this block wins)*
 
 **How to read this file without rediscovering anything.** Read this block, then the three STANDING OPERATOR INSTRUCTIONS under it, then go straight to the work. **Do not read Section 0's "Current position" from top to bottom to find the latest state:** its notes were inserted over many sessions and are *not* in date order, so the newest is not the first. They are history; this block is the index. Every session ends by **rewriting** this block to the state after its own work (Section 3, step 2a), not by appending to it.
 
-**Program count: `43 done ✅ of 63`** (the ticks in "Focus run 3" are the record). **Repo heads at this refresh:** D-Store `origin/master` `09404d5`, Zealot `origin/develop` `3e024faf`, Storeapp `origin/main` `4cb5a0b`. `distr` was not cloned this session. **Nothing is pending application except the patch of the session that wrote this block.** Zealot: no patch pending.
+**Program count: `43 done ✅ of 63`** (the ticks in "Focus run 3" are the record). **Repo heads at this refresh:** D-Store `origin/master` `d785db3`, Zealot `origin/develop` `3e024faf`, Storeapp `origin/main` `4cb5a0b`. `distr` was not cloned this session. **Nothing is pending application except the patch of the session that wrote this block.** Zealot: no patch pending.
 
 **Where we are: leaf 16, `7.a.ii.zi` (Zealot), `[~]`.** Its code half (an unreadable `.aab` is refused with a 422) is applied. What is left is the first real upload, and it is the operator's, in this order:
 
 | # | Step | State |
 |---|---|---|
 | 1 | Zealot's boot-crash fix live on Render | **Done.** Fix `3e024faf` is on `develop`; image `ghcr.io/zapier-codes/zealot:deploy-3e024fa` went `live` at 05:58 UTC (deploy `dep-db09h0favr4c73engrq0`). |
-| 2 | `ENABLE_ASSET_PACK_DELIVERY=true` on `zealot-web` | **Set** (Render API, `200`, 06:18 UTC). **Deploying:** `dep-db09vnm0tbcc73eug8e0`, image `deploy-3e024fa`, triggered 06:25 UTC, `update_in_progress` at the last sighting; **its final status was not seen when this block was written, so confirm it first** with the command below. Unchecked: whether compiling a bundle fits the 512Mi free instance. |
+| 2 | `ENABLE_ASSET_PACK_DELIVERY=true` on `zealot-web` | **Done.** The variable was set through the Render API (`200`, 06:18 UTC) and the deploy `dep-db09vnm0tbcc73eug8e0`, image `deploy-3e024fa`, triggered 06:25 UTC, is **`live`** (seen at 07:32 Lagos); the deploy of the old `deploy-6731354` that a mistaken redeploy made, and the earlier `deploy-3e024fa` one, are `deactivated`. **Not yet exercised:** the first bundle compile, so whether it fits the 512Mi free instance is still unchecked; if the service dies on the first upload, look there first. |
 | 3 | An org signing key exists (`AndroidSigningKey.current`) | Not checked. Operator, in Zealot. |
 | 4 | The Storeapp app and an Android channel exist in Zealot (note its `channel_key`); the per-app token is made on the 34a-7 screen (shown once) and stored as Storeapp's secret `ZEALOT_APP_TOKEN`, with variables `ZEALOT_URL` and `ZEALOT_CHANNEL_KEY` | Not done. Operator. |
 | 5 | One run of Storeapp's `release-aab.yml` (Actions tab, or a `v*` tag) | Not done; it has never run and may fail on its own. Leaf 34 is applied on Storeapp `main`, so the first run gets versionCode = run number + 100. On a failure: `bash ~/D-Store/scripts/fetch-ci-log.sh gh Zapier-codes/Storeapp`, upload the file. |
@@ -26,11 +26,11 @@ curl -s -H "Authorization: Bearer $RENDER_API_KEY" \
   "https://api.render.com/v1/services/srv-dalsvf942hec73dk2vg0/deploys?limit=4" \
   | jq -r '.[] | (.deploy // .) | [.id, .status, (.image.ref // "-")] | @tsv'
 ```
-Healthy is a top row `live` on `…:deploy-3e024fa`. `update_failed` means run `scripts/fetch-ci-log.sh render srv-dalsvf942hec73dk2vg0` and read the uploaded file (Section 0, "CI and deploy debugging"). **Never redeploy without `imageUrl`** (item 6 of that rule explains the rollback it caused on 2026-10-03).
+At this refresh the top row is `live` on `…:deploy-3e024fa`, which is the healthy state; anything else is news. `update_failed` means run `scripts/fetch-ci-log.sh render srv-dalsvf942hec73dk2vg0` and read the uploaded file (Section 0, "CI and deploy debugging"). **Never redeploy without `imageUrl`** (item 6 of that rule explains the rollback it caused on 2026-10-03).
 
 **Do not redo (done and proven):** the debug run of the failed deploys (cause: a misplaced `message:` in `ListingEdit`, fixed); the 34a migration (applied on the live database, and Zealot migrates on boot); leaf 34 (applied: D-Store `09404d5`, Storeapp `4cb5a0b`); every Render API call in item 6 of the debug rule.
 
-**If leaf 16's steps 3 to 6 are still waiting on the operator, take the next buildable leaf out of order and say so in the commit:** leaf 27 (`5.l.xxii.zi`, D-Store: a workflow that applies `supabase/migrations/**`; needs no live service). Then the Zealot leaves 29 to 33 (these close the other three AAB-publishing gaps; a push to Zealot redeploys it through the deploy hook, so do them only once step 2's deploy is `live`). Storeapp leaf 17a is no longer blocked by leaf 34; 17b to 17d wait on Zealot leaves 30 to 33. **One leaf per session, one patch per repo** (Section 0, "Cross-repo run"; Section 3).
+**If leaf 16's steps 3 to 6 are still waiting on the operator, take the next buildable leaf out of order and say so in the commit:** leaf 27 (`5.l.xxii.zi`, D-Store: a workflow that applies `supabase/migrations/**`; needs no live service). Then the Zealot leaves 29 to 33 (these close the other three AAB-publishing gaps; a push to Zealot redeploys it through the deploy hook; step 2's deploy is `live`, so they are safe to start, but do not push Zealot while the operator is between steps 5 and 6, because a restart mid-upload would lose it). Storeapp leaf 17a is no longer blocked by leaf 34; 17b to 17d wait on Zealot leaves 30 to 33. **One leaf per session, one patch per repo** (Section 0, "Cross-repo run"; Section 3).
 
 **Standing rules, one line each (the full text is in Section 0):** no tests or builds, nothing is run, say so in the commit and the reply; clone Zealot and Storeapp every session and check each for its half of the leaf; a failed CI run or deploy is debugged from the log file the operator uploads, never from its status; hand over the patch as `git format-patch` and `git am` commands with real paths.
 
