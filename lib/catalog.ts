@@ -51,7 +51,6 @@ import {
 } from "./taxonomy";
 import { getCurrentTenant } from "./tenant";
 import { isThirdParty } from "./trust";
-import { reportedStatsFor } from "./third-party-stats";
 import { DEFAULT_TENANT_ID } from "./tenant-config";
 
 export type { TaxonomyCategory };
@@ -144,9 +143,9 @@ async function getMergedApps(): Promise<App[]> {
 
 /**
  * First-party (Zealot) apps alone, cached per tenant scope for the server lifetime like
- * `getMergedApps` — leaf `5.l.iv.zi`. Only the table-backed shelf paths below use it, so a
- * home shelf can be built from this small list plus a bounded database read instead of the
- * whole merged catalog. Same source and same scope as the merged list's first source.
+ * `getMergedApps` — leaf `5.l.iv.zi`. Every list and shelf below (`5.l.xvii.zo`) is built from
+ * this small list plus a bounded database read instead of the whole merged catalog. Same source
+ * and same scope as the merged list's first source.
  */
 const firstPartyByScope = new Map<string, Promise<App[]>>();
 
@@ -212,15 +211,22 @@ async function getPublicStatsFromTable(): Promise<PublicStats | null> {
 }
 
 /**
- * Bounded third-party read for a shelf, or `null` when the shelf must use the whole-catalog path:
- * the table is not in use, the ask is not a bounded one (`Infinity` for a full chart), or the read
- * failed. A failure logs one fixed line (no query, cursor or body) and the caller falls back,
- * the same policy `getMergedApps` applies to a failed table read.
+ * Bounded third-party read for a shelf — always an array, never `null`, never throws (leaf
+ * `5.l.xvii.zo`). The shelf is the first-party apps plus whatever this returns, so "nothing to add"
+ * is `[]`:
+ * - the Supabase env is not usable (`catalogTableConfigured`): `[]`, no log line, there is no table to read;
+ * - the ask is not a bounded one (`Infinity` for a full chart, or more than `SHELF_MAX`): `[]`, no log
+ *   line; a full chart is read page by page by `getTopFreePage` / `getNewPage`, not by these shelves;
+ * - the read failed or was refused: `[]` and one fixed log line (no query, cursor or body), so the
+ *   shelf shows the first-party apps alone. The bundled snapshot is never read as a fallback.
  */
-async function readShelfFromTable(order: "top" | "new", want: number, firstParty: readonly App[]): Promise<App[] | null> {
-  if (!useCatalogTable() || !Number.isFinite(want) || want > SHELF_MAX) return null;
+async function readShelfFromTable(order: "top" | "new", want: number, firstParty: readonly App[]): Promise<App[]> {
+  if (!useCatalogTable() || !Number.isFinite(want) || want > SHELF_MAX) return [];
   const apps = await readThirdPartyShelf(order, Math.max(0, Math.floor(want)), firstParty);
-  if (apps === null) console.error("catalog: bounded table read failed, using the whole-catalog path");
+  if (apps === null) {
+    console.error("catalog: bounded table read failed, showing first-party apps only");
+    return [];
+  }
   return apps;
 }
 
@@ -580,10 +586,10 @@ export async function getCollectionBySlug(slug: string): Promise<Collection | nu
  * filter below can only ever match a first-party app. Adding a request
  * for rows that cannot match would cost a round trip and return nothing.
  * If a third-party source ever carries `collections`, this is the place
- * to add a bounded table read. Table mode off keeps the merged catalog.
+ * to add a bounded table read. Leaf `5.l.xvii.zo`: the merged-catalog branch (table mode off) is gone.
  */
 export async function getCollectionApps(slug: string): Promise<App[]> {
-  const pool = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  const pool = await getFirstPartyList();
   const result = pool
     .filter((app) => app.collections.includes(slug))
     .sort((a, b) => b.install_count - a.install_count);
@@ -882,8 +888,8 @@ export async function setAppFeaturing(
 
 export async function getFeaturedApps(limit = 6): Promise<App[]> {
   // Featured is editorial and first-party only (every third-party app is `is_featured: false`),
-  // so in table mode the small first-party list answers it without the whole catalog (5.l.iv.zi).
-  const pool = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  // so the small first-party list answers it without the whole catalog (5.l.iv.zi, 5.l.xvii.zo).
+  const pool = await getFirstPartyList();
   const result = pool.filter((app) => app.is_featured).slice(0, limit);
   return resolveAfterDelay(result);
 }
@@ -898,15 +904,11 @@ export async function getFeaturedApps(limit = 6): Promise<App[]> {
  * tweak on a mixed list) and also backs `app/page.tsx`'s hero-selection
  * fallback chain.
  *
- * Reads the merged catalog (`getMergedApps`, `5.h.ii.zi`) rather than
- * the raw first-party `apps` array directly, so this stays correct
- * once `5.g.i.zi` swaps Zealot's side of `createZealotSource()` for a
- * real signed-index read — same seam-stability every other
- * `getMergedApps()`-backed export in this file already has. Today
- * that's a distinction without a difference (nothing non-Zealot is
- * ever `origin: "zealot"`), but filtering the merged result is the
- * honest way to express "first-party" as a catalog-wide concept rather
- * than as "whatever `lib/mock-data.ts`'s `apps` array happens to hold."
+ * Reads the first-party list (`getFirstPartyList`, the Zealot source
+ * `createZealotSource()` builds from the signed index), not the merged
+ * catalog (leaf `5.l.xvii.zo`; it read `getMergedApps` before): nothing
+ * non-Zealot is ever `origin: "zealot"`, so the merged read added only the
+ * whole third-party catalog to a filter that discards it.
  *
  * No `Shelf`-level empty-state handling needed here: `Shelf` (0.d.ii.zi)
  * already renders nothing when handed an empty `apps` array, which is
@@ -915,8 +917,8 @@ export async function getFeaturedApps(limit = 6): Promise<App[]> {
  * own version of that check.
  */
 export async function getFirstPartyApps(limit = 6): Promise<App[]> {
-  // Table mode reads the first-party list directly (5.l.iv.zi); same apps, same order.
-  const pool = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  // Reads the first-party list directly (5.l.iv.zi, 5.l.xvii.zo); same apps, same order.
+  const pool = await getFirstPartyList();
   const result = pool.filter((app) => app.origin === "zealot").slice(0, limit);
   return resolveAfterDelay(result);
 }
@@ -983,11 +985,11 @@ const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // "daily"
  * contained them) — always behind first-party ones, per the rule.
  */
 async function materializeTrendingCache(): Promise<TrendingCacheEntry> {
-  // 5.l.iv.zi: in table mode only the first-party apps are ranked here (by `view_count`); the
+  // 5.l.iv.zi, 5.l.xvii.zo: only the first-party apps are ranked here (by `view_count`); the
   // third-party part of Trending comes from a bounded database read in `getTrendingApps`.
-  const merged = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  const firstParty = await getFirstPartyList();
   const originRank = (app: App) => (app.origin === "zealot" ? 0 : 1);
-  const rankedSlugs = [...merged]
+  const rankedSlugs = [...firstParty]
     .sort((a, b) => originRank(a) - originRank(b) || b.view_count - a.view_count)
     .map((app) => app.slug);
   return { computedAt: Date.now(), rankedSlugs };
@@ -1007,41 +1009,22 @@ async function getOrRefreshTrendingCache(): Promise<TrendingCacheEntry> {
 export async function getTrendingApps(limit = 12): Promise<App[]> {
   const cache = await getOrRefreshTrendingCache();
 
-  // 5.l.iv.zi — table mode. Third-party apps all have `view_count` 0, so after the first-party
-  // group (ranked by the cached order above) the whole-catalog path leaves them in the table's
-  // `top` order; this reads exactly that prefix from the database instead of the whole table.
-  if (useCatalogTable()) {
-    const firstParty = await getFirstPartyList();
-    const ranked = cache.rankedSlugs
-      .map((slug) => firstParty.find((app) => app.slug === slug))
-      .filter((app): app is App => app !== undefined)
-      .slice(0, limit);
-    const thirdParty = await readShelfFromTable("top", limit - ranked.length, firstParty);
-    if (thirdParty !== null) return resolveAfterDelay([...ranked, ...thirdParty].slice(0, limit));
-  }
-
-  const merged = await getMergedApps();
-
-  // Table mode only reaches here after a failed bounded read. The cache above holds first-party
-  // slugs only in that mode, so rank the merged list directly (same order, just not frozen).
-  if (useCatalogTable()) {
-    const fallbackRank = (app: App) => (app.origin === "zealot" ? 0 : 1);
-    const ranked = [...merged]
-      .sort((a, b) => fallbackRank(a) - fallbackRank(b) || b.view_count - a.view_count)
-      .slice(0, limit);
-    return resolveAfterDelay(ranked);
-  }
-
-  const result = cache.rankedSlugs
-    .map((slug) => merged.find((app) => app.slug === slug))
+  // 5.l.iv.zi, 5.l.xvii.zo — third-party apps all have `view_count` 0, so after the first-party
+  // group (ranked by the cached order above) they sit in the table's `top` order; this reads
+  // exactly that prefix from the database. A failed or unavailable read adds nothing, so the shelf
+  // is the first-party apps alone (one fixed log line on a failed read); the snapshot is never read.
+  const firstParty = await getFirstPartyList();
+  const ranked = cache.rankedSlugs
+    .map((slug) => firstParty.find((app) => app.slug === slug))
     .filter((app): app is App => app !== undefined)
     .slice(0, limit);
-  return resolveAfterDelay(result);
+  const thirdParty = await readShelfFromTable("top", limit - ranked.length, firstParty);
+  return resolveAfterDelay([...ranked, ...thirdParty].slice(0, limit));
 }
 
 export async function getEditorsPicks(limit = 12): Promise<App[]> {
-  // Editorial and first-party only, like Featured (5.l.iv.zi).
-  const pool = useCatalogTable() ? await getFirstPartyList() : await getMergedApps();
+  // Editorial and first-party only, like Featured (5.l.iv.zi, 5.l.xvii.zo).
+  const pool = await getFirstPartyList();
   const result = pool.filter((app) => app.is_editors_pick).slice(0, limit);
   return resolveAfterDelay(result);
 }
@@ -1088,33 +1071,18 @@ export async function getEditorsPicks(limit = 12): Promise<App[]> {
  * `isThirdParty` and restarts the rank numbers in each.
  */
 export async function getTopFreeApps(limit = Infinity): Promise<App[]> {
-  // 5.l.iv.zi — table mode with a bounded `limit` (the home shelf): first-party group first, then
-  // the first rows of the database's `top` order, which is the same reported-downloads-then-slug
-  // order the whole-catalog sort below produces for third-party apps. A full chart (no limit)
-  // keeps the whole-catalog path until leaf 9 pages it.
-  if (useCatalogTable() && Number.isFinite(limit)) {
-    const firstPartyAll = await getFirstPartyList();
-    const firstPartyRanked = firstPartyAll
-      .filter((app) => !isThirdParty(app))
-      .sort((a, b) => b.install_count - a.install_count || a.slug.localeCompare(b.slug))
-      .slice(0, Math.max(0, limit));
-    const thirdParty = await readShelfFromTable("top", limit - firstPartyRanked.length, firstPartyAll);
-    if (thirdParty !== null) return resolveAfterDelay([...firstPartyRanked, ...thirdParty].slice(0, limit));
-  }
-
-  const merged = await getMergedApps();
-  const firstParty = merged
+  // 5.l.iv.zi, 5.l.xvii.zo — the first-party group first, then the first rows of the database's
+  // `top` order, which is the reported-downloads-then-slug order (the two-group rule above applied
+  // by the database). The whole-catalog sort that used to follow is gone: a bounded `limit` reads at
+  // most `SHELF_MAX` third-party rows, and a failed read, an unusable Supabase env or a full chart
+  // (no `limit`) returns the first-party group alone. The full chart is `getTopFreePage`'s job.
+  const firstPartyAll = await getFirstPartyList();
+  const firstPartyRanked = firstPartyAll
     .filter((app) => !isThirdParty(app))
     .sort((a, b) => b.install_count - a.install_count || a.slug.localeCompare(b.slug));
-  const thirdParty = merged
-    .filter((app) => isThirdParty(app))
-    .sort(
-      (a, b) =>
-        (reportedStatsFor(b)?.downloads ?? -1) - (reportedStatsFor(a)?.downloads ?? -1) ||
-        a.slug.localeCompare(b.slug)
-    );
-  const all = [...firstParty, ...thirdParty];
-  return resolveAfterDelay(Number.isFinite(limit) ? all.slice(0, Math.max(0, limit)) : all);
+  const firstPartyShown = Number.isFinite(limit) ? firstPartyRanked.slice(0, Math.max(0, limit)) : firstPartyRanked;
+  const thirdParty = await readShelfFromTable("top", limit - firstPartyShown.length, firstPartyAll);
+  return resolveAfterDelay([...firstPartyShown, ...thirdParty].slice(0, limit));
 }
 
 /**
@@ -1293,24 +1261,15 @@ export async function getCategoryPage(
 
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
 export async function getNewAndUpdated(limit = 12): Promise<App[]> {
-  // 5.l.iv.zi — table mode with a bounded `limit`: the first-party apps plus the first rows of the
-  // database's `new` order, merged by `updated_at` below exactly as the whole catalog would be.
-  // `getNewAndUpdated(Infinity)` (the full chart) keeps the whole-catalog path until leaf 9.
-  if (useCatalogTable() && Number.isFinite(limit)) {
-    const firstParty = await getFirstPartyList();
-    const thirdParty = await readShelfFromTable("new", limit, firstParty);
-    if (thirdParty !== null) {
-      const result = [...firstParty, ...thirdParty]
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-        .slice(0, Math.max(0, limit));
-      return resolveAfterDelay(result);
-    }
-  }
-
-  const merged = await getMergedApps();
-  const result = [...merged]
+  // 5.l.iv.zi, 5.l.xvii.zo — the first-party apps plus the first rows of the database's `new` order,
+  // merged by `updated_at`. The whole-catalog path is gone: a failed read, an unusable Supabase env
+  // or `getNewAndUpdated(Infinity)` (the full chart, `getNewPage`'s job) returns the first-party apps
+  // alone.
+  const firstParty = await getFirstPartyList();
+  const thirdParty = await readShelfFromTable("new", limit, firstParty);
+  const result = [...firstParty, ...thirdParty]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-    .slice(0, limit);
+    .slice(0, Math.max(0, limit));
   return resolveAfterDelay(result);
 }
 
