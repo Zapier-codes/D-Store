@@ -1120,10 +1120,11 @@ export async function getTopFreeApps(limit = Infinity): Promise<App[]> {
 }
 
 /**
- * One page of the Top Free chart — leaf `5.l.x.zo`. Table mode only: `null` when the table is not in
- * use (silently, the page then shows the whole list exactly as before) or when the read failed (one
- * fixed log line, no query, cursor or body; the page then falls back to the whole-catalog path, the
- * same policy as `readShelfFromTable`).
+ * One page of the Top Free chart — leaves `5.l.x.zo` and `5.l.xx.zo`. Returns a page or throws
+ * `CatalogUnavailableError` after one fixed log line (no query, cursor or body): an unusable Supabase
+ * env and a failed or refused read are the same outage, and the page shows its first-party apps above
+ * a "temporarily unavailable" notice instead. Before `5.l.xx.zo` both returned `null` and the page
+ * fell back to the whole-catalog path; that path is gone.
  *
  * Same two groups as `getTopFreeApps`, split here so the page need not: page 1 is the first-party
  * group (ranked by D-Store installs, then slug, passed to `readAppsPage` already sorted because
@@ -1138,17 +1139,23 @@ export interface TopFreePage {
   isFirstPage: boolean;
 }
 
-export async function getTopFreePage(after?: unknown, pageSize?: number): Promise<TopFreePage | null> {
-  if (!useCatalogTable()) return null;
+/**
+ * The read behind `getTopFreePage` and `getAllAppsPage` (same read, same order, same first-party
+ * rule). `what` only names the caller in the one fixed log line, so an outage on `/apps` does not log
+ * as the Top Free chart; it is never user input.
+ */
+async function readTopOrderPage(
+  what: "top free page" | "all apps page",
+  after?: unknown,
+  pageSize?: number
+): Promise<TopFreePage> {
+  if (!useCatalogTable()) throw unavailableError(`catalog: ${what} failed (the catalog table is not configured)`);
   const firstPartyAll = await getFirstPartyList();
   const ranked = [...firstPartyAll].sort(
     (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || b.install_count - a.install_count || a.slug.localeCompare(b.slug)
   );
   const page = await readAppsPage({ order: "top", after: parseAfter("top", after), pageSize, firstParty: ranked });
-  if (page === null) {
-    console.error("catalog: paged table read failed, using the whole-catalog path");
-    return null;
-  }
+  if (page === null) throw unavailableError(`catalog: ${what} read failed`);
   return {
     firstParty: page.apps.filter((app) => !isThirdParty(app)),
     thirdParty: page.apps.filter((app) => isThirdParty(app)),
@@ -1157,15 +1164,18 @@ export async function getTopFreePage(after?: unknown, pageSize?: number): Promis
   };
 }
 
+export async function getTopFreePage(after?: unknown, pageSize?: number): Promise<TopFreePage> {
+  return readTopOrderPage("top free page", after, pageSize);
+}
+
 /**
- * One page of the New & Updated chart — leaf `5.l.xi.zi`. Table mode only, same contract as
- * `getTopFreePage`: `null` silently when the table is not in use (the page then shows the whole list
- * exactly as before) and `null` with one fixed log line, no query, cursor or body, when the read
- * failed (the page falls back to `getNewAndUpdated(Infinity)`).
+ * One page of the New & Updated chart — leaves `5.l.xi.zi` and `5.l.xx.zo`. Same contract as
+ * `getTopFreePage`: a page, or `CatalogUnavailableError` after one fixed log line (the page then shows
+ * the first-party apps from `getNewAndUpdated(Infinity)` above the notice).
  *
  * One list, no sections and no ranks. Page 1 is the first-party apps (newest `updated_at` first)
  * and then the first third-party rows in the database's `new` order; later pages are third-party
- * only. This differs from the whole-catalog path in one place on purpose: that path interleaves
+ * only. This differs from the old whole-catalog path in one place on purpose: that path interleaved
  * first-party and third-party apps by `updated_at`, while a keyset page cannot, so first-party
  * apps lead page 1 (decision (c) of the `5.l.v.zi` split: first-party apps on page 1 only, never
  * repeated). `after` is the raw `after` URL value.
@@ -1176,24 +1186,22 @@ export interface NewPage {
   nextCursor: string | null;
 }
 
-export async function getNewPage(after?: unknown, pageSize?: number): Promise<NewPage | null> {
-  if (!useCatalogTable()) return null;
+export async function getNewPage(after?: unknown, pageSize?: number): Promise<NewPage> {
+  if (!useCatalogTable()) throw unavailableError("catalog: new page failed (the catalog table is not configured)");
   const firstParty = await getFirstPartyList();
   const page = await readAppsPage({ order: "new", after: parseAfter("new", after), pageSize, firstParty });
-  if (page === null) {
-    console.error("catalog: paged table read failed, using the whole-catalog path");
-    return null;
-  }
+  if (page === null) throw unavailableError("catalog: new page read failed");
   return { apps: page.apps, nextCursor: page.nextCursor };
 }
 
 /**
- * One page of "All apps" — leaf `5.l.xi.zo`: every app and game, one flat list, in `top` order.
- * Table mode only, same contract as `getTopFreePage` (of which this is the flat form: same
- * read, same order, same first-party rule): `null` silently when the table is not in use, `null`
- * with one fixed log line when the read failed. Page 1 is the first-party apps (ranked by D-Store
- * installs, then slug) and then the first third-party rows (reported downloads, then slug); later
- * pages are third-party only. `after` is the raw `after` URL value.
+ * One page of "All apps" — leaves `5.l.xi.zo` and `5.l.xx.zo`: every app and game, one flat list, in
+ * `top` order. Same contract as `getTopFreePage` (of which this is the flat form: same read, same
+ * order, same first-party rule): a page, or `CatalogUnavailableError` after one fixed log line (the
+ * page then shows the first-party apps from `getTopFreeApps()` above the notice). Page 1 is the
+ * first-party apps (ranked by D-Store installs, then slug) and then the first third-party rows
+ * (reported downloads, then slug); later pages are third-party only. `after` is the raw `after` URL
+ * value.
  */
 export interface AllAppsPage {
   apps: App[];
@@ -1201,16 +1209,16 @@ export interface AllAppsPage {
   nextCursor: string | null;
 }
 
-export async function getAllAppsPage(after?: unknown, pageSize?: number): Promise<AllAppsPage | null> {
-  const page = await getTopFreePage(after, pageSize);
-  if (page === null) return null;
+export async function getAllAppsPage(after?: unknown, pageSize?: number): Promise<AllAppsPage> {
+  const page = await readTopOrderPage("all apps page", after, pageSize);
   return { apps: [...page.firstParty, ...page.thirdParty], nextCursor: page.nextCursor };
 }
 
 /**
- * One page of a category's apps — leaves `5.l.xii.zi` and `5.l.xii.zo`. Table mode only, same
- * contract as `getTopFreePage`: `null` silently when the table is not in use (the category page then
- * loads the whole category as before) and `null` with one fixed log line when the page read failed.
+ * One page of a category's apps — leaves `5.l.xii.zi` and `5.l.xii.zo`. Table mode only. Still the
+ * old contract, until leaf `5.l.xxi.zi` changes it to a page-or-throw like `getTopFreePage`'s:
+ * `null` silently when the table is not in use (the category page then loads the whole category as
+ * before) and `null` with one fixed log line when the page read failed.
  * The category is read by the `(appType, category)` pair, in `top` order: page 1 is the category's
  * first-party apps (ranked by D-Store installs, then slug) and then the first third-party rows;
  * later pages are third-party only. First-party apps are matched with `appInTaxonomyCategory`, the
@@ -1452,9 +1460,10 @@ export async function searchApps(query: string): Promise<App[]> {
 }
 
 /**
- * One page of search results — leaf `5.l.v.zo`. Table mode only, same contract as
- * `getTopFreePage`: `null` silently when the table is not in use (the caller then uses `searchApps`
- * exactly as before) and `null` with one fixed log line when the read failed. The match rule is
+ * One page of search results — leaf `5.l.v.zo`. Table mode only. Still the old contract, until leaf
+ * `5.l.xxi.zo` changes it to a page-or-throw like `getTopFreePage`'s: `null` silently when the table
+ * is not in use (the caller then uses `searchApps` exactly as before) and `null` with one fixed log
+ * line when the read failed. The match rule is
  * `searchApps`': case-insensitive substring over name or summary. Page 1 is the matching first-party
  * apps (list order, the same "first-party leads" rule `6.a.iii.zi` set) and then the first
  * third-party matches from the table in `top` order (reported downloads, then slug); later pages are

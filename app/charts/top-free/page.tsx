@@ -1,9 +1,10 @@
-import { getTopFreeApps, getTopFreePage } from "@/lib/catalog";
+import { CatalogUnavailableError, getTopFreeApps, getTopFreePage, type App, type TopFreePage } from "@/lib/catalog";
 import { parseRankOffset } from "@/lib/apps-page";
 import { isThirdParty, sourceName } from "@/lib/trust";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import Pager from "@/components/Pager";
+import CatalogUnavailable from "@/components/CatalogUnavailable";
 import styles from "./page.module.css";
 
 /**
@@ -45,9 +46,19 @@ import styles from "./page.module.css";
  * page numbers and no total, and going back is the browser's back
  * button. Third-party ranks carry on across pages through `?n=<rows so
  * far>`, which is DISPLAY ONLY (`parseRankOffset`; never used to read
- * data, and ignored on page 1), so page 2 starts at 25, not 1. With the
- * table off, or when a page read fails, the page is exactly the
- * whole-list page it was: no `after`, no `n`, no pager.
+ * data, and ignored on page 1), so page 2 starts at 25, not 1.
+ *
+ * When the catalog cannot be read — leaf `5.l.xx.zo`. `getTopFreePage`
+ * throws `CatalogUnavailableError` (an unusable Supabase env counts) and
+ * this page catches only that error: it shows the first-party apps
+ * (`getTopFreeApps()` is first-party only now) under the same heading,
+ * then the shared "temporarily unavailable" notice, with no third-party
+ * section and no pager. The whole-list fallback is gone. Any other error
+ * is not caught and reaches `app/error.tsx`. HTTP status: this route sits
+ * under the root `app/loading.tsx`, so streaming sends `200` before the
+ * read is known; the notice is what tells a visitor (and a crawler that
+ * reads the body) the list is partial. A `503` cannot be set from here
+ * once the response has started, so none is claimed.
  */
 export default async function TopFreeChartPage({
   searchParams,
@@ -55,10 +66,15 @@ export default async function TopFreeChartPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = await searchParams;
-  const page = await getTopFreePage(query.after);
+  let page: TopFreePage | null = null;
+  try {
+    page = await getTopFreePage(query.after);
+  } catch (error) {
+    if (!(error instanceof CatalogUnavailableError)) throw error;
+  }
 
-  let firstParty;
-  let thirdParty;
+  let firstParty: App[];
+  let thirdParty: App[] = [];
   let thirdPartyOffset = 0;
   let nextCursor: string | null = null;
 
@@ -68,9 +84,9 @@ export default async function TopFreeChartPage({
     thirdPartyOffset = parseRankOffset(query.n, page.isFirstPage);
     nextCursor = page.nextCursor;
   } else {
+    // Outage: the first-party apps alone, no third-party section, no pager (nextCursor stays null).
     const apps = await getTopFreeApps();
     firstParty = apps.filter((app) => !isThirdParty(app));
-    thirdParty = apps.filter((app) => isThirdParty(app));
   }
   const thirdPartySource = thirdParty[0] ? sourceName(thirdParty[0]) : "";
 
@@ -81,11 +97,13 @@ export default async function TopFreeChartPage({
         The most-installed apps on D-Store, ranked by total installs.
       </p>
 
-      <ShelfGrid>
-        {firstParty.map((app, index) => (
-          <AppCard key={app.slug} app={app} rank={index + 1} />
-        ))}
-      </ShelfGrid>
+      {(page !== null || firstParty.length > 0) && (
+        <ShelfGrid>
+          {firstParty.map((app, index) => (
+            <AppCard key={app.slug} app={app} rank={index + 1} />
+          ))}
+        </ShelfGrid>
+      )}
 
       {thirdParty.length > 0 && (
         <>
@@ -100,6 +118,13 @@ export default async function TopFreeChartPage({
             ))}
           </ShelfGrid>
         </>
+      )}
+
+      {page === null && (
+        <CatalogUnavailable
+          heading="The rest of this list is temporarily unavailable"
+          message="We could not load the full chart just now. Please try again in a few minutes."
+        />
       )}
 
       <Pager

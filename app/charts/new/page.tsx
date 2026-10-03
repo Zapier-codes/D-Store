@@ -1,7 +1,8 @@
-import { getNewAndUpdated, getNewPage } from "@/lib/catalog";
+import { CatalogUnavailableError, getNewAndUpdated, getNewPage, type NewPage } from "@/lib/catalog";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import Pager from "@/components/Pager";
+import CatalogUnavailable from "@/components/CatalogUnavailable";
 import styles from "./page.module.css";
 
 /**
@@ -38,8 +39,16 @@ import styles from "./page.module.css";
  * "Next page" link (`?after=<cursor>`). One list, no ranks, so no rank offset is carried. The
  * catalog is read by keyset, so there are no page numbers and no total, and going back is the
  * browser's back button. First-party apps lead page 1 rather than being interleaved by date, which
- * a keyset page cannot do. With the table off, or when a page read fails, the page is exactly the
- * whole-list page it was: no `after`, no pager, the "Updated <date>" caption on every card.
+ * a keyset page cannot do.
+ *
+ * When the catalog cannot be read — leaf `5.l.xx.zo`. `getNewPage` throws `CatalogUnavailableError`
+ * (an unusable Supabase env counts) and this page catches only that error: it shows the first-party
+ * apps (`getNewAndUpdated(Infinity)` is first-party only now), with the same "Updated <date>"
+ * caption, then the shared "temporarily unavailable" notice and no pager. The whole-list fallback is
+ * gone. Any other error is not caught and reaches `app/error.tsx`. HTTP status: this route sits under
+ * the root `app/loading.tsx`, so streaming sends `200` before the read is known; the notice is what
+ * tells a visitor (and a crawler that reads the body) the list is partial. A `503` cannot be set from
+ * here once the response has started, so none is claimed.
  */
 
 const CAPTION_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
@@ -54,7 +63,12 @@ export default async function NewAndUpdatedChartPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = await searchParams;
-  const page = await getNewPage(query.after);
+  let page: NewPage | null = null;
+  try {
+    page = await getNewPage(query.after);
+  } catch (error) {
+    if (!(error instanceof CatalogUnavailableError)) throw error;
+  }
   const apps = page ? page.apps : await getNewAndUpdated(Infinity);
 
   return (
@@ -64,15 +78,24 @@ export default async function NewAndUpdatedChartPage({
         The most recently added or updated apps on D-Store.
       </p>
 
-      <ShelfGrid>
-        {apps.map((app) => (
-          <AppCard
-            key={app.slug}
-            app={app}
-            caption={`Updated ${CAPTION_DATE_FORMAT.format(new Date(app.updated_at))}`}
-          />
-        ))}
-      </ShelfGrid>
+      {(page !== null || apps.length > 0) && (
+        <ShelfGrid>
+          {apps.map((app) => (
+            <AppCard
+              key={app.slug}
+              app={app}
+              caption={`Updated ${CAPTION_DATE_FORMAT.format(new Date(app.updated_at))}`}
+            />
+          ))}
+        </ShelfGrid>
+      )}
+
+      {page === null && (
+        <CatalogUnavailable
+          heading="The rest of this list is temporarily unavailable"
+          message="We could not load the full list just now. Please try again in a few minutes."
+        />
+      )}
 
       <Pager basePath="/charts/new" nextCursor={page ? page.nextCursor : null} />
     </main>
