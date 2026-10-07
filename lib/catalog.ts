@@ -50,6 +50,7 @@ import {
   type TaxonomyCategory,
 } from "./taxonomy";
 import { getCurrentTenant } from "./tenant";
+import { rankableDownloads } from "./carried-over-stats";
 import { isThirdParty } from "./trust";
 import { DEFAULT_TENANT_ID } from "./tenant-config";
 import { CatalogUnavailableError } from "./catalog-errors";
@@ -575,7 +576,7 @@ export async function getCollectionApps(slug: string): Promise<App[]> {
   const pool = await getFirstPartyList();
   const result = pool
     .filter((app) => app.collections.includes(slug))
-    .sort((a, b) => b.install_count - a.install_count);
+    .sort((a, b) => rankableDownloads(b) - rankableDownloads(a));
   return resolveAfterDelay(result);
 }
 
@@ -780,6 +781,17 @@ export async function submitReview(
   app.avg_rating = Math.round(newAvg * 10) / 10; // one decimal, matches every displayed avg_rating already in mock-data.ts
 
   return resolveAfterDelay({ avg_rating: app.avg_rating, rating_count: app.rating_count });
+}
+
+/**
+ * This store's own live reviews for one app — Task 45d. The anonymous 1-5 star
+ * submissions `submitReview` above appends to the in-memory `reviews` array.
+ * Read by the detail page's `ReviewsList` so they merge with the app's
+ * carried-over comments (Zealot's signed index) into one unlabelled list.
+ * Returns `[]` for an app with none.
+ */
+export async function getLiveReviews(slug: string): Promise<Review[]> {
+  return reviews.filter((review) => review.app_slug === slug);
 }
 
 /**
@@ -1004,7 +1016,7 @@ export async function getTopFreeApps(limit = Infinity): Promise<App[]> {
   const firstPartyAll = await getFirstPartyList();
   const firstPartyRanked = firstPartyAll
     .filter((app) => !isThirdParty(app))
-    .sort((a, b) => b.install_count - a.install_count || a.slug.localeCompare(b.slug));
+    .sort((a, b) => rankableDownloads(b) - rankableDownloads(a) || a.slug.localeCompare(b.slug));
   const firstPartyShown = Number.isFinite(limit) ? firstPartyRanked.slice(0, Math.max(0, limit)) : firstPartyRanked;
   const thirdParty = await readShelfFromTable("top", limit - firstPartyShown.length, firstPartyAll);
   return resolveAfterDelay([...firstPartyShown, ...thirdParty].slice(0, limit));
@@ -1043,7 +1055,7 @@ async function readTopOrderPage(
   if (!catalogTableConfigured()) throw unavailableError(`catalog: ${what} failed (the catalog table is not configured)`);
   const firstPartyAll = await getFirstPartyList();
   const ranked = [...firstPartyAll].sort(
-    (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || b.install_count - a.install_count || a.slug.localeCompare(b.slug)
+    (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || rankableDownloads(b) - rankableDownloads(a) || a.slug.localeCompare(b.slug)
   );
   const page = await readAppsPage({ order: "top", after: parseAfter("top", after), pageSize, firstParty: ranked });
   if (page === null) throw unavailableError(`catalog: ${what} read failed`);
@@ -1163,7 +1175,7 @@ export async function getCategoryPage(
 
   const firstPartyAll = await getFirstPartyList();
   const ranked = [...firstPartyAll].sort(
-    (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || b.install_count - a.install_count || a.slug.localeCompare(b.slug)
+    (a, b) => (isThirdParty(a) ? 1 : 0) - (isThirdParty(b) ? 1 : 0) || rankableDownloads(b) - rankableDownloads(a) || a.slug.localeCompare(b.slug)
   );
   const matchFirstParty = (app: App) => appInTaxonomyCategory(app, appType, category);
 
@@ -1202,7 +1214,7 @@ export async function getCategoryFirstPartyApps(appType: AppType, category: stri
   const firstPartyAll = await getFirstPartyList();
   return firstPartyAll
     .filter((app) => app.origin === "zealot" && appInTaxonomyCategory(app, appType, category))
-    .sort((a, b) => b.install_count - a.install_count || a.slug.localeCompare(b.slug));
+    .sort((a, b) => rankableDownloads(b) - rankableDownloads(a) || a.slug.localeCompare(b.slug));
 }
 
 /** "New & Updated" shelf (docs/D-STORE.md §4A) — sorted by `updated_at` descending. */
@@ -1642,7 +1654,7 @@ async function getCategoryAffinityAppsFromTable(
     for (const category of ranked) {
       const own = firstParty
         .filter((app) => affinityCategory(app.category, app.app_type) === category)
-        .sort((a, b) => b.install_count - a.install_count);
+        .sort((a, b) => rankableDownloads(b) - rankableDownloads(a));
       const fromTable = rows.filter((row) => row.category === category).flatMap((row) => row.apps);
       for (const app of [...own, ...fromTable]) {
         if (result.length >= limit) break;
@@ -1688,7 +1700,7 @@ export async function getCategoryAffinityApps(
         (app) =>
           affinityCategory(app.category, app.app_type) === category && !favoritedSet.has(app.slug) && !seen.has(app.slug)
       )
-      .sort((a, b) => b.install_count - a.install_count);
+      .sort((a, b) => rankableDownloads(b) - rankableDownloads(a));
     for (const app of inCategory) {
       if (result.length >= limit) break;
       seen.add(app.slug);

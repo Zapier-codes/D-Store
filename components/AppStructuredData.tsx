@@ -1,4 +1,5 @@
 import type { App } from "@/lib/catalog";
+import { combinedRating } from "@/lib/carried-over-stats";
 
 /**
  * schema.org SoftwareApplication structured data — leaf 2.d.iii.zo,
@@ -74,11 +75,20 @@ export default function AppStructuredData({
   // third-party source's own rating (`App.third_party_stats`) is deliberately not
   // emitted here: structured data is a claim to search engines that D-Store cannot
   // back, and the source's histogram and download figure are reported, not measured.
-  if (app.rating_count > 0) {
+  //
+  // Task 45b — a first-party app's carried-over history (Zealot's neutral
+  // `base_stats`) IS emitted: it is real history entered in Zealot, and the
+  // operator's rule is that this store shows one total with no label, so the
+  // combined rating is what a visitor sees and therefore what the claim must
+  // match (a rating_count > 0 with the store's own 0.0 would be wrong).
+  const combined = combinedRating(app);
+  const ratingAverage = combined?.average ?? app.avg_rating;
+  const ratingCount = combined?.count ?? app.rating_count;
+  if (ratingCount > 0) {
     jsonLd.aggregateRating = {
       "@type": "AggregateRating",
-      ratingValue: app.avg_rating,
-      ratingCount: app.rating_count,
+      ratingValue: ratingAverage,
+      ratingCount,
     };
   }
 

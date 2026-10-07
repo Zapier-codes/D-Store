@@ -34,7 +34,7 @@
  * tenant is configured.
  */
 
-import type { App, AppOrigin, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
+import type { App, AppOrigin, BaseStats, CarriedOverReview, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
 import { readVersionStatus } from "../version-advisory";
 import { readVersionHistory } from "../version-history";
 import { CATEGORY_RAW_MAX, checkCategory, toPlay, UNCATEGORIZED, type AppType } from "../taxonomy";
@@ -193,6 +193,18 @@ export interface RawApp {
    * index that predates a field.
    */
   collections?: string[];
+  /**
+   * Task 45b — the neutral `base_stats` Zealot publishes for an app that was
+   * distributed by hand before it was listed. Optional/defaulted-to-`null` here,
+   * same conservative posture `editorial` above takes for an older cached index.
+   */
+  base_stats?: { downloads: number | null; rating: { average: number | null; count: number | null } | null } | null;
+  /**
+   * Task 45d — comments the app earned before it was listed, oldest first.
+   * Optional/defaulted-to-`[]` here, same conservative posture as the fields
+   * above for an older cached index.
+   */
+  reviews?: { author_name: string | null; rating: number | null; body: string | null; commented_on: string | null; helpful_count: number | null }[] | null;
 }
 
 /**
@@ -405,10 +417,51 @@ function normalizeZealotApp(raw: RawApp): App {
     origin: ZEALOT_ORIGIN,
     package_name: raw.package_name ?? undefined,
 
+    // Task 45b -- the neutral `base_stats` Zealot publishes for an app that was distributed by hand
+    // before it was listed; this store adds its own counters on top and shows one total (lib/carried-over-stats.ts).
+    // Null/absent reads as "none carried over", same conservative posture as the fields above.
+    base_stats: normalizeBaseStats(raw.base_stats),
+    // Task 45d -- comments the app earned before it was listed, shown as ordinary reviews. Only rows with a
+    // usable author, rating and date are kept, so a malformed entry cannot render as a broken review.
+    carried_over_reviews: normalizeCarriedOverReviews(raw.reviews),
+
     not_provided: notProvided,
   };
 
   return app;
+}
+
+function normalizeBaseStats(raw: RawApp["base_stats"]): BaseStats | null {
+  if (raw === null || raw === undefined) return null;
+  const downloads = typeof raw.downloads === "number" && Number.isFinite(raw.downloads) ? raw.downloads : 0;
+  const ratingRaw = raw.rating ?? null;
+  const rating =
+    ratingRaw !== null &&
+    typeof ratingRaw.average === "number" &&
+    Number.isFinite(ratingRaw.average) &&
+    typeof ratingRaw.count === "number" &&
+    Number.isFinite(ratingRaw.count) &&
+    ratingRaw.count > 0
+      ? { average: ratingRaw.average, count: ratingRaw.count }
+      : null;
+  if (downloads <= 0 && rating === null) return null;
+  return { downloads: Math.floor(downloads), rating };
+}
+
+function normalizeCarriedOverReviews(raw: RawApp["reviews"]): CarriedOverReview[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry) => ({
+      author_name: typeof entry?.author_name === "string" ? entry.author_name.trim() : "",
+      rating: typeof entry?.rating === "number" && Number.isFinite(entry.rating) ? Math.floor(entry.rating) : 0,
+      body: typeof entry?.body === "string" ? entry.body : null,
+      commented_on: typeof entry?.commented_on === "string" ? entry.commented_on : "",
+      helpful_count:
+        typeof entry?.helpful_count === "number" && Number.isFinite(entry.helpful_count) && entry.helpful_count > 0
+          ? Math.floor(entry.helpful_count)
+          : 0,
+    }))
+    .filter((entry) => entry.author_name !== "" && entry.rating >= 1 && entry.rating <= 5 && entry.commented_on !== "");
 }
 
 // --- Fetch, verify, cache ---------------------------------------------

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getTaxonomyCategory } from "@/lib/catalog";
+import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getTaxonomyCategory, getLiveReviews } from "@/lib/catalog";
 import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
@@ -11,6 +11,8 @@ import VersionHistory from "@/components/VersionHistory";
 import VersionAdvisory from "@/components/VersionAdvisory";
 import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
+import FirstPartyStats from "@/components/FirstPartyStats";
+import ReviewsList from "@/components/ReviewsList";
 import ChecksumDisplay from "@/components/ChecksumDisplay";
 import SignatureInfo from "@/components/SignatureInfo";
 import PlayStoreDisclosure from "@/components/PlayStoreDisclosure";
@@ -123,6 +125,8 @@ export default async function AppDetailPage({
   const thirdParty = isThirdParty(app);
   const originLabel = thirdPartyLabel(app);
   const developerName = developer?.name ?? app.developer_name ?? null;
+  // Task 45d — this store's own live reviews, merged with the app's carried-over comments in ReviewsList.
+  const liveReviews = await getLiveReviews(app.slug);
 
   return (
     <CategoryThemeScope appType={taxonomy.app_type} category={taxonomy.category} mode={mode}>
@@ -178,15 +182,13 @@ export default async function AppDetailPage({
                   mutedClassName={styles.statMuted}
                 />
               ) : (
-                <span className={styles.rating}>
-                  <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
-                  <span className={styles.statMuted}> ({app.rating_count.toLocaleString()})</span>
-                </span>
+                // Task 45b — the store-native figures with any carried-over history (Zealot's
+                // neutral base_stats) folded in as ONE Play-Store-style total, no label.
+                <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.statMuted} />
               )}
               <span className={styles.statMuted}>
                 {isNotProvided(app, "content_rating") ? "Rating not provided" : app.content_rating}
               </span>
-              {!thirdParty && <span className={styles.statMuted}>{app.install_count.toLocaleString()}+ installs</span>}
               {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
               {originLabel && <ThirdPartyBadge label={originLabel} />}
             </div>
@@ -267,6 +269,9 @@ export default async function AppDetailPage({
           </h2>
           <RatingSummary app={app} />
           <RateThisApp appSlug={app.slug} />
+          {/* Task 45d — carried-over comments and live reviews merged into one
+              unlabelled list; renders nothing when there are none. */}
+          <ReviewsList app={app} liveReviews={liveReviews} />
         </section>
 
         {!thirdParty && (

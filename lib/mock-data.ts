@@ -134,6 +134,34 @@ export interface ThirdPartyStats {
   downloads: number | null;
 }
 
+/**
+ * Task 45b — the neutral `base_stats` Zealot publishes for an app that was
+ * distributed by hand before it was listed (Zealot Task 45a/45e). Not a claim
+ * by this store: real history entered in Zealot, with the source note kept
+ * there. `downloads` already includes the GitHub download count Zealot reads
+ * for the app's installable files. This store adds its own counters to these
+ * and shows one total, Play-Store style, with no "migrated" label.
+ */
+export interface BaseStats {
+  downloads: number;
+  rating: { average: number; count: number } | null;
+}
+
+/**
+ * Task 45d — a comment an app earned before it was listed here, published by
+ * Zealot's index as `reviews`. Shown as an ordinary review, merged with this
+ * store's own by date; `source_note` and who entered it are never published.
+ */
+export interface CarriedOverReview {
+  author_name: string;
+  /** 1-5. */
+  rating: number;
+  body: string | null;
+  /** ISO date-time. */
+  commented_on: string;
+  helpful_count: number;
+}
+
 export interface App {
   id: string;
   slug: string;
@@ -435,6 +463,26 @@ export interface App {
    * as a claim. Read through `isNotProvided` (`lib/trust.ts`).
    */
   not_provided?: NotProvidedField[];
+  /**
+   * Task 45b — the downloads and ratings an app earned before it was listed
+   * here, published by Zealot's signed index under the neutral `base_stats`
+   * key (Task 45a/45e: `downloads` already includes the GitHub download count
+   * for the app's installable files). `null`/absent for an app with none, and
+   * for every third-party app. This store adds its OWN `install_count` /
+   * `avg_rating` / `rating_count` on top and shows one Play-Store-style total,
+   * with no "migrated" label anywhere in the UI; ranking uses the combined
+   * total. A first-party app whose source is this carried-over history must NOT
+   * have D-Store's own counter added on top for the same figures twice.
+   */
+  base_stats?: BaseStats | null;
+  /**
+   * Task 45d — comments an app earned before it was listed here, published by
+   * Zealot's signed index as `reviews` (oldest first). Each is shown as an
+   * ordinary review, merged with this store's own live reviews by date, with no
+   * "migrated" label; only the backend knows they were carried over. Absent for
+   * an app with none and for every third-party app.
+   */
+  carried_over_reviews?: CarriedOverReview[];
 }
 
 /**

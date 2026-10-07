@@ -1,6 +1,7 @@
 import type { App } from "@/lib/catalog";
 import { isThirdParty, sourceName } from "@/lib/trust";
 import { reportedStatsFor } from "@/lib/third-party-stats";
+import { combinedRating } from "@/lib/carried-over-stats";
 import styles from "./RatingSummary.module.css";
 
 /**
@@ -73,11 +74,12 @@ export default function RatingSummary({ app }: { app: App }) {
     );
   }
 
-  const average = thirdParty ? reported!.average : app.avg_rating;
-  const ratingCount = thirdParty ? reported!.total : app.rating_count;
+  const combined = thirdParty ? null : combinedRating(app);
+  const average = thirdParty ? reported!.average : (combined?.average ?? app.avg_rating);
+  const ratingCount = thirdParty ? reported!.total : (combined?.count ?? app.rating_count);
   const histogram = thirdParty
     ? (reported!.votes ?? []).map((vote) => ({ star: vote.star as number, count: vote.count }))
-    : syntheticHistogram(app.avg_rating, app.rating_count);
+    : syntheticHistogram(average, ratingCount);
 
   const fillFractions = starFillFractions(average);
   const maxCount = Math.max(...histogram.map((row) => row.count), 1);
