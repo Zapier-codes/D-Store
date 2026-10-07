@@ -89,13 +89,17 @@ export function formatDownloadCount(count: number): string {
     [1e6, "M"],
     [1e3, "K"],
   ];
-  for (const [size, suffix] of units) {
-    if (count >= size) {
-      const value = Math.round((count / size) * 10) / 10;
-      // 999,950 / 1000 rounds to 1000K -> show 1M instead of a value that has outgrown its unit.
-      if (value >= 1000) continue;
-      return `${value}${suffix}`;
+  for (let i = 0; i < units.length; i++) {
+    const [size, suffix] = units[i];
+    if (count < size) continue;
+    const value = Math.round((count / size) * 10) / 10;
+    // A value that rounds up to 1000 has outgrown its unit (999,950 at K is
+    // 1000.0): show it in the next larger unit instead of "1000K".
+    if (value >= 1000 && i > 0) {
+      const [largerSize, largerSuffix] = units[i - 1];
+      return `${Math.round((count / largerSize) * 10) / 10}${largerSuffix}`;
     }
+    return `${value}${suffix}`;
   }
   return `${Math.floor(count)}`;
 }
