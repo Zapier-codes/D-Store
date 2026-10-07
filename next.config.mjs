@@ -24,12 +24,22 @@ const nextConfig = {
   // this one CDN host (confirmed against the ingested snapshot,
   // storage/downloads/aptoide-snapshot.json). next/image refuses to
   // optimize a remote host that isn't explicitly allow-listed here.
+  //
+  // Zealot-hosted apps are the other source: their icon and screenshot URLs are served by
+  // Zealot itself (`/download/releases/:id/icon`, `/download/graphics/:id`), so that host must be
+  // allow-listed too or next/image rejects every Zealot icon and screenshot. Set
+  // `ZEALOT_MEDIA_HOSTS` (comma-separated hostnames) to override the default.
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "pool.img.aptoide.com",
       },
+      ...(process.env.ZEALOT_MEDIA_HOSTS || "zealot-deploy-latest.onrender.com")
+        .split(",")
+        .map((host) => host.trim())
+        .filter((host) => /^[a-z0-9.-]+$/i.test(host))
+        .map((hostname) => ({ protocol: "https", hostname })),
     ],
   },
   // 5.i.iv.zo — the twelve legacy `/categories/<slug>` URLs (indexed and

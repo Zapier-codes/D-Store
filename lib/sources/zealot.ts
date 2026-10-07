@@ -153,6 +153,8 @@ export interface RawApp {
     title: string;
     description: string | null;
     icon: { url: string | null };
+    /** Phone screenshots in display order (Zealot Task 27d-e1). Absent on an older cached index. */
+    screenshots?: { url: string | null; sha256?: string | null; alt?: string | null }[] | null;
     content_rating: string | null;
     data_safety: RawDataSafety;
     contains_ads: boolean | null;
@@ -373,7 +375,12 @@ function normalizeZealotApp(raw: RawApp): App {
     release_id: latest?.release_id != null ? String(latest.release_id) : `zealot-${raw.id}`,
     play_store_rejection_reason: null,
     permissions: [],
-    screenshots: [], // reserved on Zealot's side (Task 27d) -- always empty today, not guessed
+    // Zealot publishes `listing.screenshots[]` (Task 27d-e1), already in display order. Only real https
+    // URLs are kept (AppIcon/ScreenshotCarousel gate on the same check); an older cached index without
+    // the key reads as no screenshots.
+    screenshots: (raw.listing.screenshots ?? [])
+      .map((shot) => shot?.url)
+      .filter((url): url is string => typeof url === "string" && url.startsWith("https://")),
     changelog: latest?.changelog?.trim() || "No changelog provided.",
     // 5.c.v.zo -- the whole `versions[]` (newest first, never re-sorted) through
     // the pure reader; `latest` above is still `versions[0]`, untouched. An
