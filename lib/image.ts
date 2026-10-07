@@ -24,3 +24,21 @@
 export function isRealImageUrl(value: string | undefined | null): value is string {
   return typeof value === "string" && value.startsWith("https://");
 }
+
+/**
+ * Hosts `next/image` may optimize. Must stay in step with `images.remotePatterns` in next.config.mjs
+ * for the fixed Aptoide CDN; anything else (Zealot's icon and screenshot endpoints, which redirect to
+ * a signed storage URL on yet another host) is rendered `unoptimized`, so the browser fetches it
+ * directly and the image shows whatever host Zealot or its storage is on, with no allow-list to keep
+ * in sync (an un-allow-listed host makes the optimizer answer 400 and the image goes blank).
+ */
+const OPTIMIZABLE_IMAGE_HOSTS = new Set(["pool.img.aptoide.com"]);
+
+export function isOptimizableImageUrl(value: string | undefined | null): boolean {
+  if (!isRealImageUrl(value)) return false;
+  try {
+    return OPTIMIZABLE_IMAGE_HOSTS.has(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { App } from "@/lib/catalog";
-import { isRealImageUrl } from "@/lib/image";
+import { isRealImageUrl, isOptimizableImageUrl } from "@/lib/image";
 import Lightbox from "./Lightbox";
 import styles from "./ScreenshotCarousel.module.css";
 
@@ -77,6 +77,7 @@ export default function ScreenshotCarousel({ app }: { app: App }) {
                       src={src}
                       alt={`${app.name} — Screenshot ${index + 1}`}
                       fill
+                      unoptimized={!isOptimizableImageUrl(src)}
                       sizes="(min-width: 768px) 260px, 62vw"
                       style={{ objectFit: "cover" }}
                     />

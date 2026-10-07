@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import Image from "next/image";
-import { isRealImageUrl } from "@/lib/image";
+import { isRealImageUrl, isOptimizableImageUrl } from "@/lib/image";
 import styles from "./Lightbox.module.css";
 
 /**
@@ -147,6 +147,7 @@ export default function Lightbox({
               src={realSrc}
               alt={`${appName} — Screenshot ${index + 1}`}
               fill
+              unoptimized={!isOptimizableImageUrl(realSrc)}
               sizes="min(80vw, 360px)"
               style={{ objectFit: "cover" }}
             />

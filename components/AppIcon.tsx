@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { isRealImageUrl } from "@/lib/image";
+import { isRealImageUrl, isOptimizableImageUrl } from "@/lib/image";
 
 /**
  * AppIcon — shared icon renderer, generated placeholder by default,
@@ -88,6 +88,7 @@ export default function AppIcon({
           src={src}
           alt={`${name} icon`}
           fill
+          unoptimized={!isOptimizableImageUrl(src)}
           sizes={sizes ?? "64px"}
           priority={priority}
           style={{ objectFit: "cover" }}
