@@ -28,7 +28,7 @@ function rowFor(over: Partial<CatalogRow> = {}): CatalogRow {
     app_type: normalized.app_type,
     category: normalized.category,
     developer_slug: normalized.developer_slug,
-    developer_name: normalized.developer_name,
+    developer_name: normalized.developer_name as string,
     license: normalized.license,
     size_mb: normalized.size_mb,
     download_url: normalized.apk,

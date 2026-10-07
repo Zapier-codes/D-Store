@@ -117,7 +117,11 @@ export async function handleCatalog(request: Request, deps: CatalogApiDeps = {})
   const q = single(params, "q");
   const limitText = single(params, "limit");
   const cursor = single(params, "cursor");
-  if ([order, type, category, q, limitText, cursor].some((v) => v === null)) return fail(400, "Bad request");
+  // Each null check is written out (not `.some(...)`) so TypeScript narrows every value to `string | undefined`
+  // afterwards; the behaviour is the same: a repeated parameter answers 400.
+  if (order === null || type === null || category === null || q === null || limitText === null || cursor === null) {
+    return fail(400, "Bad request");
+  }
 
   if (order !== undefined && order !== "top" && order !== "new") return fail(400, "Bad request");
   if (type !== undefined && type !== "app" && type !== "game") return fail(400, "Bad request");
