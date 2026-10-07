@@ -37,6 +37,7 @@ import {
   getZealotCollections,
   catalogScopeForTenant,
   catalogScopeKey,
+  ZEALOT_INDEX_TTL_MS,
   type CatalogScope,
 } from "./sources/zealot";
 import {
@@ -111,18 +112,20 @@ async function getCatalogScope(): Promise<CatalogScope> {
  * plus the rows of the one `catalog_app` table (which has no tenant concept: every tenant still shows
  * the same third-party rows behind its own Zealot index, a product call this leaf did not change).
  */
-const firstPartyByScope = new Map<string, Promise<App[]>>();
+const firstPartyByScope = new Map<string, { at: number; pending: Promise<App[]> }>();
 
 async function getFirstPartyList(): Promise<App[]> {
   const scope = await getCatalogScope();
   const key = catalogScopeKey(scope);
-  let pending = firstPartyByScope.get(key);
-  if (!pending) {
-    pending = createZealotSource(scope).getApps();
-    firstPartyByScope.set(key, pending);
-    pending.catch(() => firstPartyByScope.delete(key));
-  }
-  return pending;
+  const entry = firstPartyByScope.get(key);
+  // Same refresh interval as the index reader below it, so a newly published app reaches every page.
+  if (entry && Date.now() - entry.at < ZEALOT_INDEX_TTL_MS) return entry.pending;
+  const fresh = { at: Date.now(), pending: createZealotSource(scope).getApps() };
+  firstPartyByScope.set(key, fresh);
+  fresh.pending.catch(() => {
+    if (firstPartyByScope.get(key) === fresh) firstPartyByScope.delete(key);
+  });
+  return fresh.pending;
 }
 
 /**

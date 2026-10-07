@@ -512,7 +512,18 @@ async function fetchLiveIndex(baseUrl: string, tenantId: string): Promise<RawInd
  * behavior, deliberately not altered by this leaf). A rejected resolution is dropped so a
  * transient throw isn't cached forever.
  */
-const indexMemo = new Map<string, Promise<RawIndex | null>>();
+/**
+ * The index is re-read at most once per `ZEALOT_INDEX_TTL_MS` (default 5 minutes; the env var
+ * `ZEALOT_INDEX_TTL_MS` overrides it) so an app a developer publishes shows up on its own, with no
+ * rebuild. Until then the memoized promise is shared, so concurrent requests still share one fetch.
+ * A refresh that cannot reach the live index keeps the last index this process already verified
+ * (never the older build-time disk copy over a fresher one); a first load that found nothing is
+ * retried after the same interval instead of staying empty until the process restarts.
+ */
+const parsedTtl = Number(process.env.ZEALOT_INDEX_TTL_MS);
+export const ZEALOT_INDEX_TTL_MS = Number.isFinite(parsedTtl) && parsedTtl > 0 ? parsedTtl : 5 * 60 * 1000;
+
+const indexMemo = new Map<string, { at: number; promise: Promise<RawIndex | null> }>();
 
 async function loadIndex(scope: CatalogScope): Promise<RawIndex | null> {
   let index: RawIndex | null = null;
@@ -530,15 +541,29 @@ async function loadIndex(scope: CatalogScope): Promise<RawIndex | null> {
   return index;
 }
 
+async function refreshIndex(scope: CatalogScope, previous: RawIndex | null): Promise<RawIndex | null> {
+  if (previous && scope.baseUrl) {
+    const live = await fetchLiveIndex(scope.baseUrl, scope.tenantId);
+    return live ?? previous;
+  }
+  return loadIndex(scope);
+}
+
 function resolveIndex(scope: CatalogScope): Promise<RawIndex | null> {
   const key = catalogScopeKey(scope);
-  let pending = indexMemo.get(key);
-  if (!pending) {
-    pending = loadIndex(scope);
-    indexMemo.set(key, pending);
-    pending.catch(() => indexMemo.delete(key));
-  }
-  return pending;
+  const now = Date.now();
+  const entry = indexMemo.get(key);
+  if (entry && now - entry.at < ZEALOT_INDEX_TTL_MS) return entry.promise;
+  const promise = (async () => {
+    const previous = entry ? await entry.promise.catch(() => null) : null;
+    return refreshIndex(scope, previous);
+  })();
+  const fresh = { at: now, promise };
+  indexMemo.set(key, fresh);
+  promise.catch(() => {
+    if (indexMemo.get(key) === fresh) indexMemo.delete(key);
+  });
+  return promise;
 }
 
 /** Test seam: drops every memoized scope. */
