@@ -3,7 +3,8 @@ import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
 import CountUp from "./CountUp";
 import HeroTilt from "./HeroTilt";
-import { combinedDownloadTotal, combinedRating } from "@/lib/carried-over-stats";
+import { combinedDownloadTotal, combinedRating, formatDownloadCount } from "@/lib/carried-over-stats";
+import { pickHeroArt, ratingFillPercent, updatedLabel } from "@/lib/hero-card";
 import HeroCarousel from "./HeroCarousel";
 import styles from "./Hero.module.css";
 
@@ -81,15 +82,27 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
   const downloadsLabel = carried === null ? "Installs" : "Downloads";
   const category = app.category && app.category !== "uncategorized" ? titleCase(app.category) : null;
   const hasLicense = Boolean(app.license) && app.license !== "Not provided";
+  const art = pickHeroArt(app.screenshots);
+  const fill = ratingFillPercent(average);
+  const updated = updatedLabel(app.updated_at);
+  const label = [
+    `${app.name}, ${app.is_editors_pick ? "editors' choice" : "featured app"}`,
+    ratingCount > 0 ? `rated ${average.toFixed(1)} out of 5 from ${ratingCount.toLocaleString()} ratings` : null,
+    downloads > 0 ? `${formatDownloadCount(downloads)} ${downloadsLabel.toLowerCase()}` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <HeroTilt className={styles.tilt}>
-      <Link href={`/app/${app.slug}`} className={styles.card} style={backgroundStyle} aria-label={`${app.name}, featured app`}>
+      <Link href={`/app/${app.slug}`} className={styles.card} style={backgroundStyle} aria-label={label}>
+        {art && <div className={styles.art} style={{ backgroundImage: `url(${JSON.stringify(art)})` }} aria-hidden="true" />}
         <div className={styles.flare} aria-hidden="true" />
         <div className={styles.glare} aria-hidden="true" />
 
         <div className={styles.panel}>
           <div className={styles.iconWrap}>
+            <div className={styles.ring} aria-hidden="true" />
             <div className={styles.icon}>
               <AppIcon
                 name={app.name}
@@ -107,7 +120,7 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
           <div className={styles.content}>
             <div className={styles.pills}>
               <span className={`${styles.pill} ${styles.pillAccent}`}>
-                <span aria-hidden="true">✦</span> Featured
+                <span aria-hidden="true">✦</span> {app.is_editors_pick ? "Editors’ choice" : "Featured"}
               </span>
               {category && <span className={styles.pill}>{category}</span>}
             </div>
@@ -119,7 +132,14 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
 
             <div className={styles.pills}>
               <span className={`${styles.pill} ${styles.pillStar}`}>
-                <span aria-hidden="true">★</span> {average.toFixed(1)}
+                <span
+                  className={styles.stars}
+                  style={{ "--fill": `${fill}%` } as React.CSSProperties}
+                  aria-hidden="true"
+                >
+                  ★★★★★
+                </span>
+                {average.toFixed(1)}
                 <span className={styles.pillMuted}> ({ratingCount.toLocaleString()})</span>
               </span>
               {app.version && <span className={styles.pill}>v{app.version}</span>}
@@ -127,6 +147,7 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
               {app.min_android_version && app.min_android_version !== "Not provided" && (
                 <span className={`${styles.pill} ${styles.pillOptional}`}>{app.min_android_version}+</span>
               )}
+              {updated && <span className={`${styles.pill} ${styles.pillOptional}`}>{updated}</span>}
               {hasLicense && <span className={`${styles.pill} ${styles.pillOptional}`}>{app.license}</span>}
             </div>
           </div>

@@ -5,7 +5,7 @@ import { useRef, type ReactNode } from "react";
 /**
  * Pointer-driven 3D tilt + moving specular glare for a hero card.
  *
- * It only sets four CSS custom properties (`--rx`, `--ry`, `--mx`, `--my`) on its wrapper; Hero.module.css
+ * It only sets CSS custom properties (`--rx`, `--ry`, `--px`, `--py`, `--mx`, `--my`) on its wrapper; Hero.module.css
  * turns them into a small rotation and a light spot that follows the pointer. Touch input and visitors who
  * prefer reduced motion get nothing (the card stays flat), so a swipe along the row never fights a tilt.
  */
@@ -25,6 +25,9 @@ export default function HeroTilt({ children, className }: { children: ReactNode;
     const py = (event.clientY - rect.top) / rect.height;
     node.style.setProperty("--ry", `${((px - 0.5) * 2 * MAX_TILT_DEG).toFixed(2)}deg`);
     node.style.setProperty("--rx", `${((0.5 - py) * 2 * MAX_TILT_DEG).toFixed(2)}deg`);
+    // Unitless -1..1 offsets the stylesheet multiplies into small parallax shifts (icon, name, backdrop).
+    node.style.setProperty("--px", ((px - 0.5) * 2).toFixed(3));
+    node.style.setProperty("--py", ((py - 0.5) * 2).toFixed(3));
     node.style.setProperty("--mx", `${(px * 100).toFixed(1)}%`);
     node.style.setProperty("--my", `${(py * 100).toFixed(1)}%`);
   };
@@ -34,6 +37,8 @@ export default function HeroTilt({ children, className }: { children: ReactNode;
     if (!node) return;
     node.style.setProperty("--rx", "0deg");
     node.style.setProperty("--ry", "0deg");
+    node.style.setProperty("--px", "0");
+    node.style.setProperty("--py", "0");
   };
 
   return (
