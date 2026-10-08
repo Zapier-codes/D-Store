@@ -16,7 +16,7 @@ import styles from "./Hero.module.css";
  *
  * - **Bigger.** The card is now the loudest thing on the home page: a large icon, a large name, a
  *   two-line summary and a taller panel. The glass surface, the soft glow from the app's own palette
- *   and the light flare from 0.j.v.zo are kept.
+ *   is kept; the sweeping light flare from 0.j.v.zo is gone (see `.rim` in Hero.module.css).
  * - **No View button.** The whole card is the link to `/app/<slug>` (one `<Link>` wrapping the card),
  *   so a tap anywhere opens the details page. Nothing interactive sits inside it.
  * - **One to ten cards.** `app/page.tsx` passes at most `HERO_MAX` (10) first-party apps flagged
@@ -37,7 +37,7 @@ import styles from "./Hero.module.css";
  * Operator-directed 2026-10-08 (card grew, so the detail grew with it): the name is 3D glass type (see
  * `.name` in Hero.module.css), every button-like item is a transparent glass pill, the downloads figure is
  * a large animated counter in its own stat column (no empty space on the right), and the card tilts toward
- * a mouse pointer with a light glare (`HeroTilt`). The whole card is still one link; the "Get" pill is a
+ * a mouse pointer, with a thin rim of light that follows it along the card's edge (`HeroTilt`). The whole card is still one link; the "Get" pill is a
  * visual cue, not a second control.
  */
 export default function Hero({ apps }: { apps: App[] }) {
@@ -97,8 +97,7 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
     <HeroTilt className={styles.tilt}>
       <Link href={`/app/${app.slug}`} className={styles.card} style={backgroundStyle} aria-label={label}>
         {art && <div className={styles.art} style={{ backgroundImage: `url(${JSON.stringify(art)})` }} aria-hidden="true" />}
-        <div className={styles.flare} aria-hidden="true" />
-        <div className={styles.glare} aria-hidden="true" />
+        <div className={styles.rim} aria-hidden="true" />
 
         <div className={styles.panel}>
           <div className={styles.iconWrap}>

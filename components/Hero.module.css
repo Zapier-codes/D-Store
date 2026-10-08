@@ -4,7 +4,7 @@
  * at most ten), no View button, a soft pulse. See Hero.tsx's docstring for the rationale.
  *
  * Layout: `.hero` (the carousel section) > `.track` (the scrolling flex row) > `.slide` (one per app)
- * > `.card` (the `<Link>`; the whole card is the tap target) > `.flare` + `.panel` (the glass).
+ * > `.card` (the `<Link>`; the whole card is the tap target) > `.rim` + `.panel` (the glass).
  *
  * Everything runs off the 0.b design tokens (border, surface, text, accent), so it re-themes with
  * dark/light and a category's contextual skin; only the soft glow behind the glass (Hero.tsx's inline
@@ -16,6 +16,19 @@
 .hero {
   position: relative;
   margin: 0.5rem 0.5rem 0;
+  /*
+   * The hero's own accent: gold in dark, sky blue in light. `--hero-accent` colours decoration (edges, the
+   * name's extrusion, the ring); `--hero-accent-text` is the deeper tone used wherever the accent is text or
+   * a small graphic, so it still clears the contrast bar on the light page (#0369a1 is 5.9:1 on white; the
+   * decorative #38bdf8 would be about 2:1).
+   */
+  --hero-accent: var(--color-accent);
+  --hero-accent-text: var(--color-accent);
+}
+
+:global([data-theme="light"]) .hero {
+  --hero-accent: #38bdf8;
+  --hero-accent-text: #0369a1;
 }
 
 /*
@@ -89,7 +102,7 @@
 }
 
 .card:focus-visible {
-  outline: 3px solid var(--color-accent);
+  outline: 3px solid var(--hero-accent-text);
   outline-offset: 3px;
 }
 
@@ -104,18 +117,18 @@
   background-color: color-mix(in srgb, var(--color-surface) 46%, transparent);
   backdrop-filter: blur(22px) saturate(1.3);
   -webkit-backdrop-filter: blur(22px) saturate(1.3);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  border: 1px solid color-mix(in srgb, var(--hero-accent) 28%, var(--color-border));
   border-radius: inherit;
   /* Glass edge: a bright inner top rim and a soft inner glow. */
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--color-text) 22%, transparent),
-    inset 0 0 40px color-mix(in srgb, var(--color-accent) 7%, transparent);
+    inset 0 0 40px color-mix(in srgb, var(--hero-accent) 7%, transparent);
   transition: border-color 160ms ease, background-color 160ms ease;
 }
 
 .card:hover .panel,
 .card:focus-visible .panel {
-  border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border));
+  border-color: color-mix(in srgb, var(--hero-accent) 60%, var(--color-border));
   background-color: color-mix(in srgb, var(--color-surface) 36%, transparent);
 }
 
@@ -192,9 +205,9 @@
 }
 
 .pillAccent {
-  color: var(--color-accent);
-  border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--hero-accent-text);
+  border-color: color-mix(in srgb, var(--hero-accent) 50%, transparent);
+  background: color-mix(in srgb, var(--hero-accent) 12%, transparent);
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -202,7 +215,7 @@
 }
 
 .pillStar {
-  color: var(--color-accent);
+  color: var(--hero-accent-text);
   font-weight: 800;
 }
 
@@ -216,9 +229,9 @@
   padding: 0.6rem 1.4rem;
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--color-accent);
-  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--hero-accent-text);
+  border-color: color-mix(in srgb, var(--hero-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--hero-accent) 10%, transparent);
   transition: background-color 160ms ease, border-color 160ms ease;
 }
 
@@ -229,8 +242,8 @@
 
 .card:hover .pillGet,
 .card:focus-visible .pillGet {
-  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
-  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--hero-accent) 22%, transparent);
+  border-color: var(--hero-accent);
 }
 
 .card:hover .arrow,
@@ -238,54 +251,47 @@
   transform: translateX(4px);
 }
 
-/* ---- 3D glass name ------------------------------------------------------------------------------- */
+/* ---- App name: plain, solid and readable, with a 3D accent edge --------------------------------- */
 
 /*
- * The fill is a see-through gradient (text colour fading into the accent), clipped to the letters, so the
- * page's glow shows through them like frosted glass. A hairline stroke gives the glass edge, and a stack of
- * tight drop-shadows stacks up a solid-looking extrusion below and to the right, ending in a soft ground
- * shadow. The filter sits on `.nameWrap` because `.name` clips overflow for its line clamp.
+ * The name is ordinary solid text in the theme's text colour (near-white in dark, near-black in light), so
+ * it reads cleanly on any backdrop in both themes. The 3D comes from a stacked accent-coloured extrusion
+ * behind the letters (gold in dark, sky blue in light, `--hero-accent` below) and a short accent bar under
+ * the name. The filter sits on `.nameWrap` because `.name` clips overflow for its line clamp.
  */
 .nameWrap {
   display: block;
   max-width: 100%;
   filter:
-    drop-shadow(1px 1px 0 color-mix(in srgb, var(--color-accent) 55%, #000))
-    drop-shadow(2px 2px 0 color-mix(in srgb, var(--color-accent) 42%, #000))
-    drop-shadow(3px 3px 0 color-mix(in srgb, var(--color-accent) 30%, #000))
-    drop-shadow(4px 5px 6px rgba(0, 0, 0, 0.4));
+    drop-shadow(1px 1px 0 color-mix(in srgb, var(--hero-accent) 95%, transparent))
+    drop-shadow(2px 2px 0 color-mix(in srgb, var(--hero-accent) 72%, transparent))
+    drop-shadow(3px 3px 0 color-mix(in srgb, var(--hero-accent) 46%, transparent))
+    drop-shadow(4px 6px 8px rgba(0, 0, 0, 0.26));
+}
+
+.nameWrap::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  background: var(--hero-accent);
 }
 
 .name {
   margin: 0;
   padding: 0.04em 0.08em 0.1em 0;
   font-size: clamp(2rem, 5.4vw, 3.4rem);
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.08;
-  color: var(--color-text); /* fallback where background-clip: text is unsupported */
-  background-image: linear-gradient(
-    175deg,
-    color-mix(in srgb, var(--color-text) 96%, transparent) 0%,
-    color-mix(in srgb, var(--color-text) 70%, var(--color-accent)) 55%,
-    color-mix(in srgb, var(--color-accent) 80%, transparent) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 1px color-mix(in srgb, var(--color-text) 30%, transparent);
+  color: var(--color-text);
   /* Long names wrap onto two lines rather than running off the card. */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .name {
-    -webkit-text-fill-color: currentColor;
-    -webkit-text-stroke: 0;
-  }
 }
 
 .summary {
@@ -322,7 +328,7 @@
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums; /* digits keep their width, so the counter does not jitter */
   color: var(--color-text);
-  text-shadow: 0 2px 18px color-mix(in srgb, var(--color-accent) 45%, transparent);
+  text-shadow: 0 2px 18px color-mix(in srgb, var(--hero-accent) 45%, transparent);
 }
 
 .statLabel {
@@ -331,22 +337,6 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-text-muted);
-}
-
-/* Specular glare that follows the mouse (HeroTilt sets --mx/--my). Invisible until a pointer is over the card. */
-.glare {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(circle 260px at var(--mx) var(--my), rgba(255, 255, 255, 0.22), transparent 70%);
-  mix-blend-mode: overlay;
-  transition: opacity 200ms ease;
-}
-
-.card:hover .glare {
-  opacity: 1;
 }
 
 @media (max-width: 760px) {
@@ -403,40 +393,6 @@
   }
 }
 
-/* ---- Light flare — leaf 0.j.v.zo ---------------------------------------------------------------- */
-
-/*
- * A soft diagonal highlight that periodically sweeps left-to-right across the glass. Sits above `.panel`
- * with `mix-blend-mode: overlay` so it reads as a reflection on the glass, in both themes.
- * `pointer-events: none`: decorative, never intercepts the tap that opens the app.
- */
-.flare {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.flare::before {
-  content: "";
-  position: absolute;
-  top: -40%;
-  left: -45%;
-  width: 32%;
-  height: 180%;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.02) 35%,
-    rgba(255, 255, 255, 0.3) 50%,
-    rgba(255, 255, 255, 0.02) 65%,
-    transparent 100%
-  );
-  mix-blend-mode: overlay;
-  transform: translateX(0);
-}
-
 /* ---- Dots -------------------------------------------------------------------------------------- */
 
 .dots {
@@ -473,12 +429,12 @@
 
 .dot[aria-current="true"]::after {
   width: 22px;
-  background-color: var(--color-accent);
+  background-color: var(--hero-accent-text);
   opacity: 1;
 }
 
 .dot:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--hero-accent-text);
   outline-offset: 1px;
   border-radius: 6px;
 }
@@ -518,9 +474,6 @@
     animation: heroGlowBreathe 5s ease-in-out infinite;
   }
 
-  .flare::before {
-    animation: hero-flare-sweep 6.5s ease-in-out infinite;
-  }
 
   /* Reveal — leaf 0.d.i.zo: plays once on first paint. */
   .panel {
@@ -529,34 +482,18 @@
 
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .flare::before {
-    display: none;
-  }
-}
 
 @keyframes heroPulse {
   0%,
   100% {
     box-shadow:
-      0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--hero-accent) 0%, transparent),
       0 6px 20px rgba(0, 0, 0, 0.22);
   }
   50% {
     box-shadow:
-      0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent),
-      0 0 30px 4px color-mix(in srgb, var(--color-accent) 28%, transparent);
-  }
-}
-
-@keyframes hero-flare-sweep {
-  0%,
-  30% {
-    transform: translateX(0);
-  }
-  65%,
-  100% {
-    transform: translateX(330%);
+      0 0 0 3px color-mix(in srgb, var(--hero-accent) 16%, transparent),
+      0 0 30px 4px color-mix(in srgb, var(--hero-accent) 28%, transparent);
   }
 }
 
@@ -667,8 +604,8 @@
   background: conic-gradient(
     from var(--ring-angle),
     transparent 0 52%,
-    color-mix(in srgb, var(--color-accent) 35%, transparent) 70%,
-    var(--color-accent) 92%,
+    color-mix(in srgb, var(--hero-accent) 35%, transparent) 70%,
+    var(--hero-accent) 92%,
     transparent 100%
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -681,7 +618,7 @@
 .stars {
   letter-spacing: 0.06em;
   font-size: 0.98rem;
-  background-image: linear-gradient(90deg, var(--color-accent) var(--fill, 0%), var(--color-star-empty) var(--fill, 0%));
+  background-image: linear-gradient(90deg, var(--hero-accent-text) var(--fill, 0%), var(--color-star-empty) var(--fill, 0%));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -711,8 +648,7 @@
     -webkit-backdrop-filter: none;
   }
 
-  .pill,
-  .glare {
+  .pill {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -742,5 +678,39 @@
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 100%);
     mask-image: linear-gradient(180deg, transparent 0%, #000 100%);
     background-position: center bottom;
+  }
+}
+
+/* ---- Rim light: replaces the sweeping flare and the spotlight blob ---------------------------------- */
+
+/*
+ * The old periodic flare and the mouse spotlight overlapped and fought each other (the sweep snapped back to
+ * its start while the spotlight was following the pointer), and both were stock effects. This is one quiet
+ * effect instead: a thin line of accent light along the card's edge, brightest where the pointer is, drawn
+ * only on the 1.5px border ring (so nothing washes over the text). Mouse only; touch and keyboard see none.
+ */
+.rim {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  background: radial-gradient(
+    380px circle at var(--mx) var(--my),
+    color-mix(in srgb, var(--hero-accent) 95%, #fff) 0%,
+    color-mix(in srgb, var(--hero-accent) 45%, transparent) 38%,
+    transparent 72%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .rim {
+    opacity: 1;
   }
 }
