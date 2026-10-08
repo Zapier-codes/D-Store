@@ -20,8 +20,11 @@ import styles from "./ShelfGrid.module.css";
  */
 export default function ShelfGrid({
   children,
+  compact = false,
 }: {
   children: React.ReactNode;
+  /** Operator-directed 2026-10-08 (slice 6): a rail inside a column (not the full page width) fits as many cards as the column holds instead of following the viewport's 4 / 6 steps. */
+  compact?: boolean;
 }) {
-  return <div className={styles.grid}>{children}</div>;
+  return <div className={compact ? `${styles.grid} ${styles.compact}` : styles.grid}>{children}</div>;
 }

@@ -47,17 +47,20 @@ export default function Shelf({
   extraSlot,
   priorityCount = 0,
   seeAllHref,
+  glass = false,
 }: {
   title: string;
   apps: App[];
   extraSlot?: React.ReactNode;
   priorityCount?: number;
   seeAllHref?: string;
+  /** Operator-directed 2026-10-08 (slice 6): the details page's rails use the glass card and sit flush with the page column (no extra padding, heading in the text colour). */
+  glass?: boolean;
 }) {
   if (apps.length === 0) return null;
 
   return (
-    <section className={styles.shelf} aria-labelledby={`shelf-${slugify(title)}`}>
+    <section className={glass ? `${styles.shelf} ${styles.glass}` : styles.shelf} aria-labelledby={`shelf-${slugify(title)}`}>
       {seeAllHref ? (
         <div className={styles.header}>
           <h2 id={`shelf-${slugify(title)}`} className={styles.title}>
@@ -72,9 +75,9 @@ export default function Shelf({
           {title}
         </h2>
       )}
-      <ShelfGrid>
+      <ShelfGrid compact={glass}>
         {apps.map((app, index) => (
-          <AppCard key={app.slug} app={app} priority={index < priorityCount} />
+          <AppCard key={app.slug} app={app} priority={index < priorityCount} glass={glass} />
         ))}
         {extraSlot}
       </ShelfGrid>

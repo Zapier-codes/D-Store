@@ -1,0 +1,108 @@
+/*
+ * Sticky install card: operator-directed 2026-10-08, slice 6 of the details page rework. See InstallCard.tsx.
+ *
+ * One shared glass `panel` under the accent `scope`. It is only ever shown from 1100px (page.module.css `.side`
+ * is `display: none` below that, so nothing here needs a phone layout). The name is the shared `AppNameTitle`
+ * at a small size; the secondary buttons become transparent glass pills with the same override the header uses
+ * (one element more specific than their own stylesheets, so it wins whatever the CSS order). Facts: muted label,
+ * full-colour value; nothing is painted with the border colour and nothing is opacity-dimmed.
+ */
+
+.card {
+  composes: scope panel from "./glass/glass.module.css";
+  --glass-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  min-width: 0;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.icon {
+  flex: 0 0 auto;
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--glass-icon-radius, 22%);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    0 0 0 1px color-mix(in srgb, var(--color-text) 14%, transparent);
+}
+
+.name {
+  min-width: 0;
+  --glass-name-size: 1.35rem;
+}
+
+.install {
+  display: flex;
+}
+
+.install > * {
+  flex: 1 1 auto;
+}
+
+.secondary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.secondary > button {
+  border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-text) 14%, transparent);
+  color: var(--color-text);
+}
+
+.secondary > button:hover {
+  border-color: var(--glass-accent);
+  color: var(--glass-accent-text);
+}
+
+.secondary > button:focus-visible {
+  outline: 2px solid var(--glass-accent-text);
+  outline-offset: 2px;
+}
+
+.facts {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.fact dt {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.fact dd {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (forced-colors: active) {
+  .facts {
+    border-top-color: CanvasText;
+  }
+}

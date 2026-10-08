@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getTaxonomyCategory, getLiveReviews } from "@/lib/catalog";
+import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getDeveloperApps, getTaxonomyCategory, getLiveReviews } from "@/lib/catalog";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
 import AppHeader from "@/components/AppHeader";
+import InstallCard from "@/components/InstallCard";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
@@ -17,6 +18,7 @@ import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
 import ViewPing from "@/components/ViewPing";
 import ViewHistoryRecorder from "@/components/ViewHistoryRecorder";
+import type { App } from "@/lib/catalog";
 import { isThirdParty, isNotProvided } from "@/lib/trust";
 import styles from "./page.module.css";
 
@@ -108,7 +110,16 @@ export default async function AppDetailPage({
   const thirdParty = isThirdParty(app);
   const developerName = developer?.name ?? app.developer_name ?? null;
   // Task 45d — this store's own live reviews, merged with the app's carried-over comments in ReviewsList.
-  const liveReviews = await getLiveReviews(app.slug);
+  // Operator-directed 2026-10-08 (slice 6): "More from this developer", only when the app has a developer page,
+  // and never fatal: a failed read just leaves the rail out. The current app is not listed in its own rail. Read
+  // together with the reviews so the extra read does not add its own wait.
+  const moreFromDeveloperRead: Promise<App[]> = developer
+    ? getDeveloperApps(developer.slug).then(
+        (result) => result.apps.filter((other) => other.slug !== app.slug).slice(0, 6),
+        () => [],
+      )
+    : Promise.resolve([]);
+  const [liveReviews, moreFromDeveloper] = await Promise.all([getLiveReviews(app.slug), moreFromDeveloperRead]);
 
   return (
     <CategoryThemeScope appType={taxonomy.app_type} category={taxonomy.category}>
@@ -129,52 +140,64 @@ export default async function AppDetailPage({
           categoryName={category?.name ?? null}
         />
 
-        {/* The gallery owns its section and heading and renders nothing when the app has no screenshots. */}
-        <ScreenshotCarousel app={app} />
+        {/* Operator-directed 2026-10-08 (slice 6): two columns from 1100px. The main column holds the sections; the
+            sticky glass install card sits on the right (hidden below 1100px, where StickyInstallBar is used). The
+            header stays full width above both. */}
+        <div className={styles.columns}>
+          <div className={styles.mainCol}>
+            {/* The gallery owns its section and heading and renders nothing when the app has no screenshots. */}
+            <ScreenshotCarousel app={app} />
 
-        {/* Operator-directed 2026-10-08 (slice 5 of the details page rework): About owns its section and heading
-            (glass panel, faded text, "Read more" pill) and renders nothing without a description. */}
-        <ExpandableDescription description={app.description} />
+            {/* Operator-directed 2026-10-08 (slice 5 of the details page rework): About owns its section and heading
+                (glass panel, faded text, "Read more" pill) and renders nothing without a description. */}
+            <ExpandableDescription description={app.description} />
 
-        {/* What's New is a dropdown, closed until opened, drawn as a glass card with version and date pills; the
-            heading lives inside the component and the whole block is absent when there are no notes. */}
-        <Changelog app={app} />
+            {/* What's New is a dropdown, closed until opened, drawn as a glass card with version and date pills; the
+                heading lives inside the component and the whole block is absent when there are no notes. */}
+            <Changelog app={app} />
 
-        {/* Version history is not shown (operator, 2026-10-08); the permission-change notice stays. */}
-        <PermissionDiffNotice app={app} />
+            {/* Version history is not shown (operator, 2026-10-08); the permission-change notice stays. */}
+            <PermissionDiffNotice app={app} />
 
-        {/* Operator-directed 2026-10-08 (slice 2 of the details page rework): the Information glass list, only the
-            fields the source provided; renders nothing when there are none. Placed as the design doc's section 3 says,
-            after What's New and before Ratings. */}
-        <AppInformation
-          app={app}
-          developer={developer ? { slug: developer.slug, name: developer.name } : null}
-          developerName={developerName}
-          categoryName={category?.name ?? null}
-        />
+            {/* Operator-directed 2026-10-08 (slice 2 of the details page rework): the Information glass list, only the
+                fields the source provided; renders nothing when there are none. Placed as the design doc's section 3 says,
+                after What's New and before Ratings. */}
+            <AppInformation
+              app={app}
+              developer={developer ? { slug: developer.slug, name: developer.name } : null}
+              developerName={developerName}
+              categoryName={category?.name ?? null}
+            />
 
-        <section aria-labelledby="ratings-heading">
-          <h2 id="ratings-heading" className={styles.sectionTitle}>
-            Ratings
-          </h2>
-          <RatingSummary app={app} />
-          <RateThisApp appSlug={app.slug} />
-          {/* Task 45d — carried-over comments and live reviews merged into one
-              unlabelled list; renders nothing when there are none. */}
-          <ReviewsList app={app} liveReviews={liveReviews} />
-        </section>
+            <section aria-labelledby="ratings-heading">
+              <h2 id="ratings-heading" className={styles.sectionTitle}>
+                Ratings
+              </h2>
+              <RatingSummary app={app} />
+              <RateThisApp appSlug={app.slug} />
+              {/* Task 45d — carried-over comments and live reviews merged into one
+                  unlabelled list; renders nothing when there are none. */}
+              <ReviewsList app={app} liveReviews={liveReviews} />
+            </section>
 
-        {/* Operator, 2026-10-08: a section the source gave nothing for is not shown at all. Slice 5: the groups
-            are plain-language glass chips; the component owns its section and heading. */}
-        {!isNotProvided(app, "permissions") && (
-          <PermissionsDisclosure permissions={app.permissions} notProvided={false} />
-        )}
+            {/* Operator, 2026-10-08: a section the source gave nothing for is not shown at all. Slice 5: the groups
+                are plain-language glass chips; the component owns its section and heading. */}
+            {!isNotProvided(app, "permissions") && (
+              <PermissionsDisclosure permissions={app.permissions} notProvided={false} />
+            )}
 
-        <Shelf title="Similar Apps" apps={similarApps} />
+            {/* Rails (slice 6): the glass card and pill language, flush with the column; each renders nothing when empty. */}
+            {developer && <Shelf title={`More from ${developer.name}`} apps={moreFromDeveloper} glass />}
+            <Shelf title="Similar Apps" apps={similarApps} glass />
 
-        {/* Operator-directed 2026-10-08 (slice 5): "Report a problem" is a quiet footer action that expands in
-            place, last on the page so it never competes with the install action. */}
-        <ReportProblem appSlug={app.slug} />
+            {/* Operator-directed 2026-10-08 (slice 5): "Report a problem" is a quiet footer action that expands in
+                place, last on the page so it never competes with the install action. */}
+            <ReportProblem appSlug={app.slug} />
+          </div>
+          <aside className={styles.side} aria-label="Install">
+            <InstallCard app={app} />
+          </aside>
+        </div>
 
         {/*
          * 0.j.ii.zi — sticky/anchored install action. Watches the primary

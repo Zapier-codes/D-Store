@@ -50,3 +50,71 @@
     padding-right: 1.5rem;
   }
 }
+
+/*
+ * Two columns (slice 6, 2026-10-08; docs/DETAIL-PAGE-DESIGN.md section 3).
+ * Phone and tablet: one column, the side card is not shown (the sticky bar is the install shortcut). From 1100px:
+ * the sections in the left column and the sticky glass install card in a fixed 340px right column, the header
+ * above both at full width. DOM order is sections then card, so a keyboard or screen-reader visitor reads the page
+ * first; the grid places the card on the right. `align-self: start` keeps the card its own height so it can stick.
+ */
+.columns {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.mainCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.mainCol > * {
+  min-width: 0;
+}
+
+.side {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .columns,
+  .mainCol {
+    gap: 1.5rem;
+  }
+}
+
+/* Tablet: the phone column at a comfortable reading width, centred. */
+@media (min-width: 768px) and (max-width: 1099.98px) {
+  .main > * {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 1100px) {
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    column-gap: 2rem;
+    align-items: start;
+  }
+
+  .mainCol {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .side {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: calc(1rem + env(safe-area-inset-top, 0px));
+    align-self: start;
+  }
+}

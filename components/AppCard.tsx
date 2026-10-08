@@ -85,11 +85,14 @@ export default function AppCard({
   rank,
   caption,
   priority,
+  glass = false,
 }: {
   app: App;
   rank?: number;
   caption?: string;
   priority?: boolean;
+  /** Operator-directed 2026-10-08 (slice 6): the glass look used by the details page's rails (accent edge, translucent tint, no blur). */
+  glass?: boolean;
 }) {
   const thirdParty = isThirdParty(app);
   const reportedRating = reportedStatsFor(app)?.rating ?? null;
@@ -98,7 +101,7 @@ export default function AppCard({
   const firstPartyAverage = combinedRating(app)?.average ?? app.avg_rating;
 
   return (
-    <Link href={`/app/${app.slug}`} className={styles.card}>
+    <Link href={`/app/${app.slug}`} className={glass ? `${styles.card} ${styles.cardGlass}` : styles.card}>
       <div className={styles.icon}>
         {rank !== undefined && <span className={styles.rank}>{rank}</span>}
         <AppIcon

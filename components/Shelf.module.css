@@ -39,3 +39,16 @@
 .seeAll:focus-visible {
   text-decoration: underline;
 }
+
+/*
+ * Glass rails (details page, slice 6, 2026-10-08): the page column already has its own padding, so the rail adds
+ * none; the heading is body text colour, like the page's other section titles (the gold heading stays on the home
+ * page, where the shelf is the section). Declared last with the doubled class so it wins whatever the CSS order.
+ */
+.shelf.glass {
+  padding: 0;
+}
+
+.shelf.glass .title {
+  color: var(--color-text);
+}

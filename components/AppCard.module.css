@@ -170,3 +170,36 @@
   font-size: 0.7rem;
   color: var(--color-text-muted);
 }
+
+/*
+ * Glass variant (details page rails, slice 6, 2026-10-08). Takes the shared accent scope; the tint and the hairline
+ * accent edge are the glass panel's, WITHOUT its backdrop blur (a rail can hold a dozen cards, and the blur budget
+ * is two or three layers per viewport). The doubled class beats `.card` whatever the CSS order. The focus ring uses
+ * the text-safe accent.
+ */
+.cardGlass {
+  composes: scope from "./glass/glass.module.css";
+}
+
+.card.cardGlass {
+  border-radius: 18px;
+  background-color: color-mix(in srgb, var(--color-surface) 46%, transparent);
+  border: 1px solid color-mix(in srgb, var(--glass-accent) 28%, var(--color-border));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-text) 16%, transparent);
+}
+
+.card.cardGlass:hover {
+  border-color: var(--glass-accent);
+}
+
+.card.cardGlass:focus-visible {
+  border-color: var(--glass-accent);
+  outline: 2px solid var(--glass-accent-text);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .card.cardGlass {
+    background-color: var(--color-surface);
+  }
+}

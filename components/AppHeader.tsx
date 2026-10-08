@@ -111,7 +111,9 @@ export default function AppHeader({
               <p className={styles.summary}>{app.summary}</p>
 
               {/* 5.c.viii.zo: read before acting, so it sits right above the install row. Renders nothing for an available release and for every third-party app. */}
-              <VersionAdvisory app={app} />
+              <div className={styles.advisory}>
+                <VersionAdvisory app={app} />
+              </div>
 
               <div className={styles.installRow} id="primary-install-row">
                 {thirdParty ? (

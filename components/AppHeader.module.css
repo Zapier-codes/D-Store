@@ -197,3 +197,17 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+/*
+ * Desktop (slice 6, 2026-10-08): from 1100px the install row, Share and Save (and the version advisory above
+ * them) live in the sticky side card (InstallCard.tsx), so the header drops them; below 1100px they stay here
+ * and the sticky bar is used. `display: none` also takes them out of the accessibility tree, so a screen reader
+ * meets one install row per screen size. The id `primary-install-row` stays on the hidden row on purpose: the
+ * sticky bar's watcher finds it, reads it as not scrolled past, and the bar is hidden at this width anyway.
+ */
+@media (min-width: 1100px) {
+  .installRow,
+  .advisory {
+    display: none;
+  }
+}

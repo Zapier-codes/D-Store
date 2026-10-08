@@ -105,7 +105,7 @@ export default function StickyInstallBar({
             secondaryColor={secondaryColor}
             tertiaryColor={tertiaryColor}
             iconUrl={iconUrl}
-            sizes="32px"
+            sizes="40px"
           />
         </div>
         <span className={styles.name}>{appName}</span>

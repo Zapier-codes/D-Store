@@ -37,3 +37,12 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
+
+/*
+ * Compact: a rail inside a column (the details page's two-column layout, slice 6, 2026-10-08). Cards are at least
+ * 8.5rem wide and as many fit as the column holds; `min(8.5rem, 100%)` keeps a very narrow column from overflowing.
+ * Declared last, with the doubled class, so it wins over the viewport steps above whatever the CSS order.
+ */
+.grid.compact {
+  grid-template-columns: repeat(auto-fill, minmax(min(8.5rem, 100%), 1fr));
+}
