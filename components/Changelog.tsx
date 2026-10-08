@@ -1,28 +1,21 @@
+"use client";
+
+import { useId, useState } from "react";
 import type { App } from "@/lib/catalog";
 import styles from "./Changelog.module.css";
 
 /**
- * "What's New" changelog block — leaf 0.e.ii.zo (App Detail Page →
- * Content), sibling to ExpandableDescription (0.e.ii.zi) in the "About
- * this app" area of the detail page.
- * Per docs/D-STORE.md §4B: "A 'What's New' changelog block."
+ * "What's New", as a dropdown (the way most app stores show it): only the title and a chevron are
+ * visible until the visitor opens it, then the version, date and notes slide open.
  *
- * Pure server component — no interaction needed, unlike
- * ExpandableDescription (which needed client state for its toggle).
- * `App.changelog` (lib/mock-data.ts) is a single short release-notes
- * line per app (e.g. F-Droid's "Improved repo index signature
- * verification and faster mirror fallback."), paired here with the
- * existing `version` and `updated_at` fields for the version/date
- * header Play Store's own "What's New" card always shows alongside the
- * notes themselves.
- *
- * Only ever renders the single latest entry — there's no changelog
- * *history* in the data model (`App.changelog` is one string, not an
- * array), so there's nothing to page through yet. A real backend
- * (Phase 5) would need a `changelog[]`/release-history table to show
- * more than the current version's notes; out of scope for this leaf.
+ * `App.changelog` is a single release-notes line (no history in the data model), shown with the
+ * existing `version` and `updated_at`. The heading is the toggle, so a screen reader hears one
+ * "What's New, button, collapsed". Collapsed content is `visibility: hidden`, so it cannot be tabbed
+ * to or read until opened. Reduced-motion visitors get no slide.
  */
 export default function Changelog({ app }: { app: App }) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
   const formattedDate = new Date(app.updated_at).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -30,12 +23,32 @@ export default function Changelog({ app }: { app: App }) {
   });
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.meta}>
-        <span className={styles.version}>Version {app.version}</span>
-        <span className={styles.date}>{formattedDate}</span>
+    <section className={styles.section} aria-labelledby={`${panelId}-title`}>
+      <h2 id={`${panelId}-title`} className={styles.title}>
+        <button
+          type="button"
+          className={styles.toggle}
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span>What&rsquo;s New</span>
+          <span className={styles.chevron} data-open={open} aria-hidden="true">
+            ▾
+          </span>
+        </button>
+      </h2>
+      <div className={styles.panel} data-open={open} id={panelId}>
+        <div className={styles.panelInner}>
+          <div className={styles.wrapper}>
+            <div className={styles.meta}>
+              <span className={styles.version}>Version {app.version}</span>
+              <span className={styles.date}>{formattedDate}</span>
+            </div>
+            <p className={styles.notes}>{app.changelog}</p>
+          </div>
+        </div>
       </div>
-      <p className={styles.notes}>{app.changelog}</p>
-    </div>
+    </section>
   );
 }

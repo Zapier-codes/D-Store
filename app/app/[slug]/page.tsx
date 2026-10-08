@@ -246,12 +246,8 @@ export default async function AppDetailPage({
           <ExpandableDescription description={app.description} />
         </section>
 
-        <section aria-labelledby="whats-new-heading">
-          <h2 id="whats-new-heading" className={styles.sectionTitle}>
-            What&rsquo;s New
-          </h2>
-          <Changelog app={app} />
-        </section>
+        {/* What's New is a dropdown, closed until opened; the heading lives inside the component. */}
+        <Changelog app={app} />
 
         {/* 5.c.vi.zo -- version history, first-party and third-party alike: the
             component itself shows the "Not provided" state for a source with no list. */}

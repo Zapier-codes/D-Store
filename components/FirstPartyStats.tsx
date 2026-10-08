@@ -1,5 +1,6 @@
 import type { App } from "@/lib/mock-data";
-import { combinedDownloadTotal, combinedRating, formatDownloadCount } from "@/lib/carried-over-stats";
+import { combinedDownloadTotal, combinedRating } from "@/lib/carried-over-stats";
+import CountUp from "./CountUp";
 
 /**
  * Task 45b — a first-party app's rating and download totals, shown Play-Store
@@ -35,9 +36,11 @@ export default function FirstPartyStats({
         <span className={mutedClassName}> ({ratingCount.toLocaleString()})</span>
       </span>
       <span className={mutedClassName}>
-        {downloads === null
-          ? `${app.install_count.toLocaleString()}+ installs`
-          : `${formatDownloadCount(downloads)} downloads`}
+        {downloads === null ? (
+          <CountUp target={app.install_count} variant="exact" suffix="+ installs" />
+        ) : (
+          <CountUp target={downloads} variant="short" suffix=" downloads" />
+        )}
       </span>
     </>
   );
