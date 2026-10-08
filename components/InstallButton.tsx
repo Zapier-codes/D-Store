@@ -4,10 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useInstallStatus, setInstallProgressActive, SIMULATED_INSTALL_MS } from "@/lib/install-status";
 import {
   REINSTALL_PARAM,
+  UNINSTALL_PARAM,
   buildOpenIntentUrl,
+  buildUninstallIntentUrl,
   isAndroidUserAgent,
   isReinstallRequest,
+  isUninstallUnavailable,
   reinstallFallbackUrl,
+  uninstallFallbackUrl,
 } from "@/lib/open-intent";
 import styles from "./InstallButton.module.css";
 
@@ -16,6 +20,7 @@ import styles from "./InstallButton.module.css";
  * component on one page, so the "?reinstall=1" arrival is claimed once per page load, by slug.
  */
 const reinstallClaimed = new Set<string>();
+const uninstallNoticeClaimed = new Set<string>();
 
 /**
  * Install button — leaf 3.a.iv.zi/zo (dummy install + progress-fill),
@@ -115,12 +120,26 @@ export default function InstallButton({
   // The Open link needs the browser's origin and an Android device, so it is built after mount.
   const [openHref, setOpenHref] = useState<string | null>(null);
   const [reinstallNotice, setReinstallNotice] = useState(false);
+  // The Uninstall link goes through the store app on the device; null off Android (a plain button then).
+  const [uninstallHref, setUninstallHref] = useState<string | null>(null);
+  const [uninstallNotice, setUninstallNotice] = useState(false);
   const runInstallRef = useRef<(options?: { countInstall?: boolean }) => void>(() => {});
 
   useEffect(() => {
     if (!packageName || !isAndroidUserAgent(navigator.userAgent)) return;
     setOpenHref(buildOpenIntentUrl(packageName, reinstallFallbackUrl(window.location.origin, appSlug)));
+    setUninstallHref(buildUninstallIntentUrl(packageName, uninstallFallbackUrl(window.location.origin, appSlug)));
   }, [packageName, appSlug]);
+
+  // Arrived from the Uninstall link's fallback: no store app on this device handled it. Say so once.
+  useEffect(() => {
+    if (uninstallNoticeClaimed.has(appSlug) || !isUninstallUnavailable(window.location.search)) return;
+    uninstallNoticeClaimed.add(appSlug);
+    const url = new URL(window.location.href);
+    url.searchParams.delete(UNINSTALL_PARAM);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    setUninstallNotice(true);
+  }, [appSlug]);
 
   function runSimulatedInstall(options: { countInstall?: boolean } = {}) {
     if (uiState !== "idle") return;
@@ -207,6 +226,26 @@ export default function InstallButton({
     </span>
   ) : null;
 
+  const uninstallMessage = uninstallNotice ? (
+    <span className={styles.notice} role="status">
+      Couldn&rsquo;t remove {appName} from here, because the store app isn&rsquo;t on this device. Remove it in
+      Android Settings, Apps.
+    </span>
+  ) : null;
+
+  // Uninstall control: on Android a link to the store app (it opens Android's own confirmation); elsewhere the
+  // plain button. The local record is cleared on tap so this page reads Install again.
+  const uninstallControl =
+    uninstallHref !== null ? (
+      <a href={uninstallHref} className={styles.uninstallButton} aria-label={`Uninstall ${appName}`} onClick={markUninstalled}>
+        Uninstall
+      </a>
+    ) : (
+      <button type="button" className={styles.uninstallButton} aria-label={`Uninstall ${appName}`} onClick={markUninstalled}>
+        Uninstall
+      </button>
+    );
+
   if (uiState === "installing") {
     const label = status === "outdated" ? "Updating\u2026" : "Installing\u2026";
     return (
@@ -243,15 +282,9 @@ export default function InstallButton({
             Open
           </button>
         )}
-        <button
-          type="button"
-          className={styles.uninstallButton}
-          aria-label={`Uninstall ${appName}`}
-          onClick={markUninstalled}
-        >
-          Uninstall
-        </button>
+        {uninstallControl}
         {notice}
+        {uninstallMessage}
       </span>
     );
   }
@@ -268,14 +301,8 @@ export default function InstallButton({
         >
           Update
         </button>
-        <button
-          type="button"
-          className={styles.uninstallButton}
-          aria-label={`Uninstall ${appName}`}
-          onClick={markUninstalled}
-        >
-          Uninstall
-        </button>
+        {uninstallControl}
+        {uninstallMessage}
       </span>
     );
   }

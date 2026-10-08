@@ -2,6 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildOpenIntentUrl,
+  buildUninstallIntentUrl,
+  isUninstallUnavailable,
+  uninstallFallbackUrl,
   isAndroidUserAgent,
   isReinstallRequest,
   isValidPackageName,
@@ -49,4 +52,20 @@ test("isAndroidUserAgent", () => {
   assert.equal(isAndroidUserAgent("Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/126"), true);
   assert.equal(isAndroidUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X) Safari"), false);
   assert.equal(isAndroidUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)"), false);
+});
+
+test("uninstall link goes to the store app's scheme with an encoded https fallback, else null", () => {
+  const fb = uninstallFallbackUrl("https://d-store-nu.vercel.app", "appstore")!;
+  assert.equal(fb, "https://d-store-nu.vercel.app/app/appstore?uninstall=unavailable");
+  assert.equal(
+    buildUninstallIntentUrl("com.vythera.vyxelapps", fb),
+    `intent://uninstall/com.vythera.vyxelapps#Intent;scheme=vyxelapps;S.browser_fallback_url=${encodeURIComponent(fb)};end`
+  );
+  assert.equal(buildUninstallIntentUrl("bad;pkg", fb), null);
+  assert.equal(buildUninstallIntentUrl("com.x.y", null), null);
+  assert.equal(buildUninstallIntentUrl("com.x.y", "http://insecure.example/"), null);
+  assert.equal(uninstallFallbackUrl("http://insecure.example", "appstore"), null);
+  assert.equal(isUninstallUnavailable("?uninstall=unavailable"), true);
+  assert.equal(isUninstallUnavailable("?uninstall=1"), false);
+  assert.equal(isUninstallUnavailable(""), false);
 });

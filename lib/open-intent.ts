@@ -58,3 +58,40 @@ export function isReinstallRequest(search: string): boolean {
 export function isAndroidUserAgent(userAgent: string): boolean {
   return /\bAndroid\b/i.test(userAgent);
 }
+
+/**
+ * Deep link for the "Uninstall" button (Android only). A web page cannot remove an app, and Chrome will not
+ * pass a `package:` uninstall intent to Android's installer (that activity is not BROWSABLE), so the link
+ * goes to the store's own app: Storeapp's `LinkActivity` answers `vyxelapps://uninstall/<package>` and opens
+ * Android's uninstall confirmation, which the person must still accept. No `package=` is named, because
+ * tenant builds of the store app have other application ids. When no app handles the scheme (the store app is
+ * not installed) Chrome goes to the fallback, this app's page with `?uninstall=unavailable`.
+ */
+export const STORE_APP_SCHEME = "vyxelapps";
+export const UNINSTALL_PARAM = "uninstall";
+export const UNINSTALL_UNAVAILABLE = "unavailable";
+
+/** This app's detail page with the flag that says the uninstall link found no store app. `null` for a bad input. */
+export function uninstallFallbackUrl(origin: string, appSlug: string): string | null {
+  const page = reinstallFallbackUrl(origin, appSlug);
+  if (page === null) return null;
+  return `${page.split("?")[0]}?${UNINSTALL_PARAM}=${UNINSTALL_UNAVAILABLE}`;
+}
+
+/** `intent://uninstall/<pkg>#Intent;scheme=vyxelapps;S.browser_fallback_url=<encoded>;end`, or `null` when unusable. */
+export function buildUninstallIntentUrl(packageName: unknown, fallbackUrl: string | null): string | null {
+  if (!isValidPackageName(packageName) || fallbackUrl === null) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(fallbackUrl);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:") return null;
+  return `intent://uninstall/${packageName}#Intent;scheme=${STORE_APP_SCHEME};S.browser_fallback_url=${encodeURIComponent(parsed.href)};end`;
+}
+
+/** True when the page was opened by the uninstall link's fallback (`?uninstall=unavailable`). */
+export function isUninstallUnavailable(search: string): boolean {
+  return new URLSearchParams(search).get(UNINSTALL_PARAM) === UNINSTALL_UNAVAILABLE;
+}

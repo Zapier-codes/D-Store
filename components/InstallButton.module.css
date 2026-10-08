@@ -169,7 +169,8 @@
 
 
 /* "Open" as a link (Android intent) looks exactly like the button. */
-a.button {
+a.button,
+a.uninstallButton {
   text-decoration: none;
 }
 
