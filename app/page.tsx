@@ -8,6 +8,8 @@ import {
   getHomeCategoryRows,
 } from "@/lib/catalog";
 import { toHomeCategoryRows } from "@/lib/home-categories";
+import { HERO_MAX, selectHeroApps } from "@/lib/hero";
+import { isThirdParty } from "@/lib/trust";
 import Hero from "@/components/Hero";
 import Shelf from "@/components/Shelf";
 import CategoryBar from "@/components/CategoryBar";
@@ -142,6 +144,21 @@ import ForYouShelf from "@/components/ForYouShelf";
  * thinning it by what happens to be above would make it differ from the
  * category page it links to. They never take `priority` icons: they sit
  * below the fold.
+ *
+ * Operator-directed, 2026-10-08 — the hero is now a scrolling row, and first-party apps take the
+ * page over as they arrive (first-party is primary, third-party secondary):
+ *
+ * 1. **Hero = featured first-party apps only, at most ten** (`selectHeroApps`, `lib/hero.ts`), drawn
+ *    as a horizontally scrolling row of big tappable cards (`components/Hero.tsx`). The old fallback
+ *    to a non-featured first-party or a trending third-party app is gone: with no featured
+ *    first-party app the hero is not drawn at all and the First-party shelf leads. The old separate
+ *    "Featured" shelf is gone too: the hero is the featured surface now, and a featured app past the
+ *    tenth is not lost, it appears in the First-party shelf and in its own category row.
+ * 2. **First-party shelf is bigger** (`HOME_SHELF_SIZE`, was six), minus the apps the hero already
+ *    shows, so it fills with first-party apps as they are added.
+ * 3. **First-party ahead of third-party in every shelf below** (New & Updated is re-ordered first-
+ *    party first here; Trending and Top Free already were), and each category row leads with that
+ *    category's first-party apps (`getHomeCategoryRows`), third-party filling what is left of the row.
  */
 const HOME_SHELF_SIZE = 18;
 // Fetch deeper than the shelf size so de-duplicating against the shelves
@@ -149,10 +166,10 @@ const HOME_SHELF_SIZE = 18;
 const HOME_FETCH = 60;
 
 export default async function Home() {
-  const [firstParty, featured, trending, editorsPicks, newAndUpdatedAll, topFreeAll, categoryRowData] =
+  const [firstPartyAll, featured, trending, editorsPicks, newAndUpdatedAll, topFreeAll, categoryRowData] =
     await Promise.all([
-      getFirstPartyApps(),
-      getFeaturedApps(),
+      getFirstPartyApps(Infinity),
+      getFeaturedApps(HERO_MAX),
       getTrendingApps(),
       getEditorsPicks(),
       getNewAndUpdated(HOME_FETCH),
@@ -161,14 +178,12 @@ export default async function Home() {
     ]);
   const categoryRows = toHomeCategoryRows(categoryRowData);
 
-  const heroApp =
-    featured.find((app) => app.origin === "zealot") ??
-    firstParty[0] ??
-    featured[0] ??
-    trending[0];
+  // The hero: featured first-party apps only, at most ten (lib/hero.ts). No fallback to anything else.
+  const heroApps = selectHeroApps(featured);
+  const heroSlugs = new Set(heroApps.map((app) => app.slug));
 
-  const restFirstParty = firstParty.filter((app) => app.slug !== heroApp?.slug);
-  const restFeatured = featured.filter((app) => app.slug !== heroApp?.slug);
+  // The First-party shelf: every other first-party app, up to a shelf's worth.
+  const restFirstParty = firstPartyAll.filter((app) => !heroSlugs.has(app.slug)).slice(0, HOME_SHELF_SIZE);
 
   // Two shelves added because the catalog is now ~1,500 apps and the
   // only shelf that fills from third-party data is Trending (12): the
@@ -177,9 +192,7 @@ export default async function Home() {
   // apps on its home page. Each new shelf skips apps already on the page
   // so the extra rows are new apps, not repeats.
   const shown = new Set<string>(
-    [heroApp, ...restFirstParty, ...restFeatured, ...trending, ...editorsPicks]
-      .filter((app): app is NonNullable<typeof app> => Boolean(app))
-      .map((app) => app.slug)
+    [...heroApps, ...restFirstParty, ...trending, ...editorsPicks].map((app) => app.slug)
   );
   const takeUnseen = (list: typeof trending) => {
     const out: typeof trending = [];
@@ -191,8 +204,13 @@ export default async function Home() {
     }
     return out;
   };
-  const newAndUpdated = takeUnseen(newAndUpdatedAll);
-  const topFree = takeUnseen(topFreeAll);
+  // First-party ahead of third-party: a stable split, so each group keeps its own order (newest first).
+  const firstPartyFirst = (list: typeof newAndUpdatedAll) => [
+    ...list.filter((app) => !isThirdParty(app)),
+    ...list.filter((app) => isThirdParty(app)),
+  ];
+  const newAndUpdated = takeUnseen(firstPartyFirst(newAndUpdatedAll));
+  const topFree = takeUnseen(firstPartyFirst(topFreeAll));
 
   // `3.d.ii.zo` (LCP budget pass): whichever shelf below actually
   // renders first (Shelf itself renders nothing for an empty `apps`
@@ -203,19 +221,17 @@ export default async function Home() {
   const firstNonEmptyShelf =
     restFirstParty.length > 0
       ? "firstParty"
-      : restFeatured.length > 0
-        ? "featured"
-        : trending.length > 0
-          ? "trending"
-          : editorsPicks.length > 0
-            ? "editorsPicks"
-            : null;
+      : trending.length > 0
+        ? "trending"
+        : editorsPicks.length > 0
+          ? "editorsPicks"
+          : null;
 
   return (
     <main>
-      {heroApp && (
+      {heroApps.length > 0 && (
         <ScrollReveal>
-          <Hero app={heroApp} />
+          <Hero apps={heroApps} />
         </ScrollReveal>
       )}
       <ScrollReveal>
@@ -223,13 +239,6 @@ export default async function Home() {
           title="First-party"
           apps={restFirstParty}
           priorityCount={firstNonEmptyShelf === "firstParty" ? 2 : 0}
-        />
-      </ScrollReveal>
-      <ScrollReveal>
-        <Shelf
-          title="Featured"
-          apps={restFeatured}
-          priorityCount={firstNonEmptyShelf === "featured" ? 2 : 0}
         />
       </ScrollReveal>
       <ScrollReveal>

@@ -1,34 +1,33 @@
 /*
- * SkeletonHero styles — leaf 3.a.iii.zi.
+ * SkeletonHero styles — leaf 3.a.iii.zi, resized 2026-10-08 to match the bigger hero card.
  *
- * Padding/gap/icon-size copied from Hero.module.css so the skeleton
- * occupies the exact same footprint the real hero will once its app
- * data resolves — no layout shift on swap. No per-app gradient here
- * (Hero.module.css's .scrim + inline background); a flat surface
- * color is the right "nothing to show yet" treatment.
+ * Padding/gap/icon-size/min-height copied from Hero.module.css so the skeleton occupies the footprint
+ * the real first card will once its data resolves — no layout shift on swap. No per-app gradient
+ * here; a flat surface color is the right "nothing to show yet" treatment.
  */
 
 .hero {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 3rem 2rem;
-  border-radius: 16px;
-  margin: 1.5rem 1rem;
+  gap: 1.4rem;
+  min-height: 210px;
+  padding: 1.7rem 1.8rem;
+  border-radius: 24px;
+  margin: 1.6rem 1.1rem 1.3rem;
   background-color: var(--color-surface);
-  flex-wrap: wrap;
+  box-sizing: border-box;
 }
 
 .icon {
   composes: shimmer from "./Skeleton.module.css";
   flex-shrink: 0;
-  width: 96px;
-  height: 96px;
+  width: 104px;
+  height: 104px;
   border-radius: 22%;
 }
 
 .text {
-  flex: 1 1 320px;
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -38,8 +37,15 @@
   margin-top: 0.6rem;
 }
 
-/* Right-hand button placeholder, matching Hero's View button. */
-.cta {
-  flex-shrink: 0;
-  margin-left: auto;
+@media (max-width: 560px) {
+  .hero {
+    gap: 1rem;
+    min-height: 176px;
+    padding: 1.25rem 1.1rem;
+  }
+
+  .icon {
+    width: 76px;
+    height: 76px;
+  }
 }

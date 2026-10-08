@@ -1,74 +1,62 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
-import ReportedStats from "./ReportedStats";
 import FirstPartyStats from "./FirstPartyStats";
-import { isThirdParty } from "@/lib/trust";
-import { reportedStatsFor } from "@/lib/third-party-stats";
+import HeroCarousel from "./HeroCarousel";
 import styles from "./Hero.module.css";
 
 /**
- * Cinematic hero — leaf 0.d.i.zi (part of 0.d, Home Page), redesigned
- * by leaf 0.j.v.zo (Play Store Parity Pass — "blend into the shell,
- * don't sit on top of it as a big colored banner").
+ * Home hero — a horizontally scrolling row of big, tappable cards, one per featured first-party app.
  *
- * Per docs/D-STORE.md §4A ("Cinematic hero — one featured app, one
- * deliberate visual moment") and §4C ("Glassmorphism — used once
- * deliberately (header, hero, modals), not on every card"). Still that
- * one deliberate glass moment for the home page — AppCard (0.c.ii.zo)
- * and the rest of the shell stay flat/opaque on purpose — but 0.j.v.zo
- * walks back how loud that moment reads: the original full-bleed,
- * near-viewport-height section with a bold saturated app-color
- * gradient filling the whole card read as a big banner block sitting
- * *on* the page rather than a glass surface blended *into* it. This
- * version is a compact rectangular card — the glass panel now covers
- * the entire card (not just a bottom strip over a solid backdrop), so
- * the page's own background/vignette shows through the whole thing,
- * with only a soft, low-opacity hint of the app's own color glowing
- * behind the glass rather than a solid fill.
+ * History: leaf 0.d.i.zi built a single cinematic hero; leaf 0.j.v.zo made it a compact glass card;
+ * operator-directed 2026-10-08 turned it into the row below. What changed, and why:
  *
- * Takes a single `App` and renders it. Callers pick which app — this
- * component doesn't know about "featured" as a concept; the home page
- * (app/page.tsx) calls `getFeaturedApps()` and hands the first result
- * in, same prop-in pattern AppCard already uses.
+ * - **Bigger.** The card is now the loudest thing on the home page: a large icon, a large name, a
+ *   two-line summary and a taller panel. The glass surface, the soft glow from the app's own palette
+ *   and the light flare from 0.j.v.zo are kept.
+ * - **No View button.** The whole card is the link to `/app/<slug>` (one `<Link>` wrapping the card),
+ *   so a tap anywhere opens the details page. Nothing interactive sits inside it.
+ * - **One to ten cards.** `app/page.tsx` passes at most `HERO_MAX` (10) first-party apps flagged
+ *   featured (`lib/hero.ts` picks them). With one app the card fills the width and nothing scrolls;
+ *   with more than one the row scrolls horizontally (scroll-snap) and `HeroCarousel` advances to the
+ *   next card by itself, pausing while the visitor touches, hovers or focuses it.
+ * - **Soft pulse.** Each card breathes a soft accent glow (`heroPulse` in Hero.module.css), off for
+ *   visitors who prefer reduced motion.
  *
- * Light flare — leaf 0.j.v.zo — a soft diagonal highlight band
- * (`.flare`) that periodically sweeps across the glass, the same
- * "glossy sheen catching the light" motif real glass/frosted UI
- * surfaces use. Gated behind `prefers-reduced-motion`, same as every
- * other animation in this file.
+ * Server component: the cards are rendered here and handed to the client `HeroCarousel` as children,
+ * the same pattern `ScrollReveal` uses, so only the scrolling behaviour is client code.
  *
- * No real screenshot/banner art exists yet (`App.screenshots` are
- * dummy `/mock/...` paths that don't resolve to real images) — the
- * soft app-color glow stands in for hero artwork for now.
+ * `priority` on the first card's icon — leaf `3.d.ii.zo` (LCP budget pass). The first card is always
+ * above the fold; the others are off to the side and stay lazy.
  *
- * Reveal animation — leaf 0.d.i.zo — lives entirely in Hero.module.css
- * (`.panel`/`.icon` `animation`, gated behind
- * `@media (prefers-reduced-motion: no-preference)`, same guard already
- * used by the theme-transition in app/globals.css). No client boundary
- * needed: the hero sits above the fold on first paint, so a plain CSS
- * `animation` that plays once on mount gives the "reveal" moment
- * without an IntersectionObserver — this stays a server component.
- *
- * `priority` on the icon — leaf `3.d.ii.zo` (LCP budget pass). The hero
- * is always the first thing painted, so its icon (when real) is marked
- * `priority` unconditionally rather than threading a prop in from the
- * caller — unlike AppCard, which only wants this for a few above-the-
- * fold call sites, every Hero render is above the fold by definition.
+ * The first card's name is the page's `<h1>` (it always was); later cards use `<h2>`.
  */
-export default function Hero({ app }: { app: App }) {
-  // A soft, low-opacity glow hinting at the app's own palette — not a
-  // solid fill — so the page's own background still reads through the
-  // glass everywhere else on the card. See docstring above (0.j.v.zo).
+export default function Hero({ apps }: { apps: App[] }) {
+  if (apps.length === 0) return null;
+
+  return (
+    <HeroCarousel label="Featured apps">
+      {apps.map((app, index) => (
+        <HeroCard key={app.slug} app={app} first={index === 0} />
+      ))}
+    </HeroCarousel>
+  );
+}
+
+function HeroCard({ app, first }: { app: App; first: boolean }) {
+  // A soft, low-opacity glow hinting at the app's own palette, not a solid fill, so the page's own
+  // background still reads through the glass (0.j.v.zo).
   const backgroundStyle: React.CSSProperties = {
     background: [
-      `radial-gradient(ellipse 70% 100% at 0% 50%, ${app.primary_color}33, transparent 70%)`,
-      `radial-gradient(ellipse 60% 100% at 100% 30%, ${app.secondary_color}26, transparent 70%)`,
+      `radial-gradient(ellipse 70% 100% at 0% 50%, ${app.primary_color}40, transparent 70%)`,
+      `radial-gradient(ellipse 60% 100% at 100% 30%, ${app.secondary_color}30, transparent 70%)`,
     ].join(", "),
   };
 
+  const Heading = first ? "h1" : "h2";
+
   return (
-    <section className={styles.hero} style={backgroundStyle} aria-label="Featured app">
+    <Link href={`/app/${app.slug}`} className={styles.card} style={backgroundStyle} aria-label={`${app.name}, featured app`}>
       <div className={styles.flare} aria-hidden="true" />
 
       <div className={styles.panel}>
@@ -79,40 +67,24 @@ export default function Hero({ app }: { app: App }) {
             secondaryColor={app.secondary_color}
             tertiaryColor={app.tertiary_color}
             src={app.icon}
-            sizes="64px"
-            priority
+            sizes="120px"
+            priority={first}
           />
         </div>
 
         <div className={styles.content}>
-          <p className={styles.eyebrow}>Featured</p>
-          <h1 className={styles.name}>{app.name}</h1>
-          <p className={styles.summary}>{app.summary}</p>
+          <div className={styles.eyebrow}>Featured</div>
+          <Heading className={styles.name}>{app.name}</Heading>
+          <div className={styles.summary}>{app.summary}</div>
 
           <div className={styles.meta}>
-            {isThirdParty(app) ? (
-              // 5.h.vii.zo — the source's own figures, labelled as reported; not the store-native 0s.
-              <ReportedStats
-                stats={reportedStatsFor(app)}
-                ratingClassName={styles.rating}
-                mutedClassName={styles.metaMuted}
-              />
-            ) : (
-              // Task 45b — the store-native figures, with any carried-over history (Zealot's
-              // neutral base_stats) folded in as ONE Play-Store-style total, no label.
-              <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.metaMuted} />
-            )}
+            {/* First-party only (lib/hero.ts), so always the store-native figures, with any carried-over
+                history folded in as one Play-Store-style total (Task 45b). */}
+            <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.metaMuted} />
             {app.license && app.license !== "Not provided" && <span className={styles.metaMuted}>{app.license}</span>}
           </div>
         </div>
-
-        {/* The View button sits on the right of the card, outside the text column, as a transparent
-            outlined pill built from the theme tokens (so it follows the dark/light theme and a category's
-            contextual skin). On a narrow card it drops under the text and stays right-aligned. */}
-        <Link href={`/app/${app.slug}`} className={styles.cta} aria-label={`View ${app.name}`}>
-          View
-        </Link>
       </div>
-    </section>
+    </Link>
   );
 }

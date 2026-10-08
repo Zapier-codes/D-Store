@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getTaxonomyCategory, getLiveReviews } from "@/lib/catalog";
-import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
@@ -111,7 +110,6 @@ export default async function AppDetailPage({
   // has no entry (`null`), so no name is passed on.
   const taxonomy = { app_type: app.app_type, category: app.category };
   const category = await getTaxonomyCategory(taxonomy.app_type, taxonomy.category);
-  const mode = await getTheme();
 
   // 5.h.iii.zi — third-party apps (Aptoide) never carry Zealot-derived
   // claims: no "Verify this APK" block, no simulated install, and the
@@ -122,7 +120,7 @@ export default async function AppDetailPage({
   const liveReviews = await getLiveReviews(app.slug);
 
   return (
-    <CategoryThemeScope appType={taxonomy.app_type} category={taxonomy.category} mode={mode}>
+    <CategoryThemeScope appType={taxonomy.app_type} category={taxonomy.category}>
       <main className={styles.main}>
         <ViewPing appSlug={app.slug} />
         <ViewHistoryRecorder appSlug={app.slug} category={app.category} />

@@ -7,7 +7,6 @@ import {
   type CategoryPage,
 } from "@/lib/catalog";
 import { UNCATEGORIZED, isAppType } from "@/lib/taxonomy";
-import { getTheme } from "@/lib/theme";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
@@ -114,10 +113,9 @@ export default async function TaxonomyCategoryPage({
   } else {
     apps = await getCategoryFirstPartyApps(appType, slug);
   }
-  const mode = await getTheme();
 
   return (
-    <CategoryThemeScope appType={appType} category={slug} mode={mode}>
+    <CategoryThemeScope appType={appType} category={slug}>
       <main className={styles.main}>
         <h1 className={styles.heading}>{category.name}</h1>
 

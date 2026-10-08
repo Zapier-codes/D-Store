@@ -31,7 +31,7 @@ import { DEVELOPER_APPS_LIMIT, readCatalogDeveloperApps } from "./catalog-develo
 import { readCatalogDispatchApps } from "./catalog-dispatch";
 import { COUNT_EXCLUDE_MAX, readCatalogPublishedCount } from "./catalog-count";
 import { appSitemapEntry, developerSitemapEntry, sitePageEntries, sitemapChunkCount, type SitemapEntry } from "./sitemap-xml";
-import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE } from "./home-categories";
+import { HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE, leadWithFirstParty } from "./home-categories";
 import {
   createZealotSource as createLiveZealotSource,
   getZealotCollections,
@@ -1316,26 +1316,30 @@ export async function getSitemapChunk(index: number, baseUrl: string): Promise<S
 }
 
 /**
- * Category rows for the home page — leaf `5.l.ix.zo`. Table mode only: the rows come from bounded
- * `catalog_page` reads (`readCategoryRows`), one per pair in `HOME_CATEGORY_ROWS`. With the table
- * off, or when any read fails, the answer is no rows (never the whole-catalog path, which would
- * load every app to draw a row), so the home page simply shows what it showed before. A failure
- * logs one fixed line (no slug, cursor or body). Never throws.
+ * Category rows for the home page — leaf `5.l.ix.zo`, changed 2026-10-08 (operator-directed): first-
+ * party apps lead every row. The third-party part comes from bounded `catalog_page` reads
+ * (`readCategoryRows`), one per pair in `HOME_CATEGORY_ROWS`, table mode only; the first-party part is
+ * that category's own first-party apps from the small first-party list, put in front by
+ * `leadWithFirstParty` (so a featured app past the hero's tenth card shows in its own category).
+ * With the table off, or when any read fails, the third-party part is empty (never the whole-catalog
+ * path, which would load every app to draw a row), so the rows are the first-party apps alone and the
+ * page is otherwise what it was. A failed read logs one fixed line (no slug, cursor or body). Never
+ * throws.
  */
 export async function getHomeCategoryRows(): Promise<CategoryRowData[]> {
-  if (!catalogTableConfigured()) return [];
+  let firstParty: App[] = [];
+  let thirdParty: CategoryRowData[] | null = null;
   try {
-    const firstParty = await getFirstPartyList();
-    const rows = await readCategoryRows(HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE, firstParty);
-    if (rows === null) {
-      console.error("catalog: category rows read failed, showing none");
-      return [];
+    firstParty = await getFirstPartyList();
+    if (catalogTableConfigured()) {
+      thirdParty = await readCategoryRows(HOME_CATEGORY_ROWS, HOME_CATEGORY_ROW_SIZE, firstParty);
+      if (thirdParty === null) console.error("catalog: category rows read failed, showing first-party only");
     }
-    return rows;
   } catch {
-    console.error("catalog: category rows read failed, showing none");
-    return [];
+    console.error("catalog: category rows read failed, showing first-party only");
+    thirdParty = null;
   }
+  return leadWithFirstParty(thirdParty, firstParty);
 }
 
 // --- Search & related content (0.g) -------------------------------------------

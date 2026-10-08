@@ -12,11 +12,17 @@
  *   shelf to browse.
  * - Six apps a row (`HOME_CATEGORY_ROW_SIZE`): the six-column grid's one line at desktop width.
  * - A pair the vocabulary does not know, or a row with no apps, yields no row and no bar entry.
+ * - First-party leads every row (operator-directed, 2026-10-08): a category row starts with that
+ *   category's first-party apps (most downloads first), and third-party apps fill what is left of the
+ *   six slots. First-party is primary on the home page, third-party secondary, so as first-party apps
+ *   are added they take more of each row. A featured app past the hero's tenth card also lands here,
+ *   in its own category (`leadWithFirstParty`).
  */
 
 import type { CategoryRowData, CategoryRowSpec } from "./catalog-category-rows";
 import type { App } from "./mock-data";
-import { findTaxonomyCategory } from "./taxonomy";
+import { rankableDownloads } from "./carried-over-stats";
+import { appInTaxonomyCategory, findTaxonomyCategory } from "./taxonomy";
 
 export const HOME_CATEGORY_ROW_SIZE = 6;
 
@@ -65,4 +71,43 @@ export function toHomeCategoryRows(rows: readonly CategoryRowData[] | null | und
     });
   }
   return out;
+}
+
+/**
+ * The home category rows with first-party apps leading each one. Pure.
+ *
+ * `rows` is what the database read returned (third-party only, `top` order), or `null` when it could
+ * not be read or is not configured; the result still has first-party rows then. For each pair in
+ * `specs` (the page's order): the first-party apps of that category, then the third-party ones from
+ * `rows`, a repeated slug kept once, at most `size` apps. A pair with nothing in it comes back with an
+ * empty `apps` array, which `toHomeCategoryRows` drops.
+ */
+export function leadWithFirstParty(
+  rows: readonly CategoryRowData[] | null | undefined,
+  firstParty: readonly App[],
+  specs: readonly CategoryRowSpec[] = HOME_CATEGORY_ROWS,
+  size: number = HOME_CATEGORY_ROW_SIZE
+): CategoryRowData[] {
+  const thirdPartyByPair = new Map<string, App[]>();
+  if (Array.isArray(rows)) {
+    for (const row of rows) {
+      if (row && Array.isArray(row.apps)) thirdPartyByPair.set(`${row.appType}/${row.category}`, row.apps);
+    }
+  }
+  const own = (Array.isArray(firstParty) ? firstParty : []).filter((app) => app && app.origin === "zealot");
+
+  return specs.map((spec) => {
+    const mine = own
+      .filter((app) => appInTaxonomyCategory(app, spec.appType, spec.category))
+      .sort((a, b) => rankableDownloads(b) - rankableDownloads(a) || a.slug.localeCompare(b.slug));
+    const seen = new Set<string>();
+    const apps: App[] = [];
+    for (const app of [...mine, ...(thirdPartyByPair.get(`${spec.appType}/${spec.category}`) ?? [])]) {
+      if (seen.has(app.slug)) continue;
+      seen.add(app.slug);
+      apps.push(app);
+      if (apps.length >= size) break;
+    }
+    return { appType: spec.appType, category: spec.category, apps };
+  });
 }

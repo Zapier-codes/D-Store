@@ -1,33 +1,26 @@
 /**
- * Theme persistence — leaf 0.b.iii.zi
+ * Theme — follows the visitor's device (operator-directed, 2026-10-08).
  *
- * Cookie-based storage (no accounts, per D-STORE.md §3: "no login" rules
- * out server-side per-user preference storage) so the theme can be read
- * server-side before the first byte of HTML is sent — that's what avoids
- * a flash of the wrong theme on load, rather than setting the attribute
- * client-side after hydration.
+ * The store no longer has a theme button or a theme cookie. Light or dark is whatever the device's
+ * system setting says (`prefers-color-scheme`), and it changes live when the device setting changes.
  *
- * This leaf only covers storage + read-on-load. The actual toggle UI
- * (0.c.i.zo) lives in components/ThemeToggle.tsx and calls the write
- * side, `setThemeCookie`, from lib/theme-actions.ts — kept in a
- * separate file because Next.js requires any module containing a
- * "use server" function to export *only* async functions, and this
- * file also needs to export the `Theme` type and constants that
- * server *components* (not actions) import.
+ * How: `app/layout.tsx` puts a tiny inline script in `<head>` (`THEME_SCRIPT` below) that runs before
+ * the first paint, sets `data-theme` on `<html>` from `matchMedia("(prefers-color-scheme: dark)")`,
+ * and listens for the device changing it. Every stylesheet keeps keying off `html[data-theme]`, so
+ * nothing else had to change. The server renders `DEFAULT_THEME` into the HTML as the no-JavaScript
+ * fallback, and the script replaces it before anything is painted, so a visitor never sees a flash of
+ * the wrong theme.
  *
- * Out of scope for this leaf: theme toggle UI (0.c.i.zo), transition
- * animation (0.b.iii.zo), system-preference auto-detect (not yet an
- * itemized leaf — see D-STORE.md §4.C).
+ * What the server therefore does NOT know is the visitor's theme. Anything that used to vary by it now
+ * carries both modes and lets the browser pick: the category skins (`CategoryThemeScope`) emit a dark
+ * and a light rule keyed on `[data-theme]`, the browser-chrome colour is a pair of `theme-color` tags
+ * with `prefers-color-scheme` media, and the iOS splash images are listed per scheme.
  */
-
-import { cookies } from "next/headers";
 
 export type Theme = "dark" | "light";
 
-export const THEME_COOKIE_NAME = "d-store-theme";
-
-// Cinematic Gold (0.b.i) ships before Scientific Blue is wired into any
-// UI, so "dark" is the safe default for visitors with no cookie yet.
+// The server-rendered fallback for a visitor whose browser runs no JavaScript (the script below does the
+// real work). "dark" matches the store's original look.
 export const DEFAULT_THEME: Theme = "dark";
 
 export function isTheme(value: string | undefined): value is Theme {
@@ -35,13 +28,7 @@ export function isTheme(value: string | undefined): value is Theme {
 }
 
 /**
- * Reads the persisted theme server-side. Call this from a server
- * component (e.g. the root layout) — never from the client — so the
- * correct `data-theme` is present in the initial HTML and there's
- * nothing for the client to swap after hydration.
+ * Inline `<head>` script: sets `data-theme` from the device before first paint and keeps it in step.
+ * Plain ES5, wrapped in try/catch so a browser without `matchMedia` just keeps the server's fallback.
  */
-export async function getTheme(): Promise<Theme> {
-  const store = await cookies();
-  const value = store.get(THEME_COOKIE_NAME)?.value;
-  return isTheme(value) ? value : DEFAULT_THEME;
-}
+export const THEME_SCRIPT = `(function(){try{var q=window.matchMedia("(prefers-color-scheme: dark)");var r=document.documentElement;var s=function(){r.setAttribute("data-theme",q.matches?"dark":"light")};s();if(q.addEventListener){q.addEventListener("change",s)}else if(q.addListener){q.addListener(s)}}catch(e){}})();`;

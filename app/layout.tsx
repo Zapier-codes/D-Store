@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { getTheme } from "@/lib/theme";
+import { DEFAULT_THEME, THEME_SCRIPT } from "@/lib/theme";
 import { getRegion } from "@/lib/region";
 import { hasGivenConsent } from "@/lib/consent";
 import RegionProvider from "@/components/RegionProvider";
@@ -19,9 +19,10 @@ import PushSync from "@/components/PushSync";
  * Was a static `export const metadata` until this leaf; converted to
  * Next's dynamic `generateMetadata()` form (same App Router mechanism
  * `app/manifest.ts` already uses via its own async default export) so
- * this can call `getTheme()` and resolve `appleWebApp.startupImage`
- * per visitor's theme cookie, the same pattern 4.b.ii.zi established
- * for the manifest's icon/color fields. `title`/`description` are
+ * this could resolve `appleWebApp.startupImage` per visitor's theme
+ * cookie. The theme cookie is gone (the theme follows the device now),
+ * so each splash size is listed once per colour scheme and the browser
+ * picks by `prefers-color-scheme`. `title`/`description` are
  * otherwise unchanged from the static object this replaces.
  *
  * `appleWebApp` is Next's typed metadata field for the iOS-specific
@@ -66,9 +67,7 @@ import PushSync from "@/components/PushSync";
  * list would be.
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const theme = await getTheme();
   const tenant = await getCurrentTenant();
-  const splashUrl = theme === "light" ? "/splash-light.svg" : "/splash.svg";
 
   return {
     title: tenant.branding.display_name,
@@ -76,32 +75,24 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: {
       capable: true,
       title: tenant.branding.display_name,
-      statusBarStyle: theme === "light" ? "default" : "black-translucent",
-      startupImage: [
-        {
-          url: splashUrl,
-          media:
-            "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
-        },
-        {
-          url: splashUrl,
-          media:
-            "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
-        },
-        {
-          url: splashUrl,
-          media:
-            "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
-        },
-        {
-          url: splashUrl,
-          media:
-            "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
-        },
-      ],
+      // "default" follows the device appearance on iOS; the old per-theme choice needed the theme cookie.
+      statusBarStyle: "default",
+      // One entry per device size and per scheme: the browser matches `prefers-color-scheme` itself, so the
+      // splash follows the device without the server knowing the theme.
+      startupImage: SPLASH_SIZES.flatMap((size) => [
+        { url: "/splash.svg", media: `${size} and (prefers-color-scheme: dark)` },
+        { url: "/splash-light.svg", media: `${size} and (prefers-color-scheme: light)` },
+      ]),
     },
   };
 }
+
+const SPLASH_SIZES = [
+  "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+  "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+  "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+  "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+];
 
 // `themeColor` moved out of `metadata` into its own `viewport` export —
 // leaf 4.b.i.zi (Web app manifest). Next 15 deprecated `themeColor`
@@ -118,8 +109,15 @@ export async function generateMetadata(): Promise<Metadata> {
 // may not zoom it out below 1. Without `minimumScale`, one element wider than the screen made the browser
 // shrink the whole page to fit it (tiny text and a blank band on one side, seen on the app detail page);
 // the global `overflow-x: clip` hides the overflow but does not stop that zoom-out. Zooming IN stays allowed.
+// Device-following theme (2026-10-08): two `theme-color` tags, each with its own `prefers-color-scheme` media, so the
+// browser chrome takes the dark or light page colour to match the device; `colorScheme` lets built-in controls
+// (scrollbars, form fields) follow it too.
 export const viewport: Viewport = {
-  themeColor: "#0a0908",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0a0908" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f8fa" },
+  ],
+  colorScheme: "dark light",
   width: "device-width",
   initialScale: 1,
   minimumScale: 1,
@@ -130,11 +128,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Theme is read from the cookie server-side (lib/theme.ts, 0.b.iii.zi)
-  // and set on <html> before any HTML reaches the client — no flash,
-  // no client-side swap after hydration. Falls back to DEFAULT_THEME
-  // ("dark") for first-time visitors with no cookie yet.
-  const theme = await getTheme();
+  // Theme follows the device (lib/theme.ts, 2026-10-08): no cookie, no toggle. The inline script in <head>
+  // sets `data-theme` from `prefers-color-scheme` before first paint and tracks changes; the server renders
+  // DEFAULT_THEME only as the no-JavaScript fallback, hence `suppressHydrationWarning` on <html>.
 
   // Region is read the same way (lib/region.ts, 0.h.i.zo) — by the
   // time this renders, middleware.ts has already run for this request
@@ -155,12 +151,11 @@ export default async function RootLayout({
   const tenantCss = brandingCss(tenant);
 
   return (
-    <html lang="en" data-theme={theme}>
-      {tenantCss && (
-        <head>
-          <style dangerouslySetInnerHTML={{ __html: tenantCss }} />
-        </head>
-      )}
+    <html lang="en" data-theme={DEFAULT_THEME} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {tenantCss && <style dangerouslySetInnerHTML={{ __html: tenantCss }} />}
+      </head>
       <body>
         {/*
           Skip link — follow-up to leaf 3.d.i.zo (HANDOVER.md; WCAG
@@ -168,7 +163,7 @@ export default async function RootLayout({
           didn't add one — no skip link existed anywhere in the repo
           before this. Must be the first focusable element in the
           document so it's the very first Tab stop on every page,
-          ahead of Header's nav/search/theme-toggle controls — without
+          ahead of Header's nav/search controls — without
           it, a keyboard or screen-reader user has no way to jump past
           that repeated block and has to tab through all of it on
           every single page load. Visually hidden until focused
@@ -179,7 +174,7 @@ export default async function RootLayout({
           Skip to main content
         </a>
         <RegionProvider region={region}>
-          <Header theme={theme} />
+          <Header />
           {/*
             Every page under app/ already renders its own <main> (see
             e.g. app/page.tsx) — this div is only a focusable landing

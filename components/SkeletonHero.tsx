@@ -3,8 +3,8 @@ import styles from "./SkeletonHero.module.css";
 
 /**
  * Hero-shaped skeleton — leaf 3.a.iii.zi. Mirrors `Hero`'s (0.d.i.zi)
- * own footprint (icon tile + eyebrow/name/summary/meta/cta bars) at
- * the same padding/gap, so the home page doesn't jump when the real
+ * own footprint (icon tile + eyebrow/name/summary/meta bars; the card has
+ * no View button any more, 2026-10-08) at the same padding/gap, so the home page doesn't jump when the real
  * `Hero` mounts in its place. Unlike `Hero` itself, this has no
  * per-app gradient background — there's no app data yet to draw
  * colors from, which is exactly the point of showing this instead.
@@ -19,8 +19,6 @@ export default function SkeletonHero() {
         <SkeletonBlock width="85%" height="1rem" className={styles.gapTop} />
         <SkeletonBlock width="40%" height="0.9rem" className={styles.gapTop} />
       </div>
-      {/* The View button now sits at the right of the card (Hero.tsx), outside the text column. */}
-      <SkeletonBlock width="5rem" height="2.5rem" radius="999px" className={styles.cta} />
     </div>
   );
 }

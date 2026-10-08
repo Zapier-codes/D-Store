@@ -39,9 +39,8 @@ const DEBOUNCE_MS = 200;
  * `SIMULATED_LATENCY_MS`) rather than firing on every keystroke, and
  * results are capped to 6 so the dropdown never dwarfs the header.
  * Calls `searchAppsAction` (lib/search-actions.ts) — a server action,
- * not a route handler — since that's the same pattern the codebase
- * already uses for the header's other interactive piece (ThemeToggle
- * → theme-actions.ts).
+ * not a route handler — since that is the codebase's
+ * existing pattern for small server calls from a client component.
  */
 export default function SearchBar() {
   const router = useRouter();

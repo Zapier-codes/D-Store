@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import { getTheme } from "@/lib/theme";
 
 /**
  * Web app manifest — leaf 4.b.i.zi (Phase 4 → Progressive Web App →
@@ -63,14 +62,13 @@ import { getTheme } from "@/lib/theme";
  * existing installs.
  */
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  const theme = await getTheme();
-
-  const iconSrc = theme === "light" ? "/icon-light.svg" : "/icon.svg";
-  // Mirrors app/globals.css's [data-theme="dark"|"light"] --color-bg /
-  // --color-accent values — kept in sync by hand since this route has
-  // no CSS-variable runtime to read from (see header comment above).
-  const backgroundColor = theme === "light" ? "#f7f8fa" : "#0a0908";
-  const themeColor = theme === "light" ? "#2454c9" : "#0a0908";
+  // 2026-10-08: the theme follows the device and is no longer a cookie, so a manifest (one fixed document,
+  // with no per-colour-scheme fields) cannot vary by visitor any more. It carries the dark values, as it
+  // did for a visitor with no cookie; the live browser chrome still follows the device through the
+  // `theme-color` tags in app/layout.tsx. Mirrors app/globals.css's [data-theme="dark"] --color-bg.
+  const iconSrc = "/icon.svg";
+  const backgroundColor = "#0a0908";
+  const themeColor = "#0a0908";
 
   return {
     id: "/",

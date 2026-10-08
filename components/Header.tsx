@@ -1,13 +1,11 @@
 import Link from "next/link";
-import type { Theme } from "@/lib/theme";
-import ThemeToggle from "./ThemeToggle";
 import SearchBar from "./SearchBar";
 import styles from "./Header.module.css";
 
 /**
  * Site header — leaf 0.c.i.zi (responsive nav + search bar), extended
- * by 0.c.i.zo (theme toggle integration) and 0.g.i.zi (instant search
- * suggestions).
+ * by 0.g.i.zi (instant search suggestions). The theme toggle of 0.c.i.zo
+ * is gone (2026-10-08): the theme follows the device setting, see lib/theme.ts.
  *
  * A pure server component itself: the mobile nav open/close uses the
  * checkbox-hack pattern (hidden checkbox + label, shown/hidden purely
@@ -17,9 +15,7 @@ import styles from "./Header.module.css";
  * here; as of 0.g.i.zi it's the <SearchBar> client component
  * (components/SearchBar.tsx), which still submits to /search?q=...
  * as a real form (no-JS fallback preserved) but now also shows
- * instant suggestions as a progressive enhancement. The other client
- * boundary in the header is <ThemeToggle> itself, which needs to call
- * a server action — see ThemeToggle.tsx.
+ * instant suggestions as a progressive enhancement.
  *
  * /search and /categories don't exist as real pages yet — they land in
  * 0.g (Search & Category Browse). Linking to them now is intentional,
@@ -57,7 +53,7 @@ import styles from "./Header.module.css";
  * gone with it; "Home" in the nav is the way back to `/`. The page `<title>`
  * and PWA name still carry the tenant's display name.
  */
-export default function Header({ theme }: { theme: Theme }) {
+export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.bar}>
@@ -94,7 +90,6 @@ export default function Header({ theme }: { theme: Theme }) {
           <Link href="/charts/new" className={styles.navLink}>
             New &amp; Updated
           </Link>
-          <ThemeToggle theme={theme} />
         </nav>
       </div>
     </header>

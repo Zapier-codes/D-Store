@@ -1,30 +1,85 @@
 /*
- * Hero styles — leaf 0.d.i.zi, redesigned by leaf 0.j.v.zo (Play Store
- * Parity Pass — compact rectangular card, glass across the whole
- * surface rather than a bottom strip over a solid banner, blended into
- * the page rather than sitting on top of it as a big color block, plus
- * a periodic light-flare sweep). See Hero.tsx's docstring for the full
- * rationale.
+ * Hero styles — leaf 0.d.i.zi, redesigned by leaf 0.j.v.zo (glass card blended into the page) and
+ * again, operator-directed 2026-10-08: a row of BIG tappable cards (one per featured first-party app,
+ * at most ten), no View button, a soft pulse. See Hero.tsx's docstring for the rationale.
  *
- * `.panel` (the glass surface) now *is* the card, not a strip pinned
- * to its bottom edge — everything (icon + content) lives inside it, so
- * the frosted/blurred treatment applies across the whole thing and the
- * page's own background shows through everywhere, not just behind a
- * bottom band. Still runs off the 0.b design tokens (border, surface,
- * text, accent) so it re-themes normally; only the soft background
- * glow behind the glass (Hero.tsx's inline `backgroundStyle`) comes
- * from the featured app's own dummy palette.
+ * Layout: `.hero` (the carousel section) > `.track` (the scrolling flex row) > `.slide` (one per app)
+ * > `.card` (the `<Link>`; the whole card is the tap target) > `.flare` + `.panel` (the glass).
  *
- * `.name`/`.summary`/`.metaMuted` run off `--color-text` per 0.b.iv.zi's
- * fix (same bug/fix as the identical mistake on <body> in app/globals.css).
+ * Everything runs off the 0.b design tokens (border, surface, text, accent), so it re-themes with
+ * dark/light and a category's contextual skin; only the soft glow behind the glass (Hero.tsx's inline
+ * `style`) comes from the app's own palette.
+ *
+ * `.name`/`.summary`/`.metaMuted` run off `--color-text` per 0.b.iv.zi's fix.
  */
 
 .hero {
   position: relative;
+  margin: 0.5rem 0.5rem 0;
+}
+
+/*
+ * The scrolling row. With one card (`data-single`) it does not scroll at all. With more it scrolls
+ * sideways and snaps card to card; the scrollbar is hidden (the dots and the swipe are the affordance).
+ * Vertical padding leaves room for the pulse's glow, which the row's overflow would otherwise clip.
+ */
+.track {
+  position: relative; /* the carousel measures slide.offsetLeft against this */
+  display: flex;
+  gap: 0.9rem;
+  padding: 1.1rem 0.6rem 0.9rem;
+  scroll-padding-inline: 0.6rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.track[data-single="true"] {
+  overflow-x: hidden;
+  scroll-snap-type: none;
+}
+
+/* Wide enough that the next card peeks in from the right: the cue that the row scrolls. */
+.slide {
+  flex: 0 0 90%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.track[data-single="true"] .slide {
+  flex-basis: 100%;
+}
+
+@media (min-width: 900px) {
+  .slide {
+    flex-basis: min(82%, 860px);
+  }
+}
+
+/* ---- The card ---------------------------------------------------------------------------------- */
+
+.card {
+  position: relative;
+  display: block;
   isolation: isolate;
-  border-radius: 18px;
   overflow: hidden;
-  margin: 1rem;
+  border-radius: 24px;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.card:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
 }
 
 .panel {
@@ -32,25 +87,124 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 1.1rem;
-  padding: 1.1rem 1.4rem;
+  gap: 1.4rem;
+  min-height: 210px;
+  padding: 1.7rem 1.8rem;
   background-color: color-mix(in srgb, var(--color-surface) 52%, transparent);
   backdrop-filter: blur(18px) saturate(1.15);
   -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  border-radius: inherit;
+  transition: border-color 160ms ease, background-color 160ms ease;
 }
 
+.card:hover .panel,
+.card:focus-visible .panel {
+  border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-surface) 42%, transparent);
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 104px;
+  height: 104px;
+  border-radius: 22%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  user-select: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+  /* 3.d.ii.zi — anchors AppIcon's real-image branch (`position: absolute; inset: 0`). */
+  position: relative;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.name {
+  margin: 0;
+  font-size: clamp(1.5rem, 4.2vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-text);
+  /* Long names wrap onto two lines rather than running off the card. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.summary {
+  max-width: 60ch;
+  color: var(--color-text);
+  opacity: 0.88;
+  font-size: 1rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.metaMuted {
+  color: var(--color-text);
+  opacity: 0.72;
+}
+
+@media (max-width: 560px) {
+  .panel {
+    gap: 1rem;
+    min-height: 176px;
+    padding: 1.25rem 1.1rem;
+  }
+
+  .icon {
+    width: 76px;
+    height: 76px;
+  }
+
+  .summary {
+    font-size: 0.92rem;
+  }
+}
+
+/* ---- Light flare — leaf 0.j.v.zo ---------------------------------------------------------------- */
+
 /*
- * Light flare — leaf 0.j.v.zo. A soft diagonal highlight band that
- * periodically sweeps left-to-right across the glass, the same
- * "glossy sheen catching the light" motif real frosted-glass UI
- * surfaces use. Sits above `.panel` (z-index 3) with
- * `mix-blend-mode: overlay` so it reads as a reflection on the glass's
- * front surface rather than a flat highlight, and stays convincing in
- * both light and dark themes since `overlay` scales with whatever's
- * underneath rather than always brightening by a fixed amount.
- * `pointer-events: none` — purely decorative, never intercepts clicks
- * on the CTA/content beneath it.
+ * A soft diagonal highlight that periodically sweeps left-to-right across the glass. Sits above `.panel`
+ * with `mix-blend-mode: overlay` so it reads as a reflection on the glass, in both themes.
+ * `pointer-events: none`: decorative, never intercepts the tap that opens the app.
  */
 .flare {
   position: absolute;
@@ -79,9 +233,109 @@
   transform: translateX(0);
 }
 
+/* ---- Dots -------------------------------------------------------------------------------------- */
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0 0 0.4rem;
+}
+
+/* A 24px hit area around a small visible dot (the ::after), so the dots are easy to tap. */
+.dot {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dot::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--color-text);
+  opacity: 0.3;
+  transform: translate(-50%, -50%);
+  transition: width 200ms ease, opacity 200ms ease, background-color 200ms ease;
+}
+
+.dot[aria-current="true"]::after {
+  width: 22px;
+  background-color: var(--color-accent);
+  opacity: 1;
+}
+
+.dot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-radius: 6px;
+}
+
+/* ---- Motion: gated behind no-preference, same guard as the rest of the app ---------------------- */
+
 @media (prefers-reduced-motion: no-preference) {
+  .track {
+    scroll-behavior: smooth;
+  }
+
+  /* Soft pulse — a slow breathing glow in the theme's accent colour, never a flash. Each card starts
+     a little later than the one before so a row of them does not pulse in lockstep. */
+  .card {
+    animation: heroPulse 3.6s ease-in-out infinite;
+    transition: transform 140ms ease;
+  }
+
+  .slide:nth-child(2n) .card {
+    animation-delay: -1.2s;
+  }
+
+  .slide:nth-child(3n) .card {
+    animation-delay: -2.4s;
+  }
+
+  .card:active {
+    transform: scale(0.985);
+  }
+
   .flare::before {
     animation: hero-flare-sweep 6.5s ease-in-out infinite;
+  }
+
+  /* Reveal — leaf 0.d.i.zo: plays once on first paint. */
+  .panel {
+    animation: heroPanelReveal 640ms ease-out both;
+  }
+
+  .icon {
+    animation: heroIconReveal 640ms ease-out 120ms both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flare::before {
+    display: none;
+  }
+}
+
+@keyframes heroPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent),
+      0 6px 20px rgba(0, 0, 0, 0.22);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent),
+      0 0 30px 4px color-mix(in srgb, var(--color-accent) 28%, transparent);
   }
 }
 
@@ -93,188 +347,6 @@
   65%,
   100% {
     transform: translateX(330%);
-  }
-}
-
-/* Reduced-motion fallback: the flare simply doesn't render — same
-   "no motion, no substitute animation" posture every other decorative
-   animation in this repo takes. */
-@media (prefers-reduced-motion: reduce) {
-  .flare::before {
-    display: none;
-  }
-}
-
-.icon {
-  flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  border-radius: 22%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  user-select: none;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-  /* 3.d.ii.zi — anchors AppIcon's real-image branch (`position:
-     absolute; inset: 0`) when this app has a real icon URL. */
-  position: relative;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  min-width: 0;
-  flex: 1;
-}
-
-.eyebrow {
-  margin: 0;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
-
-.name {
-  margin: 0;
-  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
-  line-height: 1.15;
-  color: var(--color-text);
-}
-
-.summary {
-  margin: 0;
-  max-width: 60ch;
-  color: var(--color-text);
-  opacity: 0.85;
-  font-size: 0.88rem;
-  /* Single line — the card is compact/rectangular now, not a tall
-     banner with room to spare (0.j.v.zo). */
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  font-size: 0.8rem;
-}
-
-.rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  color: var(--color-accent);
-  font-weight: 700;
-}
-
-.metaMuted {
-  color: var(--color-text);
-  opacity: 0.7;
-}
-
-/*
- * View button — the card's right-hand action. Transparent (no fill) so the glass and the app's own glow
- * show through; the accent colour carries the outline and the label, and the hover/press fills are a
- * low-opacity tint of that same accent, so the button re-themes with the dark/light tokens and with a
- * category's contextual skin without any colour of its own. It is a direct child of `.panel`, so it
- * sits at the right edge (`margin-left: auto`) and no longer takes a row under the summary.
- */
-.cta {
-  flex-shrink: 0;
-  margin-left: auto;
-  padding: 0.5rem 1.15rem;
-  border-radius: 999px;
-  border: 1.5px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
-  background-color: transparent;
-  color: var(--color-accent);
-  font-weight: 700;
-  font-size: 0.85rem;
-  line-height: 1.2;
-  white-space: nowrap;
-  text-decoration: none;
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 150ms ease, border-color 150ms ease;
-}
-
-.cta:hover,
-.cta:focus-visible {
-  background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
-  border-color: var(--color-accent);
-}
-
-.cta:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-/*
- * Press state — leaf 3.a.ii.zi. A stronger tint of the accent than the hover, still transparent
- * enough for the glass to read through.
- */
-.cta:active {
-  background-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
-  border-color: var(--color-accent-strong);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .cta {
-    transition: background-color 150ms ease, border-color 150ms ease, transform 100ms ease;
-  }
-
-  .cta:active {
-    transform: scale(0.97);
-  }
-}
-
-@media (max-width: 560px) {
-  .panel {
-    flex-wrap: wrap;
-  }
-
-  .icon {
-    width: 52px;
-    height: 52px;
-  }
-
-  /* The text column keeps a readable width (it wraps the button under it when the card is too narrow
-     for icon + text + button on one row), and the button stays on the right. */
-  .content {
-    flex: 1 1 12rem;
-  }
-}
-
-/*
- * Reveal animation — leaf 0.d.i.zo.
- *
- * The hero renders above the fold, so this plays once on first paint
- * rather than on scroll-into-view (there's nothing to scroll past
- * first) — .panel fades/slides up, .icon follows slightly staggered
- * so it doesn't read as one flat block moving together. Same
- * `prefers-reduced-motion: no-preference` guard already used for the
- * theme-transition (app/globals.css, 0.b.iii.zo) and the mobile nav
- * collapse — motion is opt-in by device/OS setting, not assumed.
- * `both` fill-mode holds the `from` state before the animation starts
- * and the `to` state after it ends, so there's no flash of the
- * un-animated layout on either edge.
- */
-@media (prefers-reduced-motion: no-preference) {
-  .panel {
-    animation: heroPanelReveal 640ms ease-out both;
-  }
-
-  .icon {
-    animation: heroIconReveal 640ms ease-out 120ms both;
   }
 }
 
