@@ -186,9 +186,10 @@ export default async function AppDetailPage({
                 // neutral base_stats) folded in as ONE Play-Store-style total, no label.
                 <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.statMuted} />
               )}
-              <span className={styles.statMuted}>
-                {isNotProvided(app, "content_rating") ? "Content rating not provided" : app.content_rating}
-              </span>
+              {/* Shown only when the source gives a content rating; no "not provided" placeholder. */}
+              {!isNotProvided(app, "content_rating") && app.content_rating && (
+                <span className={styles.statMuted}>{app.content_rating}</span>
+              )}
               {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
               {originLabel && <ThirdPartyBadge label={originLabel} />}
             </div>
