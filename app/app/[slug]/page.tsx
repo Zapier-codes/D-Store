@@ -7,17 +7,12 @@ import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
 import PermissionDiffNotice from "@/components/PermissionDiffNotice";
-import VersionHistory from "@/components/VersionHistory";
 import VersionAdvisory from "@/components/VersionAdvisory";
 import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
 import FirstPartyStats from "@/components/FirstPartyStats";
 import ReviewsList from "@/components/ReviewsList";
-import ChecksumDisplay from "@/components/ChecksumDisplay";
-import SignatureInfo from "@/components/SignatureInfo";
-import PlayStoreDisclosure from "@/components/PlayStoreDisclosure";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
-import DataSafety from "@/components/DataSafety";
 import ReportAppForm from "@/components/ReportAppForm";
 import InstallButton from "@/components/InstallButton";
 import ShareButton from "@/components/ShareButton";
@@ -251,15 +246,8 @@ export default async function AppDetailPage({
         {/* What's New is a dropdown, closed until opened; the heading lives inside the component. */}
         <Changelog app={app} />
 
-        {/* 5.c.vi.zo -- version history, first-party and third-party alike: the
-            component itself shows the "Not provided" state for a source with no list. */}
-        <section aria-labelledby="version-history-heading">
-          <h2 id="version-history-heading" className={styles.sectionTitle}>
-            Version History
-          </h2>
-          <VersionHistory app={app} />
-      <PermissionDiffNotice app={app} />
-        </section>
+        {/* Version history is not shown (operator, 2026-10-08); the permission-change notice stays. */}
+        <PermissionDiffNotice app={app} />
 
         <section aria-labelledby="ratings-heading">
           <h2 id="ratings-heading" className={styles.sectionTitle}>
@@ -272,35 +260,11 @@ export default async function AppDetailPage({
           <ReviewsList app={app} liveReviews={liveReviews} />
         </section>
 
-        {!thirdParty && (
-          <section aria-labelledby="verify-heading">
-            <h2 id="verify-heading" className={styles.sectionTitle}>
-              Verify this APK
-            </h2>
-            <ChecksumDisplay checksum={app.sha256_checksum} />
-            <SignatureInfo fingerprint={app.signing_certificate_fingerprint} />
-          </section>
-        )}
-
-        <section aria-labelledby="play-store-heading">
-          <h2 id="play-store-heading" className={styles.sectionTitle}>
-            Play Store Status
-          </h2>
-          <PlayStoreDisclosure app={app} />
-        </section>
-
         <section aria-labelledby="permissions-heading">
           <h2 id="permissions-heading" className={styles.sectionTitle}>
             Permissions
           </h2>
           <PermissionsDisclosure permissions={app.permissions} notProvided={isNotProvided(app, "permissions")} />
-        </section>
-
-        <section aria-labelledby="data-safety-heading">
-          <h2 id="data-safety-heading" className={styles.sectionTitle}>
-            Data Safety
-          </h2>
-          <DataSafety dataSafety={app.data_safety} />
         </section>
 
         <section aria-labelledby="report-heading">

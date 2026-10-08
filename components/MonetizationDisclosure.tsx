@@ -34,11 +34,8 @@ export default function MonetizationDisclosure({
   /** 5.h.iii.zo — the source gave no ads/IAP data, so "renders nothing" (which reads as "none") would be a false claim. */
   notProvided?: boolean;
 }) {
-  if (notProvided) {
-    return <p className={styles.line}>Ads &amp; in-app purchases: Not provided</p>;
-  }
-
-  if (!containsAds && !hasInAppPurchases) {
+  // Operator, 2026-10-08: when the source gives no ads / in-app purchase data, print nothing.
+  if (notProvided || (!containsAds && !hasInAppPurchases)) {
     return null;
   }
 

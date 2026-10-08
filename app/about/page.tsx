@@ -56,10 +56,8 @@ export default function AboutPage() {
         <h2>Why sideloaded, not Play Store</h2>
         <p>
           Some apps here aren&rsquo;t on the Play Store at all, usually because their license or
-          distribution model doesn&rsquo;t fit Play&rsquo;s policies &mdash; where we know the
-          specific reason, it&rsquo;s shown right on that app&rsquo;s page. Installing outside the
-          Play Store is called sideloading, and it&rsquo;s why every app here ships a SHA-256
-          checksum and signing-certificate fingerprint you can verify yourself before installing.
+          distribution model doesn&rsquo;t fit Play&rsquo;s policies. Installing outside the
+          Play Store is called sideloading.
         </p>
       </section>
 
@@ -74,19 +72,8 @@ export default function AboutPage() {
         <div className={styles.faqItem}>
           <h3>Is it safe to sideload an APK?</h3>
           <p>
-            It carries more responsibility than installing from the Play Store, which is exactly
-            why every app page shows a checksum and signing certificate &mdash; compare those
-            against the values on the app&rsquo;s own official site before installing if
-            you&rsquo;re unsure.
-          </p>
-        </div>
-
-        <div className={styles.faqItem}>
-          <h3>What does the &ldquo;Data safety&rdquo; section mean?</h3>
-          <p>
-            It&rsquo;s separate from the Permissions list. Permissions are what an app can ask
-            Android for; Data safety is what actually happens to any data once collected &mdash;
-            whether it&rsquo;s shared with anyone, and whether you can ask for it to be deleted.
+            It carries more responsibility than installing from the Play Store, so only install
+            apps from developers you trust, and check an app&rsquo;s permissions before installing.
           </p>
         </div>
 
