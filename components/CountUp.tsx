@@ -3,11 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { countUpValue } from "@/lib/count-up";
 import { formatDownloadCount } from "@/lib/carried-over-stats";
+import { formatReportedDownloads } from "@/lib/third-party-stats";
 
 const DURATION_MS = 1400;
 
-function render(value: number, variant: "short" | "exact"): string {
-  return variant === "short" ? formatDownloadCount(value) : value.toLocaleString();
+type Variant = "short" | "exact" | "reported";
+
+function render(value: number, variant: Variant): string {
+  if (variant === "short") return formatDownloadCount(value);
+  if (variant === "reported") return formatReportedDownloads(value);
+  return value.toLocaleString();
 }
 
 /**
@@ -16,7 +21,8 @@ function render(value: number, variant: "short" | "exact"): string {
  * The server renders the FINAL text, so the page is correct with JavaScript off, for crawlers and for
  * screen readers (which are given the final text only; the moving digits are aria-hidden). The animation
  * is skipped for visitors who prefer reduced motion. `variant` picks the format: "short" is the
- * Play-Store style `5.8M`, "exact" is the full number with separators.
+ * Play-Store style `5.8M`, "exact" is the full number with separators, "reported" is a lower bound such as
+ * `5M+` (a third-party figure, rounded down, never more than was reported; added 2026-10-08 for the stat strip).
  */
 export default function CountUp({
   target,
@@ -24,7 +30,7 @@ export default function CountUp({
   suffix = "",
 }: {
   target: number;
-  variant: "short" | "exact";
+  variant: Variant;
   suffix?: string;
 }) {
   const [value, setValue] = useState(target);

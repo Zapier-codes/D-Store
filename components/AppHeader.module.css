@@ -2,12 +2,20 @@
  * Details page header: operator-directed 2026-10-08, slice 1 of the details page rework. See AppHeader.tsx.
  *
  * The look is the home hero card's, from the shared layer (components/glass/glass.module.css): this file keeps
- * only the header's LAYOUT and the parts specific to it (icon box, secondary buttons, stats row). Phone first:
+ * only the header's LAYOUT and the parts specific to it (icon box, secondary buttons; the stat strip is its own component, StatStrip). Phone first:
  * one column with a 128px icon; from 768px a row with a 160px icon.
  *
  * `.root` is the Tilt wrapper and the accent scope: gold in dark (or the category skin's accent), sky blue in
  * light, with the text-safe tone for text (design doc, section 5).
  */
+
+/* The header card and the stat strip under it (slice 2, 2026-10-08), one gap apart. */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
 
 .root {
   composes: scope from "./glass/glass.module.css";
@@ -109,29 +117,6 @@
   font-size: 1rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
-}
-
-/* Stats row: sits over the backdrop art, so it uses the full text colour a little softened (as the hero does). */
-.stats {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.9rem;
-  font-size: 0.95rem;
-}
-
-.rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--glass-accent-text);
-  font-weight: 800;
-}
-
-.statMuted {
-  color: var(--color-text);
-  opacity: 0.85;
-  font-weight: 500;
 }
 
 /* ---- Install row ------------------------------------------------------------------------------------ */

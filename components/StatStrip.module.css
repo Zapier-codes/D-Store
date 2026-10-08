@@ -1,0 +1,125 @@
+/*
+ * Stat strip: operator-directed 2026-10-08, slice 2 of the details page rework. See StatStrip.tsx.
+ *
+ * Look comes from the shared glass layer (components/glass/glass.module.css): one panel, the accent scope,
+ * the fractional star meter. This file keeps only the strip's layout: a scroller of tiles with hairlines
+ * between them. Text uses --color-text for figures and --color-text-muted for captions; the one accent use
+ * is the rating figure, in the text-safe tone (--glass-accent-text), never the decorative one.
+ *
+ * Phone first: tiles keep a minimum width and the row scrolls with snap, so the next tile peeks in. From
+ * 768px the tiles stretch to fill the row and there is normally nothing to scroll. Only the scroller's
+ * content moves; the blurred panel itself never animates.
+ */
+
+.strip {
+  composes: scope panel from "./glass/glass.module.css";
+  --glass-radius: 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.scroller {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* The scroller is focusable so the keyboard can scroll it; the ring sits inside the rounded edge. */
+.scroller:focus-visible {
+  outline: 2px solid var(--glass-accent-text);
+  outline-offset: -4px;
+  border-radius: inherit;
+}
+
+/* max-content with a 100% floor: tiles fill spare room, and overflow scrolls when there is none. */
+.list {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  position: relative;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 6.75rem;
+  max-width: 14rem;
+  padding: 0.95rem 0.9rem;
+  text-align: center;
+  scroll-snap-align: start;
+}
+
+.tile + .tile {
+  border-inline-start: 1px solid color-mix(in srgb, var(--color-text) 14%, transparent);
+}
+
+.value {
+  color: var(--color-text);
+  font-size: clamp(1.3rem, 5.4vw, 1.7rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  /* Tabular digits so a counting figure does not jitter or resize its tile. */
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* Wordy figures (an age band such as "Everyone 10+", a version string). */
+.valueSmall {
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.valueAccent {
+  color: var(--glass-accent-text);
+}
+
+/* The shared meter sets its own size; this is one class more specific, so it wins whatever the CSS order. */
+.tile .stars {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.note {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+@media (min-width: 768px) {
+  .tile {
+    min-width: 7.5rem;
+    padding: 1.1rem 1rem;
+  }
+
+  .label {
+    font-size: 0.82rem;
+  }
+}
+
+/* Forced colours: the system picks the colours, so the hairlines and the accent figure follow the text. */
+@media (forced-colors: active) {
+  .tile + .tile {
+    border-inline-start-color: CanvasText;
+  }
+
+  .valueAccent {
+    color: CanvasText;
+  }
+}

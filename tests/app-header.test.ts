@@ -56,3 +56,13 @@ test("the header's text never uses the hairline border colour or the decorative 
   assert.ok(!/color:\s*var\(--color-border/.test(css));
   assert.ok(!/color:\s*#38bdf8/i.test(css));
 });
+
+test("slice 2: the header renders the stat strip under the card and no longer draws the old stats or the size / version / Android pills", () => {
+  assert.match(header, /<StatStrip app=\{app\} \/>/);
+  assert.ok(header.indexOf("</Tilt>") < header.indexOf("<StatStrip"), "the strip is outside the tilting card");
+  for (const gone of ["FirstPartyStats", "ReportedStats", "reportedStatsFor", "size_mb", "min_android_version", "content_rating"]) {
+    assert.ok(!header.replace(/\/\*[\s\S]*?\*\//g, "").includes(gone), gone);
+  }
+  assert.ok(!/^\.(stats|rating|statMuted)\b/m.test(css));
+  assert.match(css, /\.wrap\s*\{/);
+});

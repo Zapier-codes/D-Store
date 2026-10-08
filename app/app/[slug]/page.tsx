@@ -6,6 +6,7 @@ import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
 import PermissionDiffNotice from "@/components/PermissionDiffNotice";
+import AppInformation from "@/components/AppInformation";
 import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
 import ReviewsList from "@/components/ReviewsList";
@@ -147,6 +148,16 @@ export default async function AppDetailPage({
 
         {/* Version history is not shown (operator, 2026-10-08); the permission-change notice stays. */}
         <PermissionDiffNotice app={app} />
+
+        {/* Operator-directed 2026-10-08 (slice 2 of the details page rework): the Information glass list, only the
+            fields the source provided; renders nothing when there are none. Placed as the design doc's section 3 says,
+            after What's New and before Ratings. */}
+        <AppInformation
+          app={app}
+          developer={developer ? { slug: developer.slug, name: developer.name } : null}
+          developerName={developerName}
+          categoryName={category?.name ?? null}
+        />
 
         <section aria-labelledby="ratings-heading">
           <h2 id="ratings-heading" className={styles.sectionTitle}>

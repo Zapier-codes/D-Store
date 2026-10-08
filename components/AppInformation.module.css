@@ -1,0 +1,86 @@
+/*
+ * Information list: operator-directed 2026-10-08, slice 2 of the details page rework. See AppInformation.tsx.
+ *
+ * The section carries the shared accent scope; the list is the shared glass panel with hairline-separated rows.
+ * Labels are muted text (--color-text-muted), values the full text colour, the developer link the text-safe
+ * accent (--glass-accent-text). Nothing here is painted with the border colour, and the decorative accent is
+ * never used for text.
+ */
+
+.root {
+  composes: scope from "./glass/glass.module.css";
+}
+
+.title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.list {
+  composes: panel from "./glass/glass.module.css";
+  --glass-radius: 22px;
+  margin: 0;
+  padding: 0.2rem 1.1rem;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.8rem 0;
+}
+
+.row + .row {
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+}
+
+.label {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.value {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.link {
+  color: var(--glass-accent-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-radius: 4px;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--glass-accent-text);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .list {
+    padding: 0.3rem 1.5rem;
+  }
+
+  .label,
+  .value {
+    font-size: 1rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .row + .row {
+    border-top-color: CanvasText;
+  }
+
+  .link {
+    color: LinkText;
+  }
+}
