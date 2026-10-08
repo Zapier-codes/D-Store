@@ -1,35 +1,43 @@
 /*
- * Anonymous report-app form styles — leaf 0.f.iii.zi. Same
- * bordered-surface shell as RateThisApp (0.e.iii.zo) for visual
- * consistency across the detail page's interactive dummy forms.
+ * Anonymous report-app form: leaf 0.f.iii.zi, restyled by operator-directed 2026-10-08 (slice 5 of the details
+ * page rework). Same shell family as RateThisApp: the shared accent `scope` and one glass `panel`; the submit
+ * button is a transparent glass pill in the text-safe accent. Fields are plain tinted surfaces (no blur of
+ * their own). Text is --color-text; the error line keeps --color-error.
  */
 
 .wrapper {
+  composes: scope panel from "./glass/glass.module.css";
+  --glass-radius: 22px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.6rem;
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface);
+  gap: 0.7rem;
+  padding: 1.1rem 1.25rem;
 }
 
 .label {
   margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .select,
 .textarea {
   width: 100%;
+  box-sizing: border-box;
   font: inherit;
-  color: inherit;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 0.5rem;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+}
+
+.select:focus-visible,
+.textarea:focus-visible {
+  outline: 2px solid var(--glass-accent-text);
+  outline-offset: 2px;
 }
 
 .textarea {
@@ -37,38 +45,44 @@
 }
 
 .submit {
-  border: 1px solid var(--color-accent);
-  background: transparent;
-  color: var(--color-accent);
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding: 0.4rem 0.9rem;
-  border-radius: 6px;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.3rem;
+  border: 1px solid color-mix(in srgb, var(--glass-accent) 50%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--glass-accent) 10%, transparent);
+  color: var(--glass-accent-text);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 .submit:disabled {
-  opacity: 0.4;
+  color: var(--color-text-muted);
+  border-color: color-mix(in srgb, var(--color-text) 20%, transparent);
+  background: none;
   cursor: not-allowed;
 }
 
-.submit:not(:disabled):hover,
-.submit:not(:disabled):focus-visible {
-  background: var(--color-accent);
-  color: var(--color-bg);
+.submit:not(:disabled):hover {
+  border-color: var(--glass-accent);
+  background: color-mix(in srgb, var(--glass-accent) 18%, transparent);
 }
 
-/* Press state — leaf 3.a.ii.zi, same --color-accent-strong convention as ConsentBanner's button. */
+.submit:focus-visible {
+  outline: 2px solid var(--glass-accent-text);
+  outline-offset: 2px;
+}
+
+/* Press state: leaf 3.a.ii.zi. A tint step, and a small scale only when motion is allowed. */
 .submit:not(:disabled):active {
-  background: var(--color-accent-strong);
-  border-color: var(--color-accent-strong);
-  color: var(--color-bg);
+  background: color-mix(in srgb, var(--glass-accent) 26%, transparent);
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .submit {
-    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease;
+    transition: background-color 150ms ease, border-color 150ms ease, transform 100ms ease;
   }
 
   .submit:not(:disabled):active {
@@ -78,12 +92,25 @@
 
 .confirmation {
   margin: 0;
-  font-size: 0.9rem;
+  color: var(--color-text);
+  font-size: 0.95rem;
 }
 
-/* Real-outcome error line — leaf 3.c.x.zi. */
+/* Real-outcome error line: leaf 3.c.x.zi. */
 .error {
   margin: 0;
   font-size: 0.9rem;
   color: var(--color-error, inherit);
+}
+
+@media (forced-colors: active) {
+  .submit {
+    color: ButtonText;
+    border-color: ButtonText;
+  }
+
+  .submit:disabled {
+    color: GrayText;
+    border-color: GrayText;
+  }
 }

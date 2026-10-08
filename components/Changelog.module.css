@@ -1,41 +1,15 @@
 /*
- * "What's New" changelog block styles — leaf 0.e.ii.zo.
+ * "What's New" changelog: leaf 0.e.ii.zo, restyled by operator-directed 2026-10-08 (slice 5 of the details page
+ * rework). See Changelog.tsx.
+ *
+ * The section carries the shared accent `scope`; the opened card is one shared glass `panel` holding the
+ * version and date pills (the shared GlassPill) and the notes. The heading toggle stays plain text with a
+ * chevron, so closed it costs one line. Only transform animates (the chevron), plus the panel's grid-row slide,
+ * and reduced motion gets neither.
  */
 
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface);
-}
-
-.meta {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-}
-
-.version {
-  font-weight: 700;
-  color: var(--color-accent);
-}
-
-.date {
-  opacity: 0.7;
-}
-
-.notes {
-  overflow-wrap: anywhere; /* long words and URLs in release notes wrap instead of widening the page */
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* Dropdown: the heading is the toggle; the panel slides open with a 0fr -> 1fr grid row. */
 .section {
+  composes: scope from "./glass/glass.module.css";
   margin: 0;
 }
 
@@ -51,6 +25,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
+  min-height: 2.75rem;
   padding: 0.25rem 0;
   border: 0;
   background: none;
@@ -61,7 +36,7 @@
 }
 
 .toggle:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--glass-accent-text);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -75,6 +50,25 @@
   transform: rotate(180deg);
 }
 
+/* The card: a shared glass panel. */
+.wrapper {
+  composes: panel from "./glass/glass.module.css";
+  --glass-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.1rem 1.25rem;
+}
+
+.notes {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere; /* long words and URLs in release notes wrap instead of widening the page */
+}
+
+/* Dropdown: the panel slides open with a 0fr -> 1fr grid row. */
 .panel {
   display: grid;
   grid-template-rows: 0fr;
@@ -95,6 +89,16 @@
 
 .panel[data-open="true"] .panelInner {
   padding-top: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .wrapper {
+    padding: 1.3rem 1.75rem;
+  }
+
+  .notes {
+    font-size: 1.05rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

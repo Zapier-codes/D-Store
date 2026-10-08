@@ -1,68 +1,123 @@
 /*
- * Expandable description styles — leaf 0.e.ii.zi.
+ * About this app: leaf 0.e.ii.zi, restyled by operator-directed 2026-10-08 (slice 5 of the details page
+ * rework). See ExpandableDescription.tsx.
+ *
+ * The section carries the shared accent `scope`; the text sits in one shared glass `panel` (the same family as
+ * the Information list and the rating board). The collapsed text fades out with a mask on the text itself, so
+ * no gradient has to match the panel's translucent background. "Read more" is the shared glass pill drawn on a
+ * <button>, in the text-safe accent. Nothing here animates and nothing adds a second blur layer beyond the
+ * panel and the pill the shared layer already defines.
  */
 
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.root {
+  composes: scope from "./glass/glass.module.css";
 }
 
-.clamped {
+.title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.panel {
+  composes: panel from "./glass/glass.module.css";
+  --glass-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 1.1rem 1.25rem 1.1rem;
+}
+
+.clamped,
+.paragraph,
+.list {
   margin: 0;
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1.6;
   overflow-wrap: anywhere; /* a long URL in a description must wrap, not widen the page */
-  line-height: 1.5;
+}
+
+/* Five lines, the last of them fading out; the mask lives on the text, not on an overlay. */
+.clamped {
+  width: 100%;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
 }
 
 .formatted {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-}
-
-.paragraph {
-  margin: 0;
-  overflow-wrap: anywhere; /* a long URL in a description must wrap, not widen the page */
-  line-height: 1.5;
+  gap: 0.85rem;
 }
 
 .list {
-  margin: 0;
-  overflow-wrap: anywhere; /* a long URL in a description must wrap, not widen the page */
   padding-left: 1.25rem;
-  line-height: 1.5;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
+/* The shared pill on a button. `composes` needs a single-class selector; the rules below are one class more
+   specific (.panel .toggle), so they win over the pill's own colours whatever the stylesheet order. */
 .toggle {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--color-accent);
-  font-weight: 600;
-  font-size: 0.9rem;
+  composes: pill from "./glass/glass.module.css";
+}
+
+.panel .toggle {
+  min-height: 2.75rem;
+  padding: 0.55rem 1.2rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--glass-accent-text);
+  border-color: color-mix(in srgb, var(--glass-accent) 50%, transparent);
+  background: color-mix(in srgb, var(--glass-accent) 10%, transparent);
   cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
 }
 
-.toggle:hover,
-.toggle:focus-visible {
-  text-decoration: underline;
+.panel .toggle:hover {
+  border-color: var(--glass-accent);
+  background: color-mix(in srgb, var(--glass-accent) 18%, transparent);
 }
 
-/*
- * Press state — leaf 3.a.ii.zi. A plain text-style link-button (no
- * bordered box), so a scale-transform would look out of place here
- * the way it doesn't for the chip/pill-shaped buttons elsewhere — an
- * opacity dim reads as "pressed" without implying the text itself
- * shrank.
- */
-.toggle:active {
-  opacity: 0.65;
+.panel .toggle:focus-visible {
+  outline: 2px solid var(--glass-accent-text);
+  outline-offset: 2px;
+}
+
+.panel .toggle:active {
+  background: color-mix(in srgb, var(--glass-accent) 26%, transparent);
+}
+
+@media (min-width: 768px) {
+  .panel {
+    padding: 1.4rem 1.75rem;
+  }
+
+  .clamped,
+  .paragraph,
+  .list {
+    font-size: 1.05rem;
+  }
+}
+
+/* No fade where the system forces its own colours: the mask would clip text the user chose to see. */
+@media (forced-colors: active) {
+  .clamped {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .panel .toggle {
+    color: LinkText;
+    border-color: LinkText;
+  }
 }

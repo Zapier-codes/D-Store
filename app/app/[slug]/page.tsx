@@ -11,7 +11,7 @@ import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
 import ReviewsList from "@/components/ReviewsList";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
-import ReportAppForm from "@/components/ReportAppForm";
+import ReportProblem from "@/components/ReportProblem";
 import StickyInstallBar from "@/components/StickyInstallBar";
 import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
@@ -132,14 +132,12 @@ export default async function AppDetailPage({
         {/* The gallery owns its section and heading and renders nothing when the app has no screenshots. */}
         <ScreenshotCarousel app={app} />
 
-        <section aria-labelledby="description-heading">
-          <h2 id="description-heading" className={styles.sectionTitle}>
-            About this app
-          </h2>
-          <ExpandableDescription description={app.description} />
-        </section>
+        {/* Operator-directed 2026-10-08 (slice 5 of the details page rework): About owns its section and heading
+            (glass panel, faded text, "Read more" pill) and renders nothing without a description. */}
+        <ExpandableDescription description={app.description} />
 
-        {/* What's New is a dropdown, closed until opened; the heading lives inside the component. */}
+        {/* What's New is a dropdown, closed until opened, drawn as a glass card with version and date pills; the
+            heading lives inside the component and the whole block is absent when there are no notes. */}
         <Changelog app={app} />
 
         {/* Version history is not shown (operator, 2026-10-08); the permission-change notice stays. */}
@@ -166,24 +164,17 @@ export default async function AppDetailPage({
           <ReviewsList app={app} liveReviews={liveReviews} />
         </section>
 
-        {/* Operator, 2026-10-08: a section the source gave nothing for is not shown at all. */}
+        {/* Operator, 2026-10-08: a section the source gave nothing for is not shown at all. Slice 5: the groups
+            are plain-language glass chips; the component owns its section and heading. */}
         {!isNotProvided(app, "permissions") && (
-          <section aria-labelledby="permissions-heading">
-            <h2 id="permissions-heading" className={styles.sectionTitle}>
-              Permissions
-            </h2>
-            <PermissionsDisclosure permissions={app.permissions} notProvided={false} />
-          </section>
+          <PermissionsDisclosure permissions={app.permissions} notProvided={false} />
         )}
 
-        <section aria-labelledby="report-heading">
-          <h2 id="report-heading" className={styles.sectionTitle}>
-            Report a Problem
-          </h2>
-          <ReportAppForm appSlug={app.slug} />
-        </section>
-
         <Shelf title="Similar Apps" apps={similarApps} />
+
+        {/* Operator-directed 2026-10-08 (slice 5): "Report a problem" is a quiet footer action that expands in
+            place, last on the page so it never competes with the install action. */}
+        <ReportProblem appSlug={app.slug} />
 
         {/*
          * 0.j.ii.zi — sticky/anchored install action. Watches the primary
