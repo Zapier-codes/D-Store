@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
 import CountUp from "./CountUp";
-import HeroTilt from "./HeroTilt";
+import { AppNameTitle, GlassPill, IconRing, PillMuted, PillRow, Rim, StarMeter, Tilt } from "./glass";
 import { combinedDownloadTotal, combinedRating, formatDownloadCount } from "@/lib/carried-over-stats";
-import { pickHeroArt, ratingFillPercent, updatedLabel } from "@/lib/hero-card";
+import { pickHeroArt, updatedLabel } from "@/lib/hero-card";
 import HeroCarousel from "./HeroCarousel";
 import styles from "./Hero.module.css";
 
@@ -37,8 +37,12 @@ import styles from "./Hero.module.css";
  * Operator-directed 2026-10-08 (card grew, so the detail grew with it): the name is 3D glass type (see
  * `.name` in Hero.module.css), every button-like item is a transparent glass pill, the downloads figure is
  * a large animated counter in its own stat column (no empty space on the right), and the card tilts toward
- * a mouse pointer, with a thin rim of light that follows it along the card's edge (`HeroTilt`). The whole card is still one link; the "Get" pill is a
+ * a mouse pointer, with a thin rim of light that follows it along the card's edge (`Tilt`). The whole card is still one link; the "Get" pill is a
  * visual cue, not a second control.
+ *
+ * Operator-directed 2026-10-08 (slice 0 of the details page rework): the glass look is shared code now. The
+ * pills, star meter, 3D / frosted name, icon ring, rim light and tilt come from `components/glass/`; this file
+ * and Hero.module.css keep only the card's layout and what is specific to it. The card looks the same as before.
  */
 export default function Hero({ apps }: { apps: App[] }) {
   if (apps.length === 0) return null;
@@ -83,7 +87,6 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
   const category = app.category && app.category !== "uncategorized" ? titleCase(app.category) : null;
   const hasLicense = Boolean(app.license) && app.license !== "Not provided";
   const art = pickHeroArt(app.screenshots);
-  const fill = ratingFillPercent(average);
   const updated = updatedLabel(app.updated_at);
   const label = [
     `${app.name}, ${app.is_editors_pick ? "editors' choice" : "featured app"}`,
@@ -94,14 +97,14 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
     .join(", ");
 
   return (
-    <HeroTilt className={styles.tilt}>
+    <Tilt>
       <Link href={`/app/${app.slug}`} className={styles.card} style={backgroundStyle} aria-label={label}>
         {art && <div className={styles.art} style={{ backgroundImage: `url(${JSON.stringify(art)})` }} aria-hidden="true" />}
-        <div className={styles.rim} aria-hidden="true" />
+        <Rim />
 
         <div className={styles.panel}>
           <div className={styles.iconWrap}>
-            <div className={styles.ring} aria-hidden="true" />
+            <IconRing />
             <div className={styles.icon}>
               <AppIcon
                 name={app.name}
@@ -117,38 +120,30 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
           </div>
 
           <div className={styles.content}>
-            <div className={styles.pills}>
-              <span className={`${styles.pill} ${styles.pillAccent}`}>
+            <PillRow>
+              <GlassPill variant="accent">
                 <span aria-hidden="true">✦</span> {app.is_editors_pick ? "Editors’ choice" : "Featured"}
-              </span>
-              {category && <span className={styles.pill}>{category}</span>}
-            </div>
+              </GlassPill>
+              {category && <GlassPill>{category}</GlassPill>}
+            </PillRow>
 
-            <span className={styles.nameWrap}>
-              <Heading className={styles.name}>{app.name}</Heading>
-            </span>
+            <AppNameTitle as={Heading}>{app.name}</AppNameTitle>
             <div className={styles.summary}>{app.summary}</div>
 
-            <div className={styles.pills}>
-              <span className={`${styles.pill} ${styles.pillStar}`}>
-                <span
-                  className={styles.stars}
-                  style={{ "--fill": `${fill}%` } as React.CSSProperties}
-                  aria-hidden="true"
-                >
-                  ★★★★★
-                </span>
+            <PillRow>
+              <GlassPill variant="star">
+                <StarMeter average={average} />
                 {average.toFixed(1)}
-                <span className={styles.pillMuted}> ({ratingCount.toLocaleString()})</span>
-              </span>
-              {app.version && <span className={styles.pill}>v{app.version}</span>}
-              {app.size_mb > 0 && <span className={styles.pill}>{Math.round(app.size_mb * 10) / 10} MB</span>}
+                <PillMuted> ({ratingCount.toLocaleString()})</PillMuted>
+              </GlassPill>
+              {app.version && <GlassPill>v{app.version}</GlassPill>}
+              {app.size_mb > 0 && <GlassPill>{Math.round(app.size_mb * 10) / 10} MB</GlassPill>}
               {app.min_android_version && app.min_android_version !== "Not provided" && (
-                <span className={`${styles.pill} ${styles.pillOptional}`}>{app.min_android_version}+</span>
+                <GlassPill className={styles.pillOptional}>{app.min_android_version}+</GlassPill>
               )}
-              {updated && <span className={`${styles.pill} ${styles.pillOptional}`}>{updated}</span>}
-              {hasLicense && <span className={`${styles.pill} ${styles.pillOptional}`}>{app.license}</span>}
-            </div>
+              {updated && <GlassPill className={styles.pillOptional}>{updated}</GlassPill>}
+              {hasLicense && <GlassPill className={styles.pillOptional}>{app.license}</GlassPill>}
+            </PillRow>
           </div>
 
           <div className={styles.stat}>
@@ -156,12 +151,12 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
               <CountUp target={downloads} variant={downloadsVariant} />
             </div>
             <div className={styles.statLabel}>{downloadsLabel}</div>
-            <span className={`${styles.pill} ${styles.pillGet}`} aria-hidden="true">
+            <GlassPill variant="cta" className={styles.getCue} aria-hidden="true">
               Get <span className={styles.arrow}>→</span>
-            </span>
+            </GlassPill>
           </div>
         </div>
       </Link>
-    </HeroTilt>
+    </Tilt>
   );
 }

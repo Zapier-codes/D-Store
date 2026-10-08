@@ -1,0 +1,318 @@
+/*
+ * Shared glass layer: operator-directed 2026-10-08, slice 0 of the details page rework
+ * (docs/DETAIL-PAGE-REWORK-PROMPT.md, docs/DETAIL-PAGE-DESIGN.md).
+ *
+ * These are the visual pieces the home hero card proved out, moved here unchanged so the details page can
+ * use the very same code and the two surfaces stay one family: the accent scope, the glass panel, the
+ * transparent pills, the rim light, the icon ring, the fractional star meter, the 3D / frosted app name and
+ * the pointer variables the tilt sets. Layout belongs to whoever uses them (Hero.module.css, later the
+ * details page); only look and feel lives here.
+ *
+ * Rules that came out of the hero (see the design note for the full list):
+ *  - Accent for DECORATION is `--glass-accent`; accent for TEXT or a small graphic is `--glass-accent-text`
+ *    (gold in dark; sky blue #38bdf8 for decoration and #0369a1 for text in light, 5.9:1 on white).
+ *  - Never paint text with the hairline border colour; muted text is `--color-text-muted`.
+ *  - Animate only transform and opacity (the ring animates an angle inside a mask, which does not repaint
+ *    the page); no sweeping flares, spotlight blobs or shimmer loops.
+ */
+
+/* ---- Accent scope ------------------------------------------------------------------------------- */
+
+/*
+ * Put this on the element that wraps the glass pieces. Dark follows `--color-accent`, so a category's
+ * contextual skin (CategoryThemeScope) still re-tints the gold in dark mode; light is the fixed sky-blue pair.
+ */
+.scope {
+  --glass-accent: var(--color-accent);
+  --glass-accent-text: var(--color-accent);
+}
+
+:global([data-theme="light"]) .scope {
+  --glass-accent: #38bdf8;
+  --glass-accent-text: #0369a1;
+}
+
+/* ---- Pointer variables and the rim light --------------------------------------------------------- */
+
+/* Perspective + the variables Tilt.tsx sets (--rx, --ry, --px, --py, --mx, --my); all rest at zero or centre. */
+.tilt {
+  perspective: 1100px;
+  --rx: 0deg;
+  --ry: 0deg;
+  --px: 0;
+  --py: 0;
+  --mx: 50%;
+  --my: 30%;
+}
+
+/*
+ * One quiet effect instead of the old sweep and spotlight: a thin line of accent light along the card's edge,
+ * brightest where the pointer is, drawn only on the 1.5px border ring (so nothing washes over text). Mouse
+ * only; touch and keyboard see none. The parent supplies the rounded shape (`border-radius: inherit`).
+ */
+.rim {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  background: radial-gradient(
+    380px circle at var(--mx) var(--my),
+    color-mix(in srgb, var(--glass-accent) 95%, #fff) 0%,
+    color-mix(in srgb, var(--glass-accent) 45%, transparent) 38%,
+    transparent 72%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tilt:hover .rim {
+    opacity: 1;
+  }
+}
+
+/* ---- Glass panel --------------------------------------------------------------------------------- */
+
+/* backdrop blur over a 46% surface tint, a hairline accent border, an inset top rim and a faint inner glow. */
+.panel {
+  background-color: color-mix(in srgb, var(--color-surface) 46%, transparent);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  border: 1px solid color-mix(in srgb, var(--glass-accent) 28%, var(--color-border));
+  border-radius: var(--glass-radius, 28px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-text) 22%, transparent),
+    inset 0 0 40px color-mix(in srgb, var(--glass-accent) 7%, transparent);
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+/* ---- Pills: transparent glass, no solid fills ----------------------------------------------------- */
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-text) 14%, transparent);
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pillAccent {
+  color: var(--glass-accent-text);
+  border-color: color-mix(in srgb, var(--glass-accent) 50%, transparent);
+  background: color-mix(in srgb, var(--glass-accent) 12%, transparent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pillStar {
+  color: var(--glass-accent-text);
+  font-weight: 800;
+}
+
+/* The primary action look: bigger, accent text and edge. Carries its own hover transition. */
+.pillCta {
+  padding: 0.6rem 1.4rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--glass-accent-text);
+  border-color: color-mix(in srgb, var(--glass-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--glass-accent) 10%, transparent);
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* ---- Icon ring ------------------------------------------------------------------------------------ */
+
+/* A bright arc that circles the rounded-square icon, like Play's download ring. The parent is `position: relative`. */
+@property --ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.ring {
+  position: absolute;
+  inset: -7px;
+  z-index: 0;
+  padding: 3px;
+  border-radius: 25%;
+  background: conic-gradient(
+    from var(--ring-angle),
+    transparent 0 52%,
+    color-mix(in srgb, var(--glass-accent) 35%, transparent) 70%,
+    var(--glass-accent) 92%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ring {
+    animation: glassRingSpin 4.8s linear infinite;
+  }
+}
+
+@keyframes glassRingSpin {
+  to {
+    --ring-angle: 360deg;
+  }
+}
+
+/* ---- Fractional star meter ------------------------------------------------------------------------ */
+
+/* Five stars, filled exactly as far as the rating (4.6 fills 92%); `--fill` is set inline by StarMeter. */
+.stars {
+  letter-spacing: 0.06em;
+  font-size: 0.98rem;
+  background-image: linear-gradient(90deg, var(--glass-accent-text) var(--fill, 0%), var(--color-star-empty) var(--fill, 0%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---- App name: solid with a 3D accent edge in dark, clear frosted glass in light ----------------------- */
+
+/*
+ * Dark: ordinary solid text in the theme's text colour with a stacked accent extrusion behind the letters and
+ * a short accent bar under the name. The filter sits on `.nameWrap` because `.name` clips overflow for its
+ * line clamp. The parallax shift uses the tilt's --px/--py and rests at zero when there is no tilt.
+ * `--glass-name-size` lets a user of the component choose the size (default is the hero's).
+ */
+.nameWrap {
+  display: block;
+  max-width: 100%;
+  filter:
+    drop-shadow(1px 1px 0 color-mix(in srgb, var(--glass-accent) 95%, transparent))
+    drop-shadow(2px 2px 0 color-mix(in srgb, var(--glass-accent) 72%, transparent))
+    drop-shadow(3px 3px 0 color-mix(in srgb, var(--glass-accent) 46%, transparent))
+    drop-shadow(4px 6px 8px rgba(0, 0, 0, 0.26));
+  transform: translate3d(calc(var(--px, 0) * 5px), calc(var(--py, 0) * 3px), 0);
+  transition: transform 180ms ease-out;
+}
+
+.nameWrap::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  background: var(--glass-accent);
+}
+
+.name {
+  margin: 0;
+  padding: 0.04em 0.08em 0.1em 0;
+  font-size: var(--glass-name-size, clamp(2rem, 5.4vw, 3.4rem));
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  color: var(--color-text);
+  /* Long names wrap onto two lines rather than running off the card. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/*
+ * Light: frosted glass instead of dark ink. A see-through white-to-grey gradient clipped to the letters so the
+ * card's own glow shows through them, a fine neutral edge so they stay readable on the pale page, one soft grey
+ * shadow. No accent colour, no extrusion, no coloured bar.
+ */
+:global([data-theme="light"]) .nameWrap {
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.75)) drop-shadow(0 4px 10px rgba(15, 23, 42, 0.14));
+}
+
+:global([data-theme="light"]) .nameWrap::after {
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.04));
+}
+
+:global([data-theme="light"]) .name {
+  background-image: linear-gradient(
+    175deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.6) 48%,
+    rgba(226, 232, 240, 0.34) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1.25px rgba(15, 23, 42, 0.55);
+}
+
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  :global([data-theme="light"]) .name {
+    -webkit-text-fill-color: currentColor;
+    -webkit-text-stroke: 0;
+  }
+}
+
+/* ---- Fallbacks ------------------------------------------------------------------------------------ */
+
+/* Visitors who ask the system for less transparency get a solid panel and no blur. */
+@media (prefers-reduced-transparency: reduce) {
+  .panel {
+    background-color: var(--color-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .pill {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* No clipped-text name where the system forces its own colours: plain text, a visible edge-free fill. */
+@media (forced-colors: active) {
+  .name,
+  :global([data-theme="light"]) .name {
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+    -webkit-text-stroke: 0;
+    color: CanvasText;
+  }
+
+  .nameWrap,
+  :global([data-theme="light"]) .nameWrap {
+    filter: none;
+  }
+
+  .stars {
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+    color: CanvasText;
+  }
+}
