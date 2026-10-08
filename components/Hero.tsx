@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
 import CountUp from "./CountUp";
-import { AppNameTitle, GlassPill, IconRing, PillMuted, PillRow, Rim, StarMeter, Tilt } from "./glass";
+import { AppNameTitle, BackdropArt, GlassPill, IconRing, PillMuted, PillRow, Rim, StarMeter, Tilt } from "./glass";
 import { combinedDownloadTotal, combinedRating, formatDownloadCount } from "@/lib/carried-over-stats";
 import { pickHeroArt, updatedLabel } from "@/lib/hero-card";
 import HeroCarousel from "./HeroCarousel";
@@ -99,7 +99,7 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
   return (
     <Tilt>
       <Link href={`/app/${app.slug}`} className={styles.card} style={backgroundStyle} aria-label={label}>
-        {art && <div className={styles.art} style={{ backgroundImage: `url(${JSON.stringify(art)})` }} aria-hidden="true" />}
+        {art && <BackdropArt src={art} />}
         <Rim />
 
         <div className={styles.panel}>

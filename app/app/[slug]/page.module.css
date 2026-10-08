@@ -2,6 +2,9 @@
  * App detail page layout — leaf 0.e.i.zi. Just enough to host the
  * header + screenshot carousel; later 0.e/0.f/0.g leaves add more
  * sections below rather than restructuring this shell.
+ *
+ * Operator-directed 2026-10-08 (slice 1 of the details page rework): the header's rules moved to
+ * components/AppHeader.module.css, so only the page shell and the section title are left here.
  */
 
 .main {
@@ -22,168 +25,24 @@
   min-width: 0;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-width: 0;
-}
-
-/* The text column must be allowed to shrink below its content width, otherwise a
-   long name, summary or button row overflows (and is clipped by the global
-   overflow-x: clip) instead of wrapping. */
-.headerText {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.icon {
-  flex: 0 0 auto;
-  width: 72px;
-  height: 72px;
-  border-radius: 20%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  font-weight: 700;
-  user-select: none;
-}
-
-.name {
-  margin: 0 0 0.25rem;
-  font-size: clamp(1.25rem, 5vw, 1.75rem);
-  font-weight: 700;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-
-.summary {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.95rem;
-  overflow-wrap: anywhere;
-}
-
-/* 0.g.iii.zo — links out to the new /developer/[slug] profile route. */
-.developerLink {
-  display: inline-block;
-  margin-top: 0.35rem;
-  color: var(--color-accent);
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.developerLink:hover,
-.developerLink:focus-visible {
-  text-decoration: underline;
-}
-
-/* 3.a.iv.zi — install button sits in the page header, under the developer credit link. */
-.installRow {
-  margin-top: 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-/*
- * Trust-signal stats row — leaf 0.j.i.zi (Play Store Parity Pass).
- * Same visual language as Hero.module.css's `.meta`/`.rating` (the
- * home page's hero for this same app) and AppCard.module.css's
- * `.badge` (Editors' Pick) — carried onto this page rather than
- * inventing a third convention for the same two pieces of data.
- */
-.stats {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  font-size: 0.85rem;
-  margin-top: 0.4rem;
-}
-
-.rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  color: var(--color-accent);
-  font-weight: 700;
-}
-
-.statMuted {
-  color: var(--color-text-muted);
-}
-
-.badge {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-accent);
-  color: var(--color-accent);
-}
-
-/* Size/version/min-Android — sits beside the Install button, not inside it, so InstallButton's own label/state machine (3.a.iv.zi) stays untouched. */
-.installMeta {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  overflow-wrap: anywhere;
-}
-
 .sectionTitle {
   margin: 0 0 0.75rem;
   font-size: 1.1rem;
   font-weight: 700;
 }
 
-/* Phones: stack the icon above the text so the name, stats and the
-   Install / Share / Save row get the full width instead of sharing it with a 72px icon. */
 @media (max-width: 480px) {
   .main {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
     gap: 1.5rem;
   }
-
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .headerText {
-    flex: 0 0 auto;
-    width: 100%;
-  }
-
-  .icon {
-    width: 64px;
-    height: 64px;
-  }
-
-  /* Install stays the full-width primary action; Share / Save and the size line wrap beneath it. */
-  .installRow > :first-child {
-    flex: 1 1 100%;
-  }
 }
 
-/* Tablet and up: more breathing room, larger icon. */
+/* Tablet and up: more breathing room. */
 @media (min-width: 768px) {
   .main {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
-  }
-
-  .header {
-    gap: 1.5rem;
-    align-items: flex-start;
-  }
-
-  .icon {
-    width: 96px;
-    height: 96px;
   }
 }

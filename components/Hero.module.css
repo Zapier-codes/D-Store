@@ -129,7 +129,7 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  border-radius: 22%;
+  border-radius: var(--glass-icon-radius, 22%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -443,21 +443,7 @@
  * icon, a fractional star meter, and a reduced-transparency fallback.
  */
 
-/* Backdrop art: the app's first screenshot, under the glass so the panel's blur turns it into colour. */
-.art {
-  position: absolute;
-  inset: -4%;
-  z-index: 1;
-  background-size: cover;
-  background-position: right center;
-  opacity: 0.42;
-  filter: saturate(1.35);
-  -webkit-mask-image: linear-gradient(90deg, transparent 10%, #000 90%);
-  mask-image: linear-gradient(90deg, transparent 10%, #000 90%);
-  transform: translate3d(calc(var(--px) * 12px), calc(var(--py) * 8px), 0) scale(1.08);
-  transition: transform 220ms ease-out;
-  pointer-events: none;
-}
+/* Backdrop art (the app's first screenshot under the glass) is the shared BackdropArt layer (components/glass/). */
 
 /* Depth: layers drift a little against the pointer, the icon forward, the name and stat the other way. */
 .iconWrap {
@@ -476,35 +462,4 @@
 .statLabel {
   color: var(--color-text);
   opacity: 0.8;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .art {
-    animation: heroArtDrift 18s ease-in-out infinite alternate;
-  }
-}
-
-/* Visitors who ask the system for less transparency get a solid panel and no blur. */
-@media (prefers-reduced-transparency: reduce) {
-  /* The panel and pills drop their blur in the shared stylesheet; the art fades right back here. */
-  .art {
-    opacity: 0.12;
-  }
-}
-
-@keyframes heroArtDrift {
-  from {
-    background-position: 100% 40%;
-  }
-  to {
-    background-position: 85% 60%;
-  }
-}
-
-@media (max-width: 640px) {
-  .art {
-    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 100%);
-    mask-image: linear-gradient(180deg, transparent 0%, #000 100%);
-    background-position: center bottom;
-  }
 }

@@ -27,6 +27,7 @@ export default function AppIconLive({
   tertiaryColor,
   iconUrl,
   sizes,
+  priority,
 }: {
   appSlug: string;
   name: string;
@@ -36,6 +37,8 @@ export default function AppIconLive({
   iconUrl?: string;
   /** `next/image`'s `sizes` attribute for the two differently-sized call sites (72px header icon, 32px StickyInstallBar icon). */
   sizes?: string;
+  /** Passed to `AppIcon`: set on the details page header, where the icon is the LCP candidate. */
+  priority?: boolean;
 }) {
   const active = useInstallProgress(appSlug);
 
@@ -48,6 +51,7 @@ export default function AppIconLive({
         tertiaryColor={tertiaryColor}
         src={iconUrl}
         sizes={sizes ?? "72px"}
+        priority={priority}
       />
       <WavyProgressRing active={active} durationMs={SIMULATED_INSTALL_MS} />
     </div>

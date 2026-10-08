@@ -4,10 +4,11 @@ import skeletonStyles from "./loading.module.css";
 
 /**
  * App detail page loading skeleton — leaf 3.a.iii.zi. Reuses
- * `page.module.css`'s `.main`/`.header`/`.icon` classes directly so
- * the header row (icon + name/summary bars) sits at the exact same
- * position/size the real header (`page.tsx`) renders at — no shift
- * on swap.
+ * `page.module.css`'s `.main` so the page shell sits where the real page
+ * (`page.tsx`) renders it. Operator-directed 2026-10-08 (slice 1 of the
+ * details page rework): the header is now a glass card (`AppHeader`), so
+ * the skeleton shows one block of about its height instead of the old
+ * icon-and-bars row.
  *
  * The real page has many distinct sections (screenshots, description,
  * changelog, ratings, verify, Play Store status, permissions, report
@@ -22,13 +23,8 @@ import skeletonStyles from "./loading.module.css";
 export default function Loading() {
   return (
     <main className={styles.main} role="status" aria-label="Loading">
-      <div className={styles.header}>
-        <span className={styles.icon + " " + skeletonStyles.shimmer} aria-hidden="true" />
-        <div>
-          <SkeletonBlock width="220px" height="1.5rem" />
-          <SkeletonBlock width="320px" height="0.95rem" className={skeletonStyles.gapTop} />
-        </div>
-      </div>
+      {/* Stands in for the glass header card (components/AppHeader.tsx): a full-width block of about its height, so the swap does not shift the page. */}
+      <SkeletonBlock width="100%" height="380px" className={skeletonStyles.section} />
 
       <SkeletonBlock width="100%" height="220px" className={skeletonStyles.section} />
       <SkeletonBlock width="100%" height="140px" className={skeletonStyles.section} />

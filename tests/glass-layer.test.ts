@@ -71,14 +71,14 @@ test("no sweeping flare, spotlight or shimmer loop in the shared layer", () => {
 test("the hero uses the shared scope and panel and no longer defines the moved rules itself", () => {
   assert.match(hero, /\.hero\s*\{\s*composes:\s*scope from "\.\/glass\/glass\.module\.css"/);
   assert.match(hero, /\.panel\s*\{\s*composes:\s*panel from "\.\/glass\/glass\.module\.css"/);
-  for (const moved of [/^\.pill\b/m, /^\.pills\b/m, /^\.name\b/m, /^\.nameWrap\b/m, /^\.rim\b/m, /^\.ring\b/m, /^\.stars\b/m, /^\.tilt\b/m]) {
+  for (const moved of [/^\.pill\b/m, /^\.pills\b/m, /^\.name\b/m, /^\.nameWrap\b/m, /^\.rim\b/m, /^\.ring\b/m, /^\.stars\b/m, /^\.tilt\b/m, /^\.art\b/m]) {
     assert.ok(!moved.test(hero), `Hero.module.css still defines ${moved}`);
   }
   assert.ok(!/@property --ring-angle/.test(hero), "the ring's @property lives in the shared layer only");
 });
 
 test("the primitives exist and the old HeroTilt is gone", () => {
-  for (const file of ["GlassPill.tsx", "StarMeter.tsx", "AppNameTitle.tsx", "Tilt.tsx", "Decor.tsx", "index.ts"]) {
+  for (const file of ["GlassPill.tsx", "StarMeter.tsx", "AppNameTitle.tsx", "Tilt.tsx", "Decor.tsx", "BackdropArt.tsx", "index.ts"]) {
     assert.ok(existsSync(`components/glass/${file}`), file);
   }
   assert.ok(!existsSync("components/HeroTilt.tsx"));

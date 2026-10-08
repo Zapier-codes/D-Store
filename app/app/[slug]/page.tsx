@@ -1,32 +1,22 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getTaxonomyCategory, getLiveReviews } from "@/lib/catalog";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
+import AppHeader from "@/components/AppHeader";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
 import Changelog from "@/components/Changelog";
 import PermissionDiffNotice from "@/components/PermissionDiffNotice";
-import VersionAdvisory from "@/components/VersionAdvisory";
 import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
-import FirstPartyStats from "@/components/FirstPartyStats";
 import ReviewsList from "@/components/ReviewsList";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
 import ReportAppForm from "@/components/ReportAppForm";
-import InstallButton from "@/components/InstallButton";
-import ShareButton from "@/components/ShareButton";
-import FavoriteButton from "@/components/FavoriteButton";
-import MonetizationDisclosure from "@/components/MonetizationDisclosure";
 import StickyInstallBar from "@/components/StickyInstallBar";
-import AppIconLive from "@/components/AppIconLive";
 import Shelf from "@/components/Shelf";
 import AppStructuredData from "@/components/AppStructuredData";
 import ViewPing from "@/components/ViewPing";
 import ViewHistoryRecorder from "@/components/ViewHistoryRecorder";
-import ThirdPartyDownloadButton from "@/components/ThirdPartyDownloadButton";
-import { isThirdParty, isNotProvided, isVerifiedDeveloper } from "@/lib/trust";
-import { reportedStatsFor } from "@/lib/third-party-stats";
-import ReportedStats from "@/components/ReportedStats";
+import { isThirdParty, isNotProvided } from "@/lib/trust";
 import styles from "./page.module.css";
 
 /**
@@ -129,97 +119,14 @@ export default async function AppDetailPage({
           categoryName={category?.name ?? null}
           developerName={developerName}
         />
-        <header className={styles.header}>
-          <div className={styles.icon}>
-            <AppIconLive
-              appSlug={app.slug}
-              name={app.name}
-              primaryColor={app.primary_color}
-              secondaryColor={app.secondary_color}
-              tertiaryColor={app.tertiary_color}
-              iconUrl={app.icon}
-              sizes="96px"
-            />
-          </div>
-          <div className={styles.headerText}>
-            <h1 className={styles.name}>{app.name}</h1>
-            <p className={styles.summary}>{app.summary}</p>
-            {developer ? (
-              <Link href={`/developer/${developer.slug}`} className={styles.developerLink}>
-                by {developer.name}
-              </Link>
-            ) : (
-              // 5.h.iii.zi — third-party publishers have no /developer/[slug] page (no static
-              // Developer row), so the name is plain text rather than a link to a 404.
-              developerName && <span className={styles.developerLink}>by {developerName}</span>
-            )}
-            {isVerifiedDeveloper(app) && (
-              // 5.g.iii.zi — sourced from the Console's signed-index verified-developer
-              // flag (never claimed for a third-party/Aptoide app; isVerifiedDeveloper
-              // gates on isThirdParty the same way the Verify-this-APK section does).
-              <span className={styles.badge}>
-                <span aria-hidden="true">✓</span> Verified developer
-              </span>
-            )}
-
-            <div className={styles.stats}>
-              {thirdParty ? (
-                // 5.h.vii.zo — a third-party app's own rating and downloads, labelled as
-                // reported by its source; the store-native 0.0 (0) / 0+ installs are not shown.
-                <ReportedStats
-                  stats={reportedStatsFor(app)}
-                  ratingClassName={styles.rating}
-                  mutedClassName={styles.statMuted}
-                />
-              ) : (
-                // Task 45b — the store-native figures with any carried-over history (Zealot's
-                // neutral base_stats) folded in as ONE Play-Store-style total, no label.
-                <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.statMuted} />
-              )}
-              {/* Shown only when the source gives a content rating; no "not provided" placeholder. */}
-              {!isNotProvided(app, "content_rating") && app.content_rating && (
-                <span className={styles.statMuted}>{app.content_rating}</span>
-              )}
-              {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
-            </div>
-
-            {/* 5.c.viii.zo -- shown once, above the install area, so a visitor reads it
-                before acting; renders nothing for an available release and for every
-                third-party app (no version_status), so it needs no branch here. */}
-            <VersionAdvisory app={app} />
-
-            <div className={styles.installRow} id="primary-install-row">
-              {thirdParty ? (
-                <ThirdPartyDownloadButton
-                  appSlug={app.slug}
-                  appName={app.name}
-                  downloadUrl={app.apk}
-                />
-              ) : (
-                <InstallButton
-                  appSlug={app.slug}
-                  appName={app.name}
-                  currentVersion={app.version}
-                  apkUrl={app.version_status === "pulled" ? "" : app.apk}
-                  releaseId={app.release_id}
-                  rolloutPercentage={app.rollout_percentage}
-                  packageName={app.package_name}
-                />
-              )}
-              <ShareButton appName={app.name} />
-              <FavoriteButton appSlug={app.slug} appName={app.name} appIcon={app.icon} />
-              <span className={styles.installMeta}>
-                {app.size_mb.toFixed(1)} MB &middot; v{app.version}
-                {!isNotProvided(app, "min_android_version") && <> &middot; Android {app.min_android_version}+</>}
-              </span>
-            </div>
-            <MonetizationDisclosure
-              containsAds={app.contains_ads}
-              hasInAppPurchases={app.has_in_app_purchases}
-              notProvided={isNotProvided(app, "monetization")}
-            />
-          </div>
-        </header>
+        {/* Operator-directed 2026-10-08 (slice 1 of the details page rework): the header is its own component,
+            built from the home hero card's shared glass layer. It keeps the id `primary-install-row` below. */}
+        <AppHeader
+          app={app}
+          developer={developer ? { slug: developer.slug, name: developer.name } : null}
+          developerName={developerName}
+          categoryName={category?.name ?? null}
+        />
 
         <section aria-labelledby="screenshots-heading">
           <h2 id="screenshots-heading" className={styles.sectionTitle}>

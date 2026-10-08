@@ -5,3 +5,4 @@ export { default as StarMeter } from "./StarMeter";
 export { default as AppNameTitle } from "./AppNameTitle";
 export { default as Tilt } from "./Tilt";
 export { IconRing, Rim } from "./Decor";
+export { default as BackdropArt } from "./BackdropArt";
