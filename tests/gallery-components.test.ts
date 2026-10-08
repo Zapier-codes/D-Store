@@ -50,3 +50,11 @@ test("the gallery text colours follow the theme tokens, never the border colour"
     assert.ok(!/(^|[;{\s])color:\s*var\(--color-border\)/.test(css), `${f} paints text with the border colour`);
   }
 });
+
+test("the shelf grid tracks can shrink, so one wide card cannot widen the page (details page, third-party app)", () => {
+  const css = read("components/ShelfGrid.module.css");
+  assert.ok(!/repeat\(\d, 1fr\)/.test(css), "a bare 1fr track cannot shrink below its content");
+  assert.equal((css.match(/repeat\(\d, minmax\(0, 1fr\)\)/g) ?? []).length, 4);
+  assert.ok(/\.card\s*\{[^}]*min-width:\s*0/.test(read("components/AppCard.module.css")));
+  assert.ok(/overflow-x:\s*clip/.test(read("app/app/[slug]/page.module.css")));
+});

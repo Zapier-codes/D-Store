@@ -10,6 +10,9 @@
  */
 
 .card {
+  /* A grid item may shrink below its content (ShelfGrid.module.css uses minmax(0, 1fr)); anything wider is clipped. */
+  min-width: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

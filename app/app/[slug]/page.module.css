@@ -17,6 +17,10 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  /* Safety net: nothing inside the page may widen it. A mobile browser zooms the whole page out to fit any
+     overflowing element (tiny text, a black band down one side); clipping here keeps the layout width at the
+     phone's width. `clip` (unlike `hidden`) makes no scroll container, so sticky and fixed children are unaffected. */
+  overflow-x: clip;
 }
 
 /* A flex/grid child defaults to min-width:auto, so one long word or wide child
