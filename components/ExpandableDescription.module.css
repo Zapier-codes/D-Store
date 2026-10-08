@@ -80,7 +80,7 @@
   border-color: color-mix(in srgb, var(--glass-accent) 50%, transparent);
   background: color-mix(in srgb, var(--glass-accent) 10%, transparent);
   cursor: pointer;
-  transition: border-color 160ms ease, background-color 160ms ease;
+  transition: border-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)), background-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .panel .toggle:hover {

@@ -43,7 +43,7 @@
 
 .chevron {
   color: var(--color-text-muted);
-  transition: transform 0.2s ease;
+  transition: transform var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .chevron[data-open="true"] {
@@ -73,13 +73,13 @@
   display: grid;
   grid-template-rows: 0fr;
   visibility: hidden;
-  transition: grid-template-rows 0.25s ease, visibility 0s linear 0.25s;
+  transition: grid-template-rows var(--glass-dur-base, 240ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)), visibility 0s linear var(--glass-dur-base, 240ms);
 }
 
 .panel[data-open="true"] {
   grid-template-rows: 1fr;
   visibility: visible;
-  transition: grid-template-rows 0.25s ease, visibility 0s;
+  transition: grid-template-rows var(--glass-dur-base, 240ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)), visibility 0s;
 }
 
 .panelInner {

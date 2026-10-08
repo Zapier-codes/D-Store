@@ -118,3 +118,33 @@
     align-self: start;
   }
 }
+
+/*
+ * Section reveal (slice 7, 2026-10-08; docs/DETAIL-PAGE-DESIGN.md section 4): as a section scrolls into view it
+ * fades up a little (opacity and a 16px translate, nothing else), driven by the scroll position itself, so there
+ * is no JavaScript and no IntersectionObserver. A progressive enhancement only: a browser without scroll-driven
+ * animations (`animation-timeline: view()`), and anyone who asked for reduced motion, gets the sections already in
+ * place. `ScrollReveal` (a wrapper div) is not used here on purpose: sections such as the gallery and Permissions
+ * render nothing when the source gave nothing, and an empty wrapper would still add a 2rem flex gap.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .mainCol > * {
+      animation: sectionIn var(--glass-dur-slow, 420ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@keyframes sectionIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

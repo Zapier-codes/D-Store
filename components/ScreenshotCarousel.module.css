@@ -82,7 +82,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .ambientLayer {
-    transition: opacity 420ms ease;
+    transition: opacity var(--glass-dur-slow, 420ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
   }
 }
 

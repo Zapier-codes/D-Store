@@ -55,7 +55,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 150ms ease, border-color 150ms ease;
+  transition: background-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)), border-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .submit:disabled {
@@ -82,7 +82,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .submit {
-    transition: background-color 150ms ease, border-color 150ms ease, transform 100ms ease;
+    transition: background-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)), border-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)), transform var(--glass-dur-fast, 160ms) var(--glass-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
   }
 
   .submit:not(:disabled):active {

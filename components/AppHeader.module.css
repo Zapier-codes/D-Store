@@ -51,7 +51,7 @@
   width: 128px;
   height: 128px;
   transform: translate3d(calc(var(--px, 0) * -9px), calc(var(--py, 0) * -7px), 0);
-  transition: transform 180ms ease-out;
+  transition: transform var(--glass-dur-base, 240ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 /* No overflow:hidden here: AppIconLive's install progress ring is drawn outside the icon's box. AppIcon rounds itself. */
@@ -113,7 +113,6 @@
   margin: 0;
   max-width: 62ch;
   color: var(--color-text);
-  opacity: 0.9;
   font-size: 1rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -209,5 +208,12 @@
   .installRow,
   .advisory {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iconWrap {
+    transition: none;
+    transform: none;
   }
 }

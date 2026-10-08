@@ -27,6 +27,16 @@
   --glass-accent-text: var(--color-accent);
   /* Corner radius of an app icon's box (the ring is 3% rounder). One value for the hero and the details page. */
   --glass-icon-radius: 22%;
+  /*
+   * Motion tokens (slice 7, 2026-10-08; docs/DETAIL-PAGE-DESIGN.md section 4): three durations, one ease-out, one
+   * spring-like curve for press and confirm only. Every glass section reads these (with the same values as
+   * fallbacks, so a piece used outside a scope still moves the same way). Animate transform and opacity only.
+   */
+  --glass-dur-fast: 160ms;
+  --glass-dur-base: 240ms;
+  --glass-dur-slow: 420ms;
+  --glass-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :global([data-theme="light"]) .scope {
@@ -60,7 +70,7 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 260ms ease;
+  transition: opacity var(--glass-dur-base, 240ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
   background: radial-gradient(
     380px circle at var(--mx) var(--my),
     color-mix(in srgb, var(--glass-accent) 95%, #fff) 0%,
@@ -90,7 +100,7 @@
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--color-text) 22%, transparent),
     inset 0 0 40px color-mix(in srgb, var(--glass-accent) 7%, transparent);
-  transition: border-color 160ms ease, background-color 160ms ease;
+  transition: border-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)), background-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 /* ---- Pills: transparent glass, no solid fills ----------------------------------------------------- */
@@ -143,7 +153,7 @@
   color: var(--glass-accent-text);
   border-color: color-mix(in srgb, var(--glass-accent) 55%, transparent);
   background: color-mix(in srgb, var(--glass-accent) 10%, transparent);
-  transition: background-color 160ms ease, border-color 160ms ease;
+  transition: background-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1)), border-color var(--glass-dur-fast, 160ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .muted {
@@ -213,7 +223,7 @@
   -webkit-mask-image: linear-gradient(90deg, transparent 10%, #000 90%);
   mask-image: linear-gradient(90deg, transparent 10%, #000 90%);
   transform: translate3d(calc(var(--px, 0) * 12px), calc(var(--py, 0) * 8px), 0) scale(1.08);
-  transition: transform 220ms ease-out;
+  transition: transform var(--glass-dur-base, 240ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
   pointer-events: none;
 }
 
@@ -263,7 +273,7 @@
     drop-shadow(3px 3px 0 color-mix(in srgb, var(--glass-accent) 46%, transparent))
     drop-shadow(4px 6px 8px rgba(0, 0, 0, 0.26));
   transform: translate3d(calc(var(--px, 0) * 5px), calc(var(--py, 0) * 3px), 0);
-  transition: transform 180ms ease-out;
+  transition: transform var(--glass-dur-base, 240ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .nameWrap::after {
@@ -363,5 +373,24 @@
     background-image: none;
     -webkit-text-fill-color: currentColor;
     color: CanvasText;
+  }
+}
+
+/*
+ * Reduced motion (slice 7, 2026-10-08): the pointer-driven pieces (parallax on the art, the name and the icon, the
+ * rim fade) do not move or fade at all. The ring spin and the art drift are already inside
+ * `prefers-reduced-motion: no-preference` above; `Tilt` sets no pointer variables for these visitors either, so
+ * this is the second lock on the same door.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .rim,
+  .art,
+  .nameWrap {
+    transition: none;
+  }
+
+  .art,
+  .nameWrap {
+    transform: none;
   }
 }
