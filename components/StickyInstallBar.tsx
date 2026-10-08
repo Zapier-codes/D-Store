@@ -50,6 +50,7 @@ export default function StickyInstallBar({
   thirdParty,
   releaseId,
   rolloutPercentage,
+  packageName,
 }: {
   appSlug: string;
   appName: string;
@@ -67,6 +68,8 @@ export default function StickyInstallBar({
   /** 5.c.iv.zo — forwarded straight through to this bar's own `InstallButton` instance, same as `apkUrl` above. */
   releaseId: string;
   rolloutPercentage: number;
+  /** Forwarded to this bar's own `InstallButton` for the Open link (never shown). */
+  packageName?: string;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -122,6 +125,7 @@ export default function StickyInstallBar({
           apkUrl={apkUrl}
           releaseId={releaseId}
           rolloutPercentage={rolloutPercentage}
+          packageName={packageName}
         />
       )}
     </div>

@@ -214,6 +214,7 @@ export default async function AppDetailPage({
                   apkUrl={app.version_status === "pulled" ? "" : app.apk}
                   releaseId={app.release_id}
                   rolloutPercentage={app.rollout_percentage}
+                  packageName={app.package_name}
                 />
               )}
               <ShareButton appName={app.name} />
@@ -330,6 +331,7 @@ export default async function AppDetailPage({
           apkUrl={app.version_status === "pulled" ? "" : app.apk}
           releaseId={app.release_id}
           rolloutPercentage={app.rollout_percentage}
+          packageName={app.package_name}
           thirdParty={thirdParty ? { downloadUrl: app.apk, sourceName: sourceName(app) } : undefined}
         />
       </main>

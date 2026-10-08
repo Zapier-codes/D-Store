@@ -29,15 +29,17 @@ export function baseStatsFor(app: Pick<App, "origin" | "base_stats">): BaseStats
 }
 
 /**
- * The total downloads shown for an app: the carried-over base plus this store's
- * own `install_count`. `null` when the app has no carried-over base, so a caller
- * keeps showing the store-native count alone (never a fabricated zero base).
+ * The total downloads shown for an app that carries history: Zealot's `base_stats.downloads` ALONE.
+ * That figure is already the whole count (the carried-over history plus the downloads GitHub counts for
+ * the served file, Zealot Task 45e), and Zealot's own note on 45e says this store must NOT add its own
+ * `install_count` on top: a click here is a download GitHub also counts, so adding both counts it twice.
+ * `null` when the app has no carried-over base, so a caller keeps showing the store-native count alone
+ * (never a fabricated zero base).
  */
 export function combinedDownloadTotal(app: Pick<App, "origin" | "base_stats" | "install_count">): number | null {
   const base = baseStatsFor(app);
   if (base === null) return null;
-  const own = Number.isFinite(app.install_count) && app.install_count > 0 ? Math.floor(app.install_count) : 0;
-  return base.downloads + own;
+  return base.downloads;
 }
 
 /**

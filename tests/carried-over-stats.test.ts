@@ -28,8 +28,8 @@ test("baseStatsFor: reads a first-party app's carried-over base, null for third-
   assert.equal(baseStatsFor({ origin: "aptoide", base_stats: firstParty.base_stats }), null);
 });
 
-test("combinedDownloadTotal: base plus the store's own count, null when there is no base", () => {
-  assert.equal(combinedDownloadTotal(firstParty), 5_789_040);
+test("combinedDownloadTotal: the base alone (the store's own count is NOT added, GitHub already counts it), null when there is no base", () => {
+  assert.equal(combinedDownloadTotal(firstParty), 5_789_000);
   assert.equal(combinedDownloadTotal({ origin: "zealot", base_stats: null, install_count: 40 }), null);
 });
 
@@ -44,8 +44,8 @@ test("combinedRating: the base alone when the store has no own ratings", () => {
   assert.deepEqual(combinedRating(app), { average: 4.6, count: 10 });
 });
 
-test("rankableDownloads: combined total when there is a base, else the store's own count", () => {
-  assert.equal(rankableDownloads(firstParty), 5_789_040);
+test("rankableDownloads: the base total (no double count) when there is a base, else the store's own count", () => {
+  assert.equal(rankableDownloads(firstParty), 5_789_000);
   assert.equal(rankableDownloads({ origin: "zealot", base_stats: null, install_count: 40 }), 40);
 });
 

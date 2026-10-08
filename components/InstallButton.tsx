@@ -1,8 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInstallStatus, setInstallProgressActive, SIMULATED_INSTALL_MS } from "@/lib/install-status";
+import {
+  REINSTALL_PARAM,
+  buildOpenIntentUrl,
+  isAndroidUserAgent,
+  isReinstallRequest,
+  reinstallFallbackUrl,
+} from "@/lib/open-intent";
 import styles from "./InstallButton.module.css";
+
+/**
+ * Deep linking (operator, 2026-10-08). The header button and the sticky bar are two instances of this
+ * component on one page, so the "?reinstall=1" arrival is claimed once per page load, by slug.
+ */
+const reinstallClaimed = new Set<string>();
 
 /**
  * Install button — leaf 3.a.iv.zi/zo (dummy install + progress-fill),
@@ -78,6 +91,7 @@ export default function InstallButton({
   apkUrl,
   releaseId,
   rolloutPercentage,
+  packageName,
 }: {
   appSlug: string;
   appName: string;
@@ -88,6 +102,8 @@ export default function InstallButton({
   releaseId: string;
   /** 5.c.iv.zo — `App.rollout_percentage`; gates whether "Update" is surfaced at all once a newer `currentVersion` exists. */
   rolloutPercentage: number;
+  /** Android application id, used only to build the Open link (never shown). Without it Open stays a plain button. */
+  packageName?: string;
 }) {
   const { loaded, status, markInstalled, markUninstalled } = useInstallStatus(
     appSlug,
@@ -96,8 +112,17 @@ export default function InstallButton({
     rolloutPercentage,
   );
   const [uiState, setUiState] = useState<UiState>("idle");
+  // The Open link needs the browser's origin and an Android device, so it is built after mount.
+  const [openHref, setOpenHref] = useState<string | null>(null);
+  const [reinstallNotice, setReinstallNotice] = useState(false);
+  const runInstallRef = useRef<(options?: { countInstall?: boolean }) => void>(() => {});
 
-  function runSimulatedInstall() {
+  useEffect(() => {
+    if (!packageName || !isAndroidUserAgent(navigator.userAgent)) return;
+    setOpenHref(buildOpenIntentUrl(packageName, reinstallFallbackUrl(window.location.origin, appSlug)));
+  }, [packageName, appSlug]);
+
+  function runSimulatedInstall(options: { countInstall?: boolean } = {}) {
     if (uiState !== "idle") return;
     setUiState("installing");
     // 0.j.v.zi — flips the shared cross-component progress flag so the
@@ -111,7 +136,7 @@ export default function InstallButton({
     // is read before `markInstalled` below changes it). Errors are
     // swallowed deliberately: a failed counter ping must never block
     // or roll back the (dummy, local-only) install itself.
-    if (status !== "outdated") {
+    if (status !== "outdated" && options.countInstall !== false) {
       fetch(`/api/apps/${appSlug}/install`, { method: "POST" }).catch(() => {});
     }
     // 5.g.ii.zi — the actual download: a transient anchor to the real
@@ -132,6 +157,23 @@ export default function InstallButton({
       setUiState("idle");
     }, SIMULATED_INSTALL_MS);
   }
+
+  runInstallRef.current = runSimulatedInstall;
+
+  // Arrived from the Open link's fallback (the app is gone or cannot be opened by a link): forget the stale
+  // "installed" record so the button reads Download, say so, and download again. Not counted as a new install.
+  useEffect(() => {
+    if (!loaded || !apkUrl || reinstallClaimed.has(appSlug)) return;
+    if (!isReinstallRequest(window.location.search)) return;
+    reinstallClaimed.add(appSlug);
+    const url = new URL(window.location.href);
+    url.searchParams.delete(REINSTALL_PARAM);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    markUninstalled();
+    setReinstallNotice(true);
+    runInstallRef.current({ countInstall: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, apkUrl, appSlug]);
 
   // 5.g.ii.zi — no release attached in the Console's signed index yet:
   // same "nothing honest to link to" case `ThirdPartyDownloadButton`
@@ -159,9 +201,16 @@ export default function InstallButton({
     );
   }
 
+  const notice = reinstallNotice ? (
+    <span className={styles.notice} role="status">
+      Couldn&rsquo;t open {appName} on this device, so it&rsquo;s downloading again.
+    </span>
+  ) : null;
+
   if (uiState === "installing") {
     const label = status === "outdated" ? "Updating\u2026" : "Installing\u2026";
     return (
+      <span className={styles.group}>
       <button
         type="button"
         className={styles.button}
@@ -177,20 +226,23 @@ export default function InstallButton({
         />
         <span className={styles.label}>{label}</span>
       </button>
+      {notice}
+      </span>
     );
   }
 
   if (status === "up-to-date") {
     return (
       <span className={styles.group} aria-live="polite">
-        <button
-          type="button"
-          className={styles.button}
-          data-state="open"
-          aria-label={`Open ${appName}`}
-        >
-          Open
-        </button>
+        {openHref !== null ? (
+          <a href={openHref} className={styles.button} data-state="open" aria-label={`Open ${appName}`}>
+            Open
+          </a>
+        ) : (
+          <button type="button" className={styles.button} data-state="open" aria-label={`Open ${appName}`}>
+            Open
+          </button>
+        )}
         <button
           type="button"
           className={styles.uninstallButton}
@@ -199,6 +251,7 @@ export default function InstallButton({
         >
           Uninstall
         </button>
+        {notice}
       </span>
     );
   }
@@ -211,7 +264,7 @@ export default function InstallButton({
           className={styles.button}
           data-state="update"
           aria-label={`Update ${appName}`}
-          onClick={runSimulatedInstall}
+          onClick={() => runSimulatedInstall()}
         >
           Update
         </button>
@@ -234,7 +287,7 @@ export default function InstallButton({
       data-state="idle"
       aria-live="polite"
       aria-label={`Install ${appName}`}
-      onClick={runSimulatedInstall}
+      onClick={() => runSimulatedInstall()}
     >
       <span className={styles.label}>Install</span>
     </button>

@@ -167,3 +167,15 @@
   }
 }
 
+
+/* "Open" as a link (Android intent) looks exactly like the button. */
+a.button {
+  text-decoration: none;
+}
+
+/* Shown once after the Open link's fallback restarted the download. */
+.notice {
+  align-self: center;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
