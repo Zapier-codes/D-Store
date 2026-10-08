@@ -35,6 +35,6 @@
 
 .message {
   margin: 0;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   line-height: 1.5;
 }

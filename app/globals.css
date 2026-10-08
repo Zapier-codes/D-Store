@@ -59,6 +59,18 @@
   --color-text: #f2ece0;
 
   /*
+   * --color-text-muted — secondary text (captions, ratings rows, table headers, notices, footers).
+   * Those rules used to take --color-border, a hairline colour only 1.20:1 from the page, so the
+   * text was close to invisible. Contrast (sRGB relative luminance): #a8a08f is 7.66:1 vs --color-bg
+   * and 7.13:1 vs --color-surface, well above the 4.5:1 AA floor, and still clearly quieter than
+   * --color-text.
+   */
+  --color-text-muted: #a8a08f;
+
+  /* --color-star-empty — an unfilled rating star: 3.83:1 vs --color-bg, 3.56:1 vs --color-surface (3:1 is the bar for graphics). */
+  --color-star-empty: #736c5f;
+
+  /*
    * --color-error — leaf 3.d.i.zi (WCAG 2.1 AA contrast audit). Was a
    * hardcoded #c94b4b in the two admin form-validation stylesheets
    * (app/admin/featuring, app/admin/sponsored), which doesn't re-theme
@@ -154,6 +166,13 @@
    * copy of the dark theme's warm off-white — see contrast ratios in
    * the header comment above. */
   --color-text: #12151c;
+
+  /* --color-text-muted — see the dark theme's note. #4f5868 is 6.75:1 vs --color-bg, 7.17:1 vs
+   * --color-surface and 5.25:1 vs --color-border, so it also stays readable on hairline-tinted fills. */
+  --color-text-muted: #4f5868;
+
+  /* --color-star-empty — 3.36:1 vs --color-bg, 3.57:1 vs --color-surface. */
+  --color-star-empty: #7f8898;
 
   /* --color-error — leaf 3.d.i.zi. Same fix as the dark-theme token
    * above: the hardcoded #c94b4b it replaces also failed AA here

@@ -187,7 +187,7 @@ export default async function AppDetailPage({
                 <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.statMuted} />
               )}
               <span className={styles.statMuted}>
-                {isNotProvided(app, "content_rating") ? "Rating not provided" : app.content_rating}
+                {isNotProvided(app, "content_rating") ? "Content rating not provided" : app.content_rating}
               </span>
               {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
               {originLabel && <ThirdPartyBadge label={originLabel} />}

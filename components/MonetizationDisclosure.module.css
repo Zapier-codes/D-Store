@@ -6,6 +6,6 @@
  */
 .line {
   font-size: 0.8rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   margin: 0.35rem 0 0;
 }

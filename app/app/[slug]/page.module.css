@@ -60,7 +60,7 @@
 
 .summary {
   margin: 0;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   font-size: 0.95rem;
   overflow-wrap: anywhere;
 }
@@ -114,7 +114,7 @@
 }
 
 .statMuted {
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .badge {
@@ -129,7 +129,7 @@
 /* Size/version/min-Android — sits beside the Install button, not inside it, so InstallButton's own label/state machine (3.a.iv.zi) stays untouched. */
 .installMeta {
   font-size: 0.8rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   overflow-wrap: anywhere;
 }
 

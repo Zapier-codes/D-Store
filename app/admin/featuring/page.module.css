@@ -26,7 +26,7 @@
 .subheading {
   margin: -1rem 0 0;
   font-size: 0.9rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .table {
@@ -44,7 +44,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--color-border);
 }

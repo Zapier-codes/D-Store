@@ -3,6 +3,7 @@ import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
 import { thirdPartyLabel, isThirdParty, sourceName } from "@/lib/trust";
 import { reportedStatsFor } from "@/lib/third-party-stats";
+import { combinedRating } from "@/lib/carried-over-stats";
 import styles from "./AppCard.module.css";
 
 /**
@@ -92,6 +93,9 @@ export default function AppCard({
 }) {
   const thirdParty = isThirdParty(app);
   const reportedRating = reportedStatsFor(app)?.rating ?? null;
+  // Task 45b — a first-party app with carried-over history shows the combined average (the same number its
+  // Hero and detail page show), not this store's own 0.0. No carried-over history: the store-native figure.
+  const firstPartyAverage = combinedRating(app)?.average ?? app.avg_rating;
 
   return (
     <Link href={`/app/${app.slug}`} className={styles.card}>
@@ -116,7 +120,7 @@ export default function AppCard({
         <p className={styles.meta}>
           {!thirdParty && (
             <span className={styles.rating}>
-              <span aria-hidden="true">★</span> {app.avg_rating.toFixed(1)}
+              <span aria-hidden="true">★</span> {firstPartyAverage.toFixed(1)}
             </span>
           )}
           {thirdParty && reportedRating !== null && reportedRating.total > 0 && (

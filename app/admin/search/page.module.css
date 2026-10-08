@@ -26,7 +26,7 @@
 .subheading {
   margin: -1.25rem 0 0;
   font-size: 0.9rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .sectionHeading {
@@ -60,7 +60,7 @@
 .statLabel {
   margin: 0.2rem 0 0;
   font-size: 0.8rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .empty {
@@ -69,7 +69,7 @@
   border: 1px solid var(--color-border);
   border-radius: 12px;
   font-size: 0.9rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .chart {
@@ -114,7 +114,7 @@
 .chartValue {
   font-size: 0.75rem;
   text-align: right;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -133,7 +133,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--color-border);
 }

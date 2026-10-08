@@ -83,5 +83,5 @@
 .count {
   margin: 0;
   font-size: 0.7rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }

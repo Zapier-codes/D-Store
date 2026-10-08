@@ -22,7 +22,7 @@
 .subheading {
   margin: -1rem 0 0;
   font-size: 0.9rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 /* Third-party section heading — leaf 5.h.viii.zo. Same weight as .heading,

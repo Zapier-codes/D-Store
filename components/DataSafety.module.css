@@ -72,5 +72,5 @@
   border-top: 1px solid var(--color-border);
   list-style: none;
   font-size: 0.85rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }

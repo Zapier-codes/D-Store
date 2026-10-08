@@ -103,7 +103,7 @@ export default function Hero({ app }: { app: App }) {
               // neutral base_stats) folded in as ONE Play-Store-style total, no label.
               <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.metaMuted} />
             )}
-            <span className={styles.metaMuted}>{app.license}</span>
+            <span className={styles.metaMuted}>{app.license === "Not provided" ? "License not provided" : app.license}</span>
           </div>
         </div>
 

@@ -168,7 +168,7 @@ async function getPublicStatsFromTable(): Promise<PublicStats | null> {
     }
     const value: PublicStats = {
       totalApps: firstParty.length + counted.total,
-      totalDownloads: firstParty.reduce((sum, app) => sum + app.install_count, 0),
+      totalDownloads: firstParty.reduce((sum, app) => sum + rankableDownloads(app), 0),
     };
     publicStatsByScope.set(key, { at: Date.now(), value });
     return value;
@@ -248,7 +248,7 @@ export async function getPublicStats(): Promise<PublicStats> {
   const firstParty = await getFirstPartyList();
   return {
     totalApps: firstParty.length,
-    totalDownloads: firstParty.reduce((sum, app) => sum + app.install_count, 0),
+    totalDownloads: firstParty.reduce((sum, app) => sum + rankableDownloads(app), 0),
   };
 }
 

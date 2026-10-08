@@ -56,7 +56,7 @@
 }
 
 .starEmpty {
-  color: var(--color-border);
+  color: var(--color-star-empty);
 }
 
 .submit {

@@ -39,7 +39,7 @@
 }
 
 .starOff {
-  color: var(--color-border, rgba(127, 127, 127, 0.4));
+  color: var(--color-star-empty);
 }
 
 .body {

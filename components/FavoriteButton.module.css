@@ -17,7 +17,7 @@
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background-color: transparent;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   font: inherit;
   font-weight: 600;
   cursor: pointer;

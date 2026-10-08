@@ -71,7 +71,7 @@
 
 .clear {
   font-size: 0.85rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   text-decoration: underline;
 }
 

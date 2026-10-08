@@ -22,7 +22,7 @@
   padding: 1.25rem 1rem;
   flex-wrap: wrap;
   font-size: 0.85rem;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 /* No `nowrap` on either line: on a narrow phone a long line must wrap, not widen the page. */
@@ -32,7 +32,7 @@
 
 .stats {
   min-width: 0;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .legal {
