@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
-import FirstPartyStats from "./FirstPartyStats";
+import CountUp from "./CountUp";
+import HeroTilt from "./HeroTilt";
+import { combinedDownloadTotal, combinedRating } from "@/lib/carried-over-stats";
 import HeroCarousel from "./HeroCarousel";
 import styles from "./Hero.module.css";
 
@@ -30,6 +32,12 @@ import styles from "./Hero.module.css";
  * above the fold; the others are off to the side and stay lazy.
  *
  * The first card's name is the page's `<h1>` (it always was); later cards use `<h2>`.
+ *
+ * Operator-directed 2026-10-08 (card grew, so the detail grew with it): the name is 3D glass type (see
+ * `.name` in Hero.module.css), every button-like item is a transparent glass pill, the downloads figure is
+ * a large animated counter in its own stat column (no empty space on the right), and the card tilts toward
+ * a mouse pointer with a light glare (`HeroTilt`). The whole card is still one link; the "Get" pill is a
+ * visual cue, not a second control.
  */
 export default function Hero({ apps }: { apps: App[] }) {
   if (apps.length === 0) return null;
@@ -41,6 +49,14 @@ export default function Hero({ apps }: { apps: App[] }) {
       ))}
     </HeroCarousel>
   );
+}
+
+function titleCase(slug: string): string {
+  return slug
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function HeroCard({ app, first }: { app: App; first: boolean }) {
@@ -55,36 +71,77 @@ function HeroCard({ app, first }: { app: App; first: boolean }) {
 
   const Heading = first ? "h1" : "h2";
 
+  // First-party only (lib/hero.ts): store-native figures with any carried-over history folded in (Task 45b).
+  const rating = combinedRating(app);
+  const average = rating?.average ?? app.avg_rating;
+  const ratingCount = rating?.count ?? app.rating_count;
+  const carried = combinedDownloadTotal(app);
+  const downloads = carried ?? app.install_count;
+  const downloadsVariant = carried === null ? "exact" : "short";
+  const downloadsLabel = carried === null ? "Installs" : "Downloads";
+  const category = app.category && app.category !== "uncategorized" ? titleCase(app.category) : null;
+  const hasLicense = Boolean(app.license) && app.license !== "Not provided";
+
   return (
-    <Link href={`/app/${app.slug}`} className={styles.card} style={backgroundStyle} aria-label={`${app.name}, featured app`}>
-      <div className={styles.flare} aria-hidden="true" />
+    <HeroTilt className={styles.tilt}>
+      <Link href={`/app/${app.slug}`} className={styles.card} style={backgroundStyle} aria-label={`${app.name}, featured app`}>
+        <div className={styles.flare} aria-hidden="true" />
+        <div className={styles.glare} aria-hidden="true" />
 
-      <div className={styles.panel}>
-        <div className={styles.icon}>
-          <AppIcon
-            name={app.name}
-            primaryColor={app.primary_color}
-            secondaryColor={app.secondary_color}
-            tertiaryColor={app.tertiary_color}
-            src={app.icon}
-            sizes="120px"
-            priority={first}
-          />
-        </div>
+        <div className={styles.panel}>
+          <div className={styles.iconWrap}>
+            <div className={styles.icon}>
+              <AppIcon
+                name={app.name}
+                primaryColor={app.primary_color}
+                secondaryColor={app.secondary_color}
+                tertiaryColor={app.tertiary_color}
+                src={app.icon}
+                sizes="140px"
+                priority={first}
+              />
+            </div>
+            <div className={styles.iconGlow} aria-hidden="true" style={{ background: app.primary_color }} />
+          </div>
 
-        <div className={styles.content}>
-          <div className={styles.eyebrow}>Featured</div>
-          <Heading className={styles.name}>{app.name}</Heading>
-          <div className={styles.summary}>{app.summary}</div>
+          <div className={styles.content}>
+            <div className={styles.pills}>
+              <span className={`${styles.pill} ${styles.pillAccent}`}>
+                <span aria-hidden="true">✦</span> Featured
+              </span>
+              {category && <span className={styles.pill}>{category}</span>}
+            </div>
 
-          <div className={styles.meta}>
-            {/* First-party only (lib/hero.ts), so always the store-native figures, with any carried-over
-                history folded in as one Play-Store-style total (Task 45b). */}
-            <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.metaMuted} />
-            {app.license && app.license !== "Not provided" && <span className={styles.metaMuted}>{app.license}</span>}
+            <span className={styles.nameWrap}>
+              <Heading className={styles.name}>{app.name}</Heading>
+            </span>
+            <div className={styles.summary}>{app.summary}</div>
+
+            <div className={styles.pills}>
+              <span className={`${styles.pill} ${styles.pillStar}`}>
+                <span aria-hidden="true">★</span> {average.toFixed(1)}
+                <span className={styles.pillMuted}> ({ratingCount.toLocaleString()})</span>
+              </span>
+              {app.version && <span className={styles.pill}>v{app.version}</span>}
+              {app.size_mb > 0 && <span className={styles.pill}>{Math.round(app.size_mb * 10) / 10} MB</span>}
+              {app.min_android_version && app.min_android_version !== "Not provided" && (
+                <span className={`${styles.pill} ${styles.pillOptional}`}>{app.min_android_version}+</span>
+              )}
+              {hasLicense && <span className={`${styles.pill} ${styles.pillOptional}`}>{app.license}</span>}
+            </div>
+          </div>
+
+          <div className={styles.stat}>
+            <div className={styles.statValue}>
+              <CountUp target={downloads} variant={downloadsVariant} />
+            </div>
+            <div className={styles.statLabel}>{downloadsLabel}</div>
+            <span className={`${styles.pill} ${styles.pillGet}`} aria-hidden="true">
+              Get <span className={styles.arrow}>→</span>
+            </span>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </HeroTilt>
   );
 }
