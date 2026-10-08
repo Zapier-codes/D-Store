@@ -7,14 +7,22 @@
  * fade/scale-in is gated behind prefers-reduced-motion, the same
  * convention used by the theme transition (0.b.iii.zo) and hero reveal
  * (0.d.i.zo).
+ *
+ * Slice 3 of the details page rework (operator-directed 2026-10-08): the box is sized by the viewport's height (a
+ * shot is never taller than the screen, and a landscape one is 16:9 up to 880px wide), the dialog no longer clips
+ * the close button and counter that sit just outside the box, the controls are dark glass pills whose focus ring
+ * is white (the scrim is always near-black, so a light ring has the contrast in both themes), and the buttons
+ * have a larger touch target. Pinch zoom is not built.
  */
 
 .dialog {
   border: none;
   padding: 0;
   margin: auto;
-  max-width: 92vw;
-  max-height: 92vh;
+  max-width: 96vw;
+  max-height: 96dvh;
+  overflow: visible;
+  touch-action: pan-y; /* the page may scroll vertically; horizontal moves are the swipe handled in JS */
   background: transparent;
   color: inherit;
 }
@@ -62,20 +70,26 @@
 
 .closeButton {
   position: absolute;
-  top: -2.75rem;
+  top: -3rem;
   right: 0;
-  background: none;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
   color: #fff;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0;
 }
 
 .closeButton:focus-visible,
 .navButton:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid #fff;
   outline-offset: 2px;
   border-radius: 999px;
 }
@@ -105,13 +119,14 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   color: #fff;
   font-size: 1.75rem;
   line-height: 1;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 999px;
   cursor: pointer;
   display: flex;
@@ -129,16 +144,27 @@
 
 @media (min-width: 768px) {
   .prevButton {
-    left: -3.5rem;
+    left: -3.75rem;
   }
 
   .nextButton {
-    right: -3.5rem;
+    right: -3.75rem;
+  }
+}
+
+/* Forced colours: real borders and text colours, not tints. */
+@media (forced-colors: active) {
+  .closeButton,
+  .navButton {
+    border-color: ButtonText;
+    color: ButtonText;
+    background: ButtonFace;
   }
 }
 
 .placeholder {
-  width: min(80vw, 360px);
+  height: min(78dvh, 720px);
+  max-width: 90vw;
   aspect-ratio: 9 / 16;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -156,12 +182,31 @@
  * `.frame`/`.placeholder` pairing.
  */
 .frame {
-  width: min(80vw, 360px);
+  height: min(78dvh, 720px);
+  max-width: 90vw;
   aspect-ratio: 9 / 16;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
   overflow: hidden;
+}
+
+/* A landscape shot (the gallery saw it is wider than tall): 16:9, width-led, never taller than the screen. */
+.landscape {
+  height: auto;
+  width: min(92vw, 880px);
+  max-height: 78dvh;
+  aspect-ratio: 16 / 9;
+}
+
+/* Neighbouring shots fetched ahead; takes no room and is never seen. */
+.preload {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .placeholderLabel {
@@ -177,6 +222,7 @@
   transform: translateX(-50%);
   color: #fff;
   font-size: 0.85rem;
-  opacity: 0.8;
+  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
   margin: 0;
 }

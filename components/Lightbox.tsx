@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import Image from "next/image";
 import { isRealImageUrl, isOptimizableImageUrl } from "@/lib/image";
+import { neighbourIndexes, swipeStep, wrapIndex, type SlideShape } from "@/lib/gallery";
 import styles from "./Lightbox.module.css";
 
 /**
@@ -33,6 +34,14 @@ import styles from "./Lightbox.module.css";
  * of the colored placeholder. Omitted or a non-real entry falls
  * through to the placeholder exactly as before, so this stays
  * source-compatible with any caller that doesn't pass `screenshots`.
+ *
+ * Slice 3 of the details page rework (operator-directed 2026-10-08) adds: a horizontal swipe on touch and pen
+ * (`swipeStep`, a vertical drag is left alone); the box takes the landscape shape the gallery already saw
+ * (`shapes`) and sizes by the viewport's height so a shot is never taller than the screen; the neighbours of the
+ * open shot are fetched ahead (hidden `<Image>`s, `neighbourIndexes`) so an arrow press shows a ready image; the
+ * close, arrow and counter controls are glass pills with a visible focus ring. Kept: the native `<dialog>` (focus
+ * trap, Escape, focus returned to the shot that opened it), arrow keys, click outside to close. Pinch zoom is
+ * not built (it needs a gesture layer; recorded in the handover as not done).
  */
 
 export interface LightboxProps {
@@ -43,6 +52,8 @@ export interface LightboxProps {
   colors: string[];
   /** Parallel array to `colors`/screenshot index; a real `https://` URL renders the actual image instead of the placeholder. */
   screenshots?: string[];
+  /** Shapes the gallery has seen so far (index to "landscape"); anything absent is portrait. */
+  shapes?: Record<number, SlideShape>;
   initialIndex: number;
   onClose: () => void;
 }
@@ -54,6 +65,7 @@ export default function Lightbox({
   screenshotCount,
   colors,
   screenshots,
+  shapes,
   initialIndex,
   onClose,
 }: LightboxProps) {
@@ -80,7 +92,7 @@ export default function Lightbox({
       if (event.key === "ArrowRight") {
         setIndex((current) => (current + 1) % screenshotCount);
       } else if (event.key === "ArrowLeft") {
-        setIndex((current) => (current - 1 + screenshotCount) % screenshotCount);
+        setIndex((current) => wrapIndex(current - 1, screenshotCount));
       }
     }
     const dialog = dialogRef.current;
@@ -99,8 +111,26 @@ export default function Lightbox({
     }
   }
 
+  // Swipe: touch and pen only (a mouse drag selects nothing useful here and the arrows exist). The start point is
+  // kept in a ref; a short or mostly vertical move does nothing.
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+
+  function onPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse") return;
+    swipeStart.current = { x: event.clientX, y: event.clientY };
+  }
+
+  function onPointerUp(event: PointerEvent<HTMLDivElement>) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start || screenshotCount < 2) return;
+    const step = swipeStep(event.clientX - start.x, event.clientY - start.y);
+    if (step === -1) goToNext();
+    else if (step === 1) goToPrevious();
+  }
+
   function goToPrevious() {
-    setIndex((current) => (current - 1 + screenshotCount) % screenshotCount);
+    setIndex((current) => wrapIndex(current - 1, screenshotCount));
   }
 
   function goToNext() {
@@ -111,6 +141,11 @@ export default function Lightbox({
   const textColor = color === primaryColor ? secondaryColor : primaryColor;
   const hasMultiple = screenshotCount > 1;
   const realSrc = screenshots?.[index];
+  const landscape = shapes?.[index] === "landscape";
+  const shapeClass = landscape ? styles.landscape : "";
+  const ahead = neighbourIndexes(index, screenshotCount)
+    .map((i) => screenshots?.[i])
+    .filter((src): src is string => isRealImageUrl(src));
 
   return (
     <dialog
@@ -120,7 +155,14 @@ export default function Lightbox({
       onClick={handleDialogClick}
       aria-label={`${appName} screenshot ${index + 1} of ${screenshotCount}, full size`}
     >
-      <div className={styles.content}>
+      <div
+        className={styles.content}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => {
+          swipeStart.current = null;
+        }}
+      >
         <button
           type="button"
           className={styles.closeButton}
@@ -142,19 +184,19 @@ export default function Lightbox({
         )}
 
         {isRealImageUrl(realSrc) ? (
-          <div className={styles.frame}>
+          <div className={`${styles.frame} ${shapeClass}`}>
             <Image
               src={realSrc}
               alt={`${appName} — Screenshot ${index + 1}`}
               fill
               unoptimized={!isOptimizableImageUrl(realSrc)}
-              sizes="min(80vw, 360px)"
+              sizes={landscape ? "(min-width: 900px) 880px, 92vw" : "(min-width: 768px) 420px, 80vw"}
               style={{ objectFit: "cover" }}
             />
           </div>
         ) : (
           <div
-            className={styles.placeholder}
+            className={`${styles.placeholder} ${shapeClass}`}
             style={{ backgroundColor: color, color: textColor }}
           >
             <span className={styles.placeholderLabel}>
@@ -172,6 +214,23 @@ export default function Lightbox({
           >
             ›
           </button>
+        )}
+
+        {ahead.length > 0 && (
+          <div className={styles.preload} aria-hidden="true">
+            {ahead.map((src) => (
+              <Image
+                key={src}
+                src={src}
+                alt=""
+                width={16}
+                height={16}
+                unoptimized={!isOptimizableImageUrl(src)}
+                sizes="(min-width: 768px) 420px, 80vw"
+                loading="eager"
+              />
+            ))}
+          </div>
         )}
 
         {hasMultiple && (

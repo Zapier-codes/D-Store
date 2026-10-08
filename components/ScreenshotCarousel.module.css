@@ -1,34 +1,137 @@
 /*
- * Screenshot carousel styles — leaf 0.e.i.zi.
+ * Screenshot gallery: operator-directed 2026-10-08, slice 3 of the details page rework. See ScreenshotCarousel.tsx.
+ * (Leaf 0.e.i.zi created the native scroll-snap row; the row is still plain CSS scroll-snap, so swiping and
+ * trackpad scrolling need no JavaScript.)
  *
- * `scroll-snap-type: x mandatory` on the track + `scroll-snap-align:
- * start` on each slide is what makes this swipeable without any JS —
- * see the component doc comment. `scroll-behavior: smooth` only
- * affects *programmatic* scrolls (there are none yet, this is a plain
- * server component), so it isn't gated behind
- * prefers-reduced-motion the way the reveal/theme transitions are;
- * nothing here auto-plays or animates on its own.
+ * Family look comes from the shared glass layer: the section takes the accent `scope` (text-safe accent for the
+ * focus ring) and the arrow buttons use the surface tint and hairline accent border of the glass pills. Only ONE
+ * blurred layer exists (`.ambient`, behind the row); the arrows are plain tinted surfaces, with no backdrop blur of
+ * their own, so a mid-range phone never stacks blurs. Only opacity and transform animate, nothing loops.
+ *
+ * Sizing: slides are sized by HEIGHT (`--shot-h`), width follows from the aspect ratio, so portrait and landscape
+ * shots share one row height and the section's height never changes while images load.
  */
 
+.gallery {
+  composes: scope from "./glass/glass.module.css";
+  --shot-h: clamp(320px, 96vw, 440px);
+  /* The page's side padding (page.module.css: 1rem, 0.75rem up to 480px, 1.5rem from 768px); the row bleeds into it. */
+  --bleed: 1rem;
+  position: relative;
+  isolation: isolate;
+}
+
+@media (max-width: 480px) {
+  .gallery {
+    --bleed: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .gallery {
+    --shot-h: 440px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .gallery {
+    --shot-h: 480px;
+  }
+}
+
+.title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* ---- Ambient light: the active shot, blurred, behind the row ---------------------------------------- */
+
+/*
+ * One wrapper carries the blur; its layers only fade (opacity). It reaches past the page padding so the glow is
+ * edge to edge on a phone, and fades out at the top (under the heading, so heading contrast is unchanged) and at
+ * the bottom. Low opacity, and lower in light mode, keeps the shots themselves the brightest thing in the section.
+ */
+.ambient {
+  position: absolute;
+  z-index: -1;
+  inset: 1.5rem calc(var(--bleed) * -1) -0.75rem;
+  overflow: hidden;
+  filter: blur(36px) saturate(1.25);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 75%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 75%, transparent 100%);
+}
+
+.ambientLayer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transform: scale(1.15);
+}
+
+.ambientOn {
+  opacity: 0.5;
+}
+
+:global([data-theme="light"]) .ambientOn {
+  opacity: 0.32;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ambientLayer {
+    transition: opacity 420ms ease;
+  }
+}
+
+/* No blur or extra paint for people who asked for less transparency or forced colours. */
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .ambient {
+    display: none;
+  }
+}
+
+/* ---- The row ----------------------------------------------------------------------------------------- */
+
 .carousel {
+  position: relative;
   width: 100%;
 }
 
 .track {
+  position: relative; /* slides' offsetLeft is measured from the track */
   display: flex;
   gap: 0.75rem;
   margin: 0;
-  padding: 0 0 0.5rem;
+  /* Edge to edge on a phone: the row bleeds into the page padding, and the first and last shots still line up with the text. */
+  margin-inline: calc(var(--bleed) * -1);
+  padding: 0.5rem var(--bleed) 0.75rem;
   list-style: none;
 
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
+  scroll-padding-inline: var(--bleed);
   -webkit-overflow-scrolling: touch;
 
-  /* Keep the scrollbar visually out of the way without hiding it entirely (still keyboard/AT operable). */
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
+  scrollbar-color: var(--color-text-muted) transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .track {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (min-width: 768px) {
+  .track {
+    margin-inline: 0;
+    padding-inline: 0;
+    scroll-padding-inline: 0;
+  }
 }
 
 .slide {
@@ -37,84 +140,148 @@
   scroll-snap-stop: always;
 }
 
-/*
- * Slide button — leaf 0.e.i.zo. Each slide's placeholder tile is now
- * wrapped in a real <button> (opens the Lightbox at that index), so
- * this strips default button chrome back down to "look exactly like
- * the 0.e.i.zi placeholder did" and adds a focus ring for keyboard
- * users, since a bare <div> had no focus state to begin with.
- */
+/* Tilt.tsx's wrapper: perspective and the --rx/--ry variables (mouse only; nothing happens on touch). */
+.tilt {
+  display: block;
+}
+
 .slideButton {
   display: block;
-  width: 100%;
   padding: 0;
   border: none;
   background: none;
   font: inherit;
   color: inherit;
   text-align: inherit;
-  cursor: pointer;
+  cursor: zoom-in;
+  border-radius: 18px;
 }
 
 .slideButton:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: 16px;
+  outline: 2px solid var(--glass-accent-text);
+  outline-offset: 3px;
 }
 
-/* Press state — leaf 3.a.ii.zi. */
+/*
+ * The reserved box: height from --shot-h, width from the aspect ratio. Portrait is the default (the data has no
+ * dimensions); `.landscape` is added once the image itself reports it is wider than tall.
+ */
+.frame {
+  position: relative;
+  overflow: hidden;
+  height: var(--shot-h);
+  aspect-ratio: 9 / 16;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--glass-accent) 28%, var(--color-border));
+  background-color: var(--color-surface);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.landscape {
+  aspect-ratio: 16 / 9;
+}
+
+/* Never wider than the row: a very wide shot is cropped by `object-fit: cover`, not allowed to widen the page. */
+.frame {
+  max-width: calc(100vw - 2.5rem);
+}
+
+@media (min-width: 768px) {
+  .frame {
+    max-width: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  .slideButton {
-    transition: transform 100ms ease;
+  .frame {
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 140ms ease-out;
   }
 
-  .slideButton:active {
-    transform: scale(0.97);
+  .slideButton:active .frame {
+    transform: scale(0.98);
   }
 }
 
 .placeholder {
-  /* Portrait phone-screenshot aspect ratio. */
-  width: 62vw;
-  max-width: 220px;
-  aspect-ratio: 9 / 16;
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-
   display: flex;
   align-items: flex-end;
   padding: 0.75rem;
   box-sizing: border-box;
 }
 
-/*
- * Real-screenshot frame — leaf 3.d.ii.zi. Same box (size/aspect-ratio/
- * border-radius/border) as `.placeholder` above so a real image slots
- * into an identically-shaped slide, plus `position: relative` +
- * `overflow: hidden` to anchor and clip `next/image`'s `fill` layer —
- * the one thing a flex-centered placeholder box never needed.
- */
-.frame {
-  width: 62vw;
-  max-width: 220px;
-  aspect-ratio: 9 / 16;
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-  position: relative;
-  overflow: hidden;
-}
-
 .placeholderLabel {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   line-height: 1.3;
-  opacity: 0.85;
 }
 
-@media (min-width: 768px) {
-  .placeholder,
-  .frame {
-    max-width: 260px;
+/* ---- Prev / next (mouse and trackpad users; touch swipes) ------------------------------------------- */
+
+.arrow {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-top: -1.25rem;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--glass-accent) 45%, var(--color-border));
+    background-color: color-mix(in srgb, var(--color-surface) 82%, transparent);
+    color: var(--color-text);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+
+  .arrowPrev {
+    left: 0.5rem;
+  }
+
+  .arrowNext {
+    right: 0.5rem;
+  }
+
+  .arrow:hover:not(:disabled) {
+    border-color: var(--glass-accent-text);
+  }
+
+  .arrow:focus-visible {
+    outline: 2px solid var(--glass-accent-text);
+    outline-offset: 2px;
+  }
+
+  /* At either end the button steps aside instead of showing a dead control. */
+  .arrow:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .arrow {
+    transition: opacity 160ms ease, transform 100ms ease;
+  }
+
+  .arrow:active:not(:disabled) {
+    transform: scale(0.92);
+  }
+}
+
+@media (forced-colors: active) {
+  .frame,
+  .arrow {
+    border-color: CanvasText;
   }
 }
 

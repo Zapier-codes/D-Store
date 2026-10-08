@@ -129,12 +129,8 @@ export default async function AppDetailPage({
           categoryName={category?.name ?? null}
         />
 
-        <section aria-labelledby="screenshots-heading">
-          <h2 id="screenshots-heading" className={styles.sectionTitle}>
-            Screenshots
-          </h2>
-          <ScreenshotCarousel app={app} />
-        </section>
+        {/* The gallery owns its section and heading and renders nothing when the app has no screenshots. */}
+        <ScreenshotCarousel app={app} />
 
         <section aria-labelledby="description-heading">
           <h2 id="description-heading" className={styles.sectionTitle}>
