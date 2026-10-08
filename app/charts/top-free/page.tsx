@@ -1,6 +1,6 @@
 import { CatalogUnavailableError, getTopFreeApps, getTopFreePage, type App, type TopFreePage } from "@/lib/catalog";
 import { parseRankOffset } from "@/lib/apps-page";
-import { isThirdParty, sourceName } from "@/lib/trust";
+import { isThirdParty } from "@/lib/trust";
 import ShelfGrid from "@/components/ShelfGrid";
 import AppCard from "@/components/AppCard";
 import Pager from "@/components/Pager";
@@ -88,7 +88,6 @@ export default async function TopFreeChartPage({
     const apps = await getTopFreeApps();
     firstParty = apps.filter((app) => !isThirdParty(app));
   }
-  const thirdPartySource = thirdParty[0] ? sourceName(thirdParty[0]) : "";
 
   return (
     <main className={styles.main}>
@@ -107,11 +106,6 @@ export default async function TopFreeChartPage({
 
       {thirdParty.length > 0 && (
         <>
-          <h2 className={styles.sectionHeading}>Third-party apps</h2>
-          <p className={styles.subheading}>
-            Ranked by downloads reported by {thirdPartySource}, not by D-Store installs, so these
-            numbers are not comparable with the list above.
-          </p>
           <ShelfGrid>
             {thirdParty.map((app, index) => (
               <AppCard key={app.slug} app={app} rank={thirdPartyOffset + index + 1} />

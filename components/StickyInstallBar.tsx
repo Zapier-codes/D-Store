@@ -64,7 +64,7 @@ export default function StickyInstallBar({
   /** 5.g.ii.zi — stable download URL from the Console's signed index (`App.apk`), forwarded to this bar's own `InstallButton` instance. */
   apkUrl: string;
   /** 5.h.iii.zi — when set, render the real download link instead of the simulated install button. */
-  thirdParty?: { downloadUrl: string; sourceName: string };
+  thirdParty?: { downloadUrl: string };
   /** 5.c.iv.zo — forwarded straight through to this bar's own `InstallButton` instance, same as `apkUrl` above. */
   releaseId: string;
   rolloutPercentage: number;
@@ -115,7 +115,6 @@ export default function StickyInstallBar({
           appSlug={appSlug}
           appName={appName}
           downloadUrl={thirdParty.downloadUrl}
-          sourceName={thirdParty.sourceName}
         />
       ) : (
         <InstallButton

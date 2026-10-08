@@ -25,8 +25,7 @@ import AppStructuredData from "@/components/AppStructuredData";
 import ViewPing from "@/components/ViewPing";
 import ViewHistoryRecorder from "@/components/ViewHistoryRecorder";
 import ThirdPartyDownloadButton from "@/components/ThirdPartyDownloadButton";
-import ThirdPartyNotice, { ThirdPartyBadge } from "@/components/ThirdPartyNotice";
-import { isThirdParty, thirdPartyLabel, sourceName, isNotProvided, isVerifiedDeveloper } from "@/lib/trust";
+import { isThirdParty, isNotProvided, isVerifiedDeveloper } from "@/lib/trust";
 import { reportedStatsFor } from "@/lib/third-party-stats";
 import ReportedStats from "@/components/ReportedStats";
 import styles from "./page.module.css";
@@ -118,7 +117,6 @@ export default async function AppDetailPage({
   // claims: no "Verify this APK" block, no simulated install, and the
   // download goes to the source's own delivery. See lib/trust.ts.
   const thirdParty = isThirdParty(app);
-  const originLabel = thirdPartyLabel(app);
   const developerName = developer?.name ?? app.developer_name ?? null;
   // Task 45d — this store's own live reviews, merged with the app's carried-over comments in ReviewsList.
   const liveReviews = await getLiveReviews(app.slug);
@@ -172,7 +170,6 @@ export default async function AppDetailPage({
                 // reported by its source; the store-native 0.0 (0) / 0+ installs are not shown.
                 <ReportedStats
                   stats={reportedStatsFor(app)}
-                  sourceName={sourceName(app)}
                   ratingClassName={styles.rating}
                   mutedClassName={styles.statMuted}
                 />
@@ -186,7 +183,6 @@ export default async function AppDetailPage({
                 <span className={styles.statMuted}>{app.content_rating}</span>
               )}
               {app.is_editors_pick && <span className={styles.badge}>Editors&rsquo; Pick</span>}
-              {originLabel && <ThirdPartyBadge label={originLabel} />}
             </div>
 
             {/* 5.c.viii.zo -- shown once, above the install area, so a visitor reads it
@@ -200,7 +196,6 @@ export default async function AppDetailPage({
                   appSlug={app.slug}
                   appName={app.name}
                   downloadUrl={app.apk}
-                  sourceName={sourceName(app)}
                 />
               ) : (
                 <InstallButton
@@ -225,7 +220,6 @@ export default async function AppDetailPage({
               hasInAppPurchases={app.has_in_app_purchases}
               notProvided={isNotProvided(app, "monetization")}
             />
-            {thirdParty && <ThirdPartyNotice sourceName={sourceName(app)} scanRank={app.third_party_scan_rank} />}
           </div>
         </header>
 
@@ -260,12 +254,15 @@ export default async function AppDetailPage({
           <ReviewsList app={app} liveReviews={liveReviews} />
         </section>
 
-        <section aria-labelledby="permissions-heading">
-          <h2 id="permissions-heading" className={styles.sectionTitle}>
-            Permissions
-          </h2>
-          <PermissionsDisclosure permissions={app.permissions} notProvided={isNotProvided(app, "permissions")} />
-        </section>
+        {/* Operator, 2026-10-08: a section the source gave nothing for is not shown at all. */}
+        {!isNotProvided(app, "permissions") && (
+          <section aria-labelledby="permissions-heading">
+            <h2 id="permissions-heading" className={styles.sectionTitle}>
+              Permissions
+            </h2>
+            <PermissionsDisclosure permissions={app.permissions} notProvided={false} />
+          </section>
+        )}
 
         <section aria-labelledby="report-heading">
           <h2 id="report-heading" className={styles.sectionTitle}>
@@ -297,7 +294,7 @@ export default async function AppDetailPage({
           releaseId={app.release_id}
           rolloutPercentage={app.rollout_percentage}
           packageName={app.package_name}
-          thirdParty={thirdParty ? { downloadUrl: app.apk, sourceName: sourceName(app) } : undefined}
+          thirdParty={thirdParty ? { downloadUrl: app.apk } : undefined}
         />
       </main>
     </CategoryThemeScope>

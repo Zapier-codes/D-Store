@@ -13,12 +13,10 @@ import { formatReportedDownloads } from "@/lib/third-party-stats";
  */
 export default function ReportedStats({
   stats,
-  sourceName,
   ratingClassName,
   mutedClassName,
 }: {
   stats: ThirdPartyStats | null;
-  sourceName: string;
   ratingClassName: string;
   mutedClassName: string;
 }) {
@@ -27,22 +25,20 @@ export default function ReportedStats({
 
   return (
     <>
-      {rating === null ? (
-        <span className={mutedClassName}>Ratings not provided by {sourceName}</span>
-      ) : rating.total === 0 ? (
-        <span className={mutedClassName}>No ratings on {sourceName} yet</span>
+      {rating === null ? null : rating.total === 0 ? (
+        <span className={mutedClassName}>No ratings yet</span>
       ) : (
         <span className={ratingClassName}>
           <span aria-hidden="true">★</span> {rating.average.toFixed(1)}
           <span className={mutedClassName}>
             {" "}
-            ({rating.total.toLocaleString()} {rating.total === 1 ? "rating" : "ratings"} on {sourceName})
+            ({rating.total.toLocaleString()} {rating.total === 1 ? "rating" : "ratings"})
           </span>
         </span>
       )}
       {downloads !== null && (
         <span className={mutedClassName}>
-          {formatReportedDownloads(downloads)} downloads reported by {sourceName}
+          {formatReportedDownloads(downloads)} downloads
         </span>
       )}
     </>

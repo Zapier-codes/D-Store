@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
-import { thirdPartyLabel, isThirdParty, sourceName } from "@/lib/trust";
+import { isThirdParty } from "@/lib/trust";
 import { reportedStatsFor } from "@/lib/third-party-stats";
 import { combinedRating } from "@/lib/carried-over-stats";
 import styles from "./AppCard.module.css";
@@ -128,16 +128,13 @@ export default function AppCard({
               className={styles.rating}
               title={`${reportedRating.average.toFixed(1)} average from ${reportedRating.total.toLocaleString()} ${
                 reportedRating.total === 1 ? "rating" : "ratings"
-              } on ${sourceName(app)}`}
+              }`}
             >
               <span aria-hidden="true">★</span> {reportedRating.average.toFixed(1)}
             </span>
           )}
           {app.is_editors_pick && (
             <span className={styles.badge}>Editors&rsquo; Pick</span>
-          )}
-          {thirdPartyLabel(app) && (
-            <span className={styles.origin}>{thirdPartyLabel(app)}</span>
           )}
         </p>
 

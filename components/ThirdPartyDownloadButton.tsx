@@ -26,12 +26,10 @@ export default function ThirdPartyDownloadButton({
   appSlug,
   appName,
   downloadUrl,
-  sourceName,
 }: {
   appSlug: string;
   appName: string;
   downloadUrl: string;
-  sourceName: string;
 }) {
   if (!downloadUrl) {
     return (
@@ -47,7 +45,7 @@ export default function ThirdPartyDownloadButton({
       className={styles.button}
       target="_blank"
       rel="noopener noreferrer nofollow"
-      aria-label={`Download ${appName} from ${sourceName}`}
+      aria-label={`Download ${appName}`}
       onClick={() => {
         fetch(`/api/apps/${appSlug}/install`, { method: "POST", keepalive: true }).catch(() => {});
       }}

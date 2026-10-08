@@ -1,5 +1,5 @@
 import type { App } from "@/lib/catalog";
-import { isThirdParty, sourceName } from "@/lib/trust";
+import { isThirdParty } from "@/lib/trust";
 import { reportedStatsFor } from "@/lib/third-party-stats";
 import { combinedRating } from "@/lib/carried-over-stats";
 import styles from "./RatingSummary.module.css";
@@ -63,15 +63,12 @@ function syntheticHistogram(avgRating: number, ratingCount: number) {
 
 export default function RatingSummary({ app }: { app: App }) {
   const thirdParty = isThirdParty(app);
-  const source = sourceName(app);
   const reported = thirdParty ? reportedStatsFor(app)?.rating ?? null : null;
 
-  if (thirdParty && (reported === null || reported.total === 0)) {
-    return (
-      <p className={styles.source}>
-        {reported === null ? `Ratings not provided by ${source}.` : `No ratings on ${source} yet.`}
-      </p>
-    );
+  // Operator, 2026-10-08: a source that gave no rating shows nothing; no source is named anywhere.
+  if (thirdParty && reported === null) return null;
+  if (thirdParty && reported !== null && reported.total === 0) {
+    return <p className={styles.source}>No ratings yet.</p>;
   }
 
   const combined = thirdParty ? null : combinedRating(app);
@@ -117,10 +114,6 @@ export default function RatingSummary({ app }: { app: App }) {
             </div>
           ))}
         </div>
-      )}
-
-      {thirdParty && (
-        <p className={styles.source}>Ratings reported by {source}. They are not ratings from D-Store visitors.</p>
       )}
     </div>
   );

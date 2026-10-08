@@ -3,7 +3,7 @@ import type { App } from "@/lib/catalog";
 import AppIcon from "./AppIcon";
 import ReportedStats from "./ReportedStats";
 import FirstPartyStats from "./FirstPartyStats";
-import { isThirdParty, sourceName } from "@/lib/trust";
+import { isThirdParty } from "@/lib/trust";
 import { reportedStatsFor } from "@/lib/third-party-stats";
 import styles from "./Hero.module.css";
 
@@ -94,7 +94,6 @@ export default function Hero({ app }: { app: App }) {
               // 5.h.vii.zo — the source's own figures, labelled as reported; not the store-native 0s.
               <ReportedStats
                 stats={reportedStatsFor(app)}
-                sourceName={sourceName(app)}
                 ratingClassName={styles.rating}
                 mutedClassName={styles.metaMuted}
               />
@@ -103,7 +102,7 @@ export default function Hero({ app }: { app: App }) {
               // neutral base_stats) folded in as ONE Play-Store-style total, no label.
               <FirstPartyStats app={app} ratingClassName={styles.rating} mutedClassName={styles.metaMuted} />
             )}
-            <span className={styles.metaMuted}>{app.license === "Not provided" ? "License not provided" : app.license}</span>
+            {app.license && app.license !== "Not provided" && <span className={styles.metaMuted}>{app.license}</span>}
           </div>
         </div>
 
