@@ -1,0 +1,137 @@
+/*
+ * Ratings panel: operator-directed 2026-10-08, slice 4 of the details page rework. See RatingBoard.tsx.
+ *
+ * The look is the shared glass layer's: the accent `scope` and one `panel`. Text uses --color-text for the figure
+ * and --color-text-muted for captions; graphics (the star meter and the bar fill) use the text-safe accent
+ * (--glass-accent-text), never the decorative one, because a pale sky-blue bar on a light page is under 3:1.
+ * Nothing is painted with the border colour. Only `transform` animates, once.
+ */
+
+.root {
+  composes: scope from "./glass/glass.module.css";
+}
+
+.panel {
+  composes: panel from "./glass/glass.module.css";
+  --glass-radius: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem 2rem;
+  padding: 1.25rem 1.3rem;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 6.5rem;
+  margin-inline: auto;
+}
+
+.average {
+  color: var(--color-text);
+  font-size: clamp(2.6rem, 12vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  /* Tabular digits so the counting figure does not jitter. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* The shared meter sets its own size; this is one class more specific. */
+.summary .meter {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.count {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+/* ---- Real per-star bars (only when the source gave votes) -------------------------------------------- */
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1 1 14rem;
+  min-width: min(14rem, 100%);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 0.9rem minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+}
+
+.rowLabel {
+  color: var(--color-text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  height: 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-text) 14%, transparent);
+  overflow: hidden;
+}
+
+/* Final length by default (server HTML, no JavaScript, reduced motion); scaled from the left, so only transform moves. */
+.fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--glass-accent-text);
+  transform-origin: left center;
+  transform: scaleX(var(--p, 0));
+}
+
+.rowCount {
+  color: var(--color-text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The grow-in: armed = zero length, no transition; shown = back to the final length, easing in, staggered a little. */
+.armed .fill {
+  transform: scaleX(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shown .fill {
+    transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .shown .row:nth-child(2) .fill {
+    transition-delay: 60ms;
+  }
+
+  .shown .row:nth-child(3) .fill {
+    transition-delay: 120ms;
+  }
+
+  .shown .row:nth-child(4) .fill {
+    transition-delay: 180ms;
+  }
+
+  .shown .row:nth-child(5) .fill {
+    transition-delay: 240ms;
+  }
+}
+
+@media (forced-colors: active) {
+  .track {
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+
+  .fill {
+    background: Highlight;
+  }
+}

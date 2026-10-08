@@ -63,3 +63,42 @@ test("rows that scroll sideways cannot widen the page: the stat strip and the ga
   assert.ok(/\.strip\s*\{[^}]*contain:\s*inline-size/.test(read("components/StatStrip.module.css")));
   assert.ok(/\.carousel\s*\{[^}]*contain:\s*inline-size/.test(read("components/ScreenshotCarousel.module.css")));
 });
+
+test("slice 4: no synthesized histogram is left, and the ratings text colours follow the tokens", () => {
+  const summary = read("components/RatingSummary.tsx");
+  assert.ok(!summary.includes("syntheticHistogram"));
+  assert.ok(!summary.includes("Math.exp"));
+  assert.ok(summary.includes("ratingSummaryFor"));
+  const lib = read("lib/ratings.ts");
+  assert.ok(!lib.includes("Math.exp"), "the Gaussian synthesis must not come back");
+  for (const f of ["components/RatingBoard.module.css", "components/RateThisApp.module.css", "components/ReviewsList.module.css", "components/RatingSummary.module.css"]) {
+    const css = read(f);
+    assert.ok(!/(^|[;{\s])color:\s*var\(--color-border\)/.test(css), `${f} paints text with the border colour`);
+    assert.ok(!/opacity:\s*0\.[5-8]\d*\s*;/.test(css) || f.includes("RateThisApp"), `${f} dims text with opacity`);
+  }
+});
+
+test("slice 4: the rating bars end at their final length with no script, and animate only transform, once", () => {
+  const css = read("components/RatingBoard.module.css");
+  assert.ok(css.includes("transform: scaleX(var(--p, 0))"));
+  assert.ok(!/animation\s*:/.test(css) && !/@keyframes/.test(css));
+  assert.ok(css.includes("prefers-reduced-motion: no-preference"));
+  const tsx = read("components/RatingBoard.tsx");
+  assert.ok(tsx.includes('useState<Phase>("static")'));
+  assert.ok(tsx.includes("prefers-reduced-motion: reduce"));
+  assert.ok(tsx.includes("observer.disconnect()"));
+});
+
+test("slice 4: the star picker keeps its radiogroup contract and the request", () => {
+  const src = read("components/RateThisApp.tsx");
+  assert.ok(src.includes('role="radiogroup"') && src.includes('role="radio"'));
+  assert.ok(src.includes("/api/apps/${appSlug}/reviews"));
+  assert.ok(src.includes('"Home"') && src.includes('"End"'));
+  assert.ok(src.includes("starRippleDelay("));
+});
+
+test("slice 4: reviews fold behind a native details element", () => {
+  const src = read("components/ReviewsList.tsx");
+  assert.ok(src.includes("<details") && src.includes("splitReviews("));
+  assert.ok(!src.includes('"use client"'));
+});

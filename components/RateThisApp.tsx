@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
+import { starRippleDelay } from "@/lib/ratings";
 import styles from "./RateThisApp.module.css";
 
 /**
@@ -34,6 +35,13 @@ import styles from "./RateThisApp.module.css";
  * failed ping" posture `InstallButton`/`ViewPing` already take, since
  * a star-rating confirmation isn't worth stalling on a network round
  * trip the person didn't ask to wait for.
+ *
+ * Operator-directed 2026-10-08 (slice 4 of the details page rework): restyled only, no logic changed. The panel
+ * is the shared glass panel; the stars are larger (44px targets) and fill as you hover or focus, with a small
+ * lift on the hovered star (mouse) and the press scale it already had; the thank-you view shows the chosen stars
+ * popping in one after another, once (`starRippleDelay`), and nothing moves under reduced motion. The submit
+ * button is a glass pill. The radiogroup keyboard model, the request and the "confirm even if the request fails"
+ * rule are exactly as before.
  */
 export default function RateThisApp({ appSlug }: { appSlug: string }) {
   const [selected, setSelected] = useState(0);
@@ -89,6 +97,17 @@ export default function RateThisApp({ appSlug }: { appSlug: string }) {
   if (submitted !== null) {
     return (
       <div className={styles.wrapper}>
+        <div className={styles.confirmStars} aria-hidden="true">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <span
+              key={value}
+              className={`${styles.confirmStar} ${value <= submitted ? styles.starFull : styles.starEmpty}`}
+              style={{ animationDelay: `${starRippleDelay(value - 1)}ms` }}
+            >
+              ★
+            </span>
+          ))}
+        </div>
         <p className={styles.confirmation} role="status">
           Thanks for rating this app {submitted} {submitted === 1 ? "star" : "stars"}!
         </p>

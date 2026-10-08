@@ -1,110 +1,11 @@
 /*
- * Rating stars + histogram styles — leaf 0.e.iii.zi.
+ * Rating summary: only the "No ratings yet." note is left here. The panel, figure and bars moved to
+ * RatingBoard.module.css (operator-directed 2026-10-08, slice 4); the old fractional-star clip, the synthetic
+ * histogram rows and their opacity-dimmed text were deleted with them.
  */
 
-.wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  align-items: flex-start;
-}
-
-/* --- Summary: big average + stars + count --- */
-
-.summary {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 6rem;
-}
-
-.average {
-  font-size: 2.25rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.stars {
-  display: flex;
-  gap: 0.1rem;
-  font-size: 1.1rem;
-}
-
-.starWrap {
-  position: relative;
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  line-height: 1;
-}
-
-.starEmpty {
-  color: var(--color-star-empty);
-}
-
-.starFillClip {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.starFull {
-  color: var(--color-accent);
-}
-
-.count {
-  font-size: 0.8rem;
-  opacity: 0.7;
-  white-space: nowrap;
-}
-
-/* --- Histogram: 5-star ... 1-star bars --- */
-
-.histogram {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  flex: 1 1 16rem;
-  min-width: min(14rem, 100%);
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 0.9rem 1fr 2.5rem;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-}
-
-.rowLabel {
-  text-align: right;
-  opacity: 0.7;
-}
-
-.barTrack {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--color-border);
-  overflow: hidden;
-}
-
-.barFill {
-  height: 100%;
-  background: var(--color-accent);
-  border-radius: 3px;
-}
-
-.rowCount {
-  text-align: right;
-  opacity: 0.7;
-}
-
-/* 5.h.vii.zo — the "reported by <source>" caption and the no-ratings note for third-party apps; full width under the summary/histogram row. */
 .source {
-  flex-basis: 100%;
   margin: 0;
-  font-size: 0.8rem;
-  opacity: 0.7;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
 }
