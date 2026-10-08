@@ -1,5 +1,5 @@
 import type { App } from "@/lib/catalog";
-import { isNotProvided } from "@/lib/trust";
+import { isNotProvided, isThirdParty } from "@/lib/trust";
 import { decideRollback, type RollbackWithheldReason } from "@/lib/rollback";
 import type { DownloadWithheldReason, VersionEntry } from "@/lib/version-history";
 import RollbackInstallLink from "./RollbackInstallLink";
@@ -111,7 +111,7 @@ export default function VersionHistory({ app }: { app: App }) {
               {offer.offered ? (
                 <RollbackInstallLink
                   className={styles.download}
-                  href={offer.url}
+                  href={isThirdParty(app) ? offer.url : `/api/apps/${encodeURIComponent(app.slug)}/download?version=${encodeURIComponent(entry.version_name)}`}
                   slug={app.slug}
                   version={entry.version_name}
                 >

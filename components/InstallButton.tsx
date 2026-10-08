@@ -146,7 +146,7 @@ export default function InstallButton({
     // and no blank tab) — this is what makes the click resolve to the
     // stable contract URL for real, instead of only running a timer.
     const link = document.createElement("a");
-    link.href = apkUrl;
+    link.href = `/api/apps/${encodeURIComponent(appSlug)}/download`; // the store's own door, so the browser shows this domain, not the storage host
     link.rel = "noopener noreferrer";
     document.body.appendChild(link);
     link.click();
