@@ -16,9 +16,21 @@
   --glass-radius: 22px;
   position: relative;
   overflow: hidden;
+  /*
+   * Operator-directed 2026-10-08 (third-party apps showed the page zoomed out with a black band down the side):
+   * a third-party app has all six tiles, and six tiles at their 6.75rem floor are about 650px of unbreakable row.
+   * The row scrolls inside `.scroller`, but a scroll container still reports its CONTENT width as its intrinsic
+   * width, and a mobile browser that finds a page's intrinsic width larger than the phone zooms the whole page
+   * out to fit it. `contain: inline-size` stops the strip's content from counting towards any parent's width, so
+   * the strip is exactly as wide as its column and the tiles scroll inside it.
+   */
+  contain: inline-size;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .scroller {
+  max-width: 100%;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;

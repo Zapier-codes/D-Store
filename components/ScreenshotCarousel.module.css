@@ -98,6 +98,8 @@
 .carousel {
   position: relative;
   width: 100%;
+  /* The row of shots scrolls inside; its content width must never count towards the page's (see StatStrip.module.css). */
+  contain: inline-size;
 }
 
 .track {

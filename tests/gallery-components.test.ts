@@ -58,3 +58,8 @@ test("the shelf grid tracks can shrink, so one wide card cannot widen the page (
   assert.ok(/\.card\s*\{[^}]*min-width:\s*0/.test(read("components/AppCard.module.css")));
   assert.ok(/overflow-x:\s*clip/.test(read("app/app/[slug]/page.module.css")));
 });
+
+test("rows that scroll sideways cannot widen the page: the stat strip and the gallery contain their inline size", () => {
+  assert.ok(/\.strip\s*\{[^}]*contain:\s*inline-size/.test(read("components/StatStrip.module.css")));
+  assert.ok(/\.carousel\s*\{[^}]*contain:\s*inline-size/.test(read("components/ScreenshotCarousel.module.css")));
+});
