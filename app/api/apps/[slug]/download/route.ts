@@ -1,7 +1,14 @@
 import { checkRateLimit, rateLimitKey, tooManyRequests } from "@/lib/rate-limit";
 import { getAppBySlug } from "@/lib/catalog";
 import { isThirdParty } from "@/lib/trust";
-import { allowedUpstreamHosts, downloadFilename, isAllowedUpstream, pickUpstreamUrl } from "@/lib/download-proxy";
+import {
+  allowedUpstreamHosts,
+  checkUpstream,
+  downloadFilename,
+  isAllowedUpstream,
+  lengthGuard,
+  pickUpstreamUrl,
+} from "@/lib/download-proxy";
 
 /**
  * The store's own download door for first-party apps.
@@ -16,6 +23,12 @@ import { allowedUpstreamHosts, downloadFilename, isAllowedUpstream, pickUpstream
  * Throttled per client (30 downloads per 10 minutes, fail-open like the other routes). The function's time
  * limit caps one download at `maxDuration`; a very slow connection on a large file can be cut off, and the
  * browser then resumes with a `Range` request.
+ *
+ * A short file must never look finished (a short APK has no zip directory and Android reports "problem
+ * parsing the package"). So before streaming, `checkUpstream` refuses an answer that is a page or data, is
+ * compressed (its length could not be checked) or has an unreadable length; and when the answer announces a
+ * length, `lengthGuard` errors the response if the bytes that pass are fewer or more than announced, which
+ * aborts the transfer and shows as a failed download. The file is asked for uncompressed (`identity`).
  */
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -37,7 +50,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     return new Response("Not found", { status: 404 });
   }
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { "accept-encoding": "identity" };
   const range = request.headers.get("range");
   if (range) headers.range = range;
 
@@ -47,8 +60,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   } catch {
     return new Response("The file could not be fetched. Try again.", { status: 502 });
   }
-  if ((upstream.status !== 200 && upstream.status !== 206) || upstream.body === null) {
+  if (upstream.body === null) {
     return new Response("The file could not be fetched. Try again.", { status: 502 });
+  }
+  const verdict = checkUpstream(upstream.status, upstream.headers);
+  if (!verdict.ok) {
+    await upstream.body.cancel().catch(() => undefined);
+    return new Response(`The file could not be fetched (${verdict.reason}). Try again.`, { status: 502 });
   }
 
   const out = new Headers({
@@ -62,5 +80,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     const value = upstream.headers.get(name);
     if (value) out.set(name, value);
   }
-  return new Response(upstream.body, { status: upstream.status, headers: out });
+  const body = verdict.expectedBytes === null ? upstream.body : upstream.body.pipeThrough(lengthGuard(verdict.expectedBytes));
+  return new Response(body, { status: upstream.status, headers: out });
 }
