@@ -534,6 +534,21 @@ export async function commitIndexState(parsed: RawIndex, tenantId: string = DEFA
   await writeJsonFile(cacheFileFor(tenantId), parsed);
 }
 
+/**
+ * A query string that changes every `ZEALOT_INDEX_TTL_MS` (default 30 seconds) and is the same for every
+ * server instance inside that window. The index is served from GitHub's raw host or Pages, whose CDN keeps
+ * a file for about five minutes per URL no matter what `cache: "no-store"` asks of it; a different query
+ * string is a different cache key, so each window's first request reads GitHub's current file and every
+ * other instance in the window shares that answer. That is what lets a release a publisher just uploaded
+ * show on the website within about a minute instead of after the CDN's five. The host ignores the query
+ * string, so the bytes (and the signature check) are unchanged. Not a way around any check: the
+ * signature, schema, expiry and anti-rollback tests in `validateIndex` still decide whether the index is
+ * trusted.
+ */
+export function freshnessQuery(now: number = Date.now(), windowMs: number = ZEALOT_INDEX_TTL_MS): string {
+  return `?v=${Math.floor(now / windowMs)}`;
+}
+
 /** Fetches + fully verifies one candidate index over plain HTTP (the Pages CDN), then commits it immediately -- the runtime path, unchanged in behavior from before the `validateIndex`/`commitIndexState` split above. `scripts/snapshot-zealot-index.ts` (`5.g.iv.zi`) is the build-time path: same `validateIndex`, a per-file SHA-256 check in between, then the same `commitIndexState`. */
 async function fetchLiveIndex(baseUrl: string, tenantId: string): Promise<RawIndex | null> {
   const base = baseUrl.replace(/\/+$/, "");
@@ -541,9 +556,11 @@ async function fetchLiveIndex(baseUrl: string, tenantId: string): Promise<RawInd
   let indexText: string;
   let signatureText: string;
   try {
+    // The same time bucket on both URLs, so the pair always comes from one publish (see `freshnessQuery`).
+    const query = freshnessQuery();
     const [indexRes, sigRes] = await Promise.all([
-      fetch(`${base}/index.json`, { cache: "no-store" }),
-      fetch(`${base}/index.json.sig`, { cache: "no-store" }),
+      fetch(`${base}/index.json${query}`, { cache: "no-store" }),
+      fetch(`${base}/index.json.sig${query}`, { cache: "no-store" }),
     ]);
     if (!indexRes.ok || !sigRes.ok) return null;
     indexText = await indexRes.text();
@@ -573,15 +590,15 @@ async function fetchLiveIndex(baseUrl: string, tenantId: string): Promise<RawInd
  * transient throw isn't cached forever.
  */
 /**
- * The index is re-read at most once per `ZEALOT_INDEX_TTL_MS` (default 5 minutes; the env var
- * `ZEALOT_INDEX_TTL_MS` overrides it) so an app a developer publishes shows up on its own, with no
- * rebuild. Until then the memoized promise is shared, so concurrent requests still share one fetch.
+ * The index is re-read at most once per `ZEALOT_INDEX_TTL_MS` (default 30 seconds; the env var
+ * `ZEALOT_INDEX_TTL_MS` overrides it) so an app or an update a developer publishes shows up on its own, with
+ * no rebuild. It was 5 minutes, and the CDN in front of the file added up to 5 more (see `freshnessQuery`). Until then the memoized promise is shared, so concurrent requests still share one fetch.
  * A refresh that cannot reach the live index keeps the last index this process already verified
  * (never the older build-time disk copy over a fresher one); a first load that found nothing is
  * retried after the same interval instead of staying empty until the process restarts.
  */
 const parsedTtl = Number(process.env.ZEALOT_INDEX_TTL_MS);
-export const ZEALOT_INDEX_TTL_MS = Number.isFinite(parsedTtl) && parsedTtl > 0 ? parsedTtl : 5 * 60 * 1000;
+export const ZEALOT_INDEX_TTL_MS = Number.isFinite(parsedTtl) && parsedTtl > 0 ? parsedTtl : 30 * 1000;
 
 const indexMemo = new Map<string, { at: number; promise: Promise<RawIndex | null> }>();
 

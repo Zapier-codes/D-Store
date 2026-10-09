@@ -69,7 +69,7 @@ export interface CatalogApiApp {
 }
 
 const NO_STORE = { "Cache-Control": "no-store" };
-const CACHEABLE = { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" };
+const CACHEABLE = { "Cache-Control": "public, max-age=30, s-maxage=30, stale-while-revalidate=60" };
 
 function fail(status: number, error: string): Response {
   return Response.json({ error }, { status, headers: NO_STORE });
