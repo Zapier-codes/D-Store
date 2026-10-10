@@ -97,3 +97,39 @@ Storeapp's row already holds the pure logic; this is what the web port needs on 
    fields (`collects`/`shares`/`encrypted_in_transit`/`deletable`), are the only
    things the web port needs that do not already exist in the `catalog_app` shape.
    Until they do, those panels render their explanatory empty state, not a placeholder.
+
+
+---
+
+## 4. Full cross-check, web status (operator-directed 2026-10-10; docs only, nothing built or run)
+
+The full Play Store against Appstore table (with the consumer / enterprise tags) is in Storeapp's `docs/PLAY-PARITY.md`, section 4; the Console half is Zealot's. This section records only where the **website** differs from the client, and the operating principles the operator set.
+
+## Operating principles for closing every gap *(operator directive, 2026-10-10)*
+
+1. **Human steps are automated.** Anywhere Play puts a person in the loop (app review, policy decisions, content-rating questionnaires, appeals triage, support routing), this program builds an automated decision instead: a machine verdict with machine-readable reasons (pass, flag, reject), recorded on the release. A person is only the exception path (an appeal, or a verdict the automation marks as high risk), never a queue that publishing waits on. Existing rules stand: an update to an app that already has a previous version is never held (Zealot Task 48/49).
+2. **Reviews are anonymous. No accounts, ever.** The intended design (not built; its own task, cut by the TSF before code): a device-bound pseudonymous key made on the phone (Android Keystore), one editable review per key per app, a proof-of-work challenge instead of a captcha service, rate limits per key and per network, automated moderation, and a visible "verified install" mark when the review came from the Appstore client with proof that the reviewed version was installed. The website accepts the same review with the proof-of-work token and no install mark. Developer replies are public. There is no sign-in, no email and no profile anywhere in this path.
+3. **Everything else follows the industry-standard approach**, as the earlier decision records (D43-n, 47h and the rest) already do, and keeps this program's own intended approaches where a handover has recorded one (additive-only sources, signed catalog index, org signing key, CI signs everything, no telemetry by default).
+4. **Reuse before writing.** Most missing areas already exist as open-source parts that can be assembled. The reuse map below lists them with a mark: **✓** = the project's own page was read in a search on 2026-10-10; **◇** = from the author's knowledge, not checked, so check licence and maintenance before adopting. Nothing in the map is adopted yet.
+5. **Unofficial routes carry a stated risk.** A route that depends on a reverse-engineered or unpublished interface is listed with that risk, and is never the only path to a feature.
+
+
+**Where the website differs from the client table** *(read from this repo's handover and its latest commits)*
+
+| Feature | Web status |
+|---|---|
+| Install, update, uninstall | ➖ by design: the details page offers Download and Share only (a website cannot install an Android app) |
+| Search sort and rating filter | ✅ (`lib/search-view.ts`, commit `aeedf79`) |
+| Read ratings and reviews | ✅ (`RatingBoard`, `ReviewsList`) |
+| Write a review | ❓ a star picker exists; whether submissions are anonymous, rate-limited and spam-checked is not confirmed here. Check before building the principle 2 path, and use the proof-of-work token (ALTCHA) rather than a captcha service |
+| Data Safety panel | ◐ the component exists but the section was removed from the details page on 2026-10-08 |
+| Report footer | ✅ |
+| Share | ✅ |
+| Wishlist or save | ❌ (the Save pill was removed with the install machinery) |
+| More from this developer, similar rails | ✅ |
+| Resumable download | ✅ (the download door passes `Range`, and refuses a short or compressed answer) |
+| Search suggestions | ❓ no-JS GET form today; `pg_trgm` on the Supabase database is the cheap route |
+| Content rating, age filter, device filter | ❌ wait on Zealot's declarations and device fields |
+| Top charts, Kids tab | ◐ collections and sponsored slots only |
+
+Reuse routes that apply to the web (ALTCHA, `pg_trgm`, Meilisearch, F-Droid index-v2) are in the reuse map in Storeapp's section 4.
