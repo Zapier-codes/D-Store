@@ -83,3 +83,13 @@ test("fallbacks: forced colours keep the hairlines visible", () => {
   assert.match(stripCss, /@media \(forced-colors: active\)/);
   assert.match(infoCss, /@media \(forced-colors: active\)/);
 });
+
+test("a short strip fills its column from tablet up: the desktop tile drops the phone max-width cap", () => {
+  // Operator-reported 2026-10-09: a first-party app (three or four tiles) left a large empty glass band
+  // beside its tiles on desktop, because each tile stopped growing at the phone's 14rem cap. A third-party
+  // app's six tiles reached the cap and hid it. The fix lifts the cap once the row stops being a scroller.
+  assert.match(stripCss, /max-width:\s*14rem/);
+  const desktop = stripCss.match(/@media \(min-width: 768px\)\s*\{[\s\S]*?\n\}/);
+  assert.ok(desktop, "a min-width:768px block exists");
+  assert.match(desktop[0], /max-width:\s*none/, "the tile cap is lifted from tablet up so tiles fill the row");
+});

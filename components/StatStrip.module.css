@@ -117,6 +117,11 @@
 @media (min-width: 768px) {
   .tile {
     min-width: 7.5rem;
+    /* The 14rem cap above only exists to stop a phone tile running away; from 768px the row is not a scroller,
+       so the cap made a short strip (a first-party app with three or four tiles) stop short of the column and
+       leave a large empty glass band — operator-reported 2026-10-09, first-party only, because a third-party
+       app has all six tiles and reached the cap. Let the tiles fill the row here, as the file's own note says. */
+    max-width: none;
     padding: 1.1rem 1rem;
   }
 
