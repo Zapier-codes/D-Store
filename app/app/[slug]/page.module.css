@@ -87,12 +87,15 @@
   }
 }
 
-/* Tablet: the phone column at a comfortable reading width, centred. */
+/*
+ * Tablet and small laptop (operator-directed 2026-10-10): use the full width. The earlier cap of 760px, centred,
+ * left a band of empty space down each side of a 900-1099px window (70-170px a side) — not what the operator
+ * wants, and no longer needed now that the header and stat strip span the shell. The desktop two-column rule
+ * takes over at 1100px; below 768px the phone padding already keeps the edges.
+ */
 @media (min-width: 768px) and (max-width: 1099.98px) {
   .main > * {
     width: 100%;
-    max-width: 760px;
-    margin-inline: auto;
   }
 }
 
