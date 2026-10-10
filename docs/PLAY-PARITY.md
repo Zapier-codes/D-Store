@@ -70,7 +70,7 @@ rows this repo *reads* are below; the publishing rows live in Zealot's `handover
 | App bundles (AAB) + dynamic delivery | n/a | Sources publish APKs; this storefront carries the download URL. |
 | Crash / ANR / vitals dashboards | n/a | No telemetry, by design. |
 | Play App Signing / key rotation | n/a | Out of scope; the client verifies signer continuity instead. |
-| **Billing / payments (pricing, in-app purchases, subscriptions)** | reader / n/a | Zealot's console does run one money path — a publisher pays for a paid *store listing* through Hyperswitch (`checkouts`, `store_listing_payment`) — and this storefront reads the resulting `is_published` / checkout state. There is still no user-facing billing in the catalogue (`MonetizationDisclosure.tsx` prints nothing when the source gave no data). |
+| **Billing / payments (pricing, in-app purchases, subscriptions)** | reader / n/a | Zealot's console does run one money path — a publisher pays for a paid *store listing* through B-Pay-backend (`checkouts`, `store_listing_payment`) — and this storefront reads the resulting `is_published` / checkout state. There is still no user-facing billing in the catalogue (`MonetizationDisclosure.tsx` prints nothing when the source gave no data). |
 | **Revenue / earnings reports, payouts, financial reporting** | n/a (web) | Belongs to Zealot's console, not the storefront; see Zealot's `handover.md`. |
 | **App content / policy declarations** (Data safety, Content rating, Target audience, Ads, News) | have (reader) / port | Data safety and content rating are read off the index today; the target-audience and news declarations are `port` once the index publishes them. |
 
