@@ -102,6 +102,42 @@ function trimZero(value: number): string {
   return fixed.replace(/\.0$/, "");
 }
 
+// ── Update-delta reader (card Z-P13) ─────────────────────────────────────────
+
+/**
+ * Card Z-P13, the web data half of the client's delta applier. The index now carries, per version, the
+ * File-by-File update deltas Zealot generated at publish time; a version's full download is `entry.size_mb`,
+ * and an update *to* it can arrive as a much smaller patch built against a previous build. This reads those
+ * into an honest line - "Update delta from version X, N MB" - for the version that carries them.
+ *
+ * The storefront cannot patch or install an APK (a browser cannot), so nothing here is offered as an action;
+ * it says what the source published. A version with no deltas yields `null` (nothing to say), never a zero
+ * or a placeholder. `formatBytes` keeps a real figure rather than a rounded megabyte for a small patch.
+ */
+export type DeltaPatchLike = {
+  from_version_code: string;
+  size_bytes: number | null;
+  sha256: string | null;
+};
+
+export function updateDeltaLabel(hasDeltas: boolean, patch: DeltaPatchLike | null | undefined): string | null {
+  if (!hasDeltas || !patch) return null;
+  const from = typeof patch.from_version_code === "string" ? patch.from_version_code.trim() : "";
+  if (from === "") return null;
+  const size = patch.size_bytes !== null && Number.isFinite(patch.size_bytes) ? formatBytes(patch.size_bytes) : null;
+  return size === null
+    ? `Update delta from version ${from}`
+    : `Update delta from version ${from}, ${size}`;
+}
+
+/** A byte count in B, KB or MB to one decimal, for a patch small enough that "0 MB" would be a lie. */
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  if (bytes >= 1024 * 1024) return `${trimZero(Math.round((bytes / (1024 * 1024)) * 10) / 10)} MB`;
+  if (bytes >= 1024) return `${trimZero(Math.round((bytes / 1024) * 10) / 10)} KB`;
+  return `${Math.round(bytes)} B`;
+}
+
 // ── Staged-rollout label (card Z-P1 reader) ──────────────────────────────────
 
 /**

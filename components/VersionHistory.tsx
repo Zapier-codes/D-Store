@@ -3,6 +3,7 @@ import { isNotProvided, isThirdParty } from "@/lib/trust";
 import { decideRollback, type RollbackWithheldReason } from "@/lib/rollback";
 import type { DownloadWithheldReason, VersionEntry } from "@/lib/version-history";
 import styles from "./VersionHistory.module.css";
+import { updateDeltaLabel } from "@/lib/play-ports";
 
 /**
  * Version history list — leaf `5.c.vi.zi` (split out of `5.c.ii.zi`).
@@ -42,6 +43,12 @@ import styles from "./VersionHistory.module.css";
  *
  * Shell classes are copied from `Changelog`/`DataSafety` rather than adding
  * a third variant.
+ *
+ * Z-P13: an entry whose index carried `delta_patches[]` shows one honest line —
+ * "Update delta from version X, N KB" — saying an update to this version can be
+ * delivered as a smaller patch when installed from X. It is informational: the
+ * storefront cannot apply an APK patch. `updateDeltaLabel` returns null (nothing
+ * rendered) when there are no deltas, so this is additive to every cached index.
  */
 
 const WITHHELD_TEXT: Record<DownloadWithheldReason, string> = {
@@ -99,6 +106,9 @@ export default function VersionHistory({ app }: { app: App }) {
       <ol className={styles.list}>
         {entries.map((entry, index) => {
           const offer = offers[index];
+          // Z-P13: the update delta this version carries, if the index published one.
+          const deltas = entry.delta_patches ?? [];
+          const delta = updateDeltaLabel(deltas.length > 0, deltas[0]);
           return (
             // `release_id` may repeat or be missing, so the position is part of the key.
             <li key={`${index}-${entry.version_name}`} className={styles.item}>
@@ -108,6 +118,7 @@ export default function VersionHistory({ app }: { app: App }) {
                 <span className={styles.detail}>{rolloutText(entry)}</span>
               </div>
               <p className={styles.notes}>{entry.changelog ?? "No changelog provided."}</p>
+              {delta !== null && <p className={styles.delta}>{delta}</p>}
               {offer.offered ? (
                 <a
                   className={styles.download}

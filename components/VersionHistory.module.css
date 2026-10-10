@@ -93,3 +93,10 @@
   font-size: 0.85rem;
   opacity: 0.7;
 }
+
+/* Z-P13 - the update-delta line under a version that carries one. */
+.delta {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}

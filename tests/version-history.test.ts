@@ -42,10 +42,12 @@ test("a full entry is read field by field, and carries no checksum, fingerprint 
       status: "available",
       download_url: "https://example.invalid/a.apk",
       permissions: [],
+      delta_patches: [],
     },
   ]);
   assert.deepEqual(Object.keys(entries[0]).sort(), [
     "changelog",
+    "delta_patches",
     "download_url",
     "permissions",
     "rollout_percentage",

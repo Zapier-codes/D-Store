@@ -135,6 +135,12 @@ export interface RawVersion {
    * `readVersionStatus` reads that as `"available"`.
    */
   status?: "available" | "halted" | "pulled" | null;
+  /**
+   * Z-P13 - the File-by-File update deltas Zealot publishes for this version, read
+   * by `readVersionHistory`/`readDeltaPatches`. Optional: an older cached index has
+   * no such key and must read as "none", never as an error.
+   */
+  delta_patches?: unknown;
 }
 
 export interface RawApp {

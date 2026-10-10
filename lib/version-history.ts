@@ -16,6 +16,27 @@ import { readVersionStatus, type VersionStatus } from "./version-advisory";
 
 export type VersionRolloutStatus = "active" | "halted" | "complete";
 
+/**
+ * One File-by-File update delta Zealot publishes on a version — parity card
+ * Z-P13, the data half of the Storeapp client that applies these. This is the
+ * `delta_patches[]` entry from the signed index, read conservatively: a patch
+ * is kept only when its base version code and its URL are both usable, the same
+ * posture `download_url` above already takes. Surfaced, not applied — a website
+ * cannot patch or install an APK; the entry only tells a reader that an update
+ * to this version can be delivered as a smaller delta when installed from
+ * `from_version_code`.
+ */
+export interface DeltaPatchEntry {
+  /** The installed build this patch applies from (Zealot's `from_version_code`). Never empty. */
+  from_version_code: string;
+  /** Zealot's own delta endpoint, a plain `https://` URL (checked like `download_url`). */
+  download_url: string;
+  /** Patch size in real bytes, or `null` when the index gave no usable size. */
+  size_bytes: number | null;
+  /** Lower-case hex SHA-256 of the patch bytes, or `null` when absent/malformed. */
+  sha256: string | null;
+}
+
 export interface VersionEntry {
   version_name: string;
   /** Trimmed release notes, or `null` when the index had none. */
@@ -38,6 +59,13 @@ export interface VersionEntry {
    */
   download_url: string | null;
   permissions: string[];
+  /**
+   * The update deltas that reach this version (parity card Z-P13). Empty when
+   * the index published none — a first release, an identical pair, a pulled
+   * previous build, or a deployment with delta patching off. Additive: an
+   * older cached index without the key reads as `[]`, never as an error.
+   */
+  delta_patches?: DeltaPatchEntry[];
 }
 
 export interface VersionHistory {
@@ -58,6 +86,12 @@ export const MAX_VERSIONS_SCANNED = 1000;
 export const MAX_VERSION_NAME_LENGTH = 64;
 export const MAX_CHANGELOG_LENGTH = 2000;
 export const MAX_DOWNLOAD_URL_LENGTH = 2048;
+/** Most deltas kept per version — a version normally has very few; a hostile array cannot cost unbounded work. */
+export const MAX_DELTA_PATCHES = 32;
+/** Bounds mirrored from the client (`DeltaApplier.selectPatch`), so display and apply agree on what is usable. */
+export const MAX_VERSION_CODE_LENGTH = 64;
+/** A SHA-256 is 64 hex characters; anything longer is not one. */
+export const MAX_SHA256_LENGTH = 64;
 
 const STATUSES: readonly VersionRolloutStatus[] = ["active", "halted", "complete"];
 
@@ -125,6 +159,52 @@ function readPermissions(compatibility: unknown): string[] {
     .map((p) => p.replace(/^android\.permission\./, ""));
 }
 
+/** A release version code, trimmed and bounded; `null` when absent or empty. */
+function readVersionCode(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const code = value.trim();
+  if (code === "" || code.length > MAX_VERSION_CODE_LENGTH) return null;
+  return code;
+}
+
+/** A lower-case hex SHA-256, or `null`. A mis-cased or colon-separated value is not one. */
+function readSha256(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const hex = value.trim();
+  return /^[0-9a-f]{64}$/.test(hex) ? hex : null;
+}
+
+/** Real byte size, or `null` when the index gave none (the patch size, unlike a version's `size_bytes`). */
+function readBytes(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.round(value) : null;
+}
+
+/**
+ * The `delta_patches[]` a version carries (card Z-P13). A patch is kept only
+ * when its base version code and its URL are both usable — the exact pair
+ * `DeltaApplier.selectPatch` needs — so the list shown is the list that could
+ * actually be applied. Anything else (a patch without a base, a non-https URL)
+ * is dropped rather than shown as a dead entry. A non-array reads as empty.
+ */
+export function readDeltaPatches(value: unknown): DeltaPatchEntry[] {
+  if (!Array.isArray(value)) return [];
+  const out: DeltaPatchEntry[] = [];
+  for (let i = 0; i < value.length && out.length < MAX_DELTA_PATCHES; i++) {
+    const item = value[i];
+    if (!isRecord(item)) continue;
+    const from = readVersionCode(item.from_version_code);
+    const url = readDownloadUrl(item.download_url);
+    if (from === null || url === null) continue;
+    out.push({
+      from_version_code: from,
+      download_url: url,
+      size_bytes: readBytes(item.size),
+      sha256: readSha256(item.sha256),
+    });
+  }
+  return out;
+}
+
 function readEntry(item: unknown): VersionEntry | null {
   if (!isRecord(item)) return null;
   const name = typeof item.version_name === "string" ? item.version_name.trim() : "";
@@ -138,6 +218,7 @@ function readEntry(item: unknown): VersionEntry | null {
     status: readVersionStatus(item.status),
     download_url: readDownloadUrl(item.download_url),
     permissions: readPermissions(item.compatibility),
+    delta_patches: readDeltaPatches(item.delta_patches),
   };
 }
 
