@@ -13,8 +13,7 @@
  * favorites (an unbounded collection a visitor deliberately curates
  * over a long time), view history is a short, self-pruning recency
  * window (`MAX_ENTRIES` below), which is exactly the "single small
- * record" shape `lib/install-status.ts`'s own comment already
- * distinguishes `localStorage` as right-sized for.
+ * record" shape `localStorage` is right-sized for.
  *
  * Stores `{ slug, category, viewedAt }`, not a full `App` — same "the
  * local record is a lightweight pointer, not a data cache" split
@@ -27,7 +26,7 @@
  * timestamp rather than adding a duplicate entry — a history of *distinct
  * recently-viewed apps*, not a raw event log, so one app opened five
  * times today can't crowd out four other apps actually looked at. Same
- * fail-soft posture as `install-status.ts`: any storage error resolves
+ * fail-soft posture as `lib/favorites.ts`: any storage error resolves
  * to a safe empty default rather than throwing, so a browsing-history
  * write/read failure never blocks rendering.
  */
@@ -68,7 +67,7 @@ function writeHistory(entries: ViewHistoryEntry[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
   } catch {
-    // Best-effort only — same fail-soft posture as install-status.ts.
+    // Best-effort only — same fail-soft posture as the rest of this module.
   }
 }
 

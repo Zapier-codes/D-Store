@@ -8,8 +8,8 @@
  * throws, whatever it is handed.
  *
  * This is the release's lifecycle, NOT the staged-rollout ramp
- * (`rollout.status`, `active`/`halted`/`complete`, read by `lib/rollout.ts`
- * and `lib/version-history.ts`). A rollout paused at 30% is not an advisory.
+ * (`rollout.status`, `active`/`halted`/`complete`, read by
+ * `lib/version-history.ts`). A rollout paused at 30% is not an advisory.
  *
  * The index says nothing about WHY a release was halted or pulled, and has no
  * security-advisory field, so the texts below state the status and give no

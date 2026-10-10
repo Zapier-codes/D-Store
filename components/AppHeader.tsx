@@ -1,13 +1,11 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
-import { isThirdParty, isNotProvided, isVerifiedDeveloper } from "@/lib/trust";
+import { isNotProvided, isVerifiedDeveloper } from "@/lib/trust";
 import { pickHeroArt } from "@/lib/hero-card";
 import { AppNameTitle, BackdropArt, GlassPill, IconRing, PillRow, Rim, Tilt } from "./glass";
-import AppIconLive from "./AppIconLive";
+import AppIcon from "./AppIcon";
 import StatStrip from "./StatStrip";
-import VersionAdvisory from "./VersionAdvisory";
-import InstallButton from "./InstallButton";
-import ThirdPartyDownloadButton from "./ThirdPartyDownloadButton";
+import DownloadControl from "./installControls";
 import ShareButton from "./ShareButton";
 import FavoriteButton from "./FavoriteButton";
 import MonetizationDisclosure from "./MonetizationDisclosure";
@@ -21,15 +19,18 @@ import styles from "./AppHeader.module.css";
  * name as 3D / frosted type, transparent pills, and a pointer tilt with the rim light (mouse only).
  *
  * What it renders, top to bottom: pills (Verified developer, Editors' pick, category, developer), the name
- * (`<h1>`), the summary, the version advisory, the install row, the ads and purchases line; and directly under
+ * (`h1`), the summary, the install row, the ads and purchases line; and directly under
  * that glass card, the stat strip (`StatStrip`, slice 2, 2026-10-08), which replaced the old plain stats row,
  * the content-rating text and the size / version / Android pills. The strip is a sibling of the tilting card,
  * not inside it, so the pointer tilt and rim light stay on the card alone.
  *
  * **Behaviour that must stay exactly as it was** (only the look changed): the install row keeps the id
- * `primary-install-row` that `StickyInstallBar` watches; `InstallButton` and `ThirdPartyDownloadButton` get the
- * same props the page gave them; `VersionAdvisory` sits right above the install row; nothing the source did not
- * provide is printed (no "Not provided"); no source or third-party wording.
+ * `primary-install-row` that `StickyInstallBar` watches; the download control is the same `DownloadControl`
+ * the rest of the page uses; nothing the source did not provide is printed (no "Not provided"); no source
+ * or third-party wording.
+ *
+ * Operator-directed 2026-10-10: a website can only download and share, so the install row is the real
+ * Download control plus Share (the simulated install/progress is gone).
  *
  * The icon is the page's LCP candidate (`priority`). The backdrop art is a CSS background, so it never
  * competes with it.
@@ -45,7 +46,6 @@ export default function AppHeader({
   developerName: string | null;
   categoryName: string | null;
 }) {
-  const thirdParty = isThirdParty(app);
   const art = pickHeroArt(app.screenshots);
 
   // The same soft palette glow the hero card uses when there is no screenshot art (and under it when there is).
@@ -67,13 +67,12 @@ export default function AppHeader({
             <div className={styles.iconWrap}>
               <IconRing />
               <div className={styles.icon}>
-                <AppIconLive
-                  appSlug={app.slug}
+                <AppIcon
                   name={app.name}
                   primaryColor={app.primary_color}
                   secondaryColor={app.secondary_color}
                   tertiaryColor={app.tertiary_color}
-                  iconUrl={app.icon}
+                  src={app.icon}
                   sizes="160px"
                   priority
                 />
@@ -110,25 +109,8 @@ export default function AppHeader({
               </AppNameTitle>
               <p className={styles.summary}>{app.summary}</p>
 
-              {/* 5.c.viii.zo: read before acting, so it sits right above the install row. Renders nothing for an available release and for every third-party app. */}
-              <div className={styles.advisory}>
-                <VersionAdvisory app={app} />
-              </div>
-
               <div className={styles.installRow} id="primary-install-row">
-                {thirdParty ? (
-                  <ThirdPartyDownloadButton appSlug={app.slug} appName={app.name} downloadUrl={app.apk} />
-                ) : (
-                  <InstallButton
-                    appSlug={app.slug}
-                    appName={app.name}
-                    currentVersion={app.version}
-                    apkUrl={app.version_status === "pulled" ? "" : app.apk}
-                    releaseId={app.release_id}
-                    rolloutPercentage={app.rollout_percentage}
-                    packageName={app.package_name}
-                  />
-                )}
+                <DownloadControl app={app} />
                 <div className={styles.secondary}>
                   <ShareButton appName={app.name} />
                   <FavoriteButton appSlug={app.slug} appName={app.name} appIcon={app.icon} />

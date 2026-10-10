@@ -54,7 +54,7 @@
   transition: transform var(--glass-dur-base, 240ms) var(--glass-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
-/* No overflow:hidden here: AppIconLive's install progress ring is drawn outside the icon's box. AppIcon rounds itself. */
+/* AppIcon rounds itself; no overflow:hidden needed here. */
 .icon {
   position: relative;
   z-index: 1;
@@ -198,15 +198,14 @@
 }
 
 /*
- * Desktop (slice 6, 2026-10-08): from 1100px the install row, Share and Save (and the version advisory above
- * them) live in the sticky side card (InstallCard.tsx), so the header drops them; below 1100px they stay here
- * and the sticky bar is used. `display: none` also takes them out of the accessibility tree, so a screen reader
- * meets one install row per screen size. The id `primary-install-row` stays on the hidden row on purpose: the
- * sticky bar's watcher finds it, reads it as not scrolled past, and the bar is hidden at this width anyway.
+ * Desktop (slice 6, 2026-10-08): from 1100px the install row, Share and Save live in the sticky side card
+ * (InstallCard.tsx), so the header drops them; below 1100px they stay here and the sticky bar is used.
+ * `display: none` also takes them out of the accessibility tree, so a screen reader meets one install row per
+ * screen size. The id `primary-install-row` stays on the hidden row on purpose: the sticky bar's watcher finds
+ * it, reads it as not scrolled past, and the bar is hidden at this width anyway.
  */
 @media (min-width: 1100px) {
-  .installRow,
-  .advisory {
+  .installRow {
     display: none;
   }
 }

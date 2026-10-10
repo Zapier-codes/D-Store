@@ -22,16 +22,17 @@ test("the header has the page's one h1, through the shared name component", () =
   assert.ok(!/<h1/.test(header));
 });
 
-test("the install button keeps every prop it had on the page", () => {
-  for (const prop of ["appSlug={app.slug}", "appName={app.name}", "currentVersion={app.version}", "releaseId={app.release_id}", "rolloutPercentage={app.rollout_percentage}", "packageName={app.package_name}"]) {
-    assert.ok(header.includes(prop), prop);
+test("the install row uses the one download control, and the simulated install props are gone", () => {
+  assert.match(header, /<DownloadControl app=\{app\} \/>/);
+  for (const gone of ["currentVersion", "releaseId", "rolloutPercentage", "packageName", "apkUrl", "ThirdPartyDownloadButton", "InstallButton"]) {
+    assert.ok(!header.includes(gone), gone);
   }
-  assert.match(header, /apkUrl=\{app\.version_status === "pulled" \? "" : app\.apk\}/);
 });
 
-test("the version advisory comes before the install row", () => {
-  assert.ok(header.indexOf("<VersionAdvisory") > 0);
-  assert.ok(header.indexOf("<VersionAdvisory") < header.indexOf('id="primary-install-row"'));
+test("the version advisory banner is gone (a website only downloads and shares)", () => {
+  assert.ok(!header.includes("VersionAdvisory"));
+  // Nothing sits between the summary and the install row now.
+  assert.ok(!/advisory/.test(header));
 });
 
 test("nothing the source did not provide is printed, and no source or third-party wording", () => {

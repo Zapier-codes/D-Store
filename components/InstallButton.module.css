@@ -1,18 +1,18 @@
 /*
- * Install-button styles — leaf 3.a.iv.zi, extended by 3.a.iv.zo
- * (progress-fill animation on `.fill`, below).
+ * Download-button styles — operator-directed 2026-10-10, simplified from the old install-button
+ * sheet. The control is a real download link now: one filled pill, two states (a link, and a dimmed
+ * non-interactive button when there is nothing honest to link to). The simulated progress fill,
+ * the "installing"/"checking"/"open" states, the Open/Uninstall group and its notice are gone with
+ * the simulation itself.
  *
- * Filled pill button, same shape/token set as Hero's `.cta`
- * (components/Hero.module.css) so it reads as the same "primary
- * action" affordance wherever it appears. `[data-state]` drives the
- * three visual states.
+ * Same shape/token set as Hero's `.cta` (components/Hero.module.css) so it reads as the same
+ * "primary action" affordance wherever it appears (header, sticky card, sticky bar).
  */
 
 .button {
-  position: relative;
-  overflow: hidden;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   padding: 0.6rem 1.5rem;
   border-radius: 999px;
@@ -20,6 +20,7 @@
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
   /* Inside a glass accent scope (the details page header) the primary pill takes the scope's text-safe accent; elsewhere it is --color-accent as before. */
   background-color: var(--glass-accent-text, var(--color-accent));
   color: var(--color-bg);
@@ -39,145 +40,19 @@
   background-color: var(--color-accent-strong);
 }
 
-.button[data-state="installing"] {
-  /* Flat, non-interactive, and readable: muted text on the surface with a hairline. (It used to be the page
-   * colour on the border colour at reduced opacity, about 1.2:1, so the label could not be read.) */
+/*
+ * Nothing honest to link to (no release attached, a pulled release, a third-party entry with no
+ * usable https source): a dimmed, non-interactive button — never a dead link.
+ */
+.button[data-state="unavailable"] {
   background-color: var(--color-surface);
   color: var(--color-text-muted);
   box-shadow: inset 0 0 0 1px var(--color-border);
   cursor: default;
-}
-
-/*
- * device-aware status states (lib/install-status.ts).
- * "checking" — first client render, before localStorage has been read;
- * same flat/dimmed treatment as "installing" since both are non-interactive.
- * "update" gets no override: it deliberately falls through to the base
- * `.button` rule, same "next primary action, not a muted state" reasoning
- * `data-state="open"` already uses below.
- */
-.button[data-state="checking"] {
-  background-color: var(--color-surface);
-  color: var(--color-text-muted);
-  box-shadow: inset 0 0 0 1px var(--color-border);
-  cursor: default;
-}
-
-/*
- * 0.j.i.zo — post-install button group ("Open" + "Uninstall").
- *
- * `.group` is a plain flex row, no card/border of its own — it just
- * places the two pills the same distance apart other inline actions on
- * this page use. `.button[data-state="open"]` gets no override below:
- * it deliberately falls through to the base `.button` rule (the same
- * accent-filled pill `idle`'s "Install" uses), matching Play's pattern
- * of "Open" being the next primary action rather than a muted/disabled
- * end state — see InstallButton.tsx's docstring.
- *
- * `.uninstallButton` is the secondary action: outlined rather than
- * filled, same visual weight class `AppCard`/`Shelf` never had to
- * invent before now since this is the first place two actions sit
- * side by side — deliberately quieter than `.button` so "Open" still
- * reads as the primary action in the pair.
- */
-.group {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.uninstallButton {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.6rem 1.25rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background-color: transparent;
-  color: var(--color-text-muted);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.uninstallButton:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
-.uninstallButton:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-.uninstallButton:active {
-  background-color: var(--color-surface);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .uninstallButton {
-    transition: border-color 150ms ease, color 150ms ease;
-  }
-}
-
-/* 3.a.iv.zo — sits above the button's own background, under the label text. */
-.label {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.fill {
-  position: absolute;
-  inset: 0;
-  width: 0%;
-  background-color: var(--color-accent-strong);
-  z-index: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .button {
     transition: filter 150ms ease, background-color 150ms ease;
   }
-
-  /* animation-duration is set inline per-render from InstallButton.tsx's
-     SIMULATED_INSTALL_MS, so the visual fill always matches the real
-     setTimeout that flips the button to "installed" — one constant
-     driving both. */
-  .fill {
-    animation: install-fill linear forwards;
-  }
-
-  @keyframes install-fill {
-    from {
-      width: 0%;
-    }
-    to {
-      width: 100%;
-    }
-  }
-}
-
-/* Reduced-motion fallback: no bar at all, just the flat dimmed
-   "installing" state 3.a.iv.zi already shipped — same "already
-   revealed, no animation" fallback ScrollReveal (3.a.i.zi) uses. */
-@media (prefers-reduced-motion: reduce) {
-  .fill {
-    display: none;
-  }
-}
-
-
-/* "Open" as a link (Android intent) looks exactly like the button. */
-a.button,
-a.uninstallButton {
-  text-decoration: none;
-}
-
-/* Shown once after the Open link's fallback restarted the download. */
-.notice {
-  align-self: center;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
 }

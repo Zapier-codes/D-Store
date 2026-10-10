@@ -19,7 +19,7 @@ import AppStructuredData from "@/components/AppStructuredData";
 import ViewPing from "@/components/ViewPing";
 import ViewHistoryRecorder from "@/components/ViewHistoryRecorder";
 import type { App } from "@/lib/catalog";
-import { isThirdParty, isNotProvided } from "@/lib/trust";
+import { isNotProvided } from "@/lib/trust";
 import styles from "./page.module.css";
 
 /**
@@ -105,9 +105,8 @@ export default async function AppDetailPage({
   const category = await getTaxonomyCategory(taxonomy.app_type, taxonomy.category);
 
   // 5.h.iii.zi — third-party apps (Aptoide) never carry Zealot-derived
-  // claims: no "Verify this APK" block, no simulated install, and the
-  // download goes to the source's own delivery. See lib/trust.ts.
-  const thirdParty = isThirdParty(app);
+  // claims: no "Verify this APK" block and the download goes to the source's
+  // own delivery. See lib/trust.ts.
   const developerName = developer?.name ?? app.developer_name ?? null;
   // Task 45d — this store's own live reviews, merged with the app's carried-over comments in ReviewsList.
   // Operator-directed 2026-10-08 (slice 6): "More from this developer", only when the app has a developer page,
@@ -207,21 +206,7 @@ export default async function AppDetailPage({
          * long description/screenshot/permissions listing. See
          * StickyInstallBar.tsx for the observer + reduced-motion details.
          */}
-        <StickyInstallBar
-          appSlug={app.slug}
-          appName={app.name}
-          currentVersion={app.version}
-          primaryColor={app.primary_color}
-          secondaryColor={app.secondary_color}
-          tertiaryColor={app.tertiary_color}
-          iconUrl={app.icon}
-          watchTargetId="primary-install-row"
-          apkUrl={app.version_status === "pulled" ? "" : app.apk}
-          releaseId={app.release_id}
-          rolloutPercentage={app.rollout_percentage}
-          packageName={app.package_name}
-          thirdParty={thirdParty ? { downloadUrl: app.apk } : undefined}
-        />
+        <StickyInstallBar app={app} watchTargetId="primary-install-row" />
       </main>
     </CategoryThemeScope>
   );

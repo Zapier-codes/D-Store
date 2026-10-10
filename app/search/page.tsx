@@ -4,6 +4,8 @@ import AppCard from "@/components/AppCard";
 import EmptyState from "@/components/EmptyState";
 import Pager from "@/components/Pager";
 import CatalogUnavailable from "@/components/CatalogUnavailable";
+import SearchSortFilter from "@/components/SearchSortFilter";
+import { applySearchView, parseMinStars, parseSearchSort, isDefaultSearchView, searchViewQuery } from "@/lib/search-view";
 import styles from "./page.module.css";
 
 /**
@@ -52,10 +54,12 @@ import styles from "./page.module.css";
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; after?: string | string[] }>;
+  searchParams: Promise<{ q?: string; after?: string | string[]; sort?: string; minStars?: string }>;
 }) {
-  const { q, after } = await searchParams;
+  const { q, after, sort: sortParam, minStars: minStarsParam } = await searchParams;
   const query = (q ?? "").trim();
+  const sort = parseSearchSort(sortParam);
+  const minStars = parseMinStars(minStarsParam);
   let page: SearchPageData | null = null;
   let unavailable = false;
   if (query) {
@@ -71,6 +75,10 @@ export default async function SearchPage({
     await logSearchQuery(query);
   }
   const results = query ? (page ? page.apps : unavailable ? await searchApps(query) : []) : [];
+  // Track k: the same portable view Storeapp's `applySearchView` applies — sort + min rating on the
+  // already-read page. A default view leaves `results` untouched, so relevance ranking is unchanged.
+  const viewed = applySearchView(results, sort, minStars);
+  const nonDefaultView = !isDefaultSearchView(sort, minStars);
 
   return (
     <main className={styles.main}>
@@ -92,17 +100,23 @@ export default async function SearchPage({
         />
       )}
 
-      {query && !unavailable && results.length === 0 && (
+      {query && <SearchSortFilter query={query} sort={sort} minStars={minStars} />}
+
+      {query && !unavailable && viewed.length === 0 && (
         <EmptyState
           kind="search"
           heading="No results"
-          message={`No apps matched \u201c${query}\u201d.`}
+          message={
+            nonDefaultView
+              ? `No apps matched \u201c${query}\u201d with this sort and rating filter.`
+              : `No apps matched \u201c${query}\u201d.`
+          }
         />
       )}
 
-      {results.length > 0 && (
+      {viewed.length > 0 && (
         <ShelfGrid>
-          {results.map((app) => (
+          {viewed.map((app) => (
             <AppCard key={app.slug} app={app} />
           ))}
         </ShelfGrid>
@@ -115,7 +129,11 @@ export default async function SearchPage({
         />
       )}
 
-      <Pager basePath="/search" nextCursor={page ? page.nextCursor : null} params={{ q: query }} />
+      <Pager
+        basePath="/search"
+        nextCursor={page ? page.nextCursor : null}
+        params={searchViewQuery(query, sort, minStars)}
+      />
     </main>
   );
 }

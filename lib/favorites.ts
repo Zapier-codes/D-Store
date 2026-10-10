@@ -6,10 +6,10 @@ import { useCallback, useEffect, useState } from "react";
  * Local favorites — leaf `4.d.i.zi`, first of two `4.d.i` leaves.
  *
  * D-Store has no accounts (no login rules out server-side per-user
- * storage, same constraint `lib/theme.ts`/`lib/install-status.ts`
- * already document), so "favoriting" an app is a per-device record,
- * same "anonymous, local-state-only" convention as install status,
- * ratings and reports. Unlike those, this leaf is asked for
+ * storage, same constraint `lib/theme.ts` already documents), so
+ * "favoriting" an app is a per-device record, same "anonymous,
+ * local-state-only" convention as ratings, reports and view history.
+ * Unlike those, this leaf is asked for
  * **IndexedDB**, not `localStorage`: favorites are an unbounded,
  * open-ended list a visitor may grow over a long time (versus a single
  * small record per app), and IndexedDB is the right-sized browser
@@ -26,7 +26,7 @@ import { useCallback, useEffect, useState } from "react";
  * single app's favorited state. The dedicated "Saved apps" page that
  * lists every favorite is `4.d.i.zo`, next.
  *
- * Fail-soft posture, same as `lib/install-status.ts`: IndexedDB can be
+ * Fail-soft posture, same as `lib/view-history.ts`: IndexedDB can be
  * unavailable (private browsing in some browsers, disabled storage) or
  * a request can reject — every function below resolves to a safe
  * default (`false`, `null`, or an empty list) rather than throwing, so
@@ -168,13 +168,13 @@ export async function removeFavorite(slug: string): Promise<void> {
 /**
  * Reads/toggles a single app's favorited state. `loaded` is false for
  * the first client render (IndexedDB reads are always async, so this
- * avoids a hydration-mismatch flash the same way `useInstallStatus`
+ * avoids a hydration-mismatch flash the same way `lib/view-history.ts`
  * guards against one) until the initial lookup resolves.
  *
  * Listens for the same-tab `CHANGE_EVENT` so multiple mounted
  * instances for the same app — e.g. this app's detail-page button and
  * a future card-level heart icon — stay in sync without lifting state
- * into a shared parent, same pattern `useInstallStatus` already uses.
+ * into a shared parent.
  */
 export function useFavorite(app: { slug: string; name: string; icon: string }) {
   const { slug } = app;
@@ -213,9 +213,8 @@ export function useFavorite(app: { slug: string; name: string; icon: string }) {
     } else {
       addFavorite(app);
     }
-    // Optimistic — the store write is fire-and-forget same as
-    // `install-status.ts`'s writes, and the change event above will
-    // reconcile this to the real state regardless.
+    // Optimistic — the store write is fire-and-forget, and the change
+    // event above will reconcile this to the real state regardless.
     setFavorited((current) => !current);
   }, [favorited, slug, app]);
 

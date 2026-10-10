@@ -2,7 +2,6 @@ import type { App } from "@/lib/catalog";
 import { isNotProvided, isThirdParty } from "@/lib/trust";
 import { decideRollback, type RollbackWithheldReason } from "@/lib/rollback";
 import type { DownloadWithheldReason, VersionEntry } from "@/lib/version-history";
-import RollbackInstallLink from "./RollbackInstallLink";
 import styles from "./VersionHistory.module.css";
 
 /**
@@ -23,11 +22,12 @@ import styles from "./VersionHistory.module.css";
  * entry after the first gets either a link or a one-line reason there is none,
  * decided by `decideRollback` (which defers to `decideDownload`: a link only
  * for a release that is neither halted nor pulled and is fully rolled out).
- * The link is `RollbackInstallLink`, which records the older version in the
- * device-local install record on click. The first entry is the newest release:
- * it is offered by the Install button and covered by the advisory banner, so
- * it gets neither a link nor a reason here (`newest`, and `invalid`, render
- * nothing). No checksum or signing fingerprint is
+ * The link is a plain `<a>`: operator-directed 2026-10-10 removed the old
+ * "record the rollback in a device-local install record" behaviour, since a
+ * website can only download — the click is just the download. The first entry
+ * is the newest release: it is offered by the download control and covered by
+ * the advisory, so it gets neither a link nor a reason here (`newest`, and
+ * `invalid`, render nothing). No checksum or signing fingerprint is
  * shown for an older version.
  *
  * `5.c.xi.zo` — the caution under the list appears once, only when at least one
@@ -109,14 +109,13 @@ export default function VersionHistory({ app }: { app: App }) {
               </div>
               <p className={styles.notes}>{entry.changelog ?? "No changelog provided."}</p>
               {offer.offered ? (
-                <RollbackInstallLink
+                <a
                   className={styles.download}
                   href={isThirdParty(app) ? offer.url : `/api/apps/${encodeURIComponent(app.slug)}/download?version=${encodeURIComponent(entry.version_name)}`}
-                  slug={app.slug}
-                  version={entry.version_name}
+                  rel="noopener noreferrer"
                 >
                   Download version {entry.version_name}
-                </RollbackInstallLink>
+                </a>
               ) : (
                 isWithheldLine(offer.reason) && <p className={styles.withheld}>{WITHHELD_TEXT[offer.reason]}</p>
               )}

@@ -31,9 +31,9 @@ import { isRealImageUrl, isOptimizableImageUrl } from "@/lib/image";
  * The image branch is a `position: absolute; inset: 0;` layer over the
  * same box the SVG branch fills, with `border-radius: inherit` so it
  * picks up whichever rounding the parent `.icon` container already
- * applies (AppCard/Hero/the app-detail header/AppIconLive all set
- * their own `border-radius` on that container) rather than needing a
- * second copy of that value here.
+ * applies (AppCard/Hero/the app-detail header all set their own
+ * `border-radius` on that container) rather than needing a second copy
+ * of that value here.
  *
  * `3.d.ii.zo` (Lighthouse LCP budget pass) adds the optional
  * `priority` prop, threaded straight to `next/image`. Every real image

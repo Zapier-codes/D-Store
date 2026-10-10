@@ -40,20 +40,16 @@ test("the header stays above both columns, and the sections come before the card
 
 test("one sticky install per screen: the bar is hidden from 1100px and the header drops its install row there", () => {
   assert.match(bar, /@media \(min-width: 1100px\)\s*\{\s*\.bar\s*\{\s*display:\s*none/);
-  assert.match(headerCss, /@media \(min-width: 1100px\)\s*\{\s*\.installRow,\s*\.advisory\s*\{\s*display:\s*none/);
+  assert.match(headerCss, /@media \(min-width: 1100px\)\s*\{\s*\.installRow\s*\{\s*display:\s*none/);
   assert.match(header, /id="primary-install-row"/);
   assert.match(page, /watchTargetId="primary-install-row"/);
 });
 
-test("the install card uses the same install components and props as the header, and the page's one h1 stays the header's", () => {
-  assert.match(card, /<InstallButton[\s\S]*apkUrl=\{app\.version_status === "pulled" \? "" : app\.apk\}/);
-  assert.match(card, /releaseId=\{app\.release_id\}/);
-  assert.match(card, /packageName=\{app\.package_name\}/);
-  assert.match(card, /<ThirdPartyDownloadButton/);
+test("the install card uses the one download control, and the page's one h1 stays the header's", () => {
+  assert.match(card, /<DownloadControl app=\{app\} \/>/);
   assert.match(card, /<AppNameTitle as="h2"/);
   assert.ok(!/<h1/.test(card));
-  assert.match(card, /<VersionAdvisory app=\{app\} \/>/);
-  assert.ok(card.indexOf("<VersionAdvisory") < card.indexOf("<InstallButton"));
+  assert.ok(!/VersionAdvisory|InstallButton|ThirdPartyDownloadButton/.test(card));
   assert.match(cardCss, /composes:\s*scope panel from "\.\/glass\/glass\.module\.css"/);
   assert.ok(!/Not provided/.test(card));
 });

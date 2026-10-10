@@ -1,75 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import InstallButton from "./InstallButton";
-import ThirdPartyDownloadButton from "./ThirdPartyDownloadButton";
-import AppIconLive from "./AppIconLive";
+import DownloadControl from "./installControls";
+import AppIcon from "./AppIcon";
+import type { App } from "@/lib/catalog";
 import styles from "./StickyInstallBar.module.css";
 
 /**
- * Sticky/anchored install action — leaf 0.j.ii.zi (Play Store Parity
- * Pass → Long-listing install accessibility).
+ * Sticky/anchored download action — leaf 0.j.ii.zi (Play Store Parity Pass → Long-listing install accessibility).
  *
- * Play gives long listings a persistent install affordance so the
- * action never scrolls out of reach (HANDOVER.md's `0.j` note, citing
- * the Android Authority Oct 2024 teardown). This app-detail page
- * (`app/app/[slug]/page.tsx`) is exactly that long listing — header,
- * screenshots, description, changelog, ratings, verification,
- * disclosures, permissions, report form, similar apps — so the
- * *header's* Install/Open/Update control (`#primary-install-row`) is
- * long gone by the time a visitor reaches the bottom sections.
+ * Play gives long listings a persistent action so the download never scrolls out of reach (HANDOVER.md's `0.j`
+ * note, citing the Android Authority Oct 2024 teardown). This app-detail page is exactly that long listing —
+ * header, screenshots, description, changelog, ratings, permissions, report form, similar apps — so the header's
+ * download control (`#primary-install-row`) is long gone by the time a visitor reaches the bottom sections.
  *
- * Implementation: a plain `IntersectionObserver` (same native-API
- * preference this repo already follows — `ScreenshotCarousel`
- * 0.e.i.zi, `useScrollReveal` 3.a.i.zi) watching the header's install
- * row via its id. The bar only reveals once that row has scrolled
- * *above* the viewport (the user scrolled down past it) — not before
- * it's ever entered the viewport on first paint, and not while it's
- * merely below the fold pre-scroll. Renders its own `InstallButton`
- * instance for the same `appSlug`; `lib/install-status.ts`'s
- * same-tab change event keeps it in sync with the header's instance
- * without lifting state into a shared parent.
+ * Implementation: a plain `IntersectionObserver` (same native-API preference this repo already follows —
+ * `ScreenshotCarousel` 0.e.i.zi, `useScrollReveal` 3.a.i.zi) watching the header's install row via its id. The bar
+ * only reveals once that row has scrolled *above* the viewport. Reveal/pin transition (slide + fade) is gated
+ * behind `@media (prefers-reduced-motion: no-preference)`, so a reduced-motion visitor gets an instant show/hide.
  *
- * Reveal/pin transition (slide + fade) is gated behind
- * `@media (prefers-reduced-motion: no-preference)` in the CSS module,
- * same convention every other animated leaf in this repo already
- * follows (ScrollReveal 3.a.i.zi, the hero mount animation 0.d.i.zo,
- * press states 3.a.ii.zi, the install-button fill 3.a.iv.zo) — a
- * reduced-motion visitor gets an instant show/hide instead.
+ * Operator-directed 2026-10-10: the bar is a second instance of the one `DownloadControl` (a real download link),
+ * so the sticky action never pretends to install. It takes the whole `App` now, so the control resolves the right
+ * URL for a first-party or third-party app the same way the header and the card do.
  */
 export default function StickyInstallBar({
-  appSlug,
-  appName,
-  currentVersion,
-  primaryColor,
-  secondaryColor,
-  tertiaryColor,
-  iconUrl,
+  app,
   watchTargetId,
-  apkUrl,
-  thirdParty,
-  releaseId,
-  rolloutPercentage,
-  packageName,
 }: {
-  appSlug: string;
-  appName: string;
-  currentVersion: string;
-  primaryColor: string;
-  secondaryColor: string;
-  tertiaryColor: string;
-  /** 3.d.ii.zi — real icon URL, threaded through to AppIconLive/AppIcon; falls back to the generated tile when absent/not a real image. */
-  iconUrl?: string;
+  app: App;
   watchTargetId: string;
-  /** 5.g.ii.zi — stable download URL from the Console's signed index (`App.apk`), forwarded to this bar's own `InstallButton` instance. */
-  apkUrl: string;
-  /** 5.h.iii.zi — when set, render the real download link instead of the simulated install button. */
-  thirdParty?: { downloadUrl: string };
-  /** 5.c.iv.zo — forwarded straight through to this bar's own `InstallButton` instance, same as `apkUrl` above. */
-  releaseId: string;
-  rolloutPercentage: number;
-  /** Forwarded to this bar's own `InstallButton` for the Open link (never shown). */
-  packageName?: string;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -98,35 +57,18 @@ export default function StickyInstallBar({
     >
       <div className={styles.identity}>
         <div className={styles.icon}>
-          <AppIconLive
-            appSlug={appSlug}
-            name={appName}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            tertiaryColor={tertiaryColor}
-            iconUrl={iconUrl}
+          <AppIcon
+            name={app.name}
+            primaryColor={app.primary_color}
+            secondaryColor={app.secondary_color}
+            tertiaryColor={app.tertiary_color}
+            src={app.icon}
             sizes="40px"
           />
         </div>
-        <span className={styles.name}>{appName}</span>
+        <span className={styles.name}>{app.name}</span>
       </div>
-      {thirdParty ? (
-        <ThirdPartyDownloadButton
-          appSlug={appSlug}
-          appName={appName}
-          downloadUrl={thirdParty.downloadUrl}
-        />
-      ) : (
-        <InstallButton
-          appSlug={appSlug}
-          appName={appName}
-          currentVersion={currentVersion}
-          apkUrl={apkUrl}
-          releaseId={releaseId}
-          rolloutPercentage={rolloutPercentage}
-          packageName={packageName}
-        />
-      )}
+      <DownloadControl app={app} />
     </div>
   );
 }

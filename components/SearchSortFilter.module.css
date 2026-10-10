@@ -1,0 +1,67 @@
+/*
+ * Search sort & filter styles — leaf port of Storeapp's SearchSortFilterRow (Track k).
+ * Mirrors CategoryFilters.module.css so the two GET forms look like one control set.
+ */
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.select {
+  font: inherit;
+  color: inherit;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+}
+
+.submit {
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.submit:hover,
+.submit:focus-visible {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* Press state — same --color-accent-strong convention as this repo's other outline-style submits. */
+.submit:active {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+  color: var(--color-bg);
+}
+
+.clear {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+}

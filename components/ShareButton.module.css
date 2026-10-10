@@ -1,11 +1,9 @@
 /*
  * Share button + QR modal styles — leaf 4.c.ii.zi.
  *
- * `.shareButton` mirrors InstallButton.module.css's `.uninstallButton`
- * treatment (outlined, quieter than the filled accent pill) — Share is
- * a secondary action next to Install/Download, same visual-weight
- * pairing that button already established for a secondary action
- * sitting beside the primary one.
+ * `.shareButton` mirrors InstallButton.module.css's `.button` treatment
+ * (a pill, quieter than the filled accent download pill) — Share is a
+ * secondary action next to Download, same visual-weight pairing.
  *
  * `.dialog`/`.content`/`.closeButton` reuse Lightbox.module.css's
  * native-`<dialog>` conventions (top-layer `<dialog>` styled directly,

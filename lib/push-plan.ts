@@ -17,8 +17,8 @@
  * ## Three decisions, recorded here so the code and the reasons stay together
  *
  * 1. **Rollout.** The server cannot know which staged-rollout bucket a
- *    device is in — `lib/rollout.ts` is per-device and runs in the
- *    browser — so it cannot tell a device "there is an update" without
+ *    device is in (that check is per-device and runs in the browser), so
+ *    it cannot tell a device "there is an update" without
  *    risking telling one that is outside the bucket and cannot install
  *    it yet. So a version is notified only when it is fully out:
  *    `rollout_status === "complete"` **and** `rollout_percentage === 100`.
