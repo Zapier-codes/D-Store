@@ -125,6 +125,10 @@ export interface AppReview {
   /** ISO date-time. */
   date: string;
   helpful_count: number;
+  /** Card D-P6 — the developer's public reply, published by the reviews inbox (Z-P8); absent when none. */
+  dev_reply?: string | null;
+  /** Card Z-P8 — when the developer reply was written (ISO date-time); absent/none when there is no reply. */
+  dev_replied_at?: string | null;
 }
 
 /**
@@ -146,6 +150,8 @@ export function mergeAppReviews(
     body: comment.body,
     date: comment.commented_on,
     helpful_count: comment.helpful_count,
+    dev_reply: comment.dev_reply ?? null,
+    dev_replied_at: comment.dev_replied_at ?? null,
   }));
   const fromLive: AppReview[] = live.map((review) => ({
     id: review.id,

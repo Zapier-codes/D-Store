@@ -1,0 +1,33 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  padding: 0.32rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  color: var(--color-fg, rgba(255, 255, 255, 0.85));
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.badge[data-badge="trending"] {
+  color: #ffd166;
+  border-color: color-mix(in srgb, #ffd166 40%, transparent);
+  background: color-mix(in srgb, #ffd166 12%, transparent);
+}
+
+.badge[data-badge="open-source"] {
+  color: #7ee0a8;
+  border-color: color-mix(in srgb, #7ee0a8 40%, transparent);
+  background: color-mix(in srgb, #7ee0a8 12%, transparent);
+}

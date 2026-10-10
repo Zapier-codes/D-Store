@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  dataSafetyRowsFor,
+  deviceFits,
   formatAppSize,
   formatFactDate,
   infoRowsFor,
@@ -10,6 +12,7 @@ import {
   usableLicense,
   type FactsApp,
 } from "../lib/app-facts";
+import type { App } from "../lib/mock-data";
 
 /**
  * Pure helpers behind the details page's stat strip and Information list (operator-directed 2026-10-08, slice 2
@@ -200,4 +203,72 @@ test("a developer without a page is plain text, not a link to a 404", () => {
   const rows = infoRowsFor(thirdParty(), { developer: null, developerName: "Some Publisher", categoryName: null });
   assert.deepEqual(rows[0], { id: "developer", label: "Developer", value: "Some Publisher" });
   assert.equal("href" in rows[0], false);
+});
+
+// Card D-P5 — the Data Safety panel rows.
+
+const safetyApp = (over: Partial<App["data_safety"]> = {}) => ({
+  data_safety: {
+    collects_data: true,
+    data_types: [],
+    shared_with_third_parties: false,
+    data_encrypted_in_transit: true,
+    can_request_data_deletion: true,
+    ...over,
+  },
+});
+
+test("dataSafetyRowsFor: renders each answer, including an honest No", () => {
+  const rows = dataSafetyRowsFor(safetyApp({ collects_data: false, data_encrypted_in_transit: false }));
+  assert.deepEqual(rows, [
+    { question: "Data collected", answer: "No" },
+    { question: "Shared with third parties", answer: "No" },
+    { question: "Data encrypted in transit", answer: "No" },
+    { question: "You can request data deletion", answer: "Yes" },
+  ]);
+});
+
+test("dataSafetyRowsFor: lists data types only when data is collected, capped with a remainder", () => {
+  const rows = dataSafetyRowsFor(safetyApp({ collects_data: true, data_types: ["Location", "Photos"] }));
+  assert.deepEqual(rows[1], { question: "Data types", answer: "Location, Photos" });
+
+  const many = dataSafetyRowsFor(
+    safetyApp({ collects_data: true, data_types: ["a", "b", "c", "d", "e", "f", "g", "h"] }),
+  );
+  assert.deepEqual(many[1], { question: "Data types", answer: "a, b, c, d, e, f, and 2 more" });
+
+  const none = dataSafetyRowsFor(safetyApp({ collects_data: false, data_types: ["Location"] }));
+  assert.ok(!none.some((r) => r.question === "Data types"));
+});
+
+test("dataSafetyRowsFor: an unprovided section yields no rows (no invented panel)", () => {
+  assert.deepEqual(dataSafetyRowsFor(safetyApp({ provided: false })), []);
+});
+
+// Card S-P2 (web reader) — "works on your device".
+
+test("deviceFits: unknown when the app published nothing, never a false yes", () => {
+  assert.equal(deviceFits({}, { apiLevel: 34, abi: "arm64-v8a" }), "unknown");
+  assert.equal(deviceFits({ device_compat: null }, { apiLevel: 34, abi: null }), "unknown");
+});
+
+test("deviceFits: a published min_sdk decides yes or no against the device API level", () => {
+  assert.equal(deviceFits({ device_compat: { min_sdk: 23 } }, { apiLevel: 34, abi: null }), "yes");
+  assert.equal(deviceFits({ device_compat: { min_sdk: 34 } }, { apiLevel: 23, abi: null }), "no");
+  // The device not saying its API level is unknown, not a guess.
+  assert.equal(deviceFits({ device_compat: { min_sdk: 23 } }, { apiLevel: null, abi: null }), "unknown");
+});
+
+test("deviceFits: a published ABI list decides yes or no against the device ABI", () => {
+  assert.equal(deviceFits({ device_compat: { abis: ["arm64-v8a", "armeabi-v7a"] } }, { apiLevel: null, abi: "arm64-v8a" }), "yes");
+  assert.equal(deviceFits({ device_compat: { abis: ["arm64-v8a"] } }, { apiLevel: null, abi: "x86_64" }), "no");
+  // The device not saying its ABI leaves only the part it did say.
+  assert.equal(deviceFits({ device_compat: { abis: ["arm64-v8a"] } }, { apiLevel: null, abi: null }), "yes");
+});
+
+test("deviceFits: any failed constraint is a no, even when another passes", () => {
+  const app = { device_compat: { min_sdk: 23, abis: ["arm64-v8a"] } };
+  assert.equal(deviceFits(app, { apiLevel: 34, abi: "x86_64" }), "no");
+  assert.equal(deviceFits(app, { apiLevel: 21, abi: "arm64-v8a" }), "no");
+  assert.equal(deviceFits(app, { apiLevel: 34, abi: "arm64-v8a" }), "yes");
 });

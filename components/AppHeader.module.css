@@ -118,6 +118,15 @@
   overflow-wrap: anywhere;
 }
 
+/* Cards D-P2 / Z-P1 — the quiet installs + rollout line between the badges and the summary. */
+.installs {
+  margin: 0;
+  color: var(--color-text-muted, var(--color-muted, currentColor));
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
 /* ---- Install row ------------------------------------------------------------------------------------ */
 
 .installRow {

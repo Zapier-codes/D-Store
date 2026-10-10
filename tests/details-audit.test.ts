@@ -19,7 +19,7 @@ const loading = read("app/app/[slug]/loading.tsx");
 const DETAILS_CSS = [
   "AppHeader", "StatStrip", "AppInformation", "RatingBoard", "ReviewsList", "RateThisApp", "ScreenshotCarousel",
   "Lightbox", "InstallCard", "StickyInstallBar", "ExpandableDescription", "Changelog", "PermissionsDisclosure",
-  "ReportProblem", "ReportAppForm",
+  "ReportProblem", "ReportAppForm", "DataSafety",
 ].map((name) => [name, read(`components/${name}.module.css`)] as const);
 
 test("the shared layer defines the motion tokens once, and every glass section reads them with the same fallbacks", () => {
@@ -63,10 +63,13 @@ test("the section reveal is scroll-driven, behind @supports and no-preference, w
 });
 
 test("the dead pieces are gone and nothing imports them", () => {
-  for (const name of ["FirstPartyStats", "ReportedStats", "DataSafety", "PlayStoreDisclosure", "ChecksumDisplay", "SignatureInfo", "ThirdPartyNotice"]) {
+  for (const name of ["FirstPartyStats", "ReportedStats", "PlayStoreDisclosure", "ChecksumDisplay", "SignatureInfo", "ThirdPartyNotice"]) {
     assert.ok(!existsSync(`components/${name}.tsx`), name);
     assert.ok(!existsSync(`components/${name}.module.css`), `${name} css`);
   }
+  // DataSafety is live again — card D-P5 rebuilt it on the model's `DataSafetyInfo` and the page renders it.
+  assert.ok(existsSync("components/DataSafety.tsx"));
+  assert.match(read("app/app/[slug]/page.tsx"), /<DataSafety app=\{app\} \/>/);
   // VersionHistory stays: PermissionDiffNotice imports its stylesheet and tests/version-history-render.test.ts renders it.
   assert.ok(existsSync("components/VersionHistory.tsx"));
 });

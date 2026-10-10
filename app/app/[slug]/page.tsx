@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
-import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getDeveloperApps, getTaxonomyCategory, getLiveReviews } from "@/lib/catalog";
+import { getAppBySlug, getSimilarApps, getDeveloperBySlug, getDeveloperApps, getTaxonomyCategory, getLiveReviews, getTrendingApps } from "@/lib/catalog";
+import { badgesFor, similarAppsFor, trailerUrlFor } from "@/lib/play-ports";
 import CategoryThemeScope from "@/components/CategoryThemeScope";
 import AppHeader from "@/components/AppHeader";
+import TrailerSection from "@/components/TrailerSection";
 import InstallCard from "@/components/InstallCard";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import ExpandableDescription from "@/components/ExpandableDescription";
@@ -12,6 +14,7 @@ import RatingSummary from "@/components/RatingSummary";
 import RateThisApp from "@/components/RateThisApp";
 import ReviewsList from "@/components/ReviewsList";
 import PermissionsDisclosure from "@/components/PermissionsDisclosure";
+import DataSafety from "@/components/DataSafety";
 import ReportProblem from "@/components/ReportProblem";
 import StickyInstallBar from "@/components/StickyInstallBar";
 import Shelf from "@/components/Shelf";
@@ -118,7 +121,23 @@ export default async function AppDetailPage({
         () => [],
       )
     : Promise.resolve([]);
-  const [liveReviews, moreFromDeveloper] = await Promise.all([getLiveReviews(app.slug), moreFromDeveloperRead]);
+  // Card D-P1: Trending membership is this store's own list, read here so the badge is a real signal, never
+  // guessed; a failed read leaves the badge off.
+  const trendingRead: Promise<App[]> = getTrendingApps(100).catch(() => []);
+  const [liveReviews, moreFromDeveloper, trending] = await Promise.all([
+    getLiveReviews(app.slug),
+    moreFromDeveloperRead,
+    trendingRead,
+  ]);
+  const badges = badgesFor(app, { trending: trending.some((other) => other.slug === app.slug) });
+  // Card D-P4: the scored "You might also like" rail over this app's own category, so the ranking reads the
+  // same relatedness signal the client's `similarAppsFor` uses (category match, shared words, same source).
+  // A wider pool than the plain rail used, so the scorer has something to choose from; a failed read falls
+  // back to the plain rail's list rather than failing the page.
+  const relatedPool = await getSimilarApps(app.slug, 40, app).catch(() => similarApps);
+  const relatedApps = similarAppsFor(app, relatedPool);
+  // Card D-P3: a real trailer only when the description (or the credits) carries a video link.
+  const trailerUrl = trailerUrlFor(app.description, app.changelog);
 
   return (
     <CategoryThemeScope appType={taxonomy.app_type} category={taxonomy.category}>
@@ -137,6 +156,7 @@ export default async function AppDetailPage({
           developer={developer ? { slug: developer.slug, name: developer.name } : null}
           developerName={developerName}
           categoryName={category?.name ?? null}
+          badges={badges}
         />
 
         {/* Operator-directed 2026-10-08 (slice 6): two columns from 1100px. The main column holds the sections; the
@@ -146,6 +166,9 @@ export default async function AppDetailPage({
           <div className={styles.mainCol}>
             {/* The gallery owns its section and heading and renders nothing when the app has no screenshots. */}
             <ScreenshotCarousel app={app} />
+
+            {/* Card D-P3: the trailer, only when the description carries a real video link; renders nothing otherwise. */}
+            <TrailerSection url={trailerUrl} />
 
             {/* Operator-directed 2026-10-08 (slice 5 of the details page rework): About owns its section and heading
                 (glass panel, faded text, "Read more" pill) and renders nothing without a description. */}
@@ -185,8 +208,13 @@ export default async function AppDetailPage({
               <PermissionsDisclosure permissions={app.permissions} notProvided={false} />
             )}
 
+            {/* Card D-P5: Data safety, right after Permissions; renders nothing when the source has no such section. */}
+            <DataSafety app={app} />
+
             {/* Rails (slice 6): the glass card and pill language, flush with the column; each renders nothing when empty. */}
             {developer && <Shelf title={`More from ${developer.name}`} apps={moreFromDeveloper} glass />}
+            {/* Card D-P4: Play's scored "You might also like" rail — relatedness, not raw category order. */}
+            <Shelf title="You might also like" apps={relatedApps} glass />
             <Shelf title="Similar Apps" apps={similarApps} glass />
 
             {/* Operator-directed 2026-10-08 (slice 5): "Report a problem" is a quiet footer action that expands in

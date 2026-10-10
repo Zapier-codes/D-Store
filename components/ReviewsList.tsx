@@ -31,6 +31,7 @@ function StarRow({ rating }: { rating: number }) {
 
 function ReviewItem({ review }: { review: AppReview }) {
   const date = reviewDateLabel(review.date);
+  const replyDate = review.dev_replied_at ? reviewDateLabel(review.dev_replied_at) : null;
   return (
     <li className={styles.item}>
       <div className={styles.itemHead}>
@@ -51,6 +52,16 @@ function ReviewItem({ review }: { review: AppReview }) {
           {review.helpful_count.toLocaleString("en-US")} {review.helpful_count === 1 ? "person" : "people"} found this
           helpful
         </p>
+      )}
+      {review.dev_reply && (
+        // Card D-P6 — the developer's public reply, published by the Console's reviews inbox (Z-P8).
+        // Renders only when the publisher actually answered; nothing otherwise.
+        <div className={styles.devReply}>
+          <span className={styles.devReplyLabel}>
+            Developer reply{replyDate ? ` · ${replyDate}` : ""}
+          </span>
+          <p className={styles.devReplyBody}>{review.dev_reply}</p>
+        </div>
       )}
     </li>
   );

@@ -1,5 +1,8 @@
 import Link from "next/link";
 import type { App } from "@/lib/catalog";
+import type { ListingBadge } from "@/lib/play-ports";
+import { installsLabelFor, rolloutLabel } from "@/lib/play-ports";
+import ListingBadges from "./ListingBadges";
 import { isNotProvided, isVerifiedDeveloper } from "@/lib/trust";
 import { pickHeroArt } from "@/lib/hero-card";
 import { AppNameTitle, BackdropArt, GlassPill, IconRing, PillRow, Rim, Tilt } from "./glass";
@@ -40,13 +43,19 @@ export default function AppHeader({
   developer,
   developerName,
   categoryName,
+  badges = [],
 }: {
   app: App;
   developer: { slug: string; name: string } | null;
   developerName: string | null;
   categoryName: string | null;
+  /** Card D-P1 — the listing badges `badgesFor` returned; empty renders nothing. */
+  badges?: ListingBadge[];
 }) {
   const art = pickHeroArt(app.screenshots);
+  // Card D-P2: the human install line (client `installsLabelFor`); card Z-P1: a staged-rollout note.
+  const installs = installsLabelFor(app);
+  const rollout = rolloutLabel(app);
 
   // The same soft palette glow the hero card uses when there is no screenshot art (and under it when there is).
   const glow: React.CSSProperties = {
@@ -107,6 +116,14 @@ export default function AppHeader({
               <AppNameTitle as="h1" className={styles.title}>
                 {app.name}
               </AppNameTitle>
+              <ListingBadges badges={badges} />
+              {(installs || rollout) && (
+                <p className={styles.installs}>
+                  {installs}
+                  {installs && rollout ? " · " : ""}
+                  {rollout}
+                </p>
+              )}
               <p className={styles.summary}>{app.summary}</p>
 
               <div className={styles.installRow} id="primary-install-row">

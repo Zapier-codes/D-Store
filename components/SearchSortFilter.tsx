@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { MIN_STARS_CHOICES, SEARCH_SORTS, isDefaultSearchView, type SearchSort } from "@/lib/search-view";
+import { AGE_FILTER_CHOICES, MIN_STARS_CHOICES, SEARCH_SORTS, isDefaultSearchView, type ContentClass, type SearchSort } from "@/lib/search-view";
+import type { LocaleChoice } from "@/lib/play-ports";
 import styles from "./SearchSortFilter.module.css";
 
 /**
@@ -23,11 +24,21 @@ export default function SearchSortFilter({
   query,
   sort,
   minStars,
+  age = "any",
+  language = "any",
+  languageChoices = [],
 }: {
   query: string;
   sort: SearchSort;
   minStars: number;
+  /** Card D-P7 — the content-rating (age) filter; `any` is the default. */
+  age?: "any" | ContentClass;
+  /** Card D-P8 — the current language preference token (`"any"` or an ISO code). */
+  language?: string;
+  /** Card D-P8 — the languages actually present in the catalogue; the control is hidden when only "any". */
+  languageChoices?: LocaleChoice[];
 }) {
+  const showLanguage = languageChoices.length > 1;
   return (
     <form method="GET" action="/search" className={styles.form}>
       <input type="hidden" name="q" value={query} />
@@ -54,11 +65,35 @@ export default function SearchSortFilter({
         </select>
       </label>
 
+      <label className={styles.field}>
+        <span className={styles.label}>Age</span>
+        <select name="age" defaultValue={age} className={styles.select}>
+          {AGE_FILTER_CHOICES.map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {showLanguage && (
+        <label className={styles.field}>
+          <span className={styles.label}>Language</span>
+          <select name="language" defaultValue={language} className={styles.select}>
+            {languageChoices.map((choice) => (
+              <option key={choice.value} value={choice.value}>
+                {choice.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
       <button type="submit" className={styles.submit}>
         Apply
       </button>
 
-      {!isDefaultSearchView(sort, minStars) && (
+      {!isDefaultSearchView(sort, minStars, age) && (
         <Link href={`/search?q=${encodeURIComponent(query)}`} className={styles.clear}>
           Clear filters
         </Link>

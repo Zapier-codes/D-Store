@@ -82,3 +82,17 @@ test("mergeAppReviews: one unlabelled list, newest first, carried-over and live 
   assert.equal(merged[1].body, "Good.");
   assert.equal(merged[1].helpful_count, 41);
 });
+
+test("mergeAppReviews: a carried-over dev_reply and its date are carried through, absent one is null (cards D-P6/Z-P8)", () => {
+  const merged = mergeAppReviews(
+    [
+      { author_name: "A", rating: 5, body: "Nice", commented_on: "2026-09-02T00:00:00Z", helpful_count: 1, dev_reply: "Thanks!", dev_replied_at: "2026-09-04T00:00:00Z" },
+      { author_name: "B", rating: 3, body: "Meh", commented_on: "2026-09-01T00:00:00Z", helpful_count: 0 },
+    ],
+    [],
+  );
+  assert.equal(merged[0].dev_reply, "Thanks!");
+  assert.equal(merged[0].dev_replied_at, "2026-09-04T00:00:00Z");
+  assert.equal(merged[1].dev_reply, null);
+  assert.equal(merged[1].dev_replied_at, null);
+});

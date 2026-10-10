@@ -204,7 +204,7 @@ export interface RawApp {
    * Optional/defaulted-to-`[]` here, same conservative posture as the fields
    * above for an older cached index.
    */
-  reviews?: { author_name: string | null; rating: number | null; body: string | null; commented_on: string | null; helpful_count: number | null }[] | null;
+  reviews?: { author_name: string | null; rating: number | null; body: string | null; commented_on: string | null; helpful_count: number | null; dev_reply?: string | null; developer_reply?: string | null; developer_replied_at?: string | null }[] | null;
 }
 
 /**
@@ -448,6 +448,12 @@ function normalizeBaseStats(raw: RawApp["base_stats"]): BaseStats | null {
   return { downloads: Math.floor(downloads), rating };
 }
 
+function normalizeReply(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
 function normalizeCarriedOverReviews(raw: RawApp["reviews"]): CarriedOverReview[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -460,6 +466,12 @@ function normalizeCarriedOverReviews(raw: RawApp["reviews"]): CarriedOverReview[
         typeof entry?.helpful_count === "number" && Number.isFinite(entry.helpful_count) && entry.helpful_count > 0
           ? Math.floor(entry.helpful_count)
           : 0,
+      // Card Z-P8 (Console reviews inbox) — the developer's reply the index now publishes. The field was
+      // renamed from the earlier placeholder `dev_reply` to `developer_reply` when the Console half landed,
+      // so read both to survive a cached index either side of the change; `developer_replied_at` is only
+      // used to date the reply and is optional.
+      dev_reply: normalizeReply(entry?.developer_reply ?? entry?.dev_reply ?? null),
+      dev_replied_at: typeof entry?.developer_replied_at === "string" ? entry.developer_replied_at : null,
     }))
     .filter((entry) => entry.author_name !== "" && entry.rating >= 1 && entry.rating <= 5 && entry.commented_on !== "");
 }

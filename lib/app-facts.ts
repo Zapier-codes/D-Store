@@ -31,6 +31,7 @@ export type FactsApp = Pick<
   | "updated_at"
   | "min_android_version"
   | "license"
+  | "device_compat"
 >;
 
 /** How a counting figure is written: `short` is 5.8M, `exact` is 1,234, `reported` is a lower bound such as 5M+. */
@@ -170,6 +171,50 @@ function ratingTile(app: FactsApp): StatTile | null {
 }
 
 /**
+ * Card S-P2 (web reader) — "works on your device": given the device's Android API level and ABI (read by
+ * `lib/device.ts` from the browser/UA on the client, or left empty when unknown), decide whether the app's
+ * published `device_compat` says it can run here. The verdict is deliberately three-valued and conservative:
+ *   - `"yes"`  — the app published its constraints and the device meets every one of them;
+ *   - `"no"`   — the app published a constraint the device fails (API level below `min_sdk`, or no shared ABI);
+ *   - `"unknown"` — the app published nothing (or too little) to decide, or the device did not say.
+ * An app with no `device_compat` is `"unknown"`, never `"yes"` — this store does not claim compatibility the
+ * source never asserted. A device API level of `null` can still fail on ABI, and vice versa.
+ */
+export type DeviceFit = "yes" | "no" | "unknown";
+
+export interface DeviceProfile {
+  /** The device's Android API level (e.g. 34), or `null` when unknown. */
+  apiLevel: number | null;
+  /** The device's primary ABI (e.g. `"arm64-v8a"`), or `null` when unknown. */
+  abi: string | null;
+}
+
+export function deviceFits(
+  app: Pick<FactsApp, "device_compat">,
+  device: DeviceProfile,
+): DeviceFit {
+  const compat = app.device_compat;
+  if (!compat) return "unknown";
+  let saidSomething = false;
+
+  // An API-level constraint the device cannot be checked against yields "unknown", not a guess.
+  const minSdk = compat.min_sdk;
+  if (Number.isFinite(minSdk) && (minSdk as number) > 0) {
+    if (device.apiLevel === null) return "unknown";
+    saidSomething = true;
+    if (device.apiLevel < (minSdk as number)) return "no";
+  }
+
+  const abis = compat.abis;
+  if (Array.isArray(abis) && abis.length > 0) {
+    saidSomething = true;
+    if (device.abi !== null && !abis.includes(device.abi)) return "no";
+  }
+
+  return saidSomething ? "yes" : "unknown";
+}
+
+/**
  * The tiles of the stat strip, in order: Downloads, Rating, Age rating, Size, Version (with its updated date),
  * Compatibility. A tile is returned only when the source provided its value; an app with nothing at all gets
  * an empty list and the strip renders nothing.
@@ -201,6 +246,45 @@ export function statTilesFor(app: FactsApp): StatTile[] {
   if (android !== null) tiles.push({ id: "android", value: android.short, label: "Requires Android" });
 
   return tiles;
+}
+
+/**
+ * Card D-P5 — the Data Safety panel rows, from the `data_safety` the source supplied. Play's form claims
+ * four things; this renders each only when the source provided the section at all (`provided !== false`),
+ * and reads a "no" honestly (a field left `false` is a fact, not a gap, exactly as `PermissionsDisclosure`
+ * treats its neighbouring data). An app whose source has no such section (`provided === false`) returns an
+ * empty list, so the page draws no panel rather than an invented one.
+ */
+export interface DataSafetyRow {
+  question: string;
+  answer: string;
+}
+
+const DATA_TYPE_LIST_LIMIT = 6;
+
+export function dataSafetyRowsFor(
+  app: Pick<App, "data_safety">,
+): DataSafetyRow[] {
+  const safety = app.data_safety;
+  if (safety.provided === false) return [];
+
+  const rows: DataSafetyRow[] = [];
+  rows.push({
+    question: "Data collected",
+    answer: safety.collects_data ? "Yes" : "No",
+  });
+  if (safety.collects_data && safety.data_types.length > 0) {
+    const shown = safety.data_types.slice(0, DATA_TYPE_LIST_LIMIT);
+    const more = safety.data_types.length - shown.length;
+    rows.push({
+      question: "Data types",
+      answer: shown.join(", ") + (more > 0 ? `, and ${more} more` : ""),
+    });
+  }
+  rows.push({ question: "Shared with third parties", answer: safety.shared_with_third_parties ? "Yes" : "No" });
+  rows.push({ question: "Data encrypted in transit", answer: safety.data_encrypted_in_transit ? "Yes" : "No" });
+  rows.push({ question: "You can request data deletion", answer: safety.can_request_data_deletion ? "Yes" : "No" });
+  return rows;
 }
 
 /**

@@ -1,0 +1,41 @@
+/*
+ * Data safety: card D-P5. See DataSafety.tsx.
+ *
+ * Shared glass layer, like its Permissions neighbour. Text is --color-text / --color-text-muted. Nothing animates.
+ */
+
+.root {
+  composes: scope from "./glass/glass.module.css";
+}
+
+.title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.list {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.question {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.answer {
+  margin: 0;
+  text-align: right;
+}

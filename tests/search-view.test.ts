@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  applyAgeFilter,
   applySearchView,
+  contentClass,
   isDefaultSearchView,
+  parseAgeFilter,
   parseMinStars,
   parseSearchSort,
   searchViewQuery,
@@ -109,4 +112,64 @@ test("searchViewQuery carries the query and only the non-default view values", (
   assert.deepEqual(searchViewQuery("chat", "size", 4.5), { q: "chat", sort: "size", minStars: "4.5" });
   // A blank query still yields the view, so a pager link never loses the sort.
   assert.deepEqual(searchViewQuery("", "name", 0), { sort: "name" });
+});
+
+// Card D-P7 — the age / content-rating filter.
+
+test("contentClass places the common rating strings, and leaves anything it cannot place unrated", () => {
+  assert.equal(contentClass("Everyone"), "everyone");
+  assert.equal(contentClass("All ages"), "everyone");
+  assert.equal(contentClass("Teen"), "teen");
+  assert.equal(contentClass("Rated for 12+"), "teen");
+  assert.equal(contentClass("Mature"), "mature");
+  assert.equal(contentClass("Mature 17+"), "mature");
+  assert.equal(contentClass("Adults only 18+"), "adults");
+  assert.equal(contentClass("Unrated"), null);
+  assert.equal(contentClass(""), null);
+  assert.equal(contentClass(null), null);
+  assert.equal(contentClass(undefined), null);
+});
+
+test("parseAgeFilter accepts the offered tokens and defaults to any", () => {
+  assert.equal(parseAgeFilter("teen"), "teen");
+  assert.equal(parseAgeFilter("Teen"), "teen");
+  assert.equal(parseAgeFilter("adults"), "adults");
+  assert.equal(parseAgeFilter("any"), "any");
+  assert.equal(parseAgeFilter("nonsense"), "any");
+  assert.equal(parseAgeFilter(undefined), "any");
+});
+
+test("applyAgeFilter keeps everything under any, narrows by class under a real one", () => {
+  const apps = [
+    app("kid", { content_rating: "Everyone" }),
+    app("teen", { content_rating: "Teen" }),
+    app("mature", { content_rating: "Mature 17+" }),
+    app("adult", { content_rating: "Adults only 18+" }),
+    // A value outside the typed vocabulary (a foreign source): still unrated, never guessed into a class.
+    app("unrated", { content_rating: "Whatever" as unknown as App["content_rating"] }),
+  ];
+  assert.deepEqual(slugs(applyAgeFilter(apps, "any")), ["kid", "teen", "mature", "adult", "unrated"]);
+  assert.deepEqual(slugs(applyAgeFilter(apps, "everyone")), ["kid"]);
+  assert.deepEqual(slugs(applyAgeFilter(apps, "teen")), ["kid", "teen"]);
+  assert.deepEqual(slugs(applyAgeFilter(apps, "mature")), ["kid", "teen", "mature"]);
+  assert.deepEqual(slugs(applyAgeFilter(apps, "adults")), ["kid", "teen", "mature", "adult"]);
+});
+
+test("applyAgeFilter drops an app whose source said the rating was not provided", () => {
+  const apps = [
+    app("kid", { content_rating: "Everyone" }),
+    app("blank", { content_rating: "Everyone", not_provided: ["content_rating"] }),
+  ];
+  assert.deepEqual(slugs(applyAgeFilter(apps, "everyone")), ["kid"]);
+});
+
+test("isDefaultSearchView accounts for the age filter too", () => {
+  assert.equal(isDefaultSearchView("relevance", 0, "any"), true);
+  assert.equal(isDefaultSearchView("relevance", 0, "teen"), false);
+  assert.equal(isDefaultSearchView("stars", 0, "any"), false);
+});
+
+test("searchViewQuery carries the age token only when it is not the default", () => {
+  assert.deepEqual(searchViewQuery("q", "relevance", 0, "any"), { q: "q" });
+  assert.deepEqual(searchViewQuery("q", "stars", 4, "teen"), { q: "q", sort: "stars", minStars: "4", age: "teen" });
 });

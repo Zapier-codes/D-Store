@@ -148,6 +148,21 @@ export interface BaseStats {
 }
 
 /**
+ * Card Z-P14 → S-P2/D reader — device targeting published by Zealot's signed index (read from the APK
+ * at publish time with `apkanalyzer`/`aapt2`): the minimum Android API level, the ABIs the release
+ * ships, and any required hardware features. Every field is optional because a release that predates
+ * the slice carries none, and this store must not read a missing field as "compatible".
+ */
+export interface DeviceCompat {
+  /** `minSdk` as an integer API level (e.g. 23); the string `min_android_version` stays for display. */
+  min_sdk?: number | null;
+  /** The ABIs the release ships, e.g. `["arm64-v8a", "armeabi-v7a"]`. */
+  abis?: string[] | null;
+  /** Hardware features the app requires, e.g. `["android.hardware.camera"]`. */
+  required_features?: string[] | null;
+}
+
+/**
  * Task 45d — a comment an app earned before it was listed here, published by
  * Zealot's index as `reviews`. Shown as an ordinary review, merged with this
  * store's own by date; `source_note` and who entered it are never published.
@@ -160,6 +175,13 @@ export interface CarriedOverReview {
   /** ISO date-time. */
   commented_on: string;
   helpful_count: number;
+  /**
+   * Card D-P6 — the developer's public reply to this review, published by the Console's reviews inbox
+   * (Z-P8). Absent/none for a review the developer has not answered; the web renders nothing then.
+   */
+  dev_reply?: string | null;
+  /** Card Z-P8 — when the developer reply was written (ISO date-time); absent/none alongside an absent `dev_reply`. */
+  dev_replied_at?: string | null;
 }
 
 export interface App {
@@ -453,6 +475,20 @@ export interface App {
    * remembering to set this one field correctly forever.
    */
   developer_verified: boolean;
+  /**
+   * The listing's language, ISO 639-1 — card D-P8 (parity kanban; the web port of the client's
+   * `language` field). Absent for the dummy first-party entries (their listings are English-only,
+   * which is not the same claim as a published `"en"`), and absent for third-party apps whose source
+   * gives none. Read through `applyLocaleFilter`/`localeChoicesFor` (`lib/play-ports.ts`).
+   */
+  language?: string | null;
+  /**
+   * Device targeting read from the APK at publish time (card Z-P14) and published in the signed index;
+   * this storefront reads it to answer "works on your device" without claiming more than the source said.
+   * Absent for every entry until Zealot publishes it (and for third-party apps, whose source gives none).
+   * `abis`/`required_features` are only set when the index carries them.
+   */
+  device_compat?: DeviceCompat | null;
   /**
    * Fields the source genuinely did not provide — leaf `5.h.iii.zo`.
    * Absent (the default) means everything is provided, so no first-party
