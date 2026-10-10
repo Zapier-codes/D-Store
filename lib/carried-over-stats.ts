@@ -1,4 +1,4 @@
-import type { App, BaseStats, CarriedOverReview } from "./mock-data";
+import type { AnonymousReview, App, BaseStats, CarriedOverReview } from "./mock-data";
 import { isThirdParty } from "./trust";
 
 /**
@@ -112,6 +112,12 @@ export function carriedOverReviewsFor(app: Pick<App, "origin" | "carried_over_re
   return app.carried_over_reviews ?? [];
 }
 
+/** Z-P9 — the app's live anonymous reviews; `[]` for a third-party app or one with none. */
+export function anonymousReviewsFor(app: Pick<App, "origin" | "anonymous_reviews">): AnonymousReview[] {
+  if (isThirdParty(app)) return [];
+  return app.anonymous_reviews ?? [];
+}
+
 /**
  * Task 45d — one review as the storefront shows it, whether it was carried over
  * from before the app was listed or written here. The two are merged into one
@@ -129,6 +135,8 @@ export interface AppReview {
   dev_reply?: string | null;
   /** Card Z-P8 — when the developer reply was written (ISO date-time); absent/none when there is no reply. */
   dev_replied_at?: string | null;
+  /** Z-P9 — the earned "verified install" mark, so the list can badge the review. Absent/false when not earned. */
+  verified_install?: boolean;
 }
 
 /**
@@ -138,10 +146,16 @@ export interface AppReview {
  * author or text), so it renders as a visitor's star rating; a carried-over
  * comment keeps its author, body and helpful count. Never labelled as carried
  * over.
+ *
+ * Z-P9 — `anonymous` are the app's live anonymous reviews from Zealot's signed
+ * index. They are anonymous by design (no author), so they render as a visitor's
+ * review but keep their body and the earned "verified install" mark. Optional and
+ * defaulted to `[]`, so every existing caller is unchanged.
  */
 export function mergeAppReviews(
   carriedOver: CarriedOverReview[],
-  live: { id: string; stars: number; created_at: string }[]
+  live: { id: string; stars: number; created_at: string; verified_install?: boolean }[],
+  anonymous: AnonymousReview[] = []
 ): AppReview[] {
   const fromCarriedOver: AppReview[] = carriedOver.map((comment, index) => ({
     id: `carried-${index}-${comment.commented_on}`,
@@ -160,8 +174,18 @@ export function mergeAppReviews(
     body: null,
     date: review.created_at,
     helpful_count: 0,
+    verified_install: review.verified_install ?? false,
   }));
-  return [...fromCarriedOver, ...fromLive].sort(
+  const fromAnonymous: AppReview[] = anonymous.map((review, index) => ({
+    id: `anonymous-${index}-${review.created_at}`,
+    author: "A visitor",
+    rating: review.rating,
+    body: review.body,
+    date: review.created_at,
+    helpful_count: review.helpful_count,
+    verified_install: review.verified_install,
+  }));
+  return [...fromCarriedOver, ...fromLive, ...fromAnonymous].sort(
     (a, b) => Date.parse(b.date) - Date.parse(a.date) || a.id.localeCompare(b.id)
   );
 }

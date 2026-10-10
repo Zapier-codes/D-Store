@@ -1,5 +1,5 @@
 import type { App } from "@/lib/mock-data";
-import { carriedOverReviewsFor, mergeAppReviews, type AppReview } from "@/lib/carried-over-stats";
+import { anonymousReviewsFor, carriedOverReviewsFor, mergeAppReviews, type AppReview } from "@/lib/carried-over-stats";
 import { reviewDateLabel, reviewInitial, splitReviews } from "@/lib/ratings";
 import styles from "./ReviewsList.module.css";
 
@@ -10,7 +10,9 @@ import styles from "./ReviewsList.module.css";
  * are no reviews at all, so an app with none is unchanged.
  *
  * This store's own live reviews are anonymous 1-5 star submissions with no text, so they show a star row and
- * "A visitor"; a carried-over comment shows its own author, star row, body and helpful count.
+ * "A visitor"; a carried-over comment shows its own author, star row, body and helpful count. Z-P9 live
+ * anonymous reviews (device-bound key) also show "A visitor" but keep their body and, when earned, a
+ * "Verified install" badge.
  *
  * Operator-directed 2026-10-08 (slice 4 of the details page rework): each review is a glass card with an initial
  * avatar (decorative), the author, the stars, the UTC date, the text and the helpful count. The first three show;
@@ -40,6 +42,11 @@ function ReviewItem({ review }: { review: AppReview }) {
         </span>
         <div className={styles.who}>
           <span className={styles.author}>{review.author}</span>
+          {review.verified_install && (
+            // Z-P9 — the earned "verified install" mark: the review carried a device key that passed Android
+            // Key Attestation and named a real release of this app. Shown only when the publisher set it.
+            <span className={styles.verified}>Verified install</span>
+          )}
           <div className={styles.sub}>
             <StarRow rating={review.rating} />
             {date && <span className={styles.date}>{date}</span>}
@@ -74,7 +81,7 @@ export default function ReviewsList({
   app: App;
   liveReviews: { id: string; stars: number; created_at: string }[];
 }) {
-  const reviews = mergeAppReviews(carriedOverReviewsFor(app), liveReviews);
+  const reviews = mergeAppReviews(carriedOverReviewsFor(app), liveReviews, anonymousReviewsFor(app));
   if (reviews.length === 0) return null;
   const { shown, rest } = splitReviews(reviews);
 

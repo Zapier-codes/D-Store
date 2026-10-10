@@ -90,6 +90,33 @@ export interface Review {
   app_slug: string; // App.slug
   stars: number; // 1-5
   created_at: string; // ISO date
+  /**
+   * Z-P9 — true for a review submitted through the anonymous review API with a
+   * device-bound key that named a real release of the app (the earned "verified
+   * install" mark). The storefront shows a "Verified install" badge for it; a
+   * plain star submission leaves it absent/false.
+   */
+  verified_install?: boolean;
+}
+
+/**
+ * Z-P9 — one live anonymous review, published by Zealot's signed index
+ * (`anonymous_reviews`). There is no account, no email and no profile behind it,
+ * so there is no author to show; the only signal beyond the stars and text is the
+ * earned `verified_install` mark. Written here by the review API, read back from
+ * the signed index alongside the carried-over comments.
+ */
+export interface AnonymousReview {
+  /** 1-5. */
+  rating: number;
+  body: string | null;
+  /** True only when the review carried a device key that passed Android Key Attestation and named a real release. */
+  verified_install: boolean;
+  /** The installed version the review is about, when the client knew it. */
+  version_code: string | null;
+  helpful_count: number;
+  /** ISO date-time. */
+  created_at: string;
 }
 
 /**
@@ -519,6 +546,14 @@ export interface App {
    * an app with none and for every third-party app.
    */
   carried_over_reviews?: CarriedOverReview[];
+  /**
+   * Z-P9 � the app's live anonymous reviews, published by Zealot's signed index
+   * (`anonymous_reviews`). Anonymous by design: no author, no account, no email.
+   * Merged into the reviews list with the carried-over comments, each showing a
+   * "Verified install" badge only when the review's key earned the mark. Absent
+   * for an app with none and for every third-party app.
+   */
+  anonymous_reviews?: AnonymousReview[];
 }
 
 /**

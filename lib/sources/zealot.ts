@@ -34,7 +34,7 @@
  * tenant is configured.
  */
 
-import type { App, AppOrigin, BaseStats, CarriedOverReview, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
+import type { AnonymousReview, App, AppOrigin, BaseStats, CarriedOverReview, Collection, ContentRating, DataSafetyInfo, NotProvidedField } from "../mock-data";
 import { readVersionStatus } from "../version-advisory";
 import { readVersionHistory } from "../version-history";
 import { CATEGORY_RAW_MAX, checkCategory, toPlay, UNCATEGORIZED, type AppType } from "../taxonomy";
@@ -211,6 +211,20 @@ export interface RawApp {
    * above for an older cached index.
    */
   reviews?: { author_name: string | null; rating: number | null; body: string | null; commented_on: string | null; helpful_count: number | null; dev_reply?: string | null; developer_reply?: string | null; developer_replied_at?: string | null }[] | null;
+  /**
+   * Z-P9 — live anonymous reviews (device-bound key, proof-of-work). Optional/
+   * defaulted-to-`[]` here, same conservative posture as the fields above for an
+   * older cached index. No reviewer identity is ever published; `verified_install`
+   * is the earned mark.
+   */
+  anonymous_reviews?: {
+    rating: number | null;
+    body: string | null;
+    verified_install: boolean | null;
+    version_code: string | null;
+    helpful_count: number | null;
+    created_at: string | null;
+  }[] | null;
 }
 
 /**
@@ -298,7 +312,7 @@ export function placeZealotCategory(raw: unknown): { app_type: AppType; category
   return { app_type: "app", category: UNCATEGORIZED.slug, category_raw: raw.slice(0, CATEGORY_RAW_MAX) };
 }
 
-function normalizeZealotApp(raw: RawApp): App {
+export function normalizeZealotApp(raw: RawApp): App {
   const nowIso = new Date().toISOString();
   const latest = raw.versions[0];
 
@@ -430,6 +444,10 @@ function normalizeZealotApp(raw: RawApp): App {
     // Task 45d -- comments the app earned before it was listed, shown as ordinary reviews. Only rows with a
     // usable author, rating and date are kept, so a malformed entry cannot render as a broken review.
     carried_over_reviews: normalizeCarriedOverReviews(raw.reviews),
+    // Z-P9 -- live anonymous reviews from Zealot's signed index. Only rows with a usable rating and date are
+    // kept (a body is optional); the "verified install" mark is copied only when the server said true, never
+    // assumed. Absent reads as "none", same posture as the fields above.
+    anonymous_reviews: normalizeAnonymousReviews(raw.anonymous_reviews),
 
     not_provided: notProvided,
   };
@@ -480,6 +498,29 @@ function normalizeCarriedOverReviews(raw: RawApp["reviews"]): CarriedOverReview[
       dev_replied_at: typeof entry?.developer_replied_at === "string" ? entry.developer_replied_at : null,
     }))
     .filter((entry) => entry.author_name !== "" && entry.rating >= 1 && entry.rating <= 5 && entry.commented_on !== "");
+}
+
+/**
+ * Z-P9 — the app's live anonymous reviews. A row needs a usable rating (1-5) and a usable `created_at`, the two
+ * things the list sorts and renders by; a body is optional (a star-only review is honest). `verified_install` is
+ * copied only when the server published `true`, never assumed, so an older index (no such field) reads as
+ * unmarked. `[]` for anything unusable, so an app with no anonymous reviews is unchanged.
+ */
+function normalizeAnonymousReviews(raw: RawApp["anonymous_reviews"]): AnonymousReview[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry) => ({
+      rating: typeof entry?.rating === "number" && Number.isFinite(entry.rating) ? Math.floor(entry.rating) : 0,
+      body: typeof entry?.body === "string" ? entry.body : null,
+      verified_install: entry?.verified_install === true,
+      version_code: typeof entry?.version_code === "string" ? entry.version_code : null,
+      helpful_count:
+        typeof entry?.helpful_count === "number" && Number.isFinite(entry.helpful_count) && entry.helpful_count > 0
+          ? Math.floor(entry.helpful_count)
+          : 0,
+      created_at: typeof entry?.created_at === "string" ? entry.created_at : "",
+    }))
+    .filter((entry) => entry.rating >= 1 && entry.rating <= 5 && entry.created_at !== "");
 }
 
 // --- Fetch, verify, cache ---------------------------------------------
